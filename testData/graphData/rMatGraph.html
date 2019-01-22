@@ -1,0 +1,63 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : rMatGraph</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>rMatGraph Data Generator:</h2> 
+
+
+<blockquote>
+<tt>rMatGraph [-j] [-o] [-a &lt;A&gt;] [-b &lt;B&gt;] [-c &lt;C&gt;] [-s &lt;s&gt;]
+[-m &lt;m&gt;] &lt;n&gt;
+</blockquote>
+
+<p>
+This generator creates a graph using the RMAT model.  Such graphs are
+designed to simulate social network graphs.  The graphs have a power
+law degree distribution and small diameter.  The graphs are defined
+recursively in terms of their adjacency matrix.  In particularly an
+adjacency matrix of n x n is partitioned into 4 equal sized quadrants
+(assuming n is a power of 2) and each quadrant is given a probability
+so the four sum to 1.  Each edge is then selected by recursively
+selecting a quadrant at random based on the quadrant probabilities
+until a singleton is reached.   
+</p>
+
+<p>
+The number of vertices is the variable <tt>n</tt> rounded up
+to the next power of two.  The number of edges is given
+by <tt>m</tt> (10 * n by default).  The <tt>[-a &lt;A&gt;]</tt>, <tt>[-b
+&lt;B&gt;]</tt>, and <tt>[-c &lt;C&gt;]</tt> arguments specify the upper left
+quadrant, upper right quadrant, and lower left quadrant respectively.
+The lower right quadrant is <tt>1 - A - B - C</tt>.  The default for A is .5,
+for B is .1 and for C is B.  The [-s &lt;s&gt;] option allows one to
+specify a different seed so a different random graph is generated, but
+with the same distribution.  For a fixed seed the generator will
+always generate the same graph independently of platform.
+</p>
+
+<p>
+The <tt>[-j]</tt> option specifies that the graph should be output
+in the <strong><a href="benchmarks/graphIO.html">adjacency graph</a> file format.
+By default it is output in the
+in the <strong><a href="benchmarks/graphIO.html">edge graph</a> file format.
+By default the vertex ordering is randomized after the graph
+is generated so that it does not
+correspond to the ordering of RMAT adjacency matrix.
+The <tt>[-o]</tt> option specifies to keep the ordering.
+</p>
+
+<p>
+In its current form when the graph is generated in the adjacency graph format
+edges are added to make the graph symmetric so each edge appears is both
+directions.
+</p>
+
+<!--#include virtual="footer.html" -->
+</body>
+<html>

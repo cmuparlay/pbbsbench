@@ -1,0 +1,87 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Graph File Formats</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Graph File Formats:</h2> 
+
+<p>
+The graph file formats include an <strong>adjacency graph</strong>
+format, an <strong>edge graph</strong> format, and a <strong>weighted
+edge graph</strong> format.
+All formats are ascii and entries are delimited by any
+consecutive sequence of delimiter characters: <strong>tab</strong>,
+<strong>space</strong>, <strong>line feed</strong> (ascii 0x0A), and
+<strong>carriage return</strong> (ascii 0x0D).  Files can start and
+end with delimiters, which are ignored.  Throughout the description n
+refers to the number of vertices and m to the number of edges in a
+graph.
+</p>
+
+<h3>Adjacency Graph</h3>
+<p>
+The adjacency graph format starts with a sequence of offsets one for
+each vertex, followed by a sequence of directed edges ordered by their
+source vertex.  The offset for a vertex i refers to the location of
+the start of a contiguous block of out edges for vertex i in the
+sequence of edges.  The block continues until the offset of the next
+vertex, or the end if i is the last vertex.  All vertices and offsets
+are 0 based and represented in decimal.  The specific format is as
+follows:
+</p>
+<blockquote>
+<tt>AdjacencyGraph</tt><br>
+&lt;<strong>o0</strong>&gt;<br>
+&lt;<strong>o1</strong>&gt;<br>
+...<br>
+&lt;<strong>o(n-1)</strong>&gt;<br>
+&lt;<strong>e0</strong>&gt;<br>
+&lt;<strong>e1</strong>&gt;<br>
+...<br>
+&lt;<strong>e(m-1)</strong>&gt;<br>
+</blockquote>
+
+<h3>Edge Graph</h3>
+<p>
+The edge graph format consists of a sequence of edges/arcs each being
+a pair of integers. 
+The format can either be interpreted as a directed graph or an undirected graphs
+depending on the application.
+Vertices are assumed to start at 0.
+The specific format is as follows:
+</p>
+<blockquote>
+<tt>EdgeArray</tt><br>
+&lt;<strong>s0</strong>&gt; &lt;<strong>t0</strong>&gt;<br>
+&lt;<strong>s1</strong>&gt; &lt;<strong>t1</strong>&gt;<br>
+...<br>
+&lt;<strong>s(n-1)</strong>&gt; &lt;<strong>t(n-1)</strong>&gt;<br>
+</blockquote>
+where &lt;<strong>si</strong>&gt; and &lt;<strong>ti</strong>&gt;
+refer to the two endpoints of the undirected edge i, or the source and
+target of a directed edge (arc) i.
+
+<h3>Weighted Edge Graph</h3>
+<p>
+The weighted edge graph format is the same as the edge graph format but
+includes double precision floating point weights.
+The specific format is as follows:
+</p>
+<blockquote>
+<tt>WeightedEdgeArray</tt><br>
+&lt;<strong>s0</strong>&gt; &lt;<strong>t0</strong>&gt; &lt;<strong>w0</strong>&gt;<br>
+&lt;<strong>s1</strong>&gt; &lt;<strong>t1</strong>&gt; &lt;<strong>w1</strong>&gt;<br>
+...<br>
+&lt;<strong>s(n-1)</strong>&gt; &lt;<strong>t(n-1)</strong>&gt; &lt;<strong>w(n-1)</strong>&gt;<br>
+</blockquote>
+where &lt;<strong>wi</strong>&gt; is the weight of edge i.  The weight can either
+be in decimal or exponential notation.
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

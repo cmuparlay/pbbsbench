@@ -1,0 +1,32 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : trigramSeq</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>trigramSeq Data Generator:</h2> 
+
+<blockquote>
+<tt>trigram &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+
+<p>
+This generator generates a sequence of <tt>n</tt> character strings in the <a
+href="benchmarks/sequenceIO.html"><strong>sequence file
+format</strong></a> based on the trigram distribution of the English
+language.  In particular it selects each next character at random
+based on the previous two characters with a probability based on the
+probability of the given sequence of three characters (the previous
+two and itself).  Only the 26 lowercase characters from the alphabet
+and the space character are used.  If the space character is selected
+then in ends the string.  The first two characters of each string are
+selected based on the 1-gram and 2-gram probabilities.
+</p>
+
+<!--#include virtual="footer.html" -->
+</body>
+<html>

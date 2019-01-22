@@ -1,0 +1,6 @@
+CCFLAGS = -mcx16 -O2 -std=c++11
+CLFLAGS = -ldl
+
+CC = g++
+CFLAGS = $(CCFLAGS)
+LFLAGS = $(CLFLAGS)

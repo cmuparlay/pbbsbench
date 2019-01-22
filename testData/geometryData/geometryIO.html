@@ -1,0 +1,87 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Geometry File Formats</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Geometry File Formats:</h2> 
+
+<p>
+The geometry file formats include <strong>points</strong> in 2 and 3
+dimensions and <strong>triangles</strong>.  All formats are ascii and
+entries are delimited by any consecutive sequence of delimiter
+characters: <strong>tab</strong>, <strong>space</strong>, <strong>line
+feed</strong> (ascii 0x0A), and <strong>carriage return</strong>
+(ascii 0x0D).  Files can start and end with delimiters, which are
+ignored.
+</p>
+
+<h3>Points</h3>
+<p>
+The points file format consists of a sequence of pairs of coordinates
+(2 dimensions) or triples of coordinates (3 dimensions).  Each
+coordinate is a real number capable of fitting withing double
+precision accuracy.  The number can be either in decimal or
+exponential notation.
+The specific format for 2d points is:
+</p>
+<blockquote>
+<tt>pbbs_sequencePoint2d</tt><br>
+&lt;<strong>x0</strong>&gt; &lt;<strong>y0</strong>&gt;<br>
+&lt;<strong>x1</strong>&gt; &lt;<strong>y1</strong>&gt;<br>
+...<br>
+&lt;<strong>x(n-1)</strong>&gt; &lt;<strong>y(n-1)</strong>&gt;<br>
+</blockquote>
+<p>
+and for 3d points:
+</p>
+<blockquote>
+<tt>pbbs_sequencePoint3d</tt><br>
+&lt;<strong>x0</strong>&gt; &lt;<strong>y0</strong>&gt; &lt;<strong>z0</strong>&gt;<br>
+&lt;<strong>x1</strong>&gt; &lt;<strong>y1</strong>&gt; &lt;<strong>z1</strong>&gt;<br>
+...<br>
+&lt;<strong>x(n-1)</strong>&gt; &lt;<strong>y(n-1)</strong>&gt; &lt;<strong>z(n-1)</strong>&gt;<br>
+</blockquote>
+
+<h3>Ray</h3>
+<p>
+For rays we use the same format as points, but pair up adjacent <q>points</q>.
+The first of each pair is the source of the ray and the second the direction.
+Therefore a file with n rays is equivalent to one with 2n points.
+</p>
+
+<h3>Triangles</h3>
+<p>
+The triangles format starts with a sequence of coordinates and is
+followed by a sequence of triangles.  Each coordinate is either a 2d
+or 3d point as in the <strong>point</strong> formats.  Each triangle
+is a triple consisting of the indices of the coordinates of its three
+corners.  The indices are zero based and refer to the position of the
+coordinate in the file.  The number of coordinates and triangles is
+included in the file.  In particular for 2d coordinates the format is
+as follows:
+</p>
+<blockquote>
+<tt>pbbs_triangles</tt><br>
+&lt;<strong>n</strong>&gt;<br>
+&lt;<strong>m</strong>&gt;<br>
+&lt;<strong>x0</strong>&gt; &lt;<strong>y0</strong>&gt;<br>
+&lt;<strong>x1</strong>&gt; &lt;<strong>y1</strong>&gt;<br>
+...<br>
+&lt;<strong>x(n-1)</strong>&gt; &lt;<strong>y(n-1)</strong>&gt;;<br>
+&lt;<strong>a0</strong>&gt; &lt;<strong>b0</strong>&gt; &lt;<strong>c0</strong>&gt;<br>
+&lt;<strong>a1</strong>&gt; &lt;<strong>b1</strong>&gt; &lt;<strong>c1</strong>&gt;<br>
+...<br>
+&lt;<strong>a(m-1)</strong>&gt; &lt;<strong>b(m-1)</strong>&gt; &lt;<strong>c(m-1)</strong>&gt;<br>
+</blockquote>
+<p>
+The format for triangles with 3d coordinates is the same but consists of n triples
+instead of pairs.
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

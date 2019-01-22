@@ -1,0 +1,27 @@
+CCFLAGS = -mcx16 -O2 -std=c++11
+CLFLAGS = -ldl
+
+OMPFLAGS = -DOPENMP -fopenmp
+CILKFLAGS = -DCILK -fcilkplus
+PBBFLAGS = -DHOMEGROWN -pthread
+
+ifdef OPENMP
+CC = g++
+CFLAGS = $(OMPFLAGS) $(CCFLAGS)
+LFLAGS = $(OMPFLAGS) $(LCFLAGS)
+
+else ifdef CILK
+CC = g++
+CFLAGS = $(CILKFLAGS) $(CCFLAGS)
+LFLAGS = $(CILKFLAGS) $(CLFLAGS)
+
+else ifdef PBBSCHED
+CC = g++
+CFLAGS = $(PBBFLAGS) $(CCFLAGS)
+LFLAGS = $(PBBFLAGS) $(CLFLAGS)
+
+else
+CC = g++
+CFLAGS = $(CCFLAGS)
+LFLAGS = $(CLFLAGS)
+endif

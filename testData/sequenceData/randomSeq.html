@@ -1,0 +1,32 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : randomSeq</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>randomSeq Data Generator:</h2> 
+
+<blockquote>
+<tt>randomSeq -t {int,double} [-r &lt;m&gt;] &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+
+<p>
+This generator creates a sequence of <tt>n</tt> values uniformly at random
+(psuedorandom) in the <a
+href="benchmarks/sequenceIO.html"><strong>sequence file
+format</strong></a>.  It supports both double-precision floating-point
+values and integers.  
+The integer version generates integers in the range <tt>[0:m)</tt> where
+<tt>m</tt> is specified with the optional
+argument <tt>[-r &lt;m&gt;]</tt> (m = n by default).
+The double precision version generates reals uniformly
+at random in the range <tt>[0,1)</tt> (within the precision).
+</p>
+
+<!--#include virtual="footer.html" -->
+</body>
+<html>

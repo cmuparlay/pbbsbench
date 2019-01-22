@@ -1,0 +1,31 @@
+#!/usr/bin/env python2
+import sys, os
+
+type = sys.argv[1]
+x = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+
+if type == "rlg-long":
+  # creates a graph with 2^(x+6) nodes
+  fct = 2
+  a = 64
+  b = 2**x
+  c = 10000
+elif type == "rlg-wide":
+  # creates a graph with 2^(x+6) nodes
+  assert x > 1
+  fct = 2
+  a = 2**x
+  b = 64
+  c = 10000
+elif type == "line-moderate":
+  # creates a graph with 2^(2x + 4) nodes
+  fct = 6
+  a = 2**(2*x + 2)
+  b = 4
+  c = 2**x
+else:
+  raise Exception, "No such type: %s" % type
+
+os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+os.system("./washington %d %d %d %d %d" % (fct, a, b, c, seed))

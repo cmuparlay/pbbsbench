@@ -1,0 +1,22 @@
+#!/usr/bin/env python2
+import sys, os
+
+c1 = 0
+c2 = 10000
+type = sys.argv[1]
+x = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+
+if type == "long":
+  # creates a graph with 2^(4x) nodes
+  a = 2**x
+  b = 2**(2*x)
+elif type == "wide":
+  # creates a graph with 2^(5x) nodes
+  a = 2**(2*x)
+  b = 2**x
+else:
+  raise Exception, "No such type: %s" % type
+
+os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+os.system("./genrmf -a %d -b %d -seed %d -c1 %d -c2 %d" % (a, b, seed, c1, c2))

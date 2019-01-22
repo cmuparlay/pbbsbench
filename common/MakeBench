@@ -1,0 +1,18 @@
+TIME = ../bench/$(BENCH)Time.C
+CHECK = $(BENCH)Check
+INCLUDE = -Icommon -Ipbbslib
+
+all : $(BENCH) testInputs
+	cd ../bench; make -s $(CHECK)
+
+$(BENCH) : $(TIME)
+	$(CC) $(CFLAGS) $(LFLAGS) $(INCLUDE) -include $(BENCH).h -o $(BENCH) $(TIME)
+
+testInputs : ../bench/testInputs
+	cp ../bench/testInputs .
+
+clean :
+	rm -f $(BENCH)
+
+cleanall : clean
+	rm -f testInputs

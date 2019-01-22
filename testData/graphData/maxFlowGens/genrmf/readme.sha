@@ -1,0 +1,9 @@
+
+The file genrmf.sh is a shar file containing all the files
+in this directory.  You can get the file, then type
+
+mkdir genrfm
+/bin/sh genrmf.sh
+
+To create a subdirectory containing all the files. 
+

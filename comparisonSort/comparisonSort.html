@@ -1,0 +1,81 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Comparison Sort</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Comparison Sort (SORT):</h2> 
+
+<p> Given a sequence of elements of any (uniform) type and a
+comparison function over the elements, sort the elements into
+ascending order.  The elements consists of a key and possible
+auxiliary data, and the comparison function must define a total order
+over the keys.  The sort need not be stable.  The code must not take
+advantage of the specific type beyond the comparison function.  </p>
+
+<h3>Input and Output File Formats</h3>
+
+<p>
+The input and output data need to be in the <a
+href="benchmarks/sequenceIO.html"><strong>sequence file
+format</strong></a>, both with the same element type.  The output file
+must be in sorted order with respect to the given comparison function.
+</p>
+
+<h3>Default Input Distributions</h3>
+
+Each distribution should be run for <tt>n=10,000,000</tt>.  Currently
+none of the inputs use auxiliary data.   The weight of each input
+for the purpose of reporting average times is given in parentheses.
+<ul>
+<li>
+(1) Double precision floating point numbers generated uniformly at
+random from the range [0:1].
+<blockquote>
+<tt><a href="benchmarks/randomSeq.html">randomSeq</a> -t double &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) Double precision floating point numbers generated at random 
+with repeats appearing in an exponential distribution.
+<blockquote>
+<tt><a href="benchmarks/exptSeq.html">exptSeq</a> -t double &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>    
+(1) Double precision floating point numbers from an almost-sorted distribution.
+<blockquote>
+<tt><a href="benchmarks/almostSortedSeq.html">almostSortedSeq</a> -t double &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(3) Strings from a tri-gram distribution.
+<blockquote>
+<tt><a href="benchmarks/trigramSeq.html">trigramSeq</a> &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+<li>
+(3) Strings from tri-gram distribution, but order randomized after
+allocation.  In particular after the data is read in, the pointers to
+the strings have to be randomly shuffled (the shuffling should not be
+included in timing).  The purpose of this test is to see how the sort
+does when strings are not allocated adjacently with respect to the
+input pointers.
+<blockquote>
+<tt>trigramSeq &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+</ul>
+
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

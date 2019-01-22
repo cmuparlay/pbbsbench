@@ -1,0 +1,31 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : almostSorted</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>almostSorted Data Generator:</h2> 
+
+
+<blockquote>
+<tt>almostSorted [-r &lt;m&gt] -t {int,double} &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+
+<p>
+This generator creates a sequence of <tt>n</tt> almost sorted values
+in the <a href="benchmarks/sequenceIO.html"><strong>sequence file
+format</strong></a>.
+In particular it generates a sorted sequence of length <tt>n</tt> and
+then randomly swaps <tt>m</tt> pairs.  If the <tt>-r</tt> argument is
+not specified the default is <tt>m = sqrt(n)</tt>.  For both the
+<tt>int</tt> and <tt>double</tt> type the sorted sequence is 0, 1, ..,
+(n-1).
+</p>
+
+<!--#include virtual="footer.html" -->
+</body>
+<html>

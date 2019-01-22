@@ -1,0 +1,47 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : exptSeq</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>exptSeq Data Generator:</h2> 
+
+<blockquote>
+<tt>exptSeq -t {int,double} &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+
+<p>
+This generator creates a sequence of <tt>n</tt> values with repeats that are
+distributed in an exponential distribution and
+outputs the in the <a href="benchmarks/sequenceIO.html"><strong>sequence file
+format</strong></a>.
+</p>
+
+<p>
+In particular it will
+first generate <tt>n</tt> possible values <tt>v<sub>1</sub></tt>,
+<tt>v<sub>2</sub></tt>, ..., <tt>v<sub>n</sub></tt> uniformly at
+random from a given range (depending on the type) and then among those
+it will pick the <tt>i<sup>th</sup></tt> value with probability
+<tt>(1/(i ln n))</tt>.  The purpose of the distribution is to test
+codes on inputs with a varying number of duplicates, and with some
+values highly duplicated (e.g., approximately a 1/(ln n) fraction of
+the elements will have value <tt>v<sub>1</sub></tt>).
+</p>
+
+<p>
+The generator supports both double-precision floating-point values and
+integers.  The integer version selects the <tt>n</tt> possible values
+uniformly at random from 0 up to the maximum possible value for a twos
+complement 32-bit integer (2,147,483,647).  The double precision
+version selects the <tt>n</tt> possible values uniformly at random in
+the range [0:1].
+</p>
+
+<!--#include virtual="footer.html" -->
+</body>
+<html>

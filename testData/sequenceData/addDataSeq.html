@@ -1,0 +1,36 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : addDataSeq</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>addDataSeq Data Generator:</h2> 
+
+<blockquote>
+<tt>addDataSeq [-t {int,double}] [-r &lt;m&gt;] &lt;infile&gt; &lt;outfile&gt;</tt>
+</blockquote>
+  
+<p>
+This generator takes a sequence of simple type &lt;S&gt; (Int, Double, String)
+  in the
+<a href="benchmarks/sequenceIO.html"><strong>sequence file
+  format</strong></a>
+  and creates a sequence of pairs of type <tt>&lt;S&gt;&lt;T&gt;Pair</tt> by adding
+  to each element a value of type &lt;T&gt;.
+  The type &lt;S&gt; is determined from the input file and the type &lt;T&gt; is
+  specified by the <tt>-t</tt> argument (<tt>int</tt> by default).
+  The added
+  values are generated uniformly at random.
+For <tt>doudble</tt> they are generated in
+  the range [0,1) and for type <tt>int</tt> they are
+  generated in the range [0:m), where <tt>m</tt> is specified by the
+  <tt>-r</tt> argument (m = n by default).
+</p>
+
+<!--#include virtual="footer.html" -->
+</body>
+<html>

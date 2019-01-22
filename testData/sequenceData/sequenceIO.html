@@ -1,0 +1,81 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Sequence File Format</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Sequence File Format:</h2> 
+
+<p>
+The sequence file format is used for representing a sequence of values.
+The files are stored in ascii and need to be in the format:
+</p>
+
+<blockquote>
+<tt>sequence</tt>&lt;<strong>type</strong>&gt;<br>
+&lt;<strong>v1</strong>&gt;<br>
+&lt;<strong>v2</strong>&gt;<br>
+...<br>
+&lt;<strong>vn</strong>&gt;<br>
+</blockquote>
+
+<p>
+Each item after the <tt>sequence</tt>&lt;<strong>type</strong>&gt;
+declaration represents one element of the sequence and
+&lt;<strong>type</strong>&gt; specifies the type of each elements.
+The items are delimited by any consecutive sequence of
+delimiter characters: <strong>tab</strong>, <strong>space</strong>,
+<strong>line feed</strong> (ascii 0x0A), and <strong>carriage
+return</strong> (ascii 0x0D).  The &lt;<strong>type</strong>&gt; can
+be one of the following:
+</p>
+
+<ul>
+<li>
+<strong>Int</strong>: integers in decimal notation.  A minus sign (-) is
+used to indicate a negative integer.   
+</li>
+
+<li>
+<strong>Double</strong>: double precision floating point numbers in
+decimal or exponential notation.
+</li>
+
+<li>
+<strong>String</strong>: character strings (can contain any sequence
+of non-delimiter character).   There is no limit on the length of the strings.
+</li>
+
+<li>
+<strong>&lt;type1&gt;&lt;type2&gt;Pair</strong>:
+where <strong>&lt;type1&gt;</strong> and <strong>&lt;type2&gt;</strong> are any
+of the types above.  This represents a pair of values of the given
+types separated by a delimiter character.  For example:
+
+<tt>
+<blockquote>
+sequenceStringIntPair<br>
+this 22<br>
+is    444<br>
+a 12345<br>
+sequence 11
+of -22
+nine<br> 14
+string 1<br>
+<br>
+integer 16<br>
+pairs 0<br>
+</blockquote>
+</tt>
+</ul>
+The missing and extra carriage returns are meant to illustrate that
+there is no distinction between the delimiting characters.
+Files can start and end with delimiters, which are ignored.
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>
