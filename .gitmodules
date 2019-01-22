@@ -1,0 +1,3 @@
+[submodule "pbbslib"]
+	path = pbbslib
+	url = git@github.com:cmuparlay/pbbslib.git
