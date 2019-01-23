@@ -31,15 +31,21 @@
 
 namespace benchIO {
   using namespace std;
-  typedef pair<long,long> intPair;
+  typedef pair<int,int> intPair;
+  typedef pair<unsigned int,int> uintPair;
+  typedef pair<long,long> longPair;
   typedef pair<char*,long> stringIntPair;
 
   enum elementType { none, intType, intPairT, stringIntPairT, doubleT, stringT};
   //elementType dataType(long a) { return longT;}
   elementType dataType(long a) { return intType;}
+  elementType dataType(int a) { return intType;}
+  elementType dataType(unsigned int a) { return intType;}
   elementType dataType(double a) { return doubleT;}
   elementType dataType(char* a) { return stringT;}
   elementType dataType(intPair a) { return intPairT;}
+  elementType dataType(uintPair a) { return intPairT;}
+  elementType dataType(longPair a) { return intPairT;}
   elementType dataType(stringIntPair a) { return stringIntPairT;}
 
   string seqHeader(elementType dt) {
@@ -84,7 +90,7 @@ namespace benchIO {
     long n = W.size()-1;
 
     if (header == seqHeader(intType)) {
-      long* A = pbbs::new_array_no_init<long>(n);
+      int* A = pbbs::new_array_no_init<int>(n);
       parallel_for(0, n, [&] (long i) {
 	  A[i] = atoi(W[i+1]);});
       return seqData((void*) A, n, intType);

@@ -1,0 +1,18 @@
+#!/usr/bin/python 
+ 
+bnchmrk="isort"
+benchmark="Integer Sort"
+checkProgram="../bench/isortCheck" 
+dataDir = "../sequenceData/data"
+
+tests = [ 
+    [1, "randomSeq_100M_int", "", ""], 
+    [1, "exptSeq_100M_int", "", ""], 
+    [1, "randomSeq_100M_int_pair_int", "", ""], 
+    [1, "randomSeq_100M_256_int_pair_int", "", ""], 
+    ] 
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)

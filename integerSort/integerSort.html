@@ -1,0 +1,75 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Integer Sort</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Integer Sort (ISORT):</h2> 
+
+<p>
+Sort fixed-length unsigned integer keys into ascending order with the ability to carry
+along fixed-length auxiliary data.  The sort must be stable unless 
+the benchmark is indicated with -U (ISORT-U).
+</p>
+
+<h3>Input and Output File Formats</h3>
+
+<p>
+The input and output should be in the <a
+href="benchmarks/sequenceIO.html"><strong>sequence file format</strong></a>.  The output file must be
+in sorted with respect to the integer values.   If there is auxiliary data
+it must be included in the output and the sort must be stable unless 
+indicated with -U.
+
+</p>
+
+<h3>Default Input Distributions</h3>
+
+Each distribution should be run for <tt>n=10,000,000</tt>.  The weights
+used for average time are given in parentheses.
+<ul>
+<li>
+(1) Unsigned integers generated uniformly at random in the
+  range [0:n).
+<blockquote>
+<tt><a href="benchmarks/randomSeq.html">randomSeq</a> -t int &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) 32-bit unsigned integers generated at random 
+with repeats appearing in an exponential distribution.
+<blockquote>
+<tt><a href="benchmarks/randomSeq.html">exptSeq</a> -t int &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) Unsigned integers generated uniformly at random in the
+  range [0:n) each with an auxiliary unsigned integer in the same range.    
+<blockquote>
+<tt><a href="benchmarks/randomSeq.html">randomSeq</a> -t int &lt;n&gt; &lt;tmpname&gt;</tt><br>
+<tt><a href="benchmarks/addDataSeq.html">addDataSeq</a> -t int &lt;tmpname&gt; &lt;filename&gt;</tt><br>
+</blockquote>
+</li>
+
+<li>
+(1) Unsigned integer keys generated uniformly at random in the range [0:256) each with an auxiliary
+unsigned integer in the range [0:n).
+<blockquote>
+<tt><a href="benchmarks/randomSeq.html">randomSeq</a> -t int -r 256 &lt;n&gt; &lt;tmpname&gt;</tt><br>
+<tt><a href="benchmarks/addDataSeq.html">addDataSeq</a> -t int &lt;tmpname&gt; &lt;filename&gt;</tt><br>
+</blockquote>
+</li>
+
+</ul>
+
+
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>
