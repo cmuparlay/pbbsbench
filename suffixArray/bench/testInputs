@@ -1,0 +1,17 @@
+#!/usr/bin/python
+
+bnchmrk="SA"
+benchmark="Suffix Array"
+checkProgram="../common/SACheck"
+dataDir = "../sequenceData/data"
+
+tests = [
+    [1, "trigramString_100000000", "", ""],
+    [3, "chr22.dna", "", ""],
+    [1, "etext99", "", ""],
+    [1, "wikisamp.xml", "", ""]
+]
+
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+
