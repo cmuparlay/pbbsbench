@@ -23,6 +23,18 @@ randomSeq_10_% : ../randomSeq
 randomSeq_100_% : ../randomSeq
 	../randomSeq -t $(subst randomSeq_100_,,$@) 100 $@
 
+randomSeq_1000_% : ../randomSeq
+	../randomSeq -t $(subst randomSeq_1000_,,$@) 1000 $@
+
+randomSeq_10000_% : ../randomSeq
+	../randomSeq -t $(subst randomSeq_10000_,,$@) 10000 $@
+
+randomSeq_100000_% : ../randomSeq
+	../randomSeq -t $(subst randomSeq_100000_,,$@) 100000 $@
+
+randomSeq_1000000_% : ../randomSeq
+	../randomSeq -t $(subst randomSeq_1000000_,,$@) 1000000 $@
+
 randomSeq_10M_% : ../randomSeq
 	../randomSeq -t $(subst randomSeq_10M_,,$@) 10000000 $@
 

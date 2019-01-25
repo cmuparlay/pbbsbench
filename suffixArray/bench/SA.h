@@ -1,2 +1,2 @@
-unsigned int* suffixArray(unsigned char* s, size_t n);
+sequence<unsigned int> suffixArray(sequence<unsigned char> s);
 

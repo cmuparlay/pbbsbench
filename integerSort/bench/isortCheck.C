@@ -36,11 +36,14 @@ void checkIntegerSort(void* In, void* Out, size_t n, LESS less) {
   T* B = (T*) Out;
   T* Tmp = pbbs::new_array_no_init<T>(n,1);
   pbbs::merge_sort(sequence<T>(A,n), sequence<T>(Tmp,n), less, 1);
-  long j = -1;
+  //std::stable_sort(A, A+n, less);
+  size_t error = n;
   parallel_for (0, n, [&] (size_t i) {
-      if (A[i] != B[i]) j = i;});
-  if (j >= 0) {
-    cout << "integer sort: check failed at i=" << j << endl;
+      if (A[i] != B[i]) 
+	pbbs::write_min(&error,i,std::less<size_t>());
+    });
+  if (error < n) {
+    cout << "integer sort: check failed at i=" << error << endl;
     abort();
   }
 }

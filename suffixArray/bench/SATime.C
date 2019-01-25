@@ -52,16 +52,16 @@ void loop(int rounds, F initf, G runf, H endf) {
 
 void timeSuffixArray(sequence<char> s, int rounds, char* outFile) {
   size_t n = s.size();
-  uint* R;
+  sequence<uchar> ss((uchar*) s.start(), n);
+  sequence<uint> R;
   loop(rounds,
-       [&] () {},
-       [&] () {R = suffixArray((uchar*) s.start(), n);},
-       [&] () {free(R);}
+       [&] () {R.clear();},
+       [&] () {R = suffixArray(ss);},
+       [&] () {}
        );
   //cout<<"Peak-memory: " <<getPeakRSS() / (1024*1024) << endl;
   cout << endl;
-  if (outFile != NULL) writeSequenceToFile(sequence<uint>(R, n), outFile);
-  delete R;
+  if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 
 int main(int argc, char* argv[]) {

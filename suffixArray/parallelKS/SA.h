@@ -1,2 +1,1 @@
-intT* suffixArray(unsigned char* s, long n);
-
+../bench/SA.h

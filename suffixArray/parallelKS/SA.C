@@ -99,7 +99,7 @@ sequence<uint> suffixArrayRec(sequence<uint> s, size_t K, bool findLCPs) {
 		       s[j+2],
 		       j);
       });
-
+    
     pbbs::integer_sort(C, get_first, 3*bits);
 
     // copy sorted results into sorted12
@@ -133,6 +133,7 @@ sequence<uint> suffixArrayRec(sequence<uint> s, size_t K, bool findLCPs) {
     sorted12[0] = C[0] & mask;
   }
 
+  for (int i = 0; i < std::min((int) n12, 10); i++) cout << name12[i] << endl;
   size_t num_names = pbbs::scan_add(name12, name12,
 				    pbbs::fl_scan_inclusive);
   
@@ -149,22 +150,24 @@ sequence<uint> suffixArrayRec(sequence<uint> s, size_t K, bool findLCPs) {
 	if (sorted12[i]-3*div3 == 1) s12[div3] = name12[i];
 	else s12[div3+n1] = name12[i];
       });
-    name12.clear();
-    sorted12.clear();
+    //name12.clear();
+    //sorted12.clear();
 
-    SA12 = suffixArrayRec(s12, num_names+1, findLCPs); 
+    SA12 = suffixArrayRec(s12, num_names+1, findLCPs);
+    //for (int i=0; i < SA12.size(); i++)
+    //  cout << SA12[i] << endl;
     //SA12 = SA12_LCP.first;
     //LCP12 = SA12_LCP.second;
-    s12.clear();
-
+    //s12.clear();
+    
     // restore proper indices into original array
     parallel_for (0, n12, [&] (size_t i) {
 	size_t l = SA12[i]; 
 	SA12[i] = (l<n1) ? 3*l+1 : 3*(l-n1)+2;
       });
   } else {
-    name12.clear();
-    SA12 = sorted12; // suffix array is sorted array
+    //name12.clear();
+    SA12 = std::move(sorted12); // suffix array is sorted array
     // if (findLCPs) {
     //   LCP12 = newA(uint, n12+3);
     //   parallel_for(long i=0; i<n12+3; i++) 
@@ -189,11 +192,11 @@ sequence<uint> suffixArrayRec(sequence<uint> s, size_t K, bool findLCPs) {
   parallel_for (0, s0n, [&] (size_t i) {
       D[i+n0-s0n] = make_pair(s[s0[i]-1], s0[i]-1);});
   
-  pbbs::integer_sort(D, get_first, K);
-  s0.clear();
-
+  pbbs::integer_sort(D, get_first, bits);
+  //s0.clear();
+    
   sequence<uint> SA0(n0, [&] (size_t i) {return D[i].second;});
-  D.clear();
+  //D.clear();
 
   auto comp = [&] (size_t i, size_t j) {
     if (i%3 == 1 || j%3 == 1) 
@@ -202,11 +205,19 @@ sequence<uint> suffixArrayRec(sequence<uint> s, size_t K, bool findLCPs) {
       return leq(s[i],s[i+1],rank[i+2], s[j],s[j+1],rank[j+2]);
   };
 
-  sequence<uint> SA(n);
-  if (n%3 == 1) SA0 = SA0.slice(1,n0);
-  else SA12 = SA12.slice(1,n12);
-  pbbs::merge(SA0, SA12, SA, comp);
-  
+  cout << "S0 out" << endl;
+  for (int i=0; i < std::min((int)(n0-1),10); i++) cout << SA0[i] << endl;
+  cout << "S12 out" << endl;
+  for (int i=0; i < std::min((int)(n12-1),10); i++) cout << SA12[i] << endl;
+  sequence<uint> SA(n-1);
+  sequence<uint> A;
+  sequence<uint> B;
+  if (n%3 == 1) {A = SA0.slice(1,n0); B = SA12;}
+  else {A = SA0; B = SA12.slice(1,n12);}
+  pbbs::merge(A, B, SA, comp);
+  cout << "SA out" << endl;
+  for (int i=0; i < std::min((int)(n-1),10); i++) cout << SA[i] << endl;
+
   //sequence<uint> LCP;
 
   //get LCP from LCP12
@@ -239,7 +250,8 @@ sequence<uint> suffixArrayRec(sequence<uint> s, size_t K, bool findLCPs) {
   return SA;
 }
 
-sequence<uint> suffixArray(sequence<uchar> s, bool findLCPs) {
+sequence<uint> suffixArray(sequence<uchar> s) {
+  bool findLCPs = false;
   size_t n = s.size();
   sequence<uint> ss(n + 3, [&] (size_t i) -> uint {
       if (i >= n) return 0; // pad with three nulls
@@ -252,5 +264,3 @@ sequence<uint> suffixArray(sequence<uchar> s, bool findLCPs) {
   return SA;
 }
 
-uint* suffixArray(unsigned char* s, size_t n) { 
-  return suffixArray(sequence<uchar>(s, n), false).start();}

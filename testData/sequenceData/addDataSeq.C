@@ -28,11 +28,11 @@ using namespace dataGen;
 using namespace benchIO;
 
 template <class T1>
-sequence<pair<T1,long>> addIntData(T1* A, size_t n, size_t range) {
+sequence<pair<T1,uint>> addIntData(T1* A, size_t n, size_t range) {
   pbbs::random r(23);
-  using par = pair<T1,long>;
+  using par = pair<T1,uint>;
   sequence<par> R(n, [&] (size_t i) {
-      return std::make_pair(A[i], r.ith_rand(i) % range);;
+      return std::make_pair(A[i], (uint) r.ith_rand(i) % range);;
     });
   return R;
 }
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
   case intType: 
     switch (dataDT) {
     case intType: 
-      return writeSequenceToFile(addIntData((long*) D.A, n, range),ofile);
+      return writeSequenceToFile(addIntData((uint*) D.A, n, range),ofile);
     default:
       cout << "addData: not a valid type" << endl;
     }

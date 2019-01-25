@@ -165,8 +165,8 @@ namespace benchIO {
     long n = end - file.tellg();
     // initializes in parallel
     //char* bytes = newArray(n+1, (char) 0);
-    sequence<char> bytes(n+1, (char) 0);
-    file.read (bytes.as_array(), n+1);
+    sequence<char> bytes(n, (char) 0);
+    file.read (bytes.as_array(), n);
     file.close();
     return bytes;
   }

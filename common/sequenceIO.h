@@ -32,7 +32,8 @@
 namespace benchIO {
   using namespace std;
   typedef pair<int,int> intPair;
-  typedef pair<unsigned int,int> uintPair;
+  typedef pair<unsigned int, unsigned int> uintPair;
+  typedef pair<unsigned int, int> uintIntPair;
   typedef pair<long,long> longPair;
   typedef pair<char*,long> stringIntPair;
 
@@ -45,6 +46,7 @@ namespace benchIO {
   elementType dataType(char* a) { return stringT;}
   elementType dataType(intPair a) { return intPairT;}
   elementType dataType(uintPair a) { return intPairT;}
+  elementType dataType(uintIntPair a) { return intPairT;}
   elementType dataType(longPair a) { return intPairT;}
   elementType dataType(stringIntPair a) { return stringIntPairT;}
 

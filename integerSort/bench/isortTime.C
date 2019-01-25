@@ -45,14 +45,14 @@ void loop(int rounds, F initf, G runf) {
 }
   
 template <class T>
-void timeIntegerSort(T* A, size_t n, int rounds, char* outFile) {
-  T* B = new T[n];
+void timeIntegerSort(sequence<T> A, int rounds, char* outFile) {
+  size_t n = A.size();
+  sequence<T> B(n);
   loop(rounds,
        [&] () {parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});},
-       [&] () {int_sort(B, n);});
+       [&] () {int_sort(B.start(), n);});
   cout << endl;
-  if (outFile != NULL) writeSequenceToFile(sequence<T>(B, n), outFile);
-  delete B; 
+  if (outFile != NULL) writeSequenceToFile(B, outFile);
 }
 
 int main(int argc, char* argv[]) {
@@ -67,9 +67,9 @@ int main(int argc, char* argv[]) {
   using upair = pair<uint,int>;
   switch (dt) {
   case intType: 
-    timeIntegerSort<uint>((uint*) D.A, D.n, rounds, oFile); break;
+    timeIntegerSort<uint>(sequence<uint>((uint*) D.A, D.n), rounds, oFile); break;
   case intPairT: 
-    timeIntegerSort<upair>((upair*) D.A, D.n, rounds, oFile);  break;
+    timeIntegerSort<upair>(sequence<upair>((upair*) D.A, D.n), rounds, oFile);  break;
   default:
     cout << "integer Sort: input file not of right type" << endl;
     return(1);
