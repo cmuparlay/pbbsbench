@@ -95,8 +95,6 @@ void splitSegment(seg *segOut, uintT start, uintT l, uintT* ranks, kvpair *Cs) {
     pbbs::scan(snames, snames, maxuint, (uintT) 0,
 	       pbbs::fl_scan_inclusive);
 
-    //sequence::scanI(names,names,l,utils::maxF<uintT>(),(uintT)0);
-
     // write new rank into original location
     parallel_for (0, l, [&] (size_t i) {
 	ranks[Cs[i].second] = names[i]+start+1;});
@@ -128,8 +126,6 @@ intpair* splitSegmentTop(seg *segOut, uintT n, uintT* ranks, long_int *Cs) {
   pbbs::scan(snames, snames, maxuint, (uintT) 0,
 	     pbbs::fl_scan_inclusive);
 
-  //sequence::scanI(names,names,n,utils::maxF<uintT>(),(uintT)0);
-
   intpair *C = newA(intpair,n);
   // write new rank into original location
   parallel_for (0, n, [&] (size_t i) {
@@ -148,7 +144,6 @@ intpair* splitSegmentTop(seg *segOut, uintT n, uintT* ranks, long_int *Cs) {
 
   nextTimeM("segments");
   free(names);
-  free(Cs);
   return C;
 }
 
@@ -178,26 +173,26 @@ uintT* suffixArrayInternal(uchar* ss, long n) {
   // 96 bits for characters, and 32 for location
   double logm = log2((double) m);
   uintT nchars = floor(96.0/logm); 
-  //cout << logm << ", " << nchars << endl;
 
-  long_int *Cl = newA(long_int,n);
+  //long_int *Cl = newA(long_int,n);
 
-  parallel_for (0, n, [&] (size_t i) {
+  sequence<long_int> Cl(n, [&] (size_t i) {
       long_int r = s[i];
       for (uintT j=1; j < nchars; j++) r = r*m + s[i+j];
-      Cl[i] = (r << 32) + i;
+      return (r << 32) + i;
     });
   free(s);
   nextTimeM("copy");
 
   // sort based on packed words
-  pbbs::sample_sort(Cl, n, std::less<long_int>());
+  pbbs::sample_sort(Cl, std::less<long_int>(), true);
   nextTimeM("sort");
 
   // identify segments of equal values
   uintT *ranks = newA(uintT,n);
   seg *segOuts = newA(seg,n);
-  intpair *C = splitSegmentTop(segOuts, n, ranks, Cl);
+  intpair *C = splitSegmentTop(segOuts, n, ranks, Cl.start());
+  Cl.clear();
   nextTimeM("split");
 
   uintT *offsets = newA(uintT,n);
@@ -212,18 +207,11 @@ uintT* suffixArrayInternal(uchar* ss, long n) {
       abort();
     }
     
-    // only keep segments that have length greater than 1
-    //uintT nSegs = sequence::filter(segOuts,segments,nKeys,isSeg());
     sequence<seg> Segs = pbbs::filter(sequence<seg>(segOuts,nKeys),isSeg(),
 				      pbbs::no_flag, segments);
     uintT nSegs = Segs.size();
     if (nSegs == 0) break;
     
-    parallel_for (0, nSegs, [&] (size_t i) {
-	offsets[i] = segments[i].length;});
-
-    sequence<uintT> soffsets(offsets,nSegs);
-    nKeys = pbbs::scan_add(soffsets,soffsets);
 #ifdef printInfo
     cout << "nSegs = " << nSegs << " nKeys = " << nKeys 
 	 << " common length = " << offset << endl;
@@ -234,6 +222,7 @@ uintT* suffixArrayInternal(uchar* ss, long n) {
 	uintT start = segments[i].start;
 	intpair *Ci = C + start;
 	uintT l = segments[i].length;
+	offsets[i] = l;
 	parallel_for (0, l, [&] (size_t j) {
 	    uintT o = Ci[j].second+offset;
 	    Ci[j].first = (o >= n) ? 0 : ranks[o]; 
@@ -241,14 +230,17 @@ uintT* suffixArrayInternal(uchar* ss, long n) {
 	auto less = [&] (intpair A, intpair B) {return A.first < B.first;};
 	if (l >= n/10) pbbs::sample_sort(Ci, l, less);
 	else pbbs::quicksort(Ci, l, less);
-      },100);
+      }, 100);
     nextTimeM("sort");
+
+    sequence<uintT> soffsets(offsets, nSegs);
+    nKeys = pbbs::scan_add(soffsets, soffsets);
 
     parallel_for (0, nSegs, [&] (size_t i) {
 	uintT start = segments[i].start;
 	splitSegment(segOuts + offsets[i], start, segments[i].length, 
 		     ranks, C + start);
-      });
+      }, 100);
     nextTimeM("split");
 
     offset = 2 * offset;
@@ -258,8 +250,7 @@ uintT* suffixArrayInternal(uchar* ss, long n) {
   return ranks;
 }
 
-// not sure whether needs to be padded with extra null
 sequence<uintT> suffixArray(sequence<unsigned char> s) {
-  sequence<uchar> ss(s.size()+1, [&] (size_t i) {return (i==s.size()) ? 0 : s[i];});
-  return sequence<uintT>(suffixArrayInternal(ss.start(), s.size()), s.size());
+  //sequence<uchar> ss(s.size()+1, [&] (size_t i) {return (i==s.size()) ? 0 : s[i];});
+  return sequence<uintT>(suffixArrayInternal(s.start(), s.size()), s.size());
 }
