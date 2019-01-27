@@ -163,10 +163,8 @@ namespace benchIO {
     long end = file.tellg();
     file.seekg (0, ios::beg);
     long n = end - file.tellg();
-    // initializes in parallel
-    //char* bytes = newArray(n+1, (char) 0);
     sequence<char> bytes(n, (char) 0);
-    file.read (bytes.as_array(), n);
+    file.read (bytes.start(), n);
     file.close();
     return bytes;
   }

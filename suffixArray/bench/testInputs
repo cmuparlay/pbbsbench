@@ -2,7 +2,7 @@
 
 bnchmrk="SA"
 benchmark="Suffix Array"
-checkProgram="../common/SACheck"
+checkProgram="../bench/SACheck"
 dataDir = "../sequenceData/data"
 
 tests = [
