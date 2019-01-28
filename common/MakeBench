@@ -5,7 +5,7 @@ INCLUDE = -Icommon -Ipbbslib
 all : $(BENCH) testInputs
 	cd ../bench; make -s $(CHECK)
 
-$(BENCH) : $(TIME)
+$(BENCH) : $(TIME) $(BENCH).h
 	$(CC) $(CFLAGS) $(LFLAGS) $(INCLUDE) -include $(BENCH).h -o $(BENCH) $(TIME)
 
 testInputs : ../bench/testInputs

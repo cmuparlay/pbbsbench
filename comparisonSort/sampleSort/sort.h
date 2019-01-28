@@ -2,5 +2,5 @@
 
 template <class E, class BinPred>
 void compSort(E* A, unsigned int n, const BinPred& f) {
-  pbbs::sample_sort(A, n, f);
+  sequence<E> r = pbbs::sample_sort(sequence<E>(A, n), f);
 }
