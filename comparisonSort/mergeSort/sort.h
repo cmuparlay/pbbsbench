@@ -1,8 +1,10 @@
 #include "pbbslib/merge_sort.h"
+#include "pbbslib/seq.h"
 
 template <class E, class BinPred>
 void compSort(E* A, unsigned int n, const BinPred& f) {
-  E* B = pbbs::new_array_no_init<E>(n,1);
-  pbbs::merge_sort(sequence<E>(A,n), sequence<E>(B,n), f, 1);
-  pbbs::free_array(B);
+  cout << A << endl;
+  sequence<E> In(A,n);
+  sequence<E> Out = pbbs::merge_sort(std::move(In), f);
+  cout << "end: " << Out.is_allocated() << ", " << In.is_allocated() << endl;
 }

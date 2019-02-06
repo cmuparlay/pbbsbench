@@ -60,7 +60,7 @@ namespace benchIO {
 
     // pointer to each start of word
     sequence<char*> SA(Offsets.size(), [&] (long j) {
-	return Str.as_array() + Offsets[j];});
+	return Str.begin() + Offsets[j];});
 
     return SA;
   }
@@ -109,12 +109,13 @@ namespace benchIO {
 
   template <class T>
   sequence<char> arrayToString(T* A, long n) {
-    sequence<long> L(n, [&] (long i) {
+    sequence<long> L(n, [&] (size_t i) -> size_t {
 	return xToStringLen(A[i])+1;});
-    long m = pbbs::scan_add(L, L);
+    size_t m;
+    std::tie(L,m) = pbbs::scan(std::move(L), addm<size_t>());
 
     sequence<char> B(m+1, (char) 0);
-    char* Bs = B.as_array();
+    char* Bs = B.begin();
 
     parallel_for(0, n-1, [&] (long i) {
       xToString(Bs + L[i], A[i]);
@@ -122,8 +123,8 @@ namespace benchIO {
       });
     xToString(Bs + L[n-1], A[n-1]);
     Bs[m] = Bs[m-1] = '\n';
-
-    sequence<char> C = pbbs::filter(B, [&] (char c) {return c != 0;});
+    
+    sequence<char> C = pbbs::filter(B, [&] (char c) {return c != 0;}); 
     C[C.size()-1] = 0;
     return C;
   }
@@ -136,7 +137,7 @@ namespace benchIO {
       // Generates a string for a sequence of size at most BSIZE
       // and then wrties it to the output stream
       sequence<char> S = arrayToString(A+offset,min(BSIZE,n-offset));
-      os.write(S.as_array(), S.size()-1);
+      os.write(S.begin(), S.size()-1);
       offset += BSIZE;
     }    
   }
@@ -164,7 +165,7 @@ namespace benchIO {
     file.seekg (0, ios::beg);
     long n = end - file.tellg();
     sequence<char> bytes(n, (char) 0);
-    file.read (bytes.start(), n);
+    file.read (bytes.begin(), n);
     file.close();
     return bytes;
   }
