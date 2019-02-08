@@ -1,4 +1,4 @@
-CCFLAGS = -mcx16 -O2 -std=c++11
+CCFLAGS = -mcx16 -O3
 CLFLAGS = -ldl
 
 CC = g++
