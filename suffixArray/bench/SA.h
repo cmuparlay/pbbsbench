@@ -1,2 +1,2 @@
-sequence<unsigned int> suffixArray(sequence<unsigned char> s);
+pbbs::sequence<unsigned int> suffixArray(pbbs::sequence<unsigned char> const &s);
 

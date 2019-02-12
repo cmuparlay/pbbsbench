@@ -5,7 +5,9 @@ benchmark="Integer Sort"
 checkProgram="../bench/isortCheck" 
 dataDir = "../sequenceData/data"
 
-tests = [ 
+tests = [
+    [1, "randomSeq_1000_int", "", ""],
+    [1, "randomSeq_1M_int", "", ""],
     [1, "randomSeq_100M_int", "", ""], 
     [1, "exptSeq_100M_int", "", ""], 
     [1, "randomSeq_100M_int_pair_int", "", ""], 

@@ -25,6 +25,7 @@
 #include <cstring>
 #include "parallel.h"
 #include "quicksort.h"
+#include "sample_sort.h"
 #include "sequenceIO.h"
 #include "parseCommandLine.h"
 using namespace std;
@@ -66,6 +67,17 @@ int main(int argc, char* argv[]) {
     pbbs::quicksort(A, n, strless);
     for(size_t i=0; i < n; i++) {
       if (strcmp(A[i],B[i])) {
+	cout << "compSortCheck: check failed at i=" << i << endl;
+	abort();
+      }
+    }
+  } else if (dt == intType) {
+    int* A = (int*) In.A;
+    int* B = (int*) Out.A;
+    auto less = [&] (int a, int b) {return a < b;};
+    pbbs::quicksort(A, n, less);
+    for(size_t i=0; i < n; i++) {
+      if (A[i] != B[i]) {
 	cout << "compSortCheck: check failed at i=" << i << endl;
 	abort();
       }

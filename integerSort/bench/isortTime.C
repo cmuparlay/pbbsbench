@@ -50,7 +50,7 @@ void timeIntegerSort(sequence<T> A, int rounds, char* outFile) {
   sequence<T> B(n);
   loop(rounds,
        [&] () {parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});},
-       [&] () {int_sort(B.start(), n);});
+       [&] () {int_sort(B.begin(), n);});
   cout << endl;
   if (outFile != NULL) writeSequenceToFile(B, outFile);
 }

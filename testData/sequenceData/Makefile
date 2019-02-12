@@ -3,7 +3,7 @@ include common/parallelDefs
 COMMON = common/sequenceIO.h common/IO.h
 LIB = pbbslib/parse_command_line.h pbbslib/parallel.h
 SEQUENCEGEN = $(COMMON) $(LIB)
-GENERATORS = randomSeq almostSortedSeq exptSeq trigramSeq addDataSeq trigramString
+GENERATORS = equalSeq randomSeq almostSortedSeq exptSeq trigramSeq addDataSeq trigramString
 
 .PHONY: all clean
 all: $(GENERATORS)
@@ -12,6 +12,9 @@ addDataSeq : addDataSeq.C sequenceData.h $(SEQUENCEGEN)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
 randomSeq : randomSeq.C sequenceData.h $(SEQUENCEGEN)
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
+
+equalSeq : equalSeq.C sequenceData.h $(SEQUENCEGEN)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
 almostSortedSeq : almostSortedSeq.C sequenceData.h $(SEQUENCEGEN)

@@ -41,16 +41,16 @@ bool strLessBounded (uchar* s1, uchar* s2, long n, uchar* end) {
   return (*s1 < *s2);
 }
 
-bool isPermutation(sequence<long> SA) {
+bool isPermutation(sequence<long> const &SA) {
   size_t n = SA.size();
   sequence<long> seen(n,(long) 0);
   parallel_for (0, n, [&] (size_t i) {seen[SA[i]] = 1;});
-  long nseen = pbbs::reduce_add(seen);
+  long nseen = pbbs::reduce(seen, pbbs::addm<long>());
   return (nseen == n);
 }
 
-bool isSorted(sequence<uchar> s, sequence<long> SA) {
-  uchar* p = s.start();
+bool isSorted(sequence<uchar> const &s, sequence<long> const &SA) {
+  uchar* p = s.begin();
   size_t n = s.size();
   int checkLen = 100;
   size_t error = n;

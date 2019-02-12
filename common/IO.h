@@ -31,6 +31,7 @@
 
 namespace benchIO {
   using namespace std;
+  using namespace pbbs;
 
   inline bool isSpace(char c) {
     switch (c)  {
@@ -45,7 +46,7 @@ namespace benchIO {
 
   // parallel code for converting a string to word pointers
   // side effects string by setting to null after each word
-  sequence<char*> stringToWords(sequence<char> Str) {
+  sequence<char*> stringToWords(sequence<char> &Str) {
     size_t n = Str.size();
     
     parallel_for(0, n, [&] (long i) {
@@ -61,7 +62,7 @@ namespace benchIO {
     // pointer to each start of word
     sequence<char*> SA(Offsets.size(), [&] (long j) {
 	return Str.begin() + Offsets[j];});
-
+    
     return SA;
   }
 

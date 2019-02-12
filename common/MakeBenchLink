@@ -38,5 +38,4 @@ clean :
 	rm -f $(BENCH) *.o
 
 cleanall : clean
-	rm -f testInputs
-
+	rm -f testInputs; cd ../bench; make -s clean

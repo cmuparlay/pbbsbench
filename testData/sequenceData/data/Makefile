@@ -44,6 +44,9 @@ randomSeq_100M_% : ../randomSeq
 randomSeq_% : ../randomSeq
 	../randomSeq -t int $(subst randomSeq_,,$@) $@
 
+equalSeq_% : ../equalSeq
+	../equalSeq -t int $(subst equalSeq_,,$@) $@
+
 # In this one the integers are limited to a range of 100K
 randomSeq_10M_100K_int : ../randomSeq
 	../randomSeq -t int -r 100000 10000000 $@

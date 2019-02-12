@@ -50,12 +50,12 @@ void loop(int rounds, F initf, G runf, H endf) {
   }
 }
 
-void timeSuffixArray(sequence<char> s, int rounds, char* outFile) {
+void timeSuffixArray(pbbs::sequence<char> const &s, int rounds, char* outFile) {
   size_t n = s.size();
-  sequence<uchar> ss((uchar*) s.start(), n);
-  sequence<uint> R;
+  pbbs::sequence<uchar> ss(n, [&] (size_t i) {return (uchar) s[i];});
+  pbbs::sequence<uint> R;
   loop(rounds,
-       [&] () {R.clear();},
+       [&] () {R = sequence<uint>();},
        [&] () {R = suffixArray(ss);},
        [&] () {}
        );
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  sequence<char> S = readStringFromFile(iFile);
+  pbbs::sequence<char> S = readStringFromFile(iFile);
   
   timeSuffixArray(S, rounds, oFile);
 }

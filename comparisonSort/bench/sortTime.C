@@ -49,6 +49,25 @@ void timeSort(T* A, size_t n, CMP f, int rounds, bool permute, char* outFile) {
   delete B; 
 }
 
+template <class T, class CMP>
+void timeSortInt(T* A, size_t n, CMP f, int rounds, bool permute, char* outFile) {
+  timer t;
+  if (permute) pbbs::random_shuffle(sequence<T>(A, n));
+  T* B = new T[n];
+  parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
+  compSort(B, n, f); // run one sort to "warm things up"
+  for (int i=0; i < rounds; i++) {
+    parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
+    t.start();
+    compSort(B, n, f);
+    t.next("");
+  }
+  cout << endl;
+  cout << B[0] << ", " << B[1] << ", " << n << endl;
+  if (outFile != NULL) writeSequenceToFile(sequence<T>(B, n), outFile);
+  delete B; 
+}
+
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-p] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
@@ -62,7 +81,7 @@ int main(int argc, char* argv[]) {
   auto strless = [&] (char* a, char* b) {return strcmp(a,b) < 0;};
   switch (dt) {
   case intType:
-    timeSort((long*) D.A, D.n, std::less<int>(), rounds, permute, oFile);
+    timeSortInt((int*) D.A, D.n, std::less<int>(), rounds, permute, oFile);
     break;
   case intPairT:
     timeSort((pair*) D.A, D.n, std::less<pair>(), rounds, permute, oFile);

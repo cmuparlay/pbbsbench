@@ -27,6 +27,7 @@
 #include "pbbslib/random.h"
 
 namespace dataGen {
+  using namespace pbbs;
 
   struct payload {
     double key;

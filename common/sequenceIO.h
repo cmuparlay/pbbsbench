@@ -31,6 +31,8 @@
 
 namespace benchIO {
   using namespace std;
+  using namespace pbbs;
+  
   typedef pair<int,int> intPair;
   typedef pair<unsigned int, unsigned int> uintPair;
   typedef pair<unsigned int, int> uintIntPair;
@@ -105,8 +107,8 @@ namespace benchIO {
       char** A = pbbs::new_array_no_init<char*>(n);
       parallel_for(0, n, [&] (long i) {
 	  A[i] = W[i+1];});
-      S.allocated = false; // to prevent freeing S now.
-      return seqData((void*) A, S.begin(), n, stringT);
+      char* s = S.to_array();
+      return seqData((void*) A, s, n, stringT);
     } else if (header == seqHeader(intPairT)) {
       n = n/2;
       intPair* A = pbbs::new_array_no_init<intPair>(n);
@@ -122,8 +124,8 @@ namespace benchIO {
 	A[i].first = W[2*i+1];
 	A[i].second = atoi(W[2*i+2]);
 	});
-      S.allocated = false; // to prevent freeing S now.
-      return seqData((void*) A, S.begin(), n, stringIntPairT);
+      char* s = S.to_array();
+      return seqData((void*) A, s, n, stringIntPairT);
     }
     abort();
   }

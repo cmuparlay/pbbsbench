@@ -3,8 +3,6 @@
 
 template <class E, class BinPred>
 void compSort(E* A, unsigned int n, const BinPred& f) {
-  cout << A << endl;
-  sequence<E> In(A,n);
-  sequence<E> Out = pbbs::merge_sort(std::move(In), f);
-  cout << "end: " << Out.is_allocated() << ", " << In.is_allocated() << endl;
+  pbbs::sequence<E> In(A,n);
+  pbbs::sequence<E> Out = pbbs::merge_sort(std::move(In), f);
 }

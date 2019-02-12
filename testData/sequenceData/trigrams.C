@@ -139,16 +139,16 @@ char* trigramString(size_t s, size_t e) {
 }
 
 // allocates all words one after the other
-sequence<char*> trigramWords(size_t s, size_t e) { 
+pbbs::sequence<char*> trigramWords(size_t s, size_t e) { 
   size_t n = e - s;
   nGramTable T = nGramTable();
-  sequence<long> L(n, [&] (size_t i) {
+  pbbs::sequence<long> L(n, [&] (size_t i) {
       return T.wordLength(100*(i+s),100);});
-  long m = pbbs::scan_add(L,L);
+  long m = pbbs::scan_inplace(L, pbbs::addm<long>());
 
   char *AA = new char[m];
 
-  sequence<char*> A(n, [&] (size_t i) {
+  pbbs::sequence<char*> A(n, [&] (size_t i) {
       char* r = AA + L[i];
       T.word(100*(i+s),r,100);
       return r;

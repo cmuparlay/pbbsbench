@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <cstring>
 #include "parallel.h"
-#include "merge_sort.h"
+#include "sample_sort.h"
 #include "sequenceIO.h"
 #include "parse_command_line.h"
 using namespace std;
@@ -34,8 +34,8 @@ template <class T, class LESS>
 void checkIntegerSort(void* In, void* Out, size_t n, LESS less) {
   T* A = (T*) In;
   T* B = (T*) Out;
-  T* Tmp = pbbs::new_array_no_init<T>(n,1);
-  pbbs::merge_sort(sequence<T>(A,n), sequence<T>(Tmp,n), less, 1);
+  auto AA = pbbs::make_slice(A,A+n);
+  pbbs::sample_sort_inplace(AA, less, true);
   //std::stable_sort(A, A+n, less);
   size_t error = n;
   parallel_for (0, n, [&] (size_t i) {
