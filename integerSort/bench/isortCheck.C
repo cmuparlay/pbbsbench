@@ -48,6 +48,26 @@ void checkIntegerSort(void* In, void* Out, size_t n, LESS less) {
   }
 }
 
+template <class T, class LESS>
+void checkIntegerSortPair(void* In, void* Out, size_t n, LESS less) {
+  T* A = (T*) In;
+  T* B = (T*) Out;
+  auto AA = pbbs::make_slice(A,A+n);
+  pbbs::sample_sort_inplace(AA, less, true);
+  //std::stable_sort(A, A+n, less);
+  size_t error = n;
+  parallel_for (0, n, [&] (size_t i) {
+      if (A[i] != B[i]) 
+	pbbs::write_min(&error,i,std::less<size_t>());
+    });
+  if (error < n) {
+    cout << "integer sort: check failed at i=" << error << endl;
+    size_t i = error;
+    cout << A[i].first << ", " <<  A[i].second << ", " << B[i].first << ", " <<  B[i].second <<endl;
+    abort();
+  }
+}
+
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<inFile> <outFile>");
   pair<char*,char*> fnames = P.IOFileNames();
@@ -72,7 +92,7 @@ int main(int argc, char* argv[]) {
   case intType:
     checkIntegerSort<uint>(In.A, Out.A, n, less); break;
   case intPairT:
-    checkIntegerSort<upair>(In.A, Out.A, n, lessp); break;
+    checkIntegerSortPair<upair>(In.A, Out.A, n, lessp); break;
   default:
     cout << argv[0] << ": input files not of right type" << endl;
     return(1);
