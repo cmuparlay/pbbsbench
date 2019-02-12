@@ -32,21 +32,21 @@ using namespace std;
 using namespace benchIO;
 
 template <class T, class CMP>
-void timeSort(T* A, size_t n, CMP f, int rounds, bool permute, char* outFile) {
+void timeSort(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
   timer t;
-  if (permute) pbbs::random_shuffle(sequence<T>(A, n));
-  T* B = new T[n];
+  sequence<T> A(Ap,n);
+  if (permute) A = pbbs::random_shuffle(A);
+  sequence<T> B(n);
   parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
-  compSort(B, n, f); // run one sort to "warm things up"
+  compSort(B.begin(), n, f); // run one sort to "warm things up"
   for (int i=0; i < rounds; i++) {
     parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
     t.start();
-    compSort(B, n, f);
+    compSort(B.begin(), n, f);
     t.next("");
   }
   cout << endl;
-  if (outFile != NULL) writeSequenceToFile(sequence<T>(B, n), outFile);
-  delete B; 
+  if (outFile != NULL) writeSequenceToFile(B, outFile);
 }
 
 template <class T, class CMP>

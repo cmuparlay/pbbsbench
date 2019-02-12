@@ -131,7 +131,7 @@ namespace benchIO {
   }
 
   template <class T>
-  int writeSequenceToFile(sequence<T> A, char* fileName) {
+  int writeSequenceToFile(sequence<T> const &A, char* fileName) {
     elementType tp = dataType(A[0]);
     return writeArrayToFile(seqHeader(tp), A.begin(), A.size(), fileName);
   }
