@@ -163,6 +163,7 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
   pbbs::slice_t<uintT*> sflags(flags,flags+256);
   auto add = [&] (uintT a, uintT b) {return a + b;};
   uintT m = pbbs::scan_inplace(sflags, pbbs::make_monoid(add,(uintT) 1));
+  cout << sflags[0] << endl;
 #ifdef printInfo
   cout << "m = " << m << " n = " << n << endl;
 #endif
@@ -212,8 +213,9 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
     }
 
     cout << "here 2.6" << endl;
+    auto is_seg = [&] (seg s) {return s.length > 1;};
     pbbs::sequence<seg> Segs = pbbs::filter(pbbs::slice_t<seg*>(segOuts,segOuts+nKeys),
-					    isSeg());
+					    is_seg);
     uintT nSegs = Segs.size();
     cout << "here 3" << endl;
     if (nSegs == 0) break;

@@ -50,22 +50,24 @@ void timeSort(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
 }
 
 template <class T, class CMP>
-void timeSortInt(T* A, size_t n, CMP f, int rounds, bool permute, char* outFile) {
+void timeSortPair(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
   timer t;
-  if (permute) pbbs::random_shuffle(sequence<T>(A, n));
-  T* B = new T[n];
+  sequence<T> A(Ap,n);
+  cout << sizeof(T) << endl;
+  cout << A[0].first << endl;
+  if (permute) A = pbbs::random_shuffle(A);
+  sequence<T> B(n);
   parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
-  compSort(B, n, f); // run one sort to "warm things up"
+  compSort(B.begin(), n, f); // run one sort to "warm things up"
   for (int i=0; i < rounds; i++) {
     parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
     t.start();
-    compSort(B, n, f);
+    compSort(B.begin(), n, f);
     t.next("");
   }
   cout << endl;
-  cout << B[0] << ", " << B[1] << ", " << n << endl;
-  if (outFile != NULL) writeSequenceToFile(sequence<T>(B, n), outFile);
-  delete B; 
+  cout << B[0].first << endl;
+  if (outFile != NULL) writeSequenceToFile(B, outFile);
 }
 
 int main(int argc, char* argv[]) {
@@ -77,18 +79,24 @@ int main(int argc, char* argv[]) {
   seqData D = readSequenceFromFile(iFile);
   size_t dt = D.dt;
 
-  using pair = pair<long,long>;
+  using intpair = pair<long,long>;
+  using doublepair = pair<double,double>;
+  auto lesspair = [&] (doublePair a, doublePair b) {return a.first < b.first;};
+
   auto strless = [&] (char* a, char* b) {return strcmp(a,b) < 0;};
   switch (dt) {
   case intType:
-    timeSortInt((int*) D.A, D.n, std::less<int>(), rounds, permute, oFile);
+    timeSort((int*) D.A, D.n, std::less<int>(), rounds, permute, oFile);
     break;
-  case intPairT:
-    timeSort((pair*) D.A, D.n, std::less<pair>(), rounds, permute, oFile);
-    break;    
   case doubleT:
     timeSort((double*) D.A, D.n, std::less<double>(), rounds, permute, oFile);
     break;
+  case intPairT:
+    timeSort((intpair*) D.A, D.n, std::less<intpair>(), rounds, permute, oFile);
+    break;
+  case doublePairT:
+    timeSort((doublepair*) D.A, D.n, lesspair, rounds, permute, oFile);
+    break;    
   case stringT:
     timeSort((char**) D.A, D.n, strless, rounds, permute, oFile); 
     break;

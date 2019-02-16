@@ -17,6 +17,10 @@ randomSeq_%_pair_int :  ../addDataSeq
 	make -s $(subst _pair_int,,$@)
 	../addDataSeq -t int $(subst _pair_int,,$@) $@
 
+randomSeq_%_pair_double :  ../addDataSeq
+	make -s $(subst _pair_double,,$@)
+	../addDataSeq -t double $(subst _pair_double,,$@) $@
+
 randomSeq_10_% : ../randomSeq
 	../randomSeq -t $(subst randomSeq_10_,,$@) 10 $@
 

@@ -9,6 +9,7 @@ tests = [
     [1, "randomSeq_100M_double", "", ""],
     [1, "exptSeq_100M_double", "", ""],
     [1, "almostSortedSeq_100M_double", "", ""],
+    [1, "randomSeq_100M_double_pair_double", "", ""],
     [1, "trigramSeq_100M", "", ""],
     [1, "trigramSeq_100M", "-p", ""]]
 

@@ -69,18 +69,21 @@ inline bool leq(uint a1, uint a2, uint a3, uint b1, uint b2, uint b3) {
 //   return lll;
 // }
 
+timer t("KS SA", false);
+
 // This recursive version requires s[n]=s[n+1]=s[n+2] = 0
 // K is the maximum value of any element in s
 pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 				    size_t K, bool findLCPs) {
+  t.next("head");
   size_t n = s.size() - 3; // padded with 3 nulls
   n = n+1;
   size_t n0=(n+2)/3, n1=(n+1)/3, n12=n-n0;
-  startTime();
   pbbs::sequence<uint> sorted12(n12);
   pbbs::sequence<uint> name12(n12);
   auto get_first = [&] (uintPair p) {return p.first;};
   size_t bits = pbbs::log2_up(K);
+  //cout << n << ", " << bits << endl;
   
   if (3*bits <= 8*sizeof(uint)) {
     // if 3 chars fit into a uint then just do one radix sort
@@ -101,7 +104,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
       });
     name12[0] = 1;
     sorted12[0] = C[0].second;
-
+    t.next("int sort");
   } else {
     // otherwise do a comparison sort on 128 bit integers
     // with three characters and index packed in
@@ -113,7 +116,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 	return (r << 32) + j;
       });
 
-    pbbs::sample_sort(C, std::less<longInt>(), true);
+    pbbs::sample_sort_inplace(C, std::less<longInt>());
 
     // copy sorted results into sorted12
     longInt mask = ((((longInt) 1) << 32)-1);
@@ -123,11 +126,12 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
       });
     name12[0] = 1;
     sorted12[0] = C[0] & mask;
+    t.next("comp sort");
   }
 
   size_t num_names = pbbs::scan_inplace(name12, pbbs::addm<uint>(),
 					pbbs::fl_scan_inclusive);
-
+  //cout << "here c: " << name12[0] << endl;
   pbbs::sequence<uint> SA12;
   //pbbs::sequence<uint> LCP12;
   // recurse if names are not yet unique
@@ -144,6 +148,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
     name12.clear();
     sorted12.clear();
 
+    t.next("to rec");
     SA12 = suffixArrayRec(s12, num_names+1, findLCPs);
     //SA12 = SA12_LCP.first;
     //LCP12 = SA12_LCP.second;
@@ -166,24 +171,25 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 
   // place ranks for the mod12 elements in full length array
   // mod0 locations of rank will contain garbage
+  t.next("to rank");
   pbbs::sequence<uint> rank(n+2);
   rank[n]=1; rank[n+1] = 0;
   parallel_for (0, n12, [&] (size_t i) {rank[SA12[i]] = i+2;});
-  
+  t.next("set rank");
   // stably sort the mod 0 suffixes 
   // uses the fact that we already have the tails sorted in SA12
   auto mod3is1 = [&] (size_t i) {return i%3 == 1;};
   pbbs::sequence<uint> s0 = pbbs::filter(SA12, mod3is1);
   size_t s0n = s0.size();
-  
+  t.next("filter");
   pbbs::sequence<uintPair> D(n0);
   D[0] = make_pair(s[n-1], n-1);
   parallel_for (0, s0n, [&] (size_t i) {
       D[i+n0-s0n] = make_pair(s[s0[i]-1], s0[i]-1);});
   s0.clear();
-  
+  t.next("to sort");
   pbbs::integer_sort(D, get_first, bits);
-    
+  t.next("sort");
   pbbs::sequence<uint> SA0(n0, [&] (size_t i) {return D[i].second;});
   D.clear();
 
@@ -202,6 +208,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 				  SA12.slice(1 - offset, n12),
 				  less);
 
+  t.next("merge");
   //pbbs::sequence<uint> LCP;
 
   //get LCP from LCP12
@@ -234,7 +241,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 }
 
 pbbs::sequence<unsigned int> suffixArray(pbbs::sequence<unsigned char> const &s) {
-  cout << "here 0" << endl;
+  //cout << "here 0" << endl;
   bool findLCPs = false;
   size_t n = s.size();
   pbbs::sequence<uint> ss(n + 3, [&] (size_t i) -> uint {
@@ -243,8 +250,9 @@ pbbs::sequence<unsigned int> suffixArray(pbbs::sequence<unsigned char> const &s)
     });
   size_t k = 1 + pbbs::reduce(ss, pbbs::maxm<uint>());
 
-  cout << "here" << endl;
+  //cout << "here" << endl;
   pbbs::sequence<uint> SA = suffixArrayRec(ss, k, findLCPs);
+  //cout << "here2" << endl;
   return SA;
 }
 

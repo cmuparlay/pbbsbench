@@ -38,8 +38,10 @@ namespace benchIO {
   typedef pair<unsigned int, int> uintIntPair;
   typedef pair<long,long> longPair;
   typedef pair<char*,long> stringIntPair;
+  typedef pair<double,double> doublePair;
 
-  enum elementType { none, intType, intPairT, stringIntPairT, doubleT, stringT};
+  enum elementType { none, intType, intPairT, doublePairT,
+		     stringIntPairT, doubleT, stringT};
   //elementType dataType(long a) { return longT;}
   elementType dataType(long a) { return intType;}
   elementType dataType(int a) { return intType;}
@@ -51,6 +53,7 @@ namespace benchIO {
   elementType dataType(uintIntPair a) { return intPairT;}
   elementType dataType(longPair a) { return intPairT;}
   elementType dataType(stringIntPair a) { return stringIntPairT;}
+  elementType dataType(doublePair a) { return doublePairT;}
 
   string seqHeader(elementType dt) {
     switch (dt) {
@@ -59,6 +62,7 @@ namespace benchIO {
     case stringT: return "sequenceChar";
     case intPairT: return "sequenceIntPair";
     case stringIntPairT: return "sequenceStringIntPair";
+    case doublePairT: return "sequenceDoublePair";
     default: 
       cout << "writeArrayToFile: type not supported" << endl; 
       abort();
@@ -117,6 +121,14 @@ namespace benchIO {
 	A[i].second = atoi(W[2*i+2]);
 	});
       return seqData((void*) A, n, intPairT);
+    } else if (header == seqHeader(doublePairT)) {
+      n = n/2;
+      doublePair* A = pbbs::new_array_no_init<doublePair>(n);
+      parallel_for (0, n, [&] (long i) {
+	A[i].first = atof(W[2*i+1]);
+	A[i].second = atof(W[2*i+2]);
+	});
+      return seqData((void*) A, n, doublePairT);
     } else if (header == seqHeader(stringIntPairT)) {
       n = n/2;
       stringIntPair* A = pbbs::new_array_no_init<stringIntPair>(n);

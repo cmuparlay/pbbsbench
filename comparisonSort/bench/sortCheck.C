@@ -58,6 +58,18 @@ int main(int argc, char* argv[]) {
 	abort();
       }
     }
+  } else if (dt == doublePairT) {
+    using dp = pair<double,double>;
+    dp* A = (dp*) In.A;
+    dp* B = (dp*) Out.A;
+    auto less = [&] (dp a, dp b) {return a < b;};
+    pbbs::quicksort(A, n, less);
+    for(size_t i=0; i < n; i++) {
+      if (A[i].first != B[i].first) {
+	cout << "compSortCheck: check failed at i=" << i << endl;
+	abort();
+      }
+    }
   } else if (dt == stringT) {
     char** A = (char**) In.A;
     char** B = (char**) Out.A;

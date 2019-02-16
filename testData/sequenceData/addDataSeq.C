@@ -27,12 +27,12 @@
 using namespace dataGen;
 using namespace benchIO;
 
-template <class T1>
-sequence<pair<T1,uint>> addIntData(T1* A, size_t n, size_t range) {
+template <class T2, class T1>
+sequence<pair<T1,T2>> addData(T1* A, size_t n, size_t range) {
   pbbs::random r(23);
-  using par = pair<T1,uint>;
+  using par = pair<T1,T2>;
   sequence<par> R(n, [&] (size_t i) {
-      return std::make_pair(A[i], (uint) r.ith_rand(i) % range);;
+      return std::make_pair(A[i], (T2) (r.ith_rand(i) % range));;
     });
   return R;
 }
@@ -56,18 +56,29 @@ int main(int argc, char* argv[]) {
   case intType: 
     switch (dataDT) {
     case intType: 
-      return writeSequenceToFile(addIntData((uint*) D.A, n, range),ofile);
+      return writeSequenceToFile(addData<uint>((uint*) D.A, n, range),ofile);
     default:
       cout << "addData: not a valid type" << endl;
+      return 1;
+    }
+  case doubleT: 
+    switch (dataDT) {
+    case doubleT: 
+      return writeSequenceToFile(addData<double>((double*) D.A, n, range),ofile);
+    default:
+      cout << "addData: not a valid type" << endl;
+      return 1;
     }
   case stringT: 
     switch (dataDT) {
     case intType: 
-      return writeSequenceToFile(addIntData((char**) D.A, n, range),ofile);
+      return writeSequenceToFile(addData<uint>((char**) D.A, n, range),ofile);
     default:
       cout << "addData: not a valid type" << endl;
+      return 1;
     }
   default:
     cout << "addData: not a valid type" << endl;
+    return 1;
   }
 }
