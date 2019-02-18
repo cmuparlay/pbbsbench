@@ -1,15 +1,13 @@
 #include "pbbslib/integer_sort.h"
 
-template <class E>
-void int_sort(E* A, unsigned int n) {
-  pbbs::slice_t<E*> In(A,A+n);
-  auto f = [&] (E x) {return x;};
-  pbbs::integer_sort(In, f);
+template <class T>
+pbbs::sequence<T> int_sort(pbbs::sequence<T> const &In) {
+  auto f = [&] (T x) {return x;};
+  return pbbs::integer_sort(In, f);
 }
 
 template <class E, class F>
-void int_sort(std::pair<E,F>* A, unsigned int n) {
-  pbbs::slice_t<std::pair<E,F>*> In(A,A+n);
+pbbs::sequence<std::pair<E,F>> int_sort(pbbs::sequence<std::pair<E,F>> const &In) {
   auto f = [&] (std::pair<E,F> x) {return x.first;};
-  pbbs::integer_sort(In, f);
+  return pbbs::integer_sort(In, f);
 }

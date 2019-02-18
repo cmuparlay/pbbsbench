@@ -46,13 +46,11 @@ void loop(int rounds, F initf, G runf) {
   
 template <class T>
 void timeIntegerSort(sequence<T> A, int rounds, char* outFile) {
-  size_t n = A.size();
-  sequence<T> B(n);
+  sequence<T> R;
   loop(rounds,
-       [&] () {parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});},
-       [&] () {int_sort(B.begin(), n);});
-  cout << endl;
-  if (outFile != NULL) writeSequenceToFile(B, outFile);
+       [&] () {R.clear();},
+       [&] () {R = int_sort(A);});
+  if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 
 int main(int argc, char* argv[]) {

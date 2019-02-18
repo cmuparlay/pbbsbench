@@ -95,7 +95,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 		       j);
       });
 
-    pbbs::integer_sort(C.slice(), get_first, 3*bits);
+    pbbs::integer_sort_inplace(C.slice(), get_first, 3*bits);
     
     // copy sorted results into sorted12
     parallel_for (1, n12, [&] (size_t i) {
@@ -188,7 +188,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
       D[i+n0-s0n] = make_pair(s[s0[i]-1], s0[i]-1);});
   s0.clear();
   t.next("to sort");
-  pbbs::integer_sort(D.slice(), get_first, bits);
+  pbbs::integer_sort_inplace(D.slice(), get_first, bits);
   t.next("sort");
   pbbs::sequence<uint> SA0(n0, [&] (size_t i) {return D[i].second;});
   D.clear();

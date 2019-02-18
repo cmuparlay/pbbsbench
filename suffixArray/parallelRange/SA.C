@@ -25,7 +25,6 @@
 #include <math.h>
 #include "get_time.h"
 #include "sequence_ops.h"
-#include "integer_sort.h"
 #include "quicksort.h"
 #include "sample_sort.h"
 #include "parallel.h"
