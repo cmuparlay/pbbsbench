@@ -3,6 +3,5 @@
 
 template <class E, class BinPred>
 void compSort(E* A, unsigned int n, const BinPred& f) {
-  pbbs::sequence<E> In(A,n);
-  pbbs::sequence<E> Out = pbbs::merge_sort(std::move(In), f);
+  pbbs::merge_sort_inplace(pbbs::slice_t<E*>(A, A+n), f);
 }
