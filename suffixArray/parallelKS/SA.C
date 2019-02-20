@@ -27,6 +27,7 @@
 // It includes code for finding the LCP
 //   Written by Guy Blelloch and Julian Shun
 
+#define NOTMAIN 1
 #include <iostream>
 #include "sequence_ops.h"
 #include "integer_sort.h"

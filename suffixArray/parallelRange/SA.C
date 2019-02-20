@@ -20,6 +20,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#define NOTMAIN 1
 #include <iostream>
 #include <algorithm>
 #include <math.h>
@@ -87,7 +88,7 @@ void splitSegment(seg *segOut, uintT start, uintT l, uintT* ranks, kvpair *Cs) {
     names[0] = 0;
 
     // scan start i across each segment
-    pbbs::slice_t<uintT*> snames(names,names+l);
+    pbbs::range<uintT*> snames(names,names+l);
     pbbs::scan_inplace(snames.slice(), pbbs::maxm<uintT>(),
 		       pbbs::fl_scan_inclusive);
 
@@ -118,7 +119,7 @@ intpair* splitSegmentTop(seg *segOut, uintT n, uintT* ranks, long_int *Cs) {
   nextTimeM("names");
 
   // scan start i across each segment
-  pbbs::slice_t<uintT*> snames(names,names+n);
+  pbbs::range<uintT*> snames(names,names+n);
   pbbs::scan_inplace(snames.slice(), pbbs::maxm<uintT>(),
 		     pbbs::fl_scan_inclusive);
 
@@ -155,7 +156,7 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
   for (uintT i=0; i < 256; i++) flags[i] = 0;
   parallel_for (0, n, [&] (size_t i) {
       if (!flags[ss[i]]) flags[ss[i]] = 1;});
-  pbbs::slice_t<uintT*> sflags(flags,flags+256);
+  pbbs::range<uintT*> sflags(flags,flags+256);
   auto add = [&] (uintT a, uintT b) {return a + b;};
   uintT m = pbbs::scan_inplace(sflags.slice(), pbbs::make_monoid(add,(uintT) 1));
 #ifdef printInfo
@@ -201,7 +202,7 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
     }
 
     auto is_seg = [&] (seg s) {return s.length > 1;};
-    pbbs::sequence<seg> Segs = pbbs::filter(pbbs::slice_t<seg*>(segOuts,segOuts+nKeys),
+    pbbs::sequence<seg> Segs = pbbs::filter(pbbs::range<seg*>(segOuts,segOuts+nKeys),
 					    is_seg);
     uintT nSegs = Segs.size();
     if (nSegs == 0) break;
@@ -227,7 +228,7 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
       }, 100);
     nextTimeM("sort");
 
-    pbbs::slice_t<uintT*> soffsets(offsets, offsets + nSegs);
+    pbbs::range<uintT*> soffsets(offsets, offsets + nSegs);
     nKeys = pbbs::scan_inplace(soffsets.slice(), pbbs::addm<uintT>());
 
     parallel_for (0, nSegs, [&] (size_t i) {

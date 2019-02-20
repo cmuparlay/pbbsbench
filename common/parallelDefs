@@ -15,13 +15,8 @@ CC = g++
 CFLAGS = $(CILKFLAGS) $(CCFLAGS)
 LFLAGS = $(CILKFLAGS) $(CLFLAGS)
 
-else ifdef PBBSSCHED
+else
 CC = g++
 CFLAGS = $(PBBFLAGS) $(CCFLAGS)
 LFLAGS = $(PBBFLAGS) $(CLFLAGS)
-
-else
-CC = g++
-CFLAGS = $(CCFLAGS)
-LFLAGS = $(CLFLAGS)
 endif
