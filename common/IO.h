@@ -46,7 +46,8 @@ namespace benchIO {
 
   // parallel code for converting a string to word pointers
   // side effects string by setting to null after each word
-  sequence<char*> stringToWords(sequence<char> &Str) {
+  template <class Seq>
+  sequence<char*> stringToWords(Seq &Str) {
     size_t n = Str.size();
     
     parallel_for(0, n, [&] (long i) {

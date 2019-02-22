@@ -1,91 +1,88 @@
-include parallelDefs
+include common/parallelDefs
 
-COMMON = dataGen.h utils.h IO.h parseCommandLine.h graph.h graphIO.h graphUtils.h parallel.h sequence.h blockRadixSort.h deterministicHash.h transpose.h quickSort.h
+COMMON = common/graph.h common/graphIO.h common/glue.h common/graphUtils.h
 GENERATORS = rMatGraph gridGraph nBy2Comps lineGraph powerGraph randLocalGraph addWeights randDoubleVector fromAdjIdx adjToEdgeArray adjElimSelfEdges edgeArrayToAdj starGraph combGraph adjGraphAddWeights binTree randGraph reorderGraph randomizeGraphOrder adjGraphAddSourceSink dimacsToFlowGraph adjToBinary adjWghToBinary
 
 .PHONY: all clean
 all: $(GENERATORS)
 
-$(COMMON) :
-	ln -s ../../common/$@ .
-
 %.o : %.C $(COMMON)
-	$(PCC) $(PCFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 rMatGraph : rMatGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ rMatGraph.o 
+	$(CC) $(LFLAGS) -o $@ rMatGraph.o 
 
 gridGraph : gridGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ gridGraph.o 
+	$(CC) $(LFLAGS) -o $@ gridGraph.o 
 
 nBy2Comps : nBy2Comps.o 
-	$(PCC) $(PLFLAGS) -o $@ nBy2Comps.o 
+	$(CC) $(LFLAGS) -o $@ nBy2Comps.o 
 
 lineGraph : lineGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ lineGraph.o 
+	$(CC) $(LFLAGS) -o $@ lineGraph.o 
 
 powerGraph : powerGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ powerGraph.o 
+	$(CC) $(LFLAGS) -o $@ powerGraph.o 
 
 randLocalGraph : randLocalGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ randLocalGraph.o 
+	$(CC) $(LFLAGS) -o $@ randLocalGraph.o 
 
 randGraph : randGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ randGraph.o 
+	$(CC) $(LFLAGS) -o $@ randGraph.o 
 
 addWeights : addWeights.o 
-	$(PCC) $(PLFLAGS) -o $@ addWeights.o
+	$(CC) $(LFLAGS) -o $@ addWeights.o
 
 fromAdjIdx : fromAdjIdx.o 
-	$(PCC) $(PLFLAGS) -o $@ fromAdjIdx.o
+	$(CC) $(LFLAGS) -o $@ fromAdjIdx.o
 
 randDoubleVector : randDoubleVector.o
-	$(PCC) $(PLFLAGS) -o $@ randDoubleVector.o
+	$(CC) $(LFLAGS) -o $@ randDoubleVector.o
 
 adjToEdgeArray : adjToEdgeArray.C $(COMMON)
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ adjToEdgeArray.C
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ adjToEdgeArray.C
 
 adjElimSelfEdges : adjElimSelfEdges.C $(COMMON)
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ adjElimSelfEdges.C
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ adjElimSelfEdges.C
 
 edgeArrayToAdj : edgeArrayToAdj.C $(COMMON)
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ edgeArrayToAdj.C
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ edgeArrayToAdj.C
 
 starGraph : starGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ starGraph.o 
+	$(CC) $(LFLAGS) -o $@ starGraph.o 
 
 combGraph : combGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ combGraph.o 
+	$(CC) $(LFLAGS) -o $@ combGraph.o 
 
 expGraph : expGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ expGraph.o 
+	$(CC) $(LFLAGS) -o $@ expGraph.o 
 
 binTree : binTree.o 
-	$(PCC) $(PLFLAGS) -o $@ binTree.o 
+	$(CC) $(LFLAGS) -o $@ binTree.o 
 
 reorderGraph : reorderGraph.o 
-	$(PCC) $(PLFLAGS) -o $@ reorderGraph.o 
+	$(CC) $(LFLAGS) -o $@ reorderGraph.o 
 
 randomizeGraphOrder : randomizeGraphOrder.o 
-	$(PCC) $(PLFLAGS) -o $@ randomizeGraphOrder.o 
+	$(CC) $(LFLAGS) -o $@ randomizeGraphOrder.o 
 
 adjGraphAddWeights : adjGraphAddWeights.o 
-	$(PCC) $(PLFLAGS) -o $@ adjGraphAddWeights.o
+	$(CC) $(LFLAGS) -o $@ adjGraphAddWeights.o
 
 adjGraphAddSourceSink : adjGraphAddSourceSink.o
-	$(PCC) $(PLFLAGS) -o $@ adjGraphAddSourceSink.o
+	$(CC) $(LFLAGS) -o $@ adjGraphAddSourceSink.o
 
 dimacsToFlowGraph : dimacsToFlowGraph.o
-	$(PCC) $(PLFLAGS) -o $@ dimacsToFlowGraph.o
+	$(CC) $(LFLAGS) -o $@ dimacsToFlowGraph.o
 
 flowGraphToDimacs : flowGraphToDimacs.o
-	$(PCC) $(PLFLAGS) -o $@ flowGraphToDimacs.o
+	$(CC) $(LFLAGS) -o $@ flowGraphToDimacs.o
 
 adjToBinary : adjToBinary.o 
-	$(PCC) $(PLFLAGS) -o $@ adjToBinary.o
+	$(CC) $(LFLAGS) -o $@ adjToBinary.o
 
 adjWghToBinary : adjWghToBinary.o 
-	$(PCC) $(PLFLAGS) -o $@ adjWghToBinary.o
+	$(CC) $(LFLAGS) -o $@ adjWghToBinary.o
 
 clean :
 	rm -f *.o $(GENERATORS)

@@ -20,13 +20,12 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+#include "common/IO.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/graphUtils.h"
+#include "pbbslib/parse_command_line.h"
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -39,7 +38,7 @@ struct rMat {
   rMat(intT _n, intT _seed, 
        double _a, double _b, double _c) {
     n = _n; a = _a; ab = _a + _b; abc = _a+_b+_c;
-    h = hash<uintT>(_seed);
+    h = dataGen::hash<uintT>(_seed);
     utils::myAssert(abc <= 1.0,
 		    "in rMat: a + b + c add to more than 1");
     utils::myAssert((1 << utils::log2Up(n)) == n, 
@@ -50,7 +49,7 @@ struct rMat {
     if (nn==1) return edge<intT>(0,0);
     else {
       edge<intT> x = rMatRec(nn/2, randStart + randStride, randStride);
-      double r = hash<double>(randStart);
+      double r = dataGen::hash<double>(randStart);
       if (r < a) return x;
       else if (r < ab) return edge<intT>(x.u,x.v+nn/2);
       else if (r < abc) return edge<intT>(x.u+nn/2, x.v);
@@ -59,8 +58,8 @@ struct rMat {
   }
 
   edge<intT> operator() (intT i) {
-    intT randStart = hash<uintT>((2*i)*h);
-    intT randStride = hash<uintT>((2*i+1)*h);
+    intT randStart = dataGen::hash<uintT>((2*i)*h);
+    intT randStride = dataGen::hash<uintT>((2*i+1)*h);
     return rMatRec(n, randStart, randStride);
   }
 };
@@ -71,13 +70,13 @@ edgeArray<intT> edgeRmat(intT n, intT m, intT seed,
   intT nn = (1 << utils::log2Up(n));
   rMat<intT> g(nn,seed,a,b,c);
   edge<intT>* E = newA(edge<intT>,m);
-  parallel_for (intT i = 0; i < m; i++) 
-    E[i] = g(i);
+  parallel_for (0, m, [&] (size_t i) {
+      E[i] = g(i);});
   return edgeArray<intT>(E,nn,nn,m);
 }
 
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,
 		"[-m <numedges>] [-s <intseed>] [-o] [-j] [-a <a>] [-b <b>] [-c <c>] n <outFile>");
   pair<intT,char*> in = P.sizeAndFileName();
