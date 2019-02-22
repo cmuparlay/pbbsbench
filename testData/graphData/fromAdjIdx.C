@@ -24,13 +24,11 @@
 #include <string>
 
 #include <math.h>
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "graphUtils.h"
-#include "dataGen.h"
-#include "parallel.h"
+#include "pbbslib/parallel.h"
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/graphUtils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 using namespace benchIO;
@@ -80,13 +78,13 @@ graph<intT> inputFiles(std::string prefix) {
   nr = fread(idx, sizeof(long), 1+numSets, fidx);
 
   vertex<intT> *vertices =  newA(vertex<intT>, numSets);
-  parallel_for(int i=0; i < numSets; i++)
-    vertices[i] = vertex<intT>((intT*) &tadj[idx[i]],idx[i+1]-idx[i]);
+  parallel_for(0, numSets, [&] (size_t i) {
+      vertices[i] = vertex<intT>((intT*) &tadj[idx[i]],idx[i+1]-idx[i]);});
   free(idx);
   return graph<intT>(vertices, numSets, adjSize, (intT*) tadj);
 }  
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-d {2,3}] [-j] [-o] n <outFile>");
   char* fname = P.getArgument(0);
   graph<intT> G = inputFiles((std::string) fname);

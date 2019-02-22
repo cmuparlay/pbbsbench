@@ -21,13 +21,11 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <math.h>
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "graphUtils.h"
-#include "dataGen.h"
-#include "parallel.h"
+#include "pbbslib/parallel.h"
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/graphUtils.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -36,14 +34,14 @@ template <class intT>
 edgeArray<intT> genGraph(intT n) {
   intT m = n/2;
   edge<intT> *E = newA(edge<intT>, m);
-  parallel_for (intT i=0; i < m; i++) {
+  parallel_for (0, m, [&] (size_t i) {
     E[i].u = 2*i;
     E[i].v = 2*i + 1;
-  }
+    });
   return edgeArray<intT>(E,n,n,m);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-j] [-o] n <outFile>");
   pair<int,char*> in = P.sizeAndFileName();
   intT n = in.first;

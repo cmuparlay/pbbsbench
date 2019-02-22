@@ -23,17 +23,17 @@
 // Adds a random integer weight to each edge
 
 #include <math.h>
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parseCommandLine.h"
-#include "dataGen.h"
-#include "parallel.h"
+
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "pbbslib/parse_command_line.h"
+
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<inFile> <outFile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
@@ -49,43 +49,43 @@ int parallel_main(int argc, char* argv[]) {
   intT maxEdgeLen = utils::log2Up(n);
   intT* Choices = newA(intT,2*maxEdgeLen);
   
-  parallel_for (intT i=0;i<maxEdgeLen;i++){
+  parallel_for (0, maxEdgeLen, [&] (size_t i) {
     Choices[2*i] = i+1;
     Choices[2*i+1] = i+1;
     //Choices[2*i+1] = -(i/10)-1;
-  }
+    });
 
-  parallel_for (intT i=0;i<m;i++) {
+  parallel_for (0, m, [&] (size_t i) {
     Weights[i] = Choices[utils::hash(i) % (2*maxEdgeLen)];
     if(i%1000==0 && Weights[i] < 0) Weights[i]*=-1;
-  }
+    });
   free(Choices);
   
   wghVertex<intT>* WV = newA(wghVertex<intT>,n);
   intT* Neighbors_start = G.allocatedInplace+2+n;
 
-  parallel_for(intT i=0;i<n;i++){
+  parallel_for(0, n, [&] (size_t i) {
     WV[i].Neighbors = G.V[i].Neighbors;
     WV[i].degree = G.V[i].degree;
     intT offset = G.V[i].Neighbors - Neighbors_start;
     WV[i].nghWeights = Weights+offset;
-  }
+    });
 
   //symmetrize
-  parallel_for(intT i=0;i<n;i++){
-    parallel_for(intT j=0;j<WV[i].degree;j++){
-      intT ngh = WV[i].Neighbors[j];
-      if(ngh > i) {
-	for(intT k=0;k<WV[ngh].degree;k++) {
-	  intT ngh_ngh = WV[ngh].Neighbors[k];
-	  if(ngh_ngh == i) {
-	    WV[i].nghWeights[j] = WV[ngh].nghWeights[k];
-	    break;
+  parallel_for(0, n, [&] (size_t i) {
+      parallel_for(0, WV[i].degree, [&] (size_t j) {
+	  intT ngh = WV[i].Neighbors[j];
+	  if(ngh > i) {
+	    for(intT k=0;k<WV[ngh].degree;k++) {
+	      intT ngh_ngh = WV[ngh].Neighbors[k];
+	      if(ngh_ngh == i) {
+		WV[i].nghWeights[j] = WV[ngh].nghWeights[k];
+		break;
+	      }
+	    }
 	  }
-	}
-      }
-    }
-  }
+	});
+    });
 
   wghGraph<intT> WG(WV,n,m,(intT*)G.allocatedInplace,Weights);
   int r = writeWghGraphToFile<intT>(WG,oFile);

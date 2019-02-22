@@ -1,16 +1,16 @@
 #include <iostream>
 #include <algorithm>
 #include "utils.h"
-#include "graph.h"
-#include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parseCommandLine.h"
-#include "graphUtils.h"
+#include "common/graph.h"
+#include "pbbslib/parallel.h"
+
+#include "common/graphIO.h"
+#include "pbbslib/parse_command_line.h"
+#include "common/graphUtils.h"
 using namespace std;
 using namespace benchIO;
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");

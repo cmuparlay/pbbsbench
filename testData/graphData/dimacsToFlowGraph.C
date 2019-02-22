@@ -24,12 +24,12 @@
 
 #include <math.h>
 #include <iostream>
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parseCommandLine.h"
-#include "dataGen.h"
-#include "parallel.h"
+
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "pbbslib/parse_command_line.h"
+
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace std;
 

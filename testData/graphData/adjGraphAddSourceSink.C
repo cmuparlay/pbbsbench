@@ -24,12 +24,12 @@
 
 #include <math.h>
 #include <iostream>
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parseCommandLine.h"
-#include "dataGen.h"
-#include "parallel.h"
+
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "pbbslib/parse_command_line.h"
+
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -53,9 +53,9 @@ int main(int argc, char* argv[]) {
 
   intT S = n, T = n + 1;
   V* v = newA(V, n + 2);
-  parallel_for (intT i = 0; i < n; ++i) {
+  parallel_for (0, n, [&] (size_t i) {
     v[i] = g.V[i];
-  }
+    });
 
   v[S].Neighbors = newA(intT, n);
   v[S].nghWeights = newA(intT, n);

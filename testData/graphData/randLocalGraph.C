@@ -20,13 +20,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+#include "pbbslib/parallel.h"
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/graphUtils.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -41,28 +39,28 @@ template <class intT>
 edgeArray<intT> edgeRandomWithDimension(intT dim, intT degree, intT numRows) {
   intT nonZeros = numRows*degree;
   edge<intT> *E = newA(edge<intT>,nonZeros);
-  parallel_for (intT k=0; k < nonZeros; k++) {
+  parallel_for (0, nonZeros, [&] (size_t k) {
     intT i = k / degree;
     intT j;
     if (dim==0) {
       intT h = k;
       do {
-	j = ((h = hash<intT>(h)) % numRows);
+	j = ((h = dataGen::hash<intT>(h)) % numRows);
       } while (j == i);
     } else {
       intT pow = dim+2;
       intT h = k;
       do {
-	while ((((h = hash<intT>(h)) % 1000003) < 500001)) pow += dim;
-	j = (i + ((h = hash<intT>(h)) % (((long) 1) << pow))) % numRows;
+	while ((((h = dataGen::hash<intT>(h)) % 1000003) < 500001)) pow += dim;
+	j = (i + ((h = dataGen::hash<intT>(h)) % (((long) 1) << pow))) % numRows;
       } while (j == i);
     }
     E[k].u = i;  E[k].v = j;
-  }
+    });
   return edgeArray<intT>(E,numRows,numRows,nonZeros);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-m <numedges>] [-d <dims>] [-o] [-j] n <outFile>");
   pair<intT,char*> in = P.sizeAndFileName();
   intT n = in.first;

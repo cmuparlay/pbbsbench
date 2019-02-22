@@ -1,17 +1,17 @@
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+
+#include "common/graphUtils.h"
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
 
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"-o <outFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");

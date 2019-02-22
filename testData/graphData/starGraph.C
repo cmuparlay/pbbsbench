@@ -20,13 +20,13 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+
+#include "common/graphUtils.h"
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -37,14 +37,14 @@ template <class intT>
 edgeArray<intT> star(intT m) {
   intT numCenters = 4;
   edge<intT> *E = newA(edge<intT>,m);
-  parallel_for (intT k=0; k < m; k++) {
+  parallel_for (0, m, [&] (size_t k) {
     E[k].u = utils::hash(k)%numCenters;
     E[k].v = k+numCenters;
-  }
+    });
   return edgeArray<intT>(E,m+numCenters,m+numCenters,m);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-m <numedges>] [-d <dims>] [-o] [-j] n <outFile>");
   pair<intT,char*> in = P.sizeAndFileName();
   intT n = in.first;

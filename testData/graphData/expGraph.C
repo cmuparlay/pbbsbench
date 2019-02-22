@@ -20,13 +20,13 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+
+#include "common/graphUtils.h"
+#include "pbbslib/parallel.h"
 #include "sequence.h"
 using namespace benchIO;
 using namespace dataGen;
@@ -36,7 +36,7 @@ template <class intT>
 edgeArray<intT> expDegrees(intT n) {
   intT* Degrees = newA(intT,n);
   parallel_for(intT i=0;i<n;i++){
-    intT rand = hash<intT>(i)%n;
+    intT rand = dataGen::hash<intT>(i)%n;
     intT p = 1;
     while(1) {
       if(rand < p) {
@@ -65,7 +65,7 @@ edgeArray<intT> expDegrees(intT n) {
   return edgeArray<intT>(E,n,n,totalDegree);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-m <numedges>] [-d <dims>] [-o] [-j] n <outFile>");
   pair<intT,char*> in = P.sizeAndFileName();
   intT n = in.first;

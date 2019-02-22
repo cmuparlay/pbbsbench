@@ -23,17 +23,16 @@
 // Adds a random double precision weight to each edge
 
 #include <math.h>
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parseCommandLine.h"
-#include "dataGen.h"
-#include "parallel.h"
+#include "pbbslib/parallel.h"
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/graphUtils.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<inFile> <outFile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
@@ -44,9 +43,9 @@ int parallel_main(int argc, char* argv[]) {
   intT n = max(In.numCols, In.numRows);
   edge<intT>* E = In.E;
   wghEdge<intT>* WE = newA(wghEdge<intT>, m);
-  parallel_for(intT i=0; i < m; i++) {
-    WE[i] = wghEdge<intT>(E[i].u, E[i].v, hash<double>(i));
-  }
+  parallel_for(0, m, [&] (size_t i) {
+      WE[i] = wghEdge<intT>(E[i].u, E[i].v, dataGen::hash<double>(i));
+    });
   In.del();
   int r = writeWghEdgeArrayToFile<intT>(wghEdgeArray<intT>(WE,n,m), oFile);
   free(WE);

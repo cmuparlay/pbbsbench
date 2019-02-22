@@ -20,13 +20,13 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+
+#include "common/graphUtils.h"
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -38,16 +38,16 @@ edgeArray<intT> comb(intT n, intT numDests) {
   //intT numDests = 16;
   intT m = 2*(n-numDests-1);
   edge<intT> *E = newA(edge<intT>,m);
-  parallel_for (intT k=0; k < n-numDests-1; k++) {
+  parallel_for (0, n-numDests-1, [&] (size_t k) {
     E[2*k].u = 0;
     E[2*k].v = k+1;
     E[2*k+1].u = k+1;
     E[2*k+1].v = n-numDests+(utils::hash(k)%numDests);
-  }
+    });
   return edgeArray<intT>(E,n,n,m);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-m <numedges>] [-d <dims>] [-o] [-j] n <outFile>");
   pair<intT,char*> in = P.sizeAndFileName();
   intT n = in.first;

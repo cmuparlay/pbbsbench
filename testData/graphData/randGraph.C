@@ -20,13 +20,13 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "dataGen.h"
-#include "graphUtils.h"
-#include "parallel.h"
+
+#include "pbbslib/parse_command_line.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+
+#include "common/graphUtils.h"
+#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -35,17 +35,17 @@ template <class intT>
 edgeArray<intT> edgeRandom(intT degree, intT numRows) {
   intT nonZeros = numRows*degree;
   edge<intT> *E = newA(edge<intT>,nonZeros);
-  parallel_for (intT i=0; i < numRows;i++) {
+  parallel_for (0, numRows, [&] (size_t i) {
     for(intT j=0;j<degree;j++) {
       E[i*degree+j].u = i;
-      intT h = hash<intT>(i*degree+j) % (numRows-1);
+      intT h = dataGen::hash<intT>(i*degree+j) % (numRows-1);
       E[i*degree+j].v = (h < i) ? h : h+1;
     }
-  }
+    });
   return edgeArray<intT>(E,numRows,numRows,nonZeros);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-m <numedges>] [-o] [-j] n <outFile>");
   pair<intT,char*> in = P.sizeAndFileName();
   intT n = in.first;
