@@ -69,10 +69,8 @@ edgeArray<intT> edgeRmat(intT n, intT m, intT seed,
 		   float a, float b, float c) {
   intT nn = (1 << utils::log2Up(n));
   rMat<intT> g(nn,seed,a,b,c);
-  edge<intT>* E = newA(edge<intT>,m);
-  parallel_for (0, m, [&] (size_t i) {
-      E[i] = g(i);});
-  return edgeArray<intT>(E,nn,nn,m);
+  sequence<edge<intT>> E(m, [&] (size_t i) {return g(i);});
+  return edgeArray<intT>(E,nn,nn);
 }
 
 
@@ -91,29 +89,5 @@ int main(int argc, char* argv[]) {
   bool ordered = P.getOption("-o");
 
   edgeArray<intT> EA = edgeRmat(n, m, seed, a, b, c);
-  if (!ordered) {
-    graph<intT> G = graphFromEdges<intT>(EA,adjArray);
-    EA.del();
-    G = graphReorder<intT>(G, NULL);
-    if (adjArray) {
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      EA = edgesFromGraph<intT>(G);
-      G.del();
-      std::random_shuffle(EA.E, EA.E + m);
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  } else {
-    if (adjArray) {
-      graph<intT> G = graphFromEdges<intT>(EA, 1);
-      EA.del();
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  }
+  writeGraphFromEdges(EA, fname, adjArray, ordered);
 }

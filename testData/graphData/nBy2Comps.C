@@ -30,15 +30,13 @@ using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
+
 template <class intT>
 edgeArray<intT> genGraph(intT n) {
   intT m = n/2;
-  edge<intT> *E = newA(edge<intT>, m);
-  parallel_for (0, m, [&] (size_t i) {
-    E[i].u = 2*i;
-    E[i].v = 2*i + 1;
-    });
-  return edgeArray<intT>(E,n,n,m);
+  sequence<edge<intT>> E(m, [&] (size_t i) {
+      return edge<intT>(2*i, 2*i + 1); });
+  return edgeArray<intT>(E,n,n);
 }
 
 int main(int argc, char* argv[]) {
@@ -54,29 +52,5 @@ int main(int argc, char* argv[]) {
     P.badArgument();
   }
   EA = genGraph(n);
-  if (!ordered) {
-    graph<intT> G = graphFromEdges<intT>(EA,adjArray);
-    EA.del();
-    G = graphReorder<intT>(G, NULL);
-    if (adjArray) {
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      EA = edgesFromGraph<intT>(G);
-      G.del();
-      std::random_shuffle(EA.E, EA.E + EA.nonZeros);
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  } else {
-    if (adjArray) {
-      graph<intT> G = graphFromEdges<intT>(EA, 1);
-      EA.del();
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  }
+  writeGraphFromEdges(EA, fname, adjArray, ordered);
 }

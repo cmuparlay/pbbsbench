@@ -55,18 +55,19 @@ template <class intT>
 struct edge {
   intT u;
   intT v;
+  edge() {}
   edge(intT f, intT s) : u(f), v(s) {}
 };
 
 template <class intT>
 struct edgeArray {
-  edge<intT>* E;
-  intT numRows;
-  intT numCols;
-  intT nonZeros;
-  void del() {free(E);}
-  edgeArray(edge<intT> *EE, intT r, intT c, intT nz) :
-    E(EE), numRows(r), numCols(c), nonZeros(nz) {}
+  pbbs::sequence<edge<intT>> E;
+  size_t numRows;
+  size_t numCols;
+  size_t nonZeros;
+  void del() {}
+  edgeArray(pbbs::sequence<edge<intT>> E, size_t r, size_t c) :
+    E(E), numRows(r), numCols(c), nonZeros(E.size()) {}
   edgeArray() {}
 };
 
@@ -108,7 +109,7 @@ struct wghVertex {
   intT degree;
   intT* nghWeights;
   void del() {free(Neighbors); free(nghWeights);}
-wghVertex(intT* N, intT* W, intT d) : Neighbors(N), nghWeights(W), degree(d) {}
+  wghVertex(intT* N, intT* W, intT d) : Neighbors(N), nghWeights(W), degree(d) {}
 };
 
 template <class intT>
@@ -150,23 +151,12 @@ struct graph {
 template <class intT, class intE>
 struct graphC {
   long n,m;
-  intT* offsets;
-  intE* edges;
-  graphC(intT* _offsets, intE* _edges, long _n, long _m)
-  : offsets(_offsets), edges(_edges), n(_n), m(_m) {}
-  graphC copy() {
-    intT* o = newA(intT,n+1);
-    intE* e = newA(intE,m);
-    parallel_for(0, n+1, [&] (size_t i) {o[i] = offsets[i];});
-    parallel_for(0, m, [&] (size_t i) {e[i] = edges[i];});
-    return graphC(o,e,n,m);
-  }
-  size_t degree(size_t i) {
-    return offsets[i+1] - offsets[i];
-  }
-  void del() {
-    free(offsets); free(edges);
-  }
+  pbbs::sequence<intT> offsets;
+  pbbs::sequence<intE> edges;
+  graphC(pbbs::sequence<intT> offsets, pbbs::sequence<intE> edges)
+    : offsets(offsets), edges(edges), n(offsets.size()-1), m(edges.size()) {}
+  graphC copy() {return graphC(offsets, edges);}
+  size_t degree(size_t i) {return offsets[i+1] - offsets[i]; }
 };
 
 template <class intT>
@@ -176,10 +166,11 @@ struct wghGraph {
   uintT m;
   intT* allocatedInplace;
   intT* weights;
-wghGraph(wghVertex<intT>* VV, intT nn, uintT mm) 
-    : V(VV), n(nn), m(mm), allocatedInplace(NULL) {}
-wghGraph(wghVertex<intT>* VV, intT nn, uintT mm, intT* ai, intT* _weights) 
-: V(VV), n(nn), m(mm), allocatedInplace(ai), weights(_weights) {}
+  wghGraph(wghVertex<intT>* VV, intT nn, uintT mm) 
+    : V(VV), n(nn), m(mm), allocatedInplace(NULL) {
+    cout << "double check correctness in wghGraph" << endl;}
+  wghGraph(wghVertex<intT>* VV, intT nn, uintT mm, intT* ai, intT* _weights) 
+    : V(VV), n(nn), m(mm), allocatedInplace(ai), weights(_weights) {}
   wghGraph copy() {
     wghVertex<intT>* VN = newA(wghVertex<intT>,n);
     intT* Edges = newA(intT,m);
@@ -199,8 +190,8 @@ wghGraph(wghVertex<intT>* VV, intT nn, uintT mm, intT* ai, intT* _weights)
   void del() {
     if (allocatedInplace == NULL) 
       for (intT i=0; i < n; i++) V[i].del();
-    else { free(allocatedInplace); free(weights); }
-    free(V);
+    else { pbbs::free_array(allocatedInplace); }
+    pbbs::free_array(V);
   }
 };
 

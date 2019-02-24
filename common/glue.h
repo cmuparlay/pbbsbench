@@ -113,15 +113,15 @@ namespace dataGen {
   template <class T> T hash(intT i);
   
   template <>
-  intT hash<intT>(intT i) {
+  inline intT hash<intT>(intT i) {
     return utils::hash(i) & (HASH_MAX_INT-1);}
 
   template <>
-  uintT hash<uintT>(intT i) {
+  inline uintT hash<uintT>(intT i) {
     return utils::hash(i);}
 
   template <>
-  double hash<double>(intT i) {
+  inline double hash<double>(intT i) {
     return ((double) hash<intT>(i)/((double) HASH_MAX_INT));}
 
 };
@@ -136,9 +136,8 @@ namespace intSort {
   template <class E, class F>
   pbbs::sequence<size_t> iSort(E *A, size_t n, size_t m, F f) {
     pbbs::range<E*> r(A, A + n);
-    pbbs::integer_sort_inplace(r, f, m);
+    pbbs::integer_sort_inplace(r, f, pbbs::log2_up(m));
     auto o = pbbs::get_offsets(r, f, m);
-    cout << n << ": " << m << ": " << o[0] << ", " << o[1] << ", " << o[2] << ", " << o[3] <<endl;
     return o; 
   }
 

@@ -96,17 +96,5 @@ int main(int argc, char* argv[]) {
   bool adjArray = P.getOption("-j");
   edgeArray<intT> EA;
   graph<intT> G = makePowerGraph(n);
-  if (adjArray) {
-    if (!ordered) G = graphReorder<intT>(G, NULL);
-    int r = writeGraphToFile<intT>(G, fname);
-    G.del();
-    return r;
-  } else {
-    edgeArray<intT> EA = edgesFromGraph(G);
-    G.del();
-    if (!ordered) std::random_shuffle(EA.E, EA.E + EA.nonZeros);
-    int r = writeEdgeArrayToFile<intT>(EA, fname);
-    EA.del();
-    return r;
-  }
+  writeGraphFromAdj(G, fname, adjArray, ordered);
 }

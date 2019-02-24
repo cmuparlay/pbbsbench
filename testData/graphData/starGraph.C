@@ -57,13 +57,13 @@ int main(int argc, char* argv[]) {
   if (adjArray) {
     graph<intT> G = graphFromEdges<intT>(EA,1);
     EA.del();
-    if (!ordered) G = graphReorder<intT>(G, NULL);
+    if (!ordered) G = graphReorder<intT>(G);
     r = writeGraphToFile<intT>(G, fname);
     G.del();
   } else {
     graph<intT> G = graphFromEdges<intT>(EA,0);
     EA.del();
-    if (!ordered) G = graphReorder<intT>(G, NULL);
+    if (!ordered) G = graphReorder<intT>(G);
     EA = edgesFromGraph<intT>(G);
     G.del();
     if (!ordered) std::random_shuffle(EA.E, EA.E + EA.nonZeros);

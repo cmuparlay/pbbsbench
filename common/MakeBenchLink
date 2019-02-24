@@ -20,11 +20,11 @@ $(BENCH) : $(TIME).o $(OBJS) $(CHECK) testInputs
 
 # The generic benchmark timer
 $(TIME).o : $(TIME).C
-	cd ../bench; make -s SATime.o
+	cd ../bench; make -s $(TIME).o
 
 # The check code
 $(CHECK) : $(CHECK).C
-	cd ../bench; make -s SACheck
+	cd ../bench; make -s $(BENCH)Check
 
 # object files
 %.o : %.C $(REQUIRE)

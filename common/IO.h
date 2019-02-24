@@ -28,6 +28,7 @@
 #include <cstring>
 #include "../pbbslib/sequence_ops.h"
 #include "../pbbslib/parallel.h"
+#include "../pbbslib/get_time.h"
 
 namespace benchIO {
   using namespace std;
@@ -133,7 +134,7 @@ namespace benchIO {
 
   template <class T>
   void writeArrayToStream(ofstream& os, T* A, long n) {
-    long BSIZE = 1000000;
+    long BSIZE = 10000000;
     long offset = 0;
     while (offset < n) {
       // Generates a string for a sequence of size at most BSIZE
@@ -141,7 +142,7 @@ namespace benchIO {
       sequence<char> S = arrayToString(A+offset,min(BSIZE,n-offset));
       os.write(S.begin(), S.size()-1);
       offset += BSIZE;
-    }    
+    }
   }
 
   template <class T>

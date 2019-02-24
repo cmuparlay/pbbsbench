@@ -1,7 +1,7 @@
 include common/parallelDefs
 
 COMMON = common/graph.h common/graphIO.h common/glue.h common/graphUtils.h
-GENERATORS = rMatGraph gridGraph nBy2Comps lineGraph powerGraph randLocalGraph addWeights randDoubleVector fromAdjIdx adjToEdgeArray adjElimSelfEdges edgeArrayToAdj starGraph combGraph adjGraphAddWeights binTree randGraph reorderGraph randomizeGraphOrder adjGraphAddSourceSink dimacsToFlowGraph adjToBinary adjWghToBinary
+GENERATORS = rMatGraph gridGraph randLocalGraph nBy2Comps lineGraph powerGraph addWeights randDoubleVector fromAdjIdx adjToEdgeArray adjElimSelfEdges edgeArrayToAdj starGraph combGraph adjGraphAddWeights binTree randGraph reorderGraph randomizeGraphOrder adjGraphAddSourceSink dimacsToFlowGraph adjToBinary adjWghToBinary
 
 .PHONY: all clean
 all: $(GENERATORS)

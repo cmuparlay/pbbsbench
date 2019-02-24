@@ -22,6 +22,7 @@
 
 #include "pbbslib/parallel.h"
 #include "pbbslib/parse_command_line.h"
+#include "pbbslib/get_time.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"
@@ -38,26 +39,25 @@ using namespace std;
 template <class intT>
 edgeArray<intT> edgeRandomWithDimension(intT dim, intT degree, intT numRows) {
   intT nonZeros = numRows*degree;
-  edge<intT> *E = newA(edge<intT>,nonZeros);
-  parallel_for (0, nonZeros, [&] (size_t k) {
-    intT i = k / degree;
-    intT j;
-    if (dim==0) {
-      intT h = k;
-      do {
-	j = ((h = dataGen::hash<intT>(h)) % numRows);
-      } while (j == i);
-    } else {
-      intT pow = dim+2;
-      intT h = k;
-      do {
-	while ((((h = dataGen::hash<intT>(h)) % 1000003) < 500001)) pow += dim;
-	j = (i + ((h = dataGen::hash<intT>(h)) % (((long) 1) << pow))) % numRows;
-      } while (j == i);
-    }
-    E[k].u = i;  E[k].v = j;
+  pbbs::sequence<edge<intT>> E(nonZeros, [&] (size_t k) {
+      intT i = k / degree;
+      intT j;
+      if (dim==0) {
+	intT h = k;
+	do {
+	  j = ((h = dataGen::hash<intT>(h)) % numRows);
+	} while (j == i);
+      } else {
+	intT pow = dim+2;
+	intT h = k;
+	do {
+	  while ((((h = dataGen::hash<intT>(h)) % 1000003) < 500001)) pow += dim;
+	  j = (i + ((h = dataGen::hash<intT>(h)) % (((long) 1) << pow))) % numRows;
+	} while (j == i);
+      }
+      return edge<intT>(i, j);
     });
-  return edgeArray<intT>(E,numRows,numRows,nonZeros);
+  return edgeArray<intT>(E,numRows,numRows);
 }
 
 int main(int argc, char* argv[]) {
@@ -70,29 +70,5 @@ int main(int argc, char* argv[]) {
   bool ordered = P.getOption("-o");
   bool adjArray = P.getOption("-j");
   edgeArray<intT> EA = edgeRandomWithDimension<intT>(dim, m/n, n);
-  if (!ordered) {
-    graph<intT> G = graphFromEdges<intT>(EA,adjArray);
-    EA.del();
-    G = graphReorder<intT>(G, NULL);
-    if (adjArray) {
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      EA = edgesFromGraph<intT>(G);
-      G.del();
-      std::random_shuffle(EA.E, EA.E + m);
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  } else {
-    if (adjArray) {
-      graph<intT> G = graphFromEdges<intT>(EA, 1);
-      EA.del();
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  }
+  writeGraphFromEdges(EA, fname, adjArray, ordered);
 }

@@ -40,14 +40,14 @@ edgeArray<intT> edge2DMesh(intT n) {
   intT dn = round(pow((float) n,1.0/2.0));
   intT nn = dn*dn;
   intT nonZeros = 2*nn;
-  edge<intT> *E = newA(edge<intT>,nonZeros);
+  pbbs::sequence<edge<intT>> E(nonZeros);
   parallel_for (0, dn, [&] (size_t i) {
     for (intT j=0; j < dn; j++) {
       intT l = loc2d(dn,i,j);
       E[2*l] = edge<intT>(l,loc2d(dn,i+1,j));
       E[2*l+1] = edge<intT>(l,loc2d(dn,i,j+1));
     }});
-  return edgeArray<intT>(E,nn,nn,nonZeros);
+  return edgeArray<intT>(E,nn,nn);
 }
 
 size_t loc3d(size_t n, size_t i1, size_t i2, size_t i3) {
@@ -59,7 +59,7 @@ edgeArray<intT> edge3DMesh(intT n) {
   intT dn = round(pow((float) n,1.0/3.0));
   intT nn = dn*dn*dn;
   intT nonZeros = 3*nn;
-  edge<intT> *E = newA(edge<intT>,nonZeros);
+  pbbs::sequence<edge<intT>> E(nonZeros);
   parallel_for (0, dn, [&] (size_t i) {
     for (intT j=0; j < dn; j++) 
       for (intT k=0; k < dn; k++) {
@@ -68,10 +68,8 @@ edgeArray<intT> edge3DMesh(intT n) {
 	E[3*l+1] = edge<intT>(l,loc3d(dn,i,j+1,k));
 	E[3*l+2] = edge<intT>(l,loc3d(dn,i,j,k+1));
       }});
-  return edgeArray<intT>(E,nn,nn,nonZeros);
+  return edgeArray<intT>(E,nn,nn);
 }
-
-
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-d {2,3}] [-j] [-o] n <outFile>");
   pair<int,char*> in = P.sizeAndFileName();
@@ -87,29 +85,5 @@ int main(int argc, char* argv[]) {
     EA = edge3DMesh(n);
   else 
     P.badArgument();
-  if (!ordered) {
-    graph<intT> G = graphFromEdges<intT>(EA,adjArray);
-    EA.del();
-    G = graphReorder<intT>(G, NULL);
-    if (adjArray) {
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      EA = edgesFromGraph<intT>(G);
-      G.del();
-      std::random_shuffle(EA.E, EA.E + EA.nonZeros);
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  } else {
-    if (adjArray) {
-      graph<intT> G = graphFromEdges<intT>(EA, 1);
-      EA.del();
-      writeGraphToFile<intT>(G, fname);
-      G.del();
-    } else {
-      writeEdgeArrayToFile<intT>(EA, fname);
-      EA.del();
-    }
-  }
+  writeGraphFromEdges(EA, fname, adjArray, ordered);
 }
