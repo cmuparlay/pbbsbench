@@ -66,8 +66,8 @@ struct edgeArray {
   size_t numCols;
   size_t nonZeros;
   void del() {}
-  edgeArray(pbbs::sequence<edge<intT>> E, size_t r, size_t c) :
-    E(E), numRows(r), numCols(c), nonZeros(E.size()) {}
+  edgeArray(pbbs::sequence<edge<intT>> EE, size_t r, size_t c) :
+    E(std::move(EE)), numRows(r), numCols(c), nonZeros(E.size()) {}
   edgeArray() {}
 };
 
@@ -85,10 +85,10 @@ struct wghEdge {
 
 template <class intT>
 struct wghEdgeArray {
-  wghEdge<intT> *E;
+  pbbs::sequence<wghEdge<intT>> E;
   intT n; intT m;
-  wghEdgeArray(wghEdge<intT>* EE, intT nn, intT mm) : E(EE), n(nn), m(mm) {}
-  void del() { free(E);}
+  wghEdgeArray(pbbs::sequence<wghEdge<intT>> E, intT n) : E(E), n(n) {}
+  void del() {}
 };
 
 // **************************************************************
@@ -101,50 +101,27 @@ struct vertex {
   intT degree;
   void del() {free(Neighbors);}
   vertex(intT* N, intT d) : Neighbors(N), degree(d) {}
-};
-
-template <class intT>
-struct wghVertex {
-  intT* Neighbors;
-  intT degree;
-  intT* nghWeights;
-  void del() {free(Neighbors); free(nghWeights);}
-  wghVertex(intT* N, intT* W, intT d) : Neighbors(N), nghWeights(W), degree(d) {}
+  vertex() : Neighbors(NULL), degree(0) {}
 };
 
 template <class intT>
 struct graph {
-  vertex<intT> *V;
-  intT n;
-  intT m;
-  intT* allocatedInplace;
-  graph(vertex<intT>* VV, intT nn, uintT mm) 
-    : V(VV), n(nn), m(mm), allocatedInplace(NULL) {}
-  graph(vertex<intT>* VV, intT nn, uintT mm, intT* ai) 
-    : V(VV), n(nn), m(mm), allocatedInplace(ai) {}
-  intT* vertices() { return allocatedInplace+2; }
-  intT* edges() { return allocatedInplace+2+n; }
-  graph copy() {
-    vertex<intT>* VN = newA(vertex<intT>,n);
-    intT* _allocatedInplace = newA(intT,n+m+2);
-    _allocatedInplace[0] = n;
-    _allocatedInplace[1] = m;
-    intT* Edges = _allocatedInplace+n+2;
-    intT k = 0;
-    for (intT i=0; i < n; i++) {
-      _allocatedInplace[i+2] = allocatedInplace[i+2];
-      VN[i] = V[i];
-      VN[i].Neighbors = Edges + k;
-      for (intT j =0; j < V[i].degree; j++) 
-	Edges[k++] = V[i].Neighbors[j];
-    }
-    return graph(VN, n, m, _allocatedInplace);
-  } 
-  void del() {
-    if (allocatedInplace == NULL) 
-      for (intT i=0; i < n; i++) V[i].del();
-    else free(allocatedInplace);
-    free(V);
+  pbbs::sequence<intT> offsets;
+  pbbs::sequence<intT> edges;
+  size_t n;
+  size_t m;
+  size_t numVertices() const {return n;}
+  size_t numEdges() const {return m;}
+  const pbbs::sequence<intT>& get_offsets() const {
+    return offsets;
+  }
+  vertex<intT> operator[] (const size_t i) const {
+    return vertex<intT>(edges.begin() + offsets[i],
+			offsets[i+1] - offsets[i]);}
+  
+  graph(pbbs::sequence<intT> offsets_, pbbs::sequence<intT> edges_, size_t n) 
+    : offsets(std::move(offsets_)), edges(std::move(edges_)), n(n), m(edges.size()) {
+    if (offsets.size() != n + 1) { cout << "error in graph constructor" << endl;}
   }
 };
 
@@ -157,6 +134,15 @@ struct graphC {
     : offsets(offsets), edges(edges), n(offsets.size()-1), m(edges.size()) {}
   graphC copy() {return graphC(offsets, edges);}
   size_t degree(size_t i) {return offsets[i+1] - offsets[i]; }
+};
+
+template <class intT>
+struct wghVertex {
+  intT* Neighbors;
+  intT degree;
+  intT* nghWeights;
+  void del() {free(Neighbors); free(nghWeights);}
+  wghVertex(intT* N, intT* W, intT d) : Neighbors(N), nghWeights(W), degree(d) {}
 };
 
 template <class intT>

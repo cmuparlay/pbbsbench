@@ -57,7 +57,7 @@ edgeArray<intT> edgeRandomWithDimension(intT dim, intT degree, intT numRows) {
       }
       return edge<intT>(i, j);
     });
-  return edgeArray<intT>(E,numRows,numRows);
+  return edgeArray<intT>(std::move(E), numRows, numRows);
 }
 
 int main(int argc, char* argv[]) {

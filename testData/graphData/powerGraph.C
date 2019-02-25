@@ -32,7 +32,8 @@ using namespace dataGen;
 using namespace std;
 
 static float powerlaw_random(float dmin, float dmax, float n) {
-  float r = (float) random() / RAND_MAX;
+  pbbs::random rg;
+  float r = (float) rg[0] / RAND_MAX;
   return pow((pow(dmax, n) - pow(dmin, n)) * pow(r, 3) + pow(dmin, n), 1.0 / n);
 }
 

@@ -70,7 +70,7 @@ edgeArray<intT> edgeRmat(intT n, intT m, intT seed,
   intT nn = (1 << utils::log2Up(n));
   rMat<intT> g(nn,seed,a,b,c);
   sequence<edge<intT>> E(m, [&] (size_t i) {return g(i);});
-  return edgeArray<intT>(E,nn,nn);
+  return edgeArray<intT>(std::move(E), nn, nn);
 }
 
 

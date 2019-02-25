@@ -47,7 +47,7 @@ edgeArray<intT> edge2DMesh(intT n) {
       E[2*l] = edge<intT>(l,loc2d(dn,i+1,j));
       E[2*l+1] = edge<intT>(l,loc2d(dn,i,j+1));
     }});
-  return edgeArray<intT>(E,nn,nn);
+  return edgeArray<intT>(std::move(E), nn, nn);
 }
 
 size_t loc3d(size_t n, size_t i1, size_t i2, size_t i3) {
@@ -68,8 +68,9 @@ edgeArray<intT> edge3DMesh(intT n) {
 	E[3*l+1] = edge<intT>(l,loc3d(dn,i,j+1,k));
 	E[3*l+2] = edge<intT>(l,loc3d(dn,i,j,k+1));
       }});
-  return edgeArray<intT>(E,nn,nn);
+  return edgeArray<intT>(std::move(E), nn, nn);
 }
+
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-d {2,3}] [-j] [-o] n <outFile>");
   pair<int,char*> in = P.sizeAndFileName();

@@ -131,15 +131,3 @@ _seq<ET> removeDuplicates(_seq<ET> S, HASH hashF) {
   return pbbs::remove_duplicates(pbbs::range<ET*>(S.A, S.A+S.n), hashF);
 }
 
-namespace intSort {
-  
-  template <class E, class F>
-  pbbs::sequence<size_t> iSort(E *A, size_t n, size_t m, F f) {
-    pbbs::range<E*> r(A, A + n);
-    pbbs::integer_sort_inplace(r, f, pbbs::log2_up(m));
-    auto o = pbbs::get_offsets(r, f, m);
-    return o; 
-  }
-
-}
-

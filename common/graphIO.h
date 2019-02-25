@@ -75,25 +75,27 @@ namespace benchIO {
   string WghAdjGraphHeader = "WeightedAdjacencyGraph";
 
   template <class intT>
-  int writeGraphToFile(graph<intT> G, char* fname) {
-    intT m = G.m;
-    intT n = G.n;
+  int writeGraphToFile(graph<intT> const &G, char* fname) {
+    intT m = G.numEdges();
+    intT n = G.numVertices();
     intT totalLen = 2 + n + m;
-    intT *Out = newA(intT, totalLen);
+    sequence<intT> Out(totalLen);
     Out[0] = n;
     Out[1] = m;
+
+    // write offsets to Out[2,..,2+n)
+    auto offsets = G.get_offsets();
     parallel_for (0, n, [&] (size_t i) {
-	Out[i+2] = G.V[i].degree;
+	Out[i+2] = offsets[i];});
+
+    // write out edges to Out[2+n,..,2+n+m)
+    parallel_for(0, n, [&] (size_t i) {
+	size_t o = offsets[i] + 2 + n;
+	vertex<intT> v = G[i];
+	for (intT j = 0; j < v.degree; j++)
+	  Out[o + j] = v.Neighbors[j];
       });
-    intT total = osequence::scan(Out+2,Out+2,n,utils::addF<intT>(),(intT)0);
-    for (intT i=0; i < n; i++) {
-      intT *O = Out + (2 + n + Out[i+2]);
-      vertex<intT> v = G.V[i];
-      for (intT j = 0; j < v.degree; j++)
-	O[j] = v.Neighbors[j];
-    }
-    int r = writeArrayToFile(AdjGraphHeader, Out, totalLen, fname);
-    free(Out);
+    int r = writeArrayToFile(AdjGraphHeader, Out.begin(), totalLen, fname);
     return r;
   }
 
@@ -124,7 +126,7 @@ namespace benchIO {
 
 
   template <class intT>
-  int writeEdgeArrayToFile(edgeArray<intT> EA, char* fname) {
+  int writeEdgeArrayToFile(edgeArray<intT> const &EA, char* fname) {
     intT m = EA.nonZeros;
     int r = writeArrayToFile(EdgeArrayHeader, EA.E.begin(), m, fname);
     return r;
@@ -193,30 +195,25 @@ namespace benchIO {
       abort();
     }
 
-    long len = W.size() -1;
-    uintT * In = newA(uintT, len);
-    parallel_for(0, len, [&] (size_t i) {
-	In[i] = atol(W[i + 1]);});
-    //W.del(); // to deal with performance bug in malloc
+    // file consists of [type, num_vertices, num_edges, <vertex offsets>, <edges>]
+    // in compressed sparse row format
+    long n = atol(W[1]);
+    long m = atol(W[2]);
+    if (W.size() != n + m + 3) {
+      cout << "Bad input file: length = "<< W.size() << " n+m+3 = " << n+m+3 << endl;
+      abort(); }
+    
+    // tags on m at the end (so n+1 total offsets)
+    sequence<intT> offsets(n+1, [&] (size_t i) {
+	return (i == n) ? m : atol(W[i+3]);});
+    sequence<intT> E(m, [&] (size_t i) {
+	return atol(W[n+i+3]);});
 
-    long n = In[0];
-    long m = In[1];
-
-    if (len != n + m + 2) {
-      cout << "Bad input file: length = "<<len<< " n+m+2 = " << n+m+2 << endl;
-      abort();
-    }
-    vertex<intT> *v = newA(vertex<intT>,n);
-    uintT* offsets = In+2;
-    uintT* edges = In+2+n;
-
-    parallel_for (0, n, [&] (size_t i) {
-	uintT o = offsets[i];
-	uintT l = ((i == n-1) ? m : offsets[i+1])-offsets[i];
-	v[i].degree = l;
-	v[i].Neighbors = (intT*)(edges+o);
-      });
-    return graph<intT>(v,(intT)n,(uintT)m,(intT*)In);
+    //generate vertices
+    sequence<vertex<intT>> V(0, n, [&] (size_t i) {
+	return vertex<intT>(E.begin() + offsets[i],
+			    offsets[i+1] - offsets[i]);});
+    return graph<intT>(V, n, m, E);
   }
 
   pbbs::sequence<char> mmapStringFromFile(const char *filename) {
