@@ -18,10 +18,6 @@ INCLUDE = -Icommon -Ipbbslib
 $(BENCH) : $(TIME).o $(OBJS) $(CHECK) testInputs
 	$(CC) $(LFLAGS) -o $@ $(TIME).o $(OBJS) $(LIBS)
 
-# The generic benchmark timer
-$(TIME).o : $(TIME).C
-	cd ../bench; make -s $(TIME).o
-
 # The check code
 $(CHECK) : $(CHECK).C
 	cd ../bench; make -s $(BENCH)Check
