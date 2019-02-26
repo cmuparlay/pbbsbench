@@ -45,11 +45,11 @@ void loop(int rounds, F initf, G runf) {
 }
   
 template <class T>
-void timeIntegerSort(sequence<T> A, int rounds, char* outFile) {
+void timeIntegerSort(sequence<T> A, int rounds, int bits, char* outFile) {
   sequence<T> R;
   loop(rounds,
        [&] () {R.clear();},
-       [&] () {R = int_sort(A);});
+       [&] () {R = int_sort(A, bits);});
   if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 
@@ -58,6 +58,7 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
+  int bits = P.getOptionIntValue("-b",0);
   startTime();
   seqData D = readSequenceFromFile(iFile);
   elementType dt = D.dt;
@@ -65,9 +66,12 @@ int main(int argc, char* argv[]) {
   using upair = pair<uint,int>;
   switch (dt) {
   case intType: 
-    timeIntegerSort<uint>(sequence<uint>((uint*) D.A, D.n), rounds, oFile); break;
+    timeIntegerSort<uint>(sequence<uint>((uint*) D.A, D.n),
+			  rounds, bits, oFile);
+    break;
   case intPairT: 
-    timeIntegerSort<upair>(sequence<upair>((upair*) D.A, D.n), rounds, oFile);  break;
+    timeIntegerSort<upair>(sequence<upair>((upair*) D.A, D.n),
+			   rounds, bits, oFile);  break;
   default:
     cout << "integer Sort: input file not of right type" << endl;
     return(1);

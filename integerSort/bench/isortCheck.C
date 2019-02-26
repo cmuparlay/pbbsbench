@@ -34,7 +34,7 @@ template <class T, class LESS>
 void checkIntegerSort(void* In, void* Out, size_t n, LESS less) {
   T* A = (T*) In;
   T* B = (T*) Out;
-  auto AA = pbbs::make_slice(A,A+n);
+  pbbs::range<T*> AA(A,A+n);
   pbbs::sample_sort_inplace(AA, less, true);
   //std::stable_sort(A, A+n, less);
   size_t error = n;
@@ -52,7 +52,7 @@ template <class T, class LESS>
 void checkIntegerSortPair(void* In, void* Out, size_t n, LESS less) {
   T* A = (T*) In;
   T* B = (T*) Out;
-  auto AA = pbbs::make_slice(A,A+n);
+  pbbs::range<T*> AA(A,A+n);
   pbbs::sample_sort_inplace(AA, less, true);
   //std::stable_sort(A, A+n, less);
   size_t error = n;

@@ -65,10 +65,10 @@ struct edgeArray {
   size_t numRows;
   size_t numCols;
   size_t nonZeros;
-  void del() {}
   edgeArray(pbbs::sequence<edge<intT>> EE, size_t r, size_t c) :
     E(std::move(EE)), numRows(r), numCols(c), nonZeros(E.size()) {}
   edgeArray() {}
+  edge<intT> operator[] (const size_t i) const {return E[i];}
 };
 
 // **************************************************************
