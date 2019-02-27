@@ -36,34 +36,31 @@
 using namespace std;
 
 template <class intT>
-wghEdgeArray<intT> addRandWeights(edgeArray<intT> G) {
+wghEdgeArray<intT> addRandWeights(edgeArray<intT> const &G) {
+  pbbs::random r(257621);
   intT m = G.nonZeros;
   intT n = G.numRows;
-  wghEdge<intT> *E = newA(wghEdge<intT>, m);
-  for (intT i=0; i < m; i++) {
-    E[i].u = G.E[i].u;
-    E[i].v = G.E[i].v;
-    E[i].weight = utils::hashInt(i);
-  }
-  return wghEdgeArray<intT>(E, n, m);
+  sequence<wghEdge<intT>> E(m, [&] (size_t i) {
+      return wghEdge<intT>(G.E[i].u, G.E[i].v, r[i]);});
+  return wghEdgeArray<intT>(std::move(E), n);
 }
 
-template <class intT>
-edgeArray<intT> edgesFromSparse(sparseRowMajor<double,intT> M) {
-  pbbs::sequence<edge<intT>> E(M.nonZeros);
-  intT k = 0;
-  for (intT i=0; i < M.numRows; i++) {
-    for (intT j=M.Starts[i]; j < M.Starts[i+1]; j++) {
-      if (M.Values[j] != 0.0) {
-	E[k].u = i;
-	E[k].v = M.ColIds[j];
-	k++;
-      }
-    }
-  }
-  intT nonZeros = k;
-  return edgeArray<intT>(std::move(E), M.numRows, M.numCols);
-}
+// template <class intT>
+// edgeArray<intT> edgesFromSparse(sparseRowMajor<double,intT> M) {
+//   pbbs::sequence<edge<intT>> E(M.nonZeros);
+//   intT k = 0;
+//   for (intT i=0; i < M.numRows; i++) {
+//     for (intT j=M.Starts[i]; j < M.Starts[i+1]; j++) {
+//       if (M.Values[j] != 0.0) {
+// 	E[k].u = i;
+// 	E[k].v = M.ColIds[j];
+// 	k++;
+//       }
+//     }
+//   }
+//   intT nonZeros = k;
+//   return edgeArray<intT>(std::move(E), M.numRows, M.numCols);
+// }
 
 edgeArray<intT> randomShuffle(edgeArray<intT> const &A) {
   auto E =  pbbs::random_shuffle(A.E);
@@ -80,9 +77,6 @@ edgeArray<intT> remDuplicates(edgeArray<intT> const &A) {
 }
 
 template <class intT>
-struct nEQF {bool operator() (edge<intT> e) const {return (e.u != e.v);}};
-
-template <class intT>
 edgeArray<intT> makeSymmetric(edgeArray<intT> const &A) {
   pbbs::sequence<edge<intT>> EF = pbbs::filter(A.E, [&] (edge<intT> e) {
       return e.u != e.v;});
@@ -91,9 +85,6 @@ edgeArray<intT> makeSymmetric(edgeArray<intT> const &A) {
   return remDuplicates(edgeArray<intT>(pbbs::append(EF, FE),
 				       A.numRows, A.numCols));
 }
-
-template <class intT>
-struct getuF {intT operator() (edge<intT> e) const {return e.u;} };
 
 template <class intT>
 struct getuEdge {intT operator() (wghEdge<intT> e) const {return e.u;} };
@@ -122,29 +113,23 @@ graph<intT> graphFromEdges(edgeArray<intT> const &EA, bool makeSym) {
 }
 
 template <class intT>
-wghGraph<intT> wghGraphFromEdges(wghEdgeArray<intT> EA) {
-  intT m = EA.m;
-  intT n = EA.n;
-  wghEdge<intT> *E = newA(wghEdge<intT>,m);
-  parallel_for (0, m, [&] (size_t i) {E[i] = EA.E[i];});
-  wghEdgeArray<intT> A = wghEdgeArray<intT>(E,n,m);
-  pbbs::sequence<size_t> offsets; // = intSort::iSort(A.E,m,n,getuEdge<intT>());
-  intT *X = newA(intT,m);
-  intT *weights = newA(intT,m);
-  wghVertex<intT> *v = newA(wghVertex<intT>,n);
-  parallel_for (0, n, [&] (size_t i) {
-    intT o = offsets[i];
-    intT l = ((i == n-1) ? m : offsets[i+1])-offsets[i];
-    v[i].degree = l;
-    v[i].Neighbors = X+o;
-    v[i].nghWeights = weights+o;
-    for (intT j=0; j < l; j++) {
-      v[i].Neighbors[j] = A.E[o+j].v;
-      v[i].nghWeights[j] = A.E[o+j].weight;
-    }
-    });
-  A.del();
-  return wghGraph<intT>(v,n,m,X,weights);
+wghGraph<intT> wghGraphFromEdges(wghEdgeArray<intT> const &A) {
+  intT n = A.n;
+  intT m = A.m;
+
+  pbbs::sequence<size_t> counts;
+  pbbs::sequence<intT> offsets;
+  pbbs::sequence<wghEdge<intT>> E;
+  size_t nn;
+  auto getu = [&] (wghEdge<intT> e) {return e.u;};
+  std::tie(E, counts) = pbbs::integer_sort_with_counts(A.E, getu, n);
+  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intT>(n+1, [&] (size_t i) {
+	return (i == n) ? 0 : counts[i];}), pbbs::addm<intT>());
+
+  return wghGraph<intT>(std::move(offsets),
+			sequence<intT>(m, [&] (size_t i) {return E[i].v;}),
+			sequence<intT>(m, [&] (size_t i) {return E[i].weight;}),
+			n);
 }
 
 template <class intT>
@@ -163,25 +148,25 @@ edgeArray<intT> edgesFromGraph(graph<intT> const &G) {
   return edgeArray<intT>(std::move(E), numRows, numRows);
 }
 
-template <class eType, class intT>
-sparseRowMajor<eType,intT> sparseFromGraph(graph<intT> G) {
-  intT numRows = G.n;
-  intT nonZeros = G.m;
-  vertex<intT>* V = G.V;
-  intT *Starts = newA(intT,numRows+1);
-  intT *ColIds = newA(intT,nonZeros);
-  intT start = 0;
-  for (intT i = 0; i < numRows; i++) {
-    Starts[i] = start;
-    start += V[i].degree;
-  }
-  Starts[numRows] = start;
-  parallel_for (0, numRows, [&] (size_t j) {
-    for (intT i = 0; i < (Starts[j+1] - Starts[j]); i++) {
-      ColIds[Starts[j]+i] = V[j].Neighbors[i];
-    }});
-  return sparseRowMajor<eType,intT>(numRows,numRows,nonZeros,Starts,ColIds,NULL);
-}
+// template <class eType, class intT>
+// sparseRowMajor<eType,intT> sparseFromGraph(graph<intT> G) {
+//   intT numRows = G.n;
+//   intT nonZeros = G.m;
+//   vertex<intT>* V = G.V;
+//   intT *Starts = newA(intT,numRows+1);
+//   intT *ColIds = newA(intT,nonZeros);
+//   intT start = 0;
+//   for (intT i = 0; i < numRows; i++) {
+//     Starts[i] = start;
+//     start += V[i].degree;
+//   }
+//   Starts[numRows] = start;
+//   parallel_for (0, numRows, [&] (size_t j) {
+//     for (intT i = 0; i < (Starts[j+1] - Starts[j]); i++) {
+//       ColIds[Starts[j]+i] = V[j].Neighbors[i];
+//     }});
+//   return sparseRowMajor<eType,intT>(numRows,numRows,nonZeros,Starts,ColIds,NULL);
+// }
 
 // offset for start of each vertex if flattening the edge listd
 template <class intT>
@@ -241,31 +226,31 @@ int graphCheckConsistency(graph<intT> const &Gr) {
   }
 }
 
-template <class intT>
-sparseRowMajor<double,intT> sparseFromCsrFile(const char* fname) {
-  FILE *f = fopen(fname,"r");
-  if (f == NULL) {
-    cout << "Trying to open nonexistant file: " << fname << endl;
-    abort();
-  }
+// template <class intT>
+// sparseRowMajor<double,intT> sparseFromCsrFile(const char* fname) {
+//   FILE *f = fopen(fname,"r");
+//   if (f == NULL) {
+//     cout << "Trying to open nonexistant file: " << fname << endl;
+//     abort();
+//   }
 
-  intT numRows;  intT numCols;  intT nonZeros;
-  intT nc = fread(&numRows, sizeof(intT), 1, f);
-  nc = fread(&numCols, sizeof(intT), 1, f);
-  nc = fread(&nonZeros, sizeof(intT), 1, f); 
+//   intT numRows;  intT numCols;  intT nonZeros;
+//   intT nc = fread(&numRows, sizeof(intT), 1, f);
+//   nc = fread(&numCols, sizeof(intT), 1, f);
+//   nc = fread(&nonZeros, sizeof(intT), 1, f); 
 
-  double *Values = (double *) malloc(sizeof(double)*nonZeros);
-  intT *ColIds = (intT *) malloc(sizeof(intT)*nonZeros);
-  intT *Starts = (intT *) malloc(sizeof(intT)*(1 + numRows));
-  Starts[numRows] = nonZeros;
+//   double *Values = (double *) malloc(sizeof(double)*nonZeros);
+//   intT *ColIds = (intT *) malloc(sizeof(intT)*nonZeros);
+//   intT *Starts = (intT *) malloc(sizeof(intT)*(1 + numRows));
+//   Starts[numRows] = nonZeros;
 
-  size_t r;
-  r = fread(Values, sizeof(double), nonZeros, f);
-  r = fread(ColIds, sizeof(intT), nonZeros, f);
-  r = fread(Starts, sizeof(intT), numRows, f); 
-  fclose(f);
-  return sparseRowMajor<double,intT>(numRows,numCols,nonZeros,Starts,ColIds,Values);
-}
+//   size_t r;
+//   r = fread(Values, sizeof(double), nonZeros, f);
+//   r = fread(ColIds, sizeof(intT), nonZeros, f);
+//   r = fread(Starts, sizeof(intT), numRows, f); 
+//   fclose(f);
+//   return sparseRowMajor<double,intT>(numRows,numCols,nonZeros,Starts,ColIds,Values);
+// }
 
 // The following two are used by the graph generators to write out in either format
 // and either with reordering or not

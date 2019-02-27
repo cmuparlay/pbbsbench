@@ -17,15 +17,6 @@ namespace utils {
     }
   }
 
-  // returns the log base 2 rounded up (works on ints or longs or unsigned versions)
-  template <class T>
-  static int log2Up(T i) {
-    int a=0;
-    T b=i-1;
-    while (b > 0) {b = b >> 1; a++;}
-    return a;
-  }
-
   inline unsigned int hash(unsigned int a)
   {
     a = (a+0x7ed55d16) + (a<<12);
@@ -41,66 +32,66 @@ namespace utils {
     return hash(a) & (((unsigned) 1 << 31) - 1);
   }
 
-  template <class E>
-  struct identityF { E operator() (const E& x) {return x;}};
+  // template <class E>
+  // struct identityF { E operator() (const E& x) {return x;}};
 
-  template <class E>
-  struct addF { E operator() (const E& a, const E& b) const {return a+b;}};
+  // template <class E>
+  // struct addF { E operator() (const E& a, const E& b) const {return a+b;}};
 
-  template <class E>
-  struct absF { E operator() (const E& a) const {return std::abs(a);}};
+  // template <class E>
+  // struct absF { E operator() (const E& a) const {return std::abs(a);}};
 
-  template <class E>
-  struct zeroF { E operator() (const E& a) const {return 0;}};
+  // template <class E>
+  // struct zeroF { E operator() (const E& a) const {return 0;}};
 
-  template <class E>
-  struct maxF { E operator() (const E& a, const E& b) const {return (a>b) ? a : b;}};
+  // template <class E>
+  // struct maxF { E operator() (const E& a, const E& b) const {return (a>b) ? a : b;}};
 
-  template <class E>
-  struct minF { E operator() (const E& a, const E& b) const {return (a<b) ? a : b;}};
+  // template <class E>
+  // struct minF { E operator() (const E& a, const E& b) const {return (a<b) ? a : b;}};
 
-  template <class E1, class E2>
-  struct firstF {E1 operator() (std::pair<E1,E2> a) {return a.first;} };
+  // template <class E1, class E2>
+  // struct firstF {E1 operator() (std::pair<E1,E2> a) {return a.first;} };
 
-  template <class E1, class E2>
-  struct secondF {E2 operator() (std::pair<E1,E2> a) {return a.second;} };
+  // template <class E1, class E2>
+  // struct secondF {E2 operator() (std::pair<E1,E2> a) {return a.second;} };
 
 }
 
-template <class T>
-struct _seq {
-  T* A;
-  long n;
-  _seq() {A = NULL; n=0;}
-  _seq(T* _A, long _n) : A(_A), n(_n) {}
-  void del() {free(A);}
-};
+// template <class T>
+// struct _seq {
+//   T* A;
+//   long n;
+//   _seq() {A = NULL; n=0;}
+//   _seq(T* _A, long _n) : A(_A), n(_n) {}
+//   void del() {free(A);}
+// };
 
-namespace osequence {
+// namespace osequence {
 
-  template <class ET, class intT, class F>
-  ET scan(ET *In, ET* Out, intT n, F f, ET zero) {
-    if (In == Out)
-      return pbbs::scan_inplace(pbbs::range<ET*>(In,In+n),pbbs::make_monoid(f,zero));
-    else {
-      std::cout << "NYI in scan" << std::endl;
-      return zero;
-    }
-  }
+//   template <class ET, class intT, class F>
+//   ET scan(ET *In, ET* Out, intT n, F f, ET zero) {
+//     if (In == Out)
+//       return pbbs::scan_inplace(pbbs::range<ET*>(In,In+n),pbbs::make_monoid(f,zero));
+//     else {
+//       std::cout << "NYI in scan" << std::endl;
+//       return zero;
+//     }
+//   }
 
-  template <class ET>
-  ET plusScan(ET *In, ET* Out, size_t n) {
-    return scan(In, Out, n, [&] (ET a, ET b) {return a + b;}, (ET) 0);
-  }
+//   template <class ET>
+//   ET plusScan(ET *In, ET* Out, size_t n) {
+//     return scan(In, Out, n, [&] (ET a, ET b) {return a + b;}, (ET) 0);
+//   }
   
-  template <class ET, class PRED>
-  size_t filter(ET* In, ET* Out, size_t n, PRED p) {
-    pbbs::sequence<ET> r = pbbs::filter(pbbs::range<ET*>(In,In+n), p);
-    parallel_for(0, r.size(), [&] (size_t i) {Out[i] = r[i];});
-    return r.size();
-  }
+//   template <class ET, class PRED>
+//   size_t filter(ET* In, ET* Out, size_t n, PRED p) {
+//     pbbs::sequence<ET> r = pbbs::filter(pbbs::range<ET*>(In,In+n), p);
+//     parallel_for(0, r.size(), [&] (size_t i) {Out[i] = r[i];});
+//     return r.size();
+//   }
 
-};
+// };
 
 namespace dataGen {
 
@@ -126,8 +117,8 @@ namespace dataGen {
 
 };
 
-template <class HASH, class ET>
-_seq<ET> removeDuplicates(_seq<ET> S, HASH hashF) {
-  return pbbs::remove_duplicates(pbbs::range<ET*>(S.A, S.A+S.n), hashF);
-}
+// template <class HASH, class ET>
+// _seq<ET> removeDuplicates(_seq<ET> S, HASH hashF) {
+//   return pbbs::remove_duplicates(pbbs::range<ET*>(S.A, S.A+S.n), hashF);
+// }
 

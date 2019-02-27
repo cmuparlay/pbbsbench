@@ -31,19 +31,19 @@
 //    SPARSE ROW MAJOR REPRESENTATION
 // **************************************************************
 
-template <class ETYPE, class intT>
-struct sparseRowMajor {
-  intT numRows;
-  intT numCols;
-  intT nonZeros;
-  intT* Starts;
-  intT* ColIds;
-  ETYPE* Values;
-  void del() {free(Starts); free(ColIds); if (Values != NULL) free(Values);}
-  sparseRowMajor(intT n, intT m, intT nz, intT* S, intT* C, ETYPE* V) :
-    numRows(n), numCols(m), nonZeros(nz), 
-    Starts(S), ColIds(C), Values(V) {}
-};
+// template <class ETYPE, class intT>
+// struct sparseRowMajor {
+//   intT numRows;
+//   intT numCols;
+//   intT nonZeros;
+//   intT* Starts;
+//   intT* ColIds;
+//   ETYPE* Values;
+//   void del() {free(Starts); free(ColIds); if (Values != NULL) free(Values);}
+//   sparseRowMajor(intT n, intT m, intT nz, intT* S, intT* C, ETYPE* V) :
+//     numRows(n), numCols(m), nonZeros(nz), 
+//     Starts(S), ColIds(C), Values(V) {}
+// };
 
 //typedef sparseRowMajor<double> sparseRowMajorD;
 
@@ -87,8 +87,10 @@ template <class intT>
 struct wghEdgeArray {
   pbbs::sequence<wghEdge<intT>> E;
   intT n; intT m;
-  wghEdgeArray(pbbs::sequence<wghEdge<intT>> E, intT n) : E(E), n(n) {}
-  void del() {}
+  wghEdgeArray(pbbs::sequence<wghEdge<intT>> E_, intT n) 
+    : E(std::move(E_)), n(n), m(E.size()) {}
+  wghEdgeArray() {}
+  wghEdge<intT> operator[] (const size_t i) const {return E[i];}
 };
 
 // **************************************************************
@@ -99,7 +101,6 @@ template <class intT>
 struct vertex {
   intT* Neighbors;
   intT degree;
-  void del() {free(Neighbors);}
   vertex(intT* N, intT d) : Neighbors(N), degree(d) {}
   vertex() : Neighbors(NULL), degree(0) {}
 };
@@ -119,65 +120,50 @@ struct graph {
     return vertex<intT>(edges.begin() + offsets[i],
 			offsets[i+1] - offsets[i]);}
   
-  graph(pbbs::sequence<intT> offsets_, pbbs::sequence<intT> edges_, size_t n) 
+  graph(pbbs::sequence<intT> offsets_,
+	pbbs::sequence<intT> edges_,
+	size_t n) 
     : offsets(std::move(offsets_)), edges(std::move(edges_)), n(n), m(edges.size()) {
     if (offsets.size() != n + 1) { cout << "error in graph constructor" << endl;}
   }
 };
 
-template <class intT, class intE>
-struct graphC {
-  long n,m;
-  pbbs::sequence<intT> offsets;
-  pbbs::sequence<intE> edges;
-  graphC(pbbs::sequence<intT> offsets, pbbs::sequence<intE> edges)
-    : offsets(offsets), edges(edges), n(offsets.size()-1), m(edges.size()) {}
-  graphC copy() {return graphC(offsets, edges);}
-  size_t degree(size_t i) {return offsets[i+1] - offsets[i]; }
-};
+// **************************************************************
+//    WEIGHTED ADJACENCY ARRAY REPRESENTATION
+// **************************************************************
 
 template <class intT>
 struct wghVertex {
   intT* Neighbors;
   intT degree;
   intT* nghWeights;
-  void del() {free(Neighbors); free(nghWeights);}
   wghVertex(intT* N, intT* W, intT d) : Neighbors(N), nghWeights(W), degree(d) {}
 };
 
 template <class intT>
 struct wghGraph {
-  wghVertex<intT> *V;
+  pbbs::sequence<intT> offsets;
+  pbbs::sequence<intT> edges;
+  pbbs::sequence<intT> weights;
   intT n;
   uintT m;
-  intT* allocatedInplace;
-  intT* weights;
-  wghGraph(wghVertex<intT>* VV, intT nn, uintT mm) 
-    : V(VV), n(nn), m(mm), allocatedInplace(NULL) {
-    cout << "double check correctness in wghGraph" << endl;}
-  wghGraph(wghVertex<intT>* VV, intT nn, uintT mm, intT* ai, intT* _weights) 
-    : V(VV), n(nn), m(mm), allocatedInplace(ai), weights(_weights) {}
-  wghGraph copy() {
-    wghVertex<intT>* VN = newA(wghVertex<intT>,n);
-    intT* Edges = newA(intT,m);
-    intT* Weights = newA(intT,m);
-    intT k = 0;
-    for (intT i=0; i < n; i++) {
-      VN[i] = V[i];
-      VN[i].Neighbors = Edges + k;
-      VN[i].nghWeights = Weights + k;
-      for (intT j =0; j < V[i].degree; j++){ 
-	Edges[k] = V[i].Neighbors[j];
-	Weights[k++] = V[i].nghWeights[j];
-      }
-    }
-    return wghGraph(VN, n, m, Edges, Weights);
-  } 
-  void del() {
-    if (allocatedInplace == NULL) 
-      for (intT i=0; i < n; i++) V[i].del();
-    else { pbbs::free_array(allocatedInplace); }
-    pbbs::free_array(V);
+  size_t numVertices() const {return n;}
+  size_t numEdges() const {return m;}
+  const pbbs::sequence<intT>& get_offsets() const {
+    return offsets;
+  }
+  vertex<intT> operator[] (const size_t i) const {
+    return wghVertex<intT>(edges.begin() + offsets[i],
+			   weights.begin() + offsets[i],
+			   offsets[i+1] - offsets[i]);}
+  wghGraph(pbbs::sequence<intT> offsets_,
+	   pbbs::sequence<intT> edges_,
+	   pbbs::sequence<intT> weights_,
+	   size_t n) 
+    : offsets(std::move(offsets_)), edges(std::move(edges_)),
+      weights(std::move(weights_)), n(n), m(edges.size()) {
+    if (offsets.size() != n + 1 || weights.size() != edges.size()) {
+      cout << "error in weighted graph constructor" << endl;}
   }
 };
 

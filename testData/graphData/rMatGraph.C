@@ -39,10 +39,10 @@ struct rMat {
        double _a, double _b, double _c) {
     n = _n; a = _a; ab = _a + _b; abc = _a+_b+_c;
     h = dataGen::hash<uintT>(_seed);
-    utils::myAssert(abc <= 1.0,
-		    "in rMat: a + b + c add to more than 1");
-    utils::myAssert((1 << utils::log2Up(n)) == n, 
-		    "in rMat: n not a power of 2");
+    pbbs::assert(abc <= 1.0,
+		 "in rMat: a + b + c add to more than 1");
+    pbbs::assert((1 << pbbs::log2_up(n)) == n, 
+		 "in rMat: n not a power of 2");
   }
 
   edge<intT> rMatRec(intT nn, intT randStart, intT randStride) {
@@ -67,7 +67,7 @@ struct rMat {
 template <class intT>
 edgeArray<intT> edgeRmat(intT n, intT m, intT seed, 
 		   float a, float b, float c) {
-  intT nn = (1 << utils::log2Up(n));
+  intT nn = (1 << pbbs::log2_up(n));
   rMat<intT> g(nn,seed,a,b,c);
   sequence<edge<intT>> E(m, [&] (size_t i) {return g(i);});
   return edgeArray<intT>(std::move(E), nn, nn);

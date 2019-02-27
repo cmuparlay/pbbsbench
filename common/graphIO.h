@@ -79,7 +79,7 @@ namespace benchIO {
     intT m = G.numEdges();
     intT n = G.numVertices();
     intT totalLen = 2 + n + m;
-    sequence<intT> Out(totalLen);
+    pbbs::sequence<intT> Out(totalLen);
     Out[0] = n;
     Out[1] = m;
 
@@ -104,26 +104,27 @@ namespace benchIO {
     intT m = G.m;
     intT n = G.n;
     intT totalLen = 2 + n + m*2;
-    intT *Out = newA(intT, totalLen);
+    pbbs::sequence<intT> Out(totalLen);
     Out[0] = n;
     Out[1] = m;
+
+    // write offsets to Out[2,..,2+n)
+    auto offsets = G.get_offsets();
     parallel_for (0, n, [&] (size_t i) {
-	Out[i+2] = G.V[i].degree;
+	Out[i+2] = offsets[i];});
+
+    // write out edges to Out[2+n,..,2+n+m)
+    // and weights to Out[2+n+m,..,2+n+2*m)
+    parallel_for(0, n, [&] (size_t i) {
+	size_t o = offsets[i] + 2 + n;
+	vertex<intT> v = G[i];
+	for (intT j = 0; j < v.degree; j++) {
+	  Out[o + j] = v.Neighbors[j];
+	  Out[j+m] = v.nghWeights[j]; }
       });
-    intT total = osequence::scan(Out+2,Out+2,n,utils::addF<intT>(),(intT)0);
-    for (intT i=0; i < n; i++) {
-      intT *O = Out + (2 + n + Out[i+2]);
-      wghVertex<intT> v = G.V[i];
-      for (intT j = 0; j < v.degree; j++) {
-	O[j] = v.Neighbors[j];
-	O[j+m] = v.nghWeights[j];
-      }
-    }
     int r = writeArrayToFile(WghAdjGraphHeader, Out, totalLen, fname);
-    free(Out);
     return r;
   }
-
 
   template <class intT>
   int writeEdgeArrayToFile(edgeArray<intT> const &EA, char* fname) {
@@ -133,9 +134,9 @@ namespace benchIO {
   }
 
   template <class intT>
-  int writeWghEdgeArrayToFile(wghEdgeArray<intT> EA, char* fname) {
+  int writeWghEdgeArrayToFile(wghEdgeArray<intT> const &EA, char* fname) {
     uintT m = EA.m;
-    int r = writeArrayToFile(WghEdgeArrayHeader, EA.E, m, fname);
+    int r = writeArrayToFile(WghEdgeArrayHeader, EA.E.begin(), m, fname);
     return r;
   }
 
@@ -152,13 +153,12 @@ namespace benchIO {
 	return edge<intT>(atol(W[2*i + 1]),
 			  atol(W[2*i + 2]));});
 
-    intT maxR = 0;
-    intT maxC = 0;
-    for (long i=0; i < n; i++) {
-      maxR = max<intT>(maxR, E[i].u);
-      maxC = max<intT>(maxC, E[i].v);
-    }
-    intT maxrc = max<intT>(maxR,maxC) + 1;
+    auto mon = pbbs::make_monoid([&] (edge<intT> a, edge<intT> b) {
+	return edge<intT>(std::max(a.u, b.u), std::max(a.v, b.v));},
+      edge<intT>(0,0));
+    auto r = pbbs::reduce(E, mon);
+
+    intT maxrc = std::max(r.u, r.v) + 1;
     return edgeArray<intT>(E, maxrc, maxrc);
   }
 
@@ -171,19 +171,17 @@ namespace benchIO {
       abort();
     }
     long n = (W.size()-1)/3;
-    wghEdge<intT> *E = newA(wghEdge<intT>,n);
-    parallel_for(0, n, [&] (size_t i) {
-	E[i] = wghEdge<intT>(atol(W[3*i + 1]),
+    pbbs::sequence<wghEdge<intT>> E(n, [&] (size_t i) {
+	return wghEdge<intT>(atol(W[3*i + 1]),
 			     atol(W[3*i + 2]),
 			     atof(W[3*i + 3]));});
 
-    intT maxR = 0;
-    intT maxC = 0;
-    for (long i=0; i < n; i++) {
-      maxR = max<intT>(maxR, E[i].u);
-      maxC = max<intT>(maxC, E[i].v);
-    }
-    return wghEdgeArray<intT>(E, max<intT>(maxR,maxC)+1, n);
+    auto mon = pbbs::make_monoid([&] (wghEdge<intT> a, wghEdge<intT> b) {
+	return wghEdge<int>(std::max(a.u, b.u), std::max(a.v, b.v), 0);},
+      wghEdge<intT>(0,0,0));
+    auto r = pbbs::reduce(E, mon);
+
+    return wghEdgeArray<intT>(E, max<intT>(r.u, r.v) + 1);
   }
 
   template <class intT>
@@ -206,14 +204,10 @@ namespace benchIO {
     // tags on m at the end (so n+1 total offsets)
     sequence<intT> offsets(n+1, [&] (size_t i) {
 	return (i == n) ? m : atol(W[i+3]);});
-    sequence<intT> E(m, [&] (size_t i) {
+    sequence<intT> edges(m, [&] (size_t i) {
 	return atol(W[n+i+3]);});
 
-    //generate vertices
-    sequence<vertex<intT>> V(0, n, [&] (size_t i) {
-	return vertex<intT>(E.begin() + offsets[i],
-			    offsets[i+1] - offsets[i]);});
-    return graph<intT>(V, n, m, E);
+    return graph<intT>(std::move(offsets), std::move(edges), n);
   }
 
   pbbs::sequence<char> mmapStringFromFile(const char *filename) {
@@ -244,47 +238,47 @@ namespace benchIO {
     return pbbs::sequence<char>(p, n);
   }
 
-  template <class intT, class intE>
-  graphC<intT, intE> readGraphCFromFile(char* fname, bool mmap=false) {
+  // template <class intT, class intE>
+  // graphC<intT, intE> readGraphCFromFile(char* fname, bool mmap=false) {
 
-    pbbs::sequence<char*> W;
-    if (mmap) {
-      cout << "mmapping file" << endl;
-      pbbs::sequence<char> S = mmapStringFromFile(fname);
-      // copy to new sequence
-      pbbs::sequence<char> bytes = S;
-      // and unmap
-      if (munmap(S.begin(), S.size()) == -1) {
-        perror("munmap");
-        exit(-1);
-      }
-      W = stringToWords(S);
-      cout << "mmap'd" << endl;
-    } else {
-      auto S = readStringFromFile(fname);
-      W = stringToWords(S);
-    }
+  //   pbbs::sequence<char*> W;
+  //   if (mmap) {
+  //     cout << "mmapping file" << endl;
+  //     pbbs::sequence<char> S = mmapStringFromFile(fname);
+  //     // copy to new sequence
+  //     pbbs::sequence<char> bytes = S;
+  //     // and unmap
+  //     if (munmap(S.begin(), S.size()) == -1) {
+  //       perror("munmap");
+  //       exit(-1);
+  //     }
+  //     W = stringToWords(S);
+  //     cout << "mmap'd" << endl;
+  //   } else {
+  //     auto S = readStringFromFile(fname);
+  //     W = stringToWords(S);
+  //   }
 
-    if (W[0] != AdjGraphHeader) {
-      cout << "Bad input file: missing header: " << AdjGraphHeader << endl;
-      abort();
-    }
+  //   if (W[0] != AdjGraphHeader) {
+  //     cout << "Bad input file: missing header: " << AdjGraphHeader << endl;
+  //     abort();
+  //   }
 
-    // num vertices, num edges, edge offsets, edge pointers
-    long len = W.size() -1;
-    long n = atol(W[1]);
-    long m = atol(W[2]);
-    if (len != n + m + 2) {
-      cout << "Bad input file: length = "<<len<< " n+m+2 = " << n+m+2 << endl;
-      abort();
-    }
-    sequence<intT> offsets(n+1, [&] (size_t i) {
-	return (i == n) ? m : atol(W[i+3]);});
-    sequence<intE> edges(m, [&] (size_t i) {
-	return atol(W[n+i+3]);});
+  //   // num vertices, num edges, edge offsets, edge pointers
+  //   long len = W.size() -1;
+  //   long n = atol(W[1]);
+  //   long m = atol(W[2]);
+  //   if (len != n + m + 2) {
+  //     cout << "Bad input file: length = "<<len<< " n+m+2 = " << n+m+2 << endl;
+  //     abort();
+  //   }
+  //   sequence<intT> offsets(n+1, [&] (size_t i) {
+  // 	return (i == n) ? m : atol(W[i+3]);});
+  //   sequence<intE> edges(m, [&] (size_t i) {
+  // 	return atol(W[n+i+3]);});
 
-    return graphC<intT,intE>(offsets,edges,n,m);
-  }
+  //   return graphC<intT,intE>(offsets,edges,n,m);
+  // }
 
   template <class intT>
   wghGraph<intT> readWghGraphFromFile(char* fname) {
@@ -295,28 +289,21 @@ namespace benchIO {
       abort();
     }
 
-    long len = W.size() -1;
-    sequence<intT> In(len, [&] (size_t i) {
-	return atol(W[i + 1]);});
-
-    // num vertices, num edges, edge offsets, edge pointers, weights
-    long n = In[0];
-    long m = In[1];
-    auto offsets = In.slice(2,2+n);
-    auto edges = In.slice(2+n,2+n+m);
-    auto weights = In.slice(2+n+m, 2+n+2*m);
-
-    if (len != n + 2*m + 2) {
-      cout << "Bad input file" << endl; abort();}
+    long n = atol(W[1]);
+    long m = atol(W[2]);
+    if (W.size() != n + 2*m + 3) {
+      cout << "Bad input file: length = "<< W.size() << " n + 2*m + 3 = " << n+2*m+3 << endl;
+      abort(); }
     
-    sequence<wghVertex<intT>> v(n, [&] (size_t i) {
-	uintT o = offsets[i];
-	uintT l = ((i == n-1) ? m : offsets[i+1])-offsets[i];
-	return wghVertex<intT>(edges.begin() + o,
-			       weights.begin() + o,
-			       l);
-      });
-    return wghGraph<intT>(v.to_array(), n, m, In.to_array(), weights);
+    // tags on m at the end (so n+1 total offsets)
+    sequence<intT> offsets(n+1, [&] (size_t i) {
+	return (i == n) ? m : atol(W[i+3]);});
+    sequence<intT> edges(m, [&] (size_t i) {
+	return atol(W[n+i+3]);});
+    sequence<intT> weights(m, [&] (size_t i) {
+	return atol(W[n+i+3+m]);});
+
+    return graph<intT>(std::move(offsets), std::move(edges), std::move(weights), n);
   }
 
   void errorOut(const char* s) {

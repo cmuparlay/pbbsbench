@@ -39,15 +39,6 @@ int main(int argc, char* argv[]) {
   char* oFile = fnames.second;
 
   edgeArray<intT> In = readEdgeArrayFromFile<intT>(iFile);
-  intT m = In.nonZeros;
-  intT n = max(In.numCols, In.numRows);
-  edge<intT>* E = In.E;
-  wghEdge<intT>* WE = newA(wghEdge<intT>, m);
-  parallel_for(0, m, [&] (size_t i) {
-      WE[i] = wghEdge<intT>(E[i].u, E[i].v, dataGen::hash<double>(i));
-    });
-  In.del();
-  int r = writeWghEdgeArrayToFile<intT>(wghEdgeArray<intT>(WE,n,m), oFile);
-  free(WE);
-  return r;
+  wghEdgeArray<intT> Out = addRandWeights(In);
+  return writeWghEdgeArrayToFile<intT>(Out, oFile);
 }
