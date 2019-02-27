@@ -8,7 +8,7 @@ using namespace benchIO;
 using namespace std;
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv," [-w] -o <outFile>");
+  commandLine P(argc,argv,"[-w] -o <outFile> <inflile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   bool weighted = P.getOptionValue("-w");

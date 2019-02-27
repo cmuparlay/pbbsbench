@@ -25,7 +25,9 @@
 #include <iostream>
 #include <algorithm>
 #include "../pbbslib/parallel.h"
-#include "glue.h"
+#include "../pbbslib/sequence.h"
+using intT = int;
+using uintT = unsigned int;
 
 // **************************************************************
 //    SPARSE ROW MAJOR REPRESENTATION
@@ -80,7 +82,7 @@ struct wghEdge {
   intT u, v;
   double weight;
   wghEdge() {}
-  wghEdge(intT _u, intT _v, double w) : u(_u), v(_v), weight(w) {}
+  wghEdge(intT _u, intT _v, float w) : u(_u), v(_v), weight(w) {}
 };
 
 template <class intT>
@@ -152,7 +154,7 @@ struct wghGraph {
   const pbbs::sequence<intT>& get_offsets() const {
     return offsets;
   }
-  vertex<intT> operator[] (const size_t i) const {
+  wghVertex<intT> operator[] (const size_t i) const {
     return wghVertex<intT>(edges.begin() + offsets[i],
 			   weights.begin() + offsets[i],
 			   offsets[i+1] - offsets[i]);}

@@ -26,7 +26,6 @@
 #include <cstring>
 #include "../pbbslib/parallel.h"
 #include "IO.h"
-#include "glue.h"
 
 #include <sys/mman.h>
 #include <stdio.h>
@@ -117,12 +116,12 @@ namespace benchIO {
     // and weights to Out[2+n+m,..,2+n+2*m)
     parallel_for(0, n, [&] (size_t i) {
 	size_t o = offsets[i] + 2 + n;
-	vertex<intT> v = G[i];
+	wghVertex<intT> v = G[i];
 	for (intT j = 0; j < v.degree; j++) {
 	  Out[o + j] = v.Neighbors[j];
-	  Out[j+m] = v.nghWeights[j]; }
+	  Out[o + m + j] = v.nghWeights[j]; }
       });
-    int r = writeArrayToFile(WghAdjGraphHeader, Out, totalLen, fname);
+    int r = writeArrayToFile(WghAdjGraphHeader, Out.begin(), totalLen, fname);
     return r;
   }
 
@@ -330,154 +329,155 @@ namespace benchIO {
     in.read(buf, 8);
     return unpackInt64((uint8_t*)buf);
   }
-  template<typename intT>
-  void writeFlowGraph(ostream& out, FlowGraph<intT> g) {
-    char buf[8];
-    out.write("FLOWFLOW", 8);
-    writeInt(out, buf, g.g.n);
-    writeInt(out, buf, g.g.m);
-    writeInt(out, buf, g.source);
-    writeInt(out, buf, g.sink);
-    intT o = 0;
-    for (intT i = 0; i < g.g.n; ++i) {
-      writeInt(out, buf, o);
-      o += g.g.V[i].degree;
-    }
-    for (intT i = 0; i < g.g.n; ++i) {
-      wghVertex<intT>& v = g.g.V[i];
-      for (intT j = 0; j < v.degree; ++j) {
-        writeInt(out, buf, v.Neighbors[j]);
-        writeInt(out, buf, v.nghWeights[j]);
-      }
-    }
-  }
-  template<typename intT>
-  FlowGraph<intT> readFlowGraph(istream& in) {
-    char buf[10];
-    in.read(buf, 8);
-    buf[8] = 0;
-    if (strcmp(buf, "FLOWFLOW"))
-      errorOut("Invalid flow graph input file");
-    intT n = readInt(in, buf);
-    intT m = readInt(in, buf);
-    intT S = readInt(in, buf);
-    intT T = readInt(in, buf);
-    intT *offset = newA(intT, n);
-    intT* adj = newA(intT, m);
-    intT* weights = newA(intT, m);
-    wghVertex<intT>* v = newA(wghVertex<intT>, n);
-    for (intT i = 0; i < n; ++i) {
-      offset[i] = readInt(in, buf);
-      v[i].Neighbors = adj + offset[i];
-      v[i].nghWeights = weights + offset[i];
-      if (i > 0)
-        v[i - 1].degree = offset[i] - offset[i - 1];
-    }
-    v[n - 1].degree = m - offset[n - 1];
-    free(offset);
-    for (intT i = 0; i < m; ++i) {
-      adj[i] = readInt(in, buf);
-      weights[i] = readInt(in, buf);
-    }
-    return FlowGraph<intT>(wghGraph<intT>(v, n, m, adj, weights), S, T);
-  }
 
-  const char nl = '\n';
-  template <typename intT>
-  FlowGraph<intT> writeFlowGraphDimacs(ostream& out, FlowGraph<intT> g) {
-    out << "c DIMACS flow network description" << nl;
-    out << "c (problem-id, nodes, arcs)" << nl;
-    out << "p max " << g.g.n << " " << g.g.m << nl;
+  // template<typename intT>
+  // void writeFlowGraph(ostream& out, FlowGraph<intT> g) {
+  //   char buf[8];
+  //   out.write("FLOWFLOW", 8);
+  //   writeInt(out, buf, g.g.n);
+  //   writeInt(out, buf, g.g.m);
+  //   writeInt(out, buf, g.source);
+  //   writeInt(out, buf, g.sink);
+  //   intT o = 0;
+  //   for (intT i = 0; i < g.g.n; ++i) {
+  //     writeInt(out, buf, o);
+  //     o += g.g.V[i].degree;
+  //   }
+  //   for (intT i = 0; i < g.g.n; ++i) {
+  //     wghVertex<intT>& v = g.g.V[i];
+  //     for (intT j = 0; j < v.degree; ++j) {
+  //       writeInt(out, buf, v.Neighbors[j]);
+  //       writeInt(out, buf, v.nghWeights[j]);
+  //     }
+  //   }
+  // }
+  // template<typename intT>
+  // FlowGraph<intT> readFlowGraph(istream& in) {
+  //   char buf[10];
+  //   in.read(buf, 8);
+  //   buf[8] = 0;
+  //   if (strcmp(buf, "FLOWFLOW"))
+  //     errorOut("Invalid flow graph input file");
+  //   intT n = readInt(in, buf);
+  //   intT m = readInt(in, buf);
+  //   intT S = readInt(in, buf);
+  //   intT T = readInt(in, buf);
+  //   intT *offset = newA(intT, n);
+  //   intT* adj = newA(intT, m);
+  //   intT* weights = newA(intT, m);
+  //   wghVertex<intT>* v = newA(wghVertex<intT>, n);
+  //   for (intT i = 0; i < n; ++i) {
+  //     offset[i] = readInt(in, buf);
+  //     v[i].Neighbors = adj + offset[i];
+  //     v[i].nghWeights = weights + offset[i];
+  //     if (i > 0)
+  //       v[i - 1].degree = offset[i] - offset[i - 1];
+  //   }
+  //   v[n - 1].degree = m - offset[n - 1];
+  //   free(offset);
+  //   for (intT i = 0; i < m; ++i) {
+  //     adj[i] = readInt(in, buf);
+  //     weights[i] = readInt(in, buf);
+  //   }
+  //   return FlowGraph<intT>(wghGraph<intT>(v, n, m, adj, weights), S, T);
+  // }
 
-    out << "c source" << nl;
-    out << "n " << g.source + 1 << " s" << nl;
-    out << "c sink" << nl;
-    out << "n " << g.sink + 1 << " t" << nl;
+  // const char nl = '\n';
+  // template <typename intT>
+  // FlowGraph<intT> writeFlowGraphDimacs(ostream& out, FlowGraph<intT> g) {
+  //   out << "c DIMACS flow network description" << nl;
+  //   out << "c (problem-id, nodes, arcs)" << nl;
+  //   out << "p max " << g.g.n << " " << g.g.m << nl;
 
-    out << "c arc description (from, to, capacity)" << nl;
+  //   out << "c source" << nl;
+  //   out << "n " << g.source + 1 << " s" << nl;
+  //   out << "c sink" << nl;
+  //   out << "n " << g.sink + 1 << " t" << nl;
 
-    for (intT i = 0; i < g.g.n; ++i) {
-      wghVertex<intT>& v = g.g.V[i];
-      for (intT j = 0; j < v.degree; ++j) {
-        out << "a " << i + 1 << " " << v.Neighbors[j] + 1 << " "
-            << v.nghWeights[j] << nl;
-      }
-    }
-  }
+  //   out << "c arc description (from, to, capacity)" << nl;
 
-  template<typename intT>
-  struct intWghEdge {
-    intT from, to, w;
-  };
-  int readDimacsLinePref(istream& in, const char* expected) {
-    char type;
-    while (in >> type) {
-      if (type == 'c') {
-        while (in.peek() != EOF && in.peek() != '\n')
-          in.ignore();
-        in >> ws;
-        continue;
-      } else if (!strchr(expected, type)) {
-        errorOut((string("Unexpected DIMACS line (expected 'c' or one of '")
-		  + expected + "')").c_str());
-      }
-      return type;
-    }
-    return EOF;
-  }
+  //   for (intT i = 0; i < g.g.n; ++i) {
+  //     wghVertex<intT>& v = g.g.V[i];
+  //     for (intT j = 0; j < v.degree; ++j) {
+  //       out << "a " << i + 1 << " " << v.Neighbors[j] + 1 << " "
+  //           << v.nghWeights[j] << nl;
+  //     }
+  //   }
+  // }
 
-  template <typename intT>
-  FlowGraph<intT> readFlowGraphDimacs(istream& in) {
-    string tmp;
-    intT n, m;
-    int type = readDimacsLinePref(in, "p");
-    if (type == EOF)
-      errorOut("Unexpected EOF while reading DIMACS file");
-    in >> tmp >> n >> m;
-    intWghEdge<intT>* edges = newA(intWghEdge<intT>, m);
-    intT edgei = 0;
-    intT* pos = newA(intT, n + 1);
-    intT S = -1, T = -1;
-    while (EOF != (type = readDimacsLinePref(in, "an"))) {
-      if (type == 'n') {
-        intT x;
-        char st;
-        in >> x >> st;
-        x--;
-        if (st == 's') S = x;
-        else T = x;
-      } else { // type == 'a'
-        intT from, to, cap;
-        in >> from >> to >> cap;
-        from--; to--;
-        edges[edgei] = (intWghEdge<intT>) { from, to, cap };
-        edgei++;
-        pos[from + 1]++;
-      }
-    }
-    if (S < 0)
-      errorOut("No source was specified in DIMACS input file");
-    if (T < 0)
-      errorOut("No sink was specified in DIMACS input file");
-    if (m != edgei)
-      errorOut("Inconsistent edge count in DIMACS input file");
-    intT* adj = newA(intT, m);
-    intT* weights = newA(intT, m);
-    wghVertex<intT>* v = newA(wghVertex<intT>, n);
-    for (intT i = 0; i < n; ++i) {
-      pos[i + 1] += pos[i];
-      v[i].Neighbors = adj + pos[i];
-      v[i].nghWeights = weights + pos[i];
-      v[i].degree = pos[i + 1] - pos[i];
-    }
-    for (intT i = 0; i < m; ++i) {
-      intT& p = pos[edges[i].from];
-      adj[p] = edges[i].to;
-      weights[p] = edges[i].w;
-      p++;
-    }
-    free(edges);
-    free(pos);
-    return FlowGraph<intT>(wghGraph<intT>(v, n, m, adj, weights), S, T);
-  }
+  // template<typename intT>
+  // struct intWghEdge {
+  //   intT from, to, w;
+  // };
+  // int readDimacsLinePref(istream& in, const char* expected) {
+  //   char type;
+  //   while (in >> type) {
+  //     if (type == 'c') {
+  //       while (in.peek() != EOF && in.peek() != '\n')
+  //         in.ignore();
+  //       in >> ws;
+  //       continue;
+  //     } else if (!strchr(expected, type)) {
+  //       errorOut((string("Unexpected DIMACS line (expected 'c' or one of '")
+  // 		  + expected + "')").c_str());
+  //     }
+  //     return type;
+  //   }
+  //   return EOF;
+  // }
+
+  // template <typename intT>
+  // FlowGraph<intT> readFlowGraphDimacs(istream& in) {
+  //   string tmp;
+  //   intT n, m;
+  //   int type = readDimacsLinePref(in, "p");
+  //   if (type == EOF)
+  //     errorOut("Unexpected EOF while reading DIMACS file");
+  //   in >> tmp >> n >> m;
+  //   intWghEdge<intT>* edges = newA(intWghEdge<intT>, m);
+  //   intT edgei = 0;
+  //   intT* pos = newA(intT, n + 1);
+  //   intT S = -1, T = -1;
+  //   while (EOF != (type = readDimacsLinePref(in, "an"))) {
+  //     if (type == 'n') {
+  //       intT x;
+  //       char st;
+  //       in >> x >> st;
+  //       x--;
+  //       if (st == 's') S = x;
+  //       else T = x;
+  //     } else { // type == 'a'
+  //       intT from, to, cap;
+  //       in >> from >> to >> cap;
+  //       from--; to--;
+  //       edges[edgei] = (intWghEdge<intT>) { from, to, cap };
+  //       edgei++;
+  //       pos[from + 1]++;
+  //     }
+  //   }
+  //   if (S < 0)
+  //     errorOut("No source was specified in DIMACS input file");
+  //   if (T < 0)
+  //     errorOut("No sink was specified in DIMACS input file");
+  //   if (m != edgei)
+  //     errorOut("Inconsistent edge count in DIMACS input file");
+  //   intT* adj = newA(intT, m);
+  //   intT* weights = newA(intT, m);
+  //   wghVertex<intT>* v = newA(wghVertex<intT>, n);
+  //   for (intT i = 0; i < n; ++i) {
+  //     pos[i + 1] += pos[i];
+  //     v[i].Neighbors = adj + pos[i];
+  //     v[i].nghWeights = weights + pos[i];
+  //     v[i].degree = pos[i + 1] - pos[i];
+  //   }
+  //   for (intT i = 0; i < m; ++i) {
+  //     intT& p = pos[edges[i].from];
+  //     adj[p] = edges[i].to;
+  //     weights[p] = edges[i].w;
+  //     p++;
+  //   }
+  //   free(edges);
+  //   free(pos);
+  //   return FlowGraph<intT>(wghGraph<intT>(v, n, m, adj, weights), S, T);
+  // }
 };

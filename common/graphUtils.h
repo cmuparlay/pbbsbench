@@ -27,13 +27,35 @@
 #include <cstdlib>
 #include <math.h>
 #include "graph.h"
-#include "glue.h"
 #include "../pbbslib/parallel.h"
 #include "../pbbslib/quicksort.h"
 #include "../pbbslib/stlalgs.h"
 #include "../pbbslib/random_shuffle.h"
+#include "../pbbslib/integer_sort.h"
 
 using namespace std;
+
+namespace dataGen {
+
+#define HASH_MAX_INT ((unsigned) 1 << 31)
+
+  //#define HASH_MAX_LONG ((unsigned long) 1 << 63)
+
+  template <class T> T hash(intT i);
+  
+  template <>
+  inline intT hash<intT>(intT i) {
+    return pbbs::hash32(i) & (HASH_MAX_INT-1);}
+
+  template <>
+  inline uintT hash<uintT>(intT i) {
+    return pbbs::hash32(i);}
+
+  template <>
+  inline double hash<double>(intT i) {
+    return ((double) hash<intT>(i)/((double) HASH_MAX_INT));}
+
+};
 
 template <class intT>
 wghEdgeArray<intT> addRandWeights(edgeArray<intT> const &G) {
@@ -41,7 +63,7 @@ wghEdgeArray<intT> addRandWeights(edgeArray<intT> const &G) {
   intT m = G.nonZeros;
   intT n = G.numRows;
   sequence<wghEdge<intT>> E(m, [&] (size_t i) {
-      return wghEdge<intT>(G.E[i].u, G.E[i].v, r[i]);});
+      return wghEdge<intT>(G.E[i].u, G.E[i].v, dataGen::hash<double>(i));});
   return wghEdgeArray<intT>(std::move(E), n);
 }
 
@@ -128,7 +150,8 @@ wghGraph<intT> wghGraphFromEdges(wghEdgeArray<intT> const &A) {
 
   return wghGraph<intT>(std::move(offsets),
 			sequence<intT>(m, [&] (size_t i) {return E[i].v;}),
-			sequence<intT>(m, [&] (size_t i) {return E[i].weight;}),
+			sequence<intT>(m, [&] (size_t i) {
+			    return (intT) 1000000000 * E[i].weight;}),
 			n);
 }
 
