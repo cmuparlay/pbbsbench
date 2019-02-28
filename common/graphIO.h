@@ -158,7 +158,7 @@ namespace benchIO {
     auto r = pbbs::reduce(E, mon);
 
     intT maxrc = std::max(r.u, r.v) + 1;
-    return edgeArray<intT>(E, maxrc, maxrc);
+    return edgeArray<intT>(std::move(E), maxrc, maxrc);
   }
 
   template <class intT>
@@ -180,7 +180,7 @@ namespace benchIO {
       wghEdge<intT>(0,0,0));
     auto r = pbbs::reduce(E, mon);
 
-    return wghEdgeArray<intT>(E, max<intT>(r.u, r.v) + 1);
+    return wghEdgeArray<intT>(std::move(E), max<intT>(r.u, r.v) + 1);
   }
 
   template <class intT>
