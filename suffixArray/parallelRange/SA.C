@@ -54,11 +54,6 @@ struct seg {
   seg(uintT s, uintT l) : start(s), length(l) {}
 };
 
-struct isSeg {bool operator() (seg s) const {return s.length > 1;}};
-
-struct pairCompF {
-  bool operator() (intpair A, intpair B) const { return A.first < B.first;}};
-
 template <typename kvpair>
 void splitSegment(seg *segOut, uintT start, uintT l, uintT* ranks, kvpair *Cs) {
   if (l < 5000) { // sequential version
@@ -80,7 +75,8 @@ void splitSegment(seg *segOut, uintT start, uintT l, uintT* ranks, kvpair *Cs) {
     segOut[l-1] = seg(name+start,l-name);
 
   } else { // parallel version
-    uintT *names = pbbs::new_array_no_init<uintT>(l);
+    //uintT *names = pbbs::new_array_no_init<uintT>(l);
+    pbbs::sequence<uintT> names(l);
 
     // mark start of each segment with equal keys
     parallel_for (1, l, [&] (size_t i) {
@@ -88,8 +84,8 @@ void splitSegment(seg *segOut, uintT start, uintT l, uintT* ranks, kvpair *Cs) {
     names[0] = 0;
 
     // scan start i across each segment
-    pbbs::range<uintT*> snames(names,names+l);
-    pbbs::scan_inplace(snames.slice(), pbbs::maxm<uintT>(),
+    //pbbs::range<uintT*> snames(names,names+l);
+    pbbs::scan_inplace(names.slice(), pbbs::maxm<uintT>(),
 		       pbbs::fl_scan_inclusive);
 
     // write new rank into original location
@@ -104,12 +100,13 @@ void splitSegment(seg *segOut, uintT start, uintT l, uintT* ranks, kvpair *Cs) {
       });
     segOut[l-1] = seg(start+names[l-1],l-names[l-1]);
 
-    pbbs::free_array(names);
+    //pbbs::free_array(names);
   }
 }  
 
 intpair* splitSegmentTop(seg *segOut, uintT n, uintT* ranks, long_int *Cs) {
-  uintT *names = pbbs::new_array_no_init<uintT>(n);
+  //uintT *names = pbbs::new_array_no_init<uintT>(n);
+  pbbs::sequence<uintT> names(n); 
   size_t mask = ((((size_t) 1) << 32) - 1);
 
   // mark start of each segment with equal keys
@@ -119,8 +116,8 @@ intpair* splitSegmentTop(seg *segOut, uintT n, uintT* ranks, long_int *Cs) {
   nextTimeM("names");
 
   // scan start i across each segment
-  pbbs::range<uintT*> snames(names,names+n);
-  pbbs::scan_inplace(snames.slice(), pbbs::maxm<uintT>(),
+  //pbbs::range<uintT*> snames(names,names+n);
+  pbbs::scan_inplace(names.slice(), pbbs::maxm<uintT>(),
 		     pbbs::fl_scan_inclusive);
 
   intpair *C = pbbs::new_array_no_init<intpair>(n);
@@ -140,7 +137,7 @@ intpair* splitSegmentTop(seg *segOut, uintT n, uintT* ranks, long_int *Cs) {
   segOut[n-1] = seg(names[n-1],n-names[n-1]);
 
   nextTimeM("segments");
-  pbbs::free_array(names);
+  //pbbs::free_array(names);
   return C;
 }
 
@@ -149,22 +146,22 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
   
   // renumber characters densely
   // start numbering at 1 leaving 0 to indicate end-of-string
-  // pad the end of string with 0s
   size_t pad = 48;
-  uchar *s = pbbs::new_array_no_init<uchar>(n+pad);
-  uintT flags[256];
-  for (uintT i=0; i < 256; i++) flags[i] = 0;
+  sequence<uintT> flags(256, (uintT) 0);
   parallel_for (0, n, [&] (size_t i) {
       if (!flags[ss[i]]) flags[ss[i]] = 1;});
-  pbbs::range<uintT*> sflags(flags,flags+256);
   auto add = [&] (uintT a, uintT b) {return a + b;};
-  uintT m = pbbs::scan_inplace(sflags.slice(), pbbs::make_monoid(add,(uintT) 1));
+  uintT m;
+  std::tie(flags, m) =
+    pbbs::scan(flags, pbbs::make_monoid(add,(uintT) 1));
+
 #ifdef printInfo
   cout << "m = " << m << " n = " << n << endl;
 #endif
-  parallel_for (0, n, [&] (size_t i) {
-      s[i] = flags[ss[i]];});
-  for (uintT i=n; i < n + pad; i++) s[i] = 0;
+
+  // pad the end of string with 0s
+  pbbs::sequence<uchar> s(n + pad, [&] (size_t i) {
+      return (i < n) ? flags[ss[i]] : 0;});
 
   // pack characters into 128-bit word, along with the location i
   // 96 bits for characters, and 32 for location
@@ -176,7 +173,6 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
       for (uintT j=1; j < nchars; j++) r = r*m + s[i+j];
       return (r << 32) + i;
     });
-  pbbs::free_array(s);
   nextTimeM("copy");
   
   // sort based on packed words
@@ -189,8 +185,6 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
   intpair *C = splitSegmentTop(segOuts, n, ranks, Cl.begin());
   Cl.clear();
   nextTimeM("split");
-    
-  uintT *offsets = pbbs::new_array_no_init<uintT>(n);
 
   uintT offset = nchars;
   uint round =0;
@@ -206,13 +200,14 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
 					    is_seg);
     uintT nSegs = Segs.size();
     if (nSegs == 0) break;
-      
+
 #ifdef printInfo
     cout << "nSegs = " << nSegs << " nKeys = " << nKeys 
 	 << " common length = " << offset << endl;
 #endif
     nextTimeM("filter and scan");    
 
+    pbbs::sequence<uintT> offsets(nSegs);
     parallel_for (0, nSegs, [&] (size_t i) {
 	uintT start = Segs[i].start;
 	intpair *Ci = C + start;
@@ -225,11 +220,10 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
 	auto less = [&] (intpair A, intpair B) {return A.first < B.first;};
 	if (l >= n/10) pbbs::sample_sort(Ci, l, less);
 	else pbbs::quicksort(Ci, l, less);
-      }, 100);
+      }); 
     nextTimeM("sort");
 
-    pbbs::range<uintT*> soffsets(offsets, offsets + nSegs);
-    nKeys = pbbs::scan_inplace(soffsets.slice(), pbbs::addm<uintT>());
+    nKeys = pbbs::scan_inplace(offsets.slice(), pbbs::addm<uintT>());
 
     parallel_for (0, nSegs, [&] (size_t i) {
 	uintT start = Segs[i].start;
@@ -241,9 +235,8 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
     offset = 2 * offset;
   }
   parallel_for (0, n, [&] (size_t i) {ranks[i] = C[i].second;});
-  pbbs::delete_array(C,n);
-  pbbs::delete_array(segOuts,n);
-  pbbs::free_array(offsets);
+  pbbs::free_array(C);
+  pbbs::free_array(segOuts);
   return ranks;
 }
 
