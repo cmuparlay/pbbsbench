@@ -19,22 +19,20 @@ pair<intT*,intT> st(edgeArray<intT> const &EA){
   edge<intT>* E = EA.E.begin();
   intT m = EA.nonZeros;
   intT n = EA.numRows;
-  intT *parents = newA(intT,n);
-  for(intT i=0;i<n;i++) parents[i] = -1;
-  intT* st = newA(intT,m);
+  intT *parents = pbbs::new_array<intT>(n);
+  for(intT i=0; i<n; i++) parents[i] = -1;
+  intT* st = pbbs::new_array<intT>(n);
   intT nInSt = 0; 
   for(intT i = 0; i < m; i++){
     intT u = find(E[i].u,parents);
     intT v = find(E[i].v,parents);
     if(u != v){
-      //union by rank -- join shallower
-      //tree to deeper tree
-      if(parents[v] < parents[u]) swap(u,v);
+      if (parents[v] < parents[u]) swap(u,v);
       parents[u] += parents[v];
       parents[v] = u;
       st[nInSt++] = i;
     }
   }  
-  free(parents); 
+  pbbs::free_array(parents); 
   return pair<intT*,intT>(st, nInSt);
 }

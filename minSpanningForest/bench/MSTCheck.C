@@ -24,54 +24,54 @@
 #include <algorithm>
 #include <cstring>
 #include "parallel.h"
+#include "IO.h"
 #include "graph.h"
 #include "graphIO.h"
 #include "parse_command_line.h"
-#include "sequence.h"
-#include "ST.h"
+#include "MST.h"
+
 using namespace std;
-using namespace benchIO;
 
-using intT = int;
-
-// The serial spanning tree used for checking against
-//pair<int*,int> st(edgeArray<int> EA);
-
-// This needs to be augmented with a proper check
-
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) { 
   commandLine P(argc,argv,"<inFile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
   char* oFile = fnames.second;
-
-  edgeArray<intT> In = readEdgeArrayFromFile<intT>(iFile);
+  wghEdgeArray<intT> In = readWghEdgeArrayFromFile<intT>(iFile);
   pbbs::sequence<intT> Out = readIntArrayFromFile<intT>(oFile);
   intT n = Out.size();
-
-  //run serial ST
-  pair<intT*,intT> serialST = st(In);
-  pbbs::free_array(serialST.first);
-  if (n != serialST.second){
-    cout << "Wrong edge count: ST has " << serialST.second
+  intT in_m = In.m;
+  //check num edges
+  pair<intT*,intT> serialMST = mst(In);
+  if (n != serialMST.second) {
+    cout << "Wrong edge count: MST has " << serialMST.second
 	 << " edges but algorithm returned " << n << " edges\n";
+    return (1);
+    }
+  
+  //check for cycles
+  sequence<bool> flags(in_m, false);
+  parallel_for(0, n, [&] (size_t i) {flags[Out[i]] = true;});
+  
+  pbbs::sequence<wghEdge<intT>> E = pbbs::pack(In.E, flags);
+  wghEdgeArray<intT> EA(std::move(E), In.n);
+  
+  pair<intT*,intT> check = mst(EA);
+  if (n != check.second){
+    cout << "Result is not a spanning forest : it has a cycle" << endl;
     return (1);
   }
   
-  //check if ST has cycles by running serial ST on it
-  //and seeing if result changes
-  pbbs::sequence<bool> flags(In.nonZeros, false);
-  parallel_for(0, n, [&] (size_t i) {
-      flags[Out[i]] = true;});
-  pbbs::sequence<edge<intT>> E = pbbs::pack(In.E, flags);
-  size_t m = E.size();
-  
-  edgeArray<intT> EA(std::move(E), In.numRows, In.numCols); 
-  pair<intT*,intT> check = st(EA);
-  pbbs::free_array(check.first);
+  // check total weight
+  double total1 = pbbs::reduce(pbbs::delayed_seq<double>(n, [&] (size_t i) {
+	return In[Out[i]].weight;}), pbbs::addm<double>());
 
-  if (m != check.second){
-    cout << "Result is not a spanning tree " << endl;
+  double total2 = pbbs::reduce(pbbs::delayed_seq<double>(n, [&] (size_t i) {
+	return In[serialMST.first[i]].weight;}), pbbs::addm<double>());
+
+  if(total1 != total2) {
+    cout << "MST has a weight of " << total1 <<
+      " but should have a weight of " << total2 << endl;
     return (1);
   }
 
