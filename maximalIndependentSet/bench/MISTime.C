@@ -28,28 +28,30 @@
 #include "IO.h"
 #include "graphIO.h"
 #include "parse_command_line.h"
-#include "MST.h"
+#include "MIS.h"
 using namespace std;
 using namespace benchIO;
 
-void timeMST(wghEdgeArray<intT> const &In, int rounds, char* outFile) {
+void timeMIS(graph<intT> const &G, int rounds, char* outFile) {
   timer t;
-  pbbs::sequence<intT> Out;
-  for (intT i=0; i < rounds; i++) {
-    Out.clear();
+  sequence<char> flags = maximalIndependentSet(G);
+  for (int i=0; i < rounds; i++) {
+    flags.clear();
     t.start();
-    Out = mst(In);
+    flags = maximalIndependentSet(G);
     t.next("");
   }
   cout << endl;
-  if (outFile != NULL) writeIntSeqToFile(Out, outFile);
+
+  sequence<int> F(G.n, [&] (size_t i) {return flags[i];});
+  writeIntSeqToFile(F, outFile);
 }
-    
+
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc, argv, "[-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  wghEdgeArray<intT> EA = readWghEdgeArrayFromFile<intT>(iFile);
-  timeMST(EA, rounds, oFile);
+  graph<intT> G = readGraphFromFile<intT>(iFile);
+  timeMIS(G, rounds, oFile);
 }

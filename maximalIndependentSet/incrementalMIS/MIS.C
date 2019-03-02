@@ -20,36 +20,50 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#define NOTMAIN 1
 #include <iostream>
-#include <algorithm>
-#include "get_time.h"
+#include "sequence.h"
 #include "graph.h"
 #include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
-#include "MST.h"
+#include "speculative_for.h"
+#include "get_time.h"
 using namespace std;
-using namespace benchIO;
 
-void timeMST(wghEdgeArray<intT> const &In, int rounds, char* outFile) {
-  timer t;
-  pbbs::sequence<intT> Out;
-  for (intT i=0; i < rounds; i++) {
-    Out.clear();
-    t.start();
-    Out = mst(In);
-    t.next("");
+// **************************************************************
+//    MAXIMAL INDEPENDENT SET
+// **************************************************************
+
+// For each vertex:
+//   Flags = 0 indicates undecided
+//   Flags = 1 indicates chosen
+//   Flags = 2 indicates a neighbor is chosen
+struct MISstep {
+  char flag;
+  pbbs::sequence<char> &Flags;
+  graph<intT> const &G;
+  MISstep(pbbs::sequence<char> & F, graph<intT> &G) : Flags(F), G(G) {}
+
+  bool reserve(intT i) {
+    intT d = G[i].degree;
+    flag = 1;
+    for (intT j = 0; j < d; j++) {
+      intT ngh = G[i].Neighbors[j];
+      if (ngh < i) {
+	if (Flags[ngh] == 1) { flag = 2; return 1;}
+	// need to wait for higher priority neighbor to decide
+	else if (Flags[ngh] == 0) flag = 0; 
+      }
+    }
+    return 1;
   }
-  cout << endl;
-  if (outFile != NULL) writeIntSeqToFile(Out, outFile);
-}
-    
-int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
-  char* iFile = P.getArgument(0);
-  char* oFile = P.getOptionValue("-o");
-  int rounds = P.getOptionIntValue("-r",1);
-  wghEdgeArray<intT> EA = readWghEdgeArrayFromFile<intT>(iFile);
-  timeMST(EA, rounds, oFile);
+
+  bool commit(intT i) { return (Flags[i] = flag) > 0;}
+};
+
+pbbs::sequence<char> maximalIndependentSet(graph<intT> GS) {
+  intT n = GS.n;
+  pbbs::sequence<char> Flags(n, (char) 0);
+  MISstep mis(Flags, GS);
+  speculative_for(mis, 0, n, 20);
+  return Flags;
 }

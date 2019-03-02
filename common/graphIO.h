@@ -94,7 +94,7 @@ namespace benchIO {
 	for (intT j = 0; j < v.degree; j++)
 	  Out[o + j] = v.Neighbors[j];
       });
-    int r = writeArrayToFile(AdjGraphHeader, Out.begin(), totalLen, fname);
+    int r = writeSeqToFile(AdjGraphHeader, Out, fname);
     return r;
   }
 
@@ -121,22 +121,18 @@ namespace benchIO {
 	  Out[o + j] = v.Neighbors[j];
 	  Out[o + m + j] = v.nghWeights[j]; }
       });
-    int r = writeArrayToFile(WghAdjGraphHeader, Out.begin(), totalLen, fname);
+    int r = writeSeqToFile(WghAdjGraphHeader, Out, fname);
     return r;
   }
 
   template <class intT>
   int writeEdgeArrayToFile(edgeArray<intT> const &EA, char* fname) {
-    intT m = EA.nonZeros;
-    int r = writeArrayToFile(EdgeArrayHeader, EA.E.begin(), m, fname);
-    return r;
+    return writeSeqToFile(EdgeArrayHeader, EA.E, fname);
   }
 
   template <class intT>
   int writeWghEdgeArrayToFile(wghEdgeArray<intT> const &EA, char* fname) {
-    uintT m = EA.m;
-    int r = writeArrayToFile(WghEdgeArrayHeader, EA.E.begin(), m, fname);
-    return r;
+    return writeSeqToFile(WghEdgeArrayHeader, EA.E, fname);
   }
 
   template <class intT>

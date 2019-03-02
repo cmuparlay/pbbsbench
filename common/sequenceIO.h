@@ -64,7 +64,7 @@ namespace benchIO {
     case stringIntPairT: return "sequenceStringIntPair";
     case doublePairT: return "sequenceDoublePair";
     default: 
-      cout << "writeArrayToFile: type not supported" << endl; 
+      cout << "writeSeqToFile: type not supported" << endl; 
       abort();
     }
   }
@@ -79,16 +79,13 @@ namespace benchIO {
   struct seqData { 
     void* A;
     long n;
-    elementType dt; 
-    char* O; // used for strings to store pointer to character array
-    seqData(void* _A, long _n, elementType _dt) : 
-      A(_A), O(NULL), n(_n), dt(_dt) {}
-    seqData(void* _A, char* _O, long _n, elementType _dt) : 
-      A(_A), O(_O), n(_n), dt(_dt) {}
-    void del() {
-      if (O) free(O);
-      free(A);
-    }
+    elementType dt;
+    sequence<char> s;  // backup store if A has pointers to strings
+    seqData(void* A, long n, elementType dt) 
+      : A(A), s(sequence<char>()), n(n), dt(dt) {}
+    seqData(void* A, sequence<char> s, long n, elementType dt)
+      : A(A), s(std::move(s)), n(n), dt(dt) {}
+    void clear() {pbbs:free_array(A); A = NULL; n = 0;}
   };
 
   seqData readSequenceFromFile(char* fileName) {
@@ -98,46 +95,29 @@ namespace benchIO {
     long n = W.size()-1;
 
     if (header == seqHeader(intType)) {
-      int* A = pbbs::new_array_no_init<int>(n);
-      parallel_for(0, n, [&] (long i) {
-	  A[i] = atoi(W[i+1]);});
-      return seqData((void*) A, n, intType);
+      sequence<int> A(n, [&] (long i) {return atoi(W[i+1]);});
+      return seqData((void*) A.to_array(), n, intType);
     } else if (header == seqHeader(doubleT)) {
-      double* A = pbbs::new_array_no_init<double>(n);
-      parallel_for(0, n, [&] (long i) {
-	  A[i] = atof(W[i+1]);});
-      return seqData((void*) A, n, doubleT);
+      sequence<double> A(n, [&] (long i) {return atof(W[i+1]);});
+      return seqData((void*) A.to_array(), n, doubleT);
     } else if (header == seqHeader(stringT)) {
-      char** A = pbbs::new_array_no_init<char*>(n);
-      parallel_for(0, n, [&] (long i) {
-	  A[i] = W[i+1];});
-      char* s = S.to_array();
-      return seqData((void*) A, s, n, stringT);
+      sequence<char*> A(n, [&] (long i) {return W[i+1];});
+      return seqData((void*) A.to_array(), std::move(S), n, stringT);
     } else if (header == seqHeader(intPairT)) {
       n = n/2;
-      intPair* A = pbbs::new_array_no_init<intPair>(n);
-      parallel_for (0, n, [&] (long i) {
-	A[i].first = atoi(W[2*i+1]);
-	A[i].second = atoi(W[2*i+2]);
-	});
-      return seqData((void*) A, n, intPairT);
+      sequence<intPair> A(n, [&] (long i) {
+	  return std::make_pair(atoi(W[2*i+1]), atoi(W[2*i+2]));});
+      return seqData((void*) A.to_array(), n, intPairT);
     } else if (header == seqHeader(doublePairT)) {
       n = n/2;
-      doublePair* A = pbbs::new_array_no_init<doublePair>(n);
-      parallel_for (0, n, [&] (long i) {
-	A[i].first = atof(W[2*i+1]);
-	A[i].second = atof(W[2*i+2]);
-	});
-      return seqData((void*) A, n, doublePairT);
+      sequence<doublePair> A(n, [&] (long i) {
+	  return std::make_pair(atof(W[2*i+1]), atof(W[2*i+2]));});
+      return seqData((void*) A.to_array(), n, intPairT);
     } else if (header == seqHeader(stringIntPairT)) {
       n = n/2;
-      stringIntPair* A = pbbs::new_array_no_init<stringIntPair>(n);
-      parallel_for (0, n, [&] (long i) {
-	A[i].first = W[2*i+1];
-	A[i].second = atoi(W[2*i+2]);
-	});
-      char* s = S.to_array();
-      return seqData((void*) A, s, n, stringIntPairT);
+      sequence<stringIntPair> A(n, [&] (long i) {
+	  return std::make_pair(W[2*i+1], atoi(W[2*i+2]));});
+      return seqData((void*) A.to_array(), std::move(S), n, stringT);
     }
     abort();
   }
@@ -145,7 +125,7 @@ namespace benchIO {
   template <class T>
   int writeSequenceToFile(sequence<T> const &A, char* fileName) {
     elementType tp = dataType(A[0]);
-    return writeArrayToFile(seqHeader(tp), A.begin(), A.size(), fileName);
+    return writeSeqToFile(seqHeader(tp), A, fileName);
   }
 
 };

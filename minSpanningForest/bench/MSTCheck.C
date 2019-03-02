@@ -38,13 +38,13 @@ int main(int argc, char* argv[]) {
   char* iFile = fnames.first;
   char* oFile = fnames.second;
   wghEdgeArray<intT> In = readWghEdgeArrayFromFile<intT>(iFile);
-  pbbs::sequence<intT> Out = readIntArrayFromFile<intT>(oFile);
+  pbbs::sequence<intT> Out = readIntSeqFromFile<intT>(oFile);
   intT n = Out.size();
   intT in_m = In.m;
   //check num edges
-  pair<intT*,intT> serialMST = mst(In);
-  if (n != serialMST.second) {
-    cout << "Wrong edge count: MST has " << serialMST.second
+  pbbs::sequence<intT> serialMST = mst(In);
+  if (n != serialMST.size()) {
+    cout << "Wrong edge count: MST has " << serialMST.size()
 	 << " edges but algorithm returned " << n << " edges\n";
     return (1);
     }
@@ -56,8 +56,8 @@ int main(int argc, char* argv[]) {
   pbbs::sequence<wghEdge<intT>> E = pbbs::pack(In.E, flags);
   wghEdgeArray<intT> EA(std::move(E), In.n);
   
-  pair<intT*,intT> check = mst(EA);
-  if (n != check.second){
+  pbbs::sequence<intT> check = mst(EA);
+  if (n != check.size()){
     cout << "Result is not a spanning forest : it has a cycle" << endl;
     return (1);
   }
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
 	return In[Out[i]].weight;}), pbbs::addm<double>());
 
   double total2 = pbbs::reduce(pbbs::delayed_seq<double>(n, [&] (size_t i) {
-	return In[serialMST.first[i]].weight;}), pbbs::addm<double>());
+	return In[serialMST[i]].weight;}), pbbs::addm<double>());
 
   if(total1 != total2) {
     cout << "MST has a weight of " << total1 <<

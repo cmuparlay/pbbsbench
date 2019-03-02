@@ -39,9 +39,9 @@ struct rMat {
        double _a, double _b, double _c) {
     n = _n; a = _a; ab = _a + _b; abc = _a+_b+_c;
     h = dataGen::hash<uintT>(_seed);
-    pbbs::assert(abc <= 1.0,
+    pbbs::assert_str(abc <= 1.0,
 		 "in rMat: a + b + c add to more than 1");
-    pbbs::assert((1 << pbbs::log2_up(n)) == n, 
+    pbbs::assert_str((1 << pbbs::log2_up(n)) == n, 
 		 "in rMat: n not a power of 2");
   }
 

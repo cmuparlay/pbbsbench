@@ -110,8 +110,9 @@ namespace benchIO {
     xToString(s+l+1, a.second);
   }
 
-  template <class T>
-  sequence<char> arrayToString(T* A, long n) {
+  template <class Seq>
+  sequence<char> seqToString(Seq const &A) {
+    size_t n = A.size();
     sequence<long> L(n, [&] (size_t i) -> size_t {
 	return xToStringLen(A[i])+1;});
     size_t m;
@@ -133,27 +134,28 @@ namespace benchIO {
   }
 
   template <class T>
-  void writeArrayToStream(ofstream& os, T* A, long n) {
-    long BSIZE = 10000000;
-    long offset = 0;
+  void writeSeqToStream(ofstream& os, sequence<T> const &A) {
+    size_t bsize = 10000000;
+    size_t offset = 0;
+    size_t n = A.size();
     while (offset < n) {
-      // Generates a string for a sequence of size at most BSIZE
+      // Generates a string for a sequence of size at most bsize
       // and then wrties it to the output stream
-      sequence<char> S = arrayToString(A+offset,min(BSIZE,n-offset));
+      sequence<char> S = seqToString(A.slice(offset, min(offset + bsize, n)));
       os.write(S.begin(), S.size()-1);
-      offset += BSIZE;
+      offset += bsize;
     }
   }
 
   template <class T>
-  int writeArrayToFile(string header, T* A, long n, char* fileName) {
+  int writeSeqToFile(string header, sequence<T> const &A, char* fileName) {
     ofstream file (fileName, ios::out | ios::binary);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
       return 1;
     }
     file << header << endl;
-    writeArrayToStream(file, A, n);
+    writeSeqToStream(file, A);
     file.close();
     return 0;
   }
@@ -176,17 +178,17 @@ namespace benchIO {
   string intHeaderIO = "sequenceInt";
 
   template <class T>
-  int writeIntArrayToFile(T* A, long n, char* fileName) {
-    return writeArrayToFile(intHeaderIO, A, n, fileName);
+  int writeIntSeqToFile(sequence<T> const &A, char* fileName) {
+    return writeSeqToFile(intHeaderIO, A, fileName);
   }
 
   template <class T>
-  sequence<T> readIntArrayFromFile(char *fileName) {
+  sequence<T> readIntSeqFromFile(char *fileName) {
     sequence<char> S = readStringFromFile(fileName);
     sequence<char*> W = stringToWords(S);
     string header = (string) W[0];
     if (header != intHeaderIO) {
-      cout << "readIntArrayFromFile: bad input" << endl;
+      cout << "readIntSeqFromFile: bad input" << endl;
       abort();
     }
     long n = W.size()-1;

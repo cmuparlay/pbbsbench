@@ -86,7 +86,7 @@ int unionFindLoop(edgei* E, intT m, intT nInMst, intT* parent, intT* mst) {
   return nInMst;
 }
 
-pair<intT*,intT> mst(wghEdgeArray<intT> const &G) { 
+pbbs::sequence<intT> mst(wghEdgeArray<intT> const &G) { 
   edgei* EI = pbbs::new_array<edgei>(G.m);
   for (intT i=0; i < G.m; i++) 
     EI[i] = edgei(G.E[i].u, G.E[i].v, G.E[i].weight, i);
@@ -117,5 +117,5 @@ pair<intT*,intT> mst(wghEdgeArray<intT> const &G) {
   //cout << "n=" << G.n << " m=" << G.m << " nInMst=" << nInMst << endl;
   pbbs::free_array(EI);
   pbbs::free_array(parent);
-  return pair<intT*,intT>(mst, nInMst);
+  return pbbs::sequence<intT>(mst, nInMst);
 }

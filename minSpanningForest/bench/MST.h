@@ -1,5 +1,6 @@
 #include "graph.h"
 #include "parallel.h"
+#include "sequence.h"
 
-std::pair<intT*,intT> mst(wghEdgeArray<intT> const &E);
+pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E);
 

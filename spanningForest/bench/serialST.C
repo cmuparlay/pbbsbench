@@ -5,34 +5,32 @@
 #include "parallel.h"
 using namespace std;
 
-// Assumes root is negative
-inline intT find(intT i, intT* parent) {
-  if ((parent[i]) < 0) return i;
-  intT j = parent[i];     
-  if (parent[j] < 0) return j;
-  do j = parent[j]; while (parent[j] >= 0);
-  parent[i] = j;
-  return j;
-}
-
-pair<intT*,intT> st(edgeArray<intT> const &EA){
+pbbs::sequence<intT> st(edgeArray<intT> const &EA) {
   edge<intT>* E = EA.E.begin();
   intT m = EA.nonZeros;
   intT n = EA.numRows;
-  intT *parents = pbbs::new_array<intT>(n);
-  for(intT i=0; i<n; i++) parents[i] = -1;
+  pbbs::sequence<intT> parents(n, (intT) -1);
+
+  auto find = [&] (intT i) {
+    if ((parents[i]) < 0) return i;
+    intT j = parents[i];     
+    if (parents[j] < 0) return j;
+    do j = parents[j]; while (parents[j] >= 0);
+    parents[i] = j;
+    return j;
+  };
+
   intT* st = pbbs::new_array<intT>(n);
   intT nInSt = 0; 
   for(intT i = 0; i < m; i++){
-    intT u = find(E[i].u,parents);
-    intT v = find(E[i].v,parents);
+    intT u = find(E[i].u);
+    intT v = find(E[i].v);
     if(u != v){
       if (parents[v] < parents[u]) swap(u,v);
       parents[u] += parents[v];
       parents[v] = u;
       st[nInSt++] = i;
     }
-  }  
-  pbbs::free_array(parents); 
-  return pair<intT*,intT>(st, nInSt);
+  } 
+  return pbbs::sequence<intT>(st, nInSt);
 }

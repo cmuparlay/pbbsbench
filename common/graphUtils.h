@@ -279,12 +279,17 @@ int graphCheckConsistency(graph<intT> const &Gr) {
 // and either with reordering or not
 template <typename intT>
 void writeGraphFromAdj(graph<intT> const &G, char* fname, bool adjArray, bool ordered) {
-  auto GR = (!ordered) ? graphReorder<intT>(G) : G;
-  if (adjArray) writeGraphToFile<intT>(G, fname);
+  if (adjArray)
+    if (ordered) writeGraphToFile<intT>(G, fname);
+    else writeGraphToFile<intT>(graphReorder(G), fname);
   else {
-    auto B = edgesFromGraph<intT>(G);
-    if (!ordered) B = randomShuffle(B);
-    writeEdgeArrayToFile<intT>(B, fname);
+    if (ordered)
+      writeEdgeArrayToFile<intT>(edgesFromGraph(G), fname);
+    else {
+      auto B = edgesFromGraph<intT>(graphReorder<intT>(G));
+      B = randomShuffle(B);
+      writeEdgeArrayToFile<intT>(B, fname);
+    }
   }
 }
 

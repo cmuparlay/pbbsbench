@@ -57,7 +57,7 @@ struct unionFindStep {
   }
 };
 
-std::pair<intT*,intT> st(edgeArray<intT> const &G){
+pbbs::sequence<intT> st(edgeArray<intT> const &G){
   intT m = G.nonZeros;
   intT n = G.numRows;
   unionFind UF(n);
@@ -66,7 +66,7 @@ std::pair<intT*,intT> st(edgeArray<intT> const &G){
   speculative_for(UFStep, 0, m, 100);
   auto stIdx = pbbs::filter(R, [&] (reservation a) {
       return a.reserved();});
-  size_t n_out = stIdx.size();
-  cout << "Tree size = " << n_out << endl;
-  return std::pair<intT*,intT>((intT*) stIdx.to_array(), n_out);
+  size_t l = stIdx.size();
+  cout << "Tree size = " << l << endl;
+  return pbbs::sequence<intT>((intT*) stIdx.to_array(), l);
 }

@@ -22,34 +22,57 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "graph.h"
+#include <cstring>
 #include "parallel.h"
 #include "IO.h"
+#include "graph.h"
 #include "graphIO.h"
 #include "parse_command_line.h"
-#include "MST.h"
+#include "sequence.h"
+#include "stlalgs.h"
 using namespace std;
 using namespace benchIO;
 
-void timeMST(wghEdgeArray<intT> const &In, int rounds, char* outFile) {
-  timer t;
-  pbbs::sequence<intT> Out;
-  for (intT i=0; i < rounds; i++) {
-    Out.clear();
-    t.start();
-    Out = mst(In);
-    t.next("");
-  }
-  cout << endl;
-  if (outFile != NULL) writeIntSeqToFile(Out, outFile);
+// Checks if valid maximal independent set
+int checkMaximalIndependentSet(graph<intT> const &G, pbbs::sequence<intT> const &Flags) {
+  intT n = G.n;
+  using P = std::pair<intT,intT>;
+  P R = pbbs::reduce(delayed_seq<P>(n, [&] (size_t i) -> P {
+	bool hasNeighbor = false;
+	for (intT j=0; j < G[i].degree; j++) {
+	  intT ngh = G[i].Neighbors[j];
+	  if (Flags[ngh] == 1) {
+	    hasNeighbor = true;
+	    if (Flags[i] == 1) return P(i, ngh);
+	  }
+	}
+	if ((Flags[i] != 1) && !hasNeighbor) return P(i,n);
+	return P(n,n);
+      }), minm<P>());
+  if (R.first < n) {
+    if (R.second < n) 
+      cout << "checkMaximalIndependentSet: bad edge ("
+	   << R.first << ", " << R.second << ")" << endl;
+    else
+      cout << "checkMaximalIndependentSet: bad vertex "
+	   << R.first << endl;
+    return 1;
+  }      
+  return 0;
 }
-    
+
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
-  char* iFile = P.getArgument(0);
-  char* oFile = P.getOptionValue("-o");
-  int rounds = P.getOptionIntValue("-r",1);
-  wghEdgeArray<intT> EA = readWghEdgeArrayFromFile<intT>(iFile);
-  timeMST(EA, rounds, oFile);
+  commandLine P(argc,argv,"<inFile> <outfile>");
+  pair<char*,char*> fnames = P.IOFileNames();
+  char* iFile = fnames.first;
+  char* oFile = fnames.second;
+
+  graph<intT> G = readGraphFromFile<intT>(iFile);
+  pbbs::sequence<intT> Out = readIntSeqFromFile<intT>(oFile);
+  if (Out.size() != G.n) {
+    cout << "checkMaximalIndependentSet: output file not of right length" << endl;
+    return(1);
+  }
+
+  return checkMaximalIndependentSet(G, Out);
 }

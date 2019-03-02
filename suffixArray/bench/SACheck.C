@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
   sequence<char> InX = readStringFromFile(fnames.first);
   sequence<uchar> In(InX.size(),[&] (size_t i) -> uchar {
       return (uchar) InX[i];});
-  sequence<long> Out = readIntArrayFromFile<long>(fnames.second);
+  sequence<long> Out = readIntSeqFromFile<long>(fnames.second);
   if (In.size() != Out.size()) {
     cout << "Suffix Array Check: lengths don't match" << endl;
     return 1;

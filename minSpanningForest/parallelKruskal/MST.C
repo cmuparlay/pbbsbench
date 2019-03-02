@@ -85,7 +85,7 @@ struct UnionFindStep {
 
 
 
-pair<intT*,intT> mst(wghEdgeArray<intT> const &E) { 
+pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E) { 
   timer t("mst", true);
   size_t m = E.m;
   size_t n = E.n;
@@ -152,7 +152,6 @@ pair<intT*,intT> mst(wghEdgeArray<intT> const &E) {
   pbbs::sequence<intT> mst = pbbs::pack_index<intT>(mstFlags);
   t.next("pack results");
 
-  size_t size = mst.size();
   //cout << "n=" << n << " m=" << m << " nInMst=" << size << endl;
-  return pair<intT*,intT>(mst.to_array(), size);
+  return mst;
 }

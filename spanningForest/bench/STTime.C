@@ -33,19 +33,15 @@ using namespace benchIO;
 
 void timeST(edgeArray<intT> In, int rounds, char* outFile) {
   timer t;
-  intT m = In.nonZeros;
-  intT n = max(In.numCols, In.numRows);
-  pair<intT*,intT> Out(NULL,0);
+  sequence<intT> Out;
   for (intT i=0; i < rounds; i++) {
-    if (Out.first != NULL) pbbs::delete_array(Out.first, Out.second);
-    edgeArray<intT> Tmp = In;
+    Out.clear();
     t.start();
-    Out = st(Tmp);
+    Out = st(In);
     t.next("");
   }
   cout << endl;
-  if (outFile != NULL) writeIntArrayToFile(Out.first, Out.second, outFile);
-  pbbs::delete_array(Out.first,Out.second);
+  if (outFile != NULL) writeIntSeqToFile(Out, outFile);
 }
     
 int main(int argc, char* argv[]) {
