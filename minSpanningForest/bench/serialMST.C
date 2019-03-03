@@ -27,95 +27,76 @@
 #include "get_time.h"
 #include "MST.h"
 #include "parallel.h"
+#include "union_find.h"
 using namespace std;
-
-
-// **************************************************************
-//    FIND OPERATION FOR UNION FIND
-// **************************************************************
-
-// Assumes root is negative
-vertexId find(vertexId i, vertexId* parent) {
-  if (parent[i] < 0) return i;
-  else {
-    vertexId j = i;
-    vertexId tmp;
-
-    // Find root
-    do j = parent[j]; while (parent[j] >= 0);
-
-    // path compress
-    while ((tmp = parent[i]) != j) { parent[i] = j; i = tmp;}
-
-    return j;
-  }
-}
 
 // **************************************************************
 //    SERIAL MST USING KRUSKAL's ALGORITHM WITH FILTERING
 // **************************************************************
 
-struct edgei {
+struct edgeAndIndex {
   vertexId u;
   vertexId v;
   double weight;
   edgeId id;
-  edgei() {}
-  edgei(vertexId _u, vertexId _v, double w, edgeId _id) 
+  edgeAndIndex() {}
+  edgeAndIndex(vertexId _u, vertexId _v, double w, edgeId _id) 
     : u(_u), v(_v), id(_id), weight(w) {}
 };
 
-struct edgeLess : std::binary_function <edgei ,edgei ,bool> {
-  bool operator() (edgei const& a, edgei const& b) const
-  { return (a.weight == b.weight) ? (a.id < b.id) : (a.weight < b.weight); }
-};
-
-int unionFindLoop(edgei* E, size_t m, size_t nInMst, vertexId* parent, vertexId* mst) {
+int unionFindLoop(edgeAndIndex* E, size_t m, size_t nInMst,
+		  unionFind<vertexId> &UF, edgeId* mst) {
   for (size_t i = 0; i < m; i++) {
-    vertexId u = find(E[i].u, parent);
-    vertexId v = find(E[i].v, parent);
+    vertexId u = UF.find(E[i].u);
+    vertexId v = UF.find(E[i].v);
     
-    // union operation 
+    // union by rank
     if (u != v) {
-      if (parent[v] < parent[u]) swap(u,v);
-      parent[u] += parent[v]; 
-      parent[v] = u;
-      mst[nInMst++] = E[i].id;
+      UF.union_roots(u,v);
+      mst[nInMst++] = E[i].id; // add edge to output
     }
   }
   return nInMst;
 }
 
-pbbs::sequence<vertexId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
-  edgei* EI = pbbs::new_array<edgei>(G.m);
-  for (size_t i=0; i < G.m; i++) 
-    EI[i] = edgei(G.E[i].u, G.E[i].v, G.E[i].weight, i);
+pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
+  // tag with edge id
+  pbbs::sequence<edgeAndIndex> EI(G.m, [&] (size_t i) {
+      return edgeAndIndex(G.E[i].u, G.E[i].v, G.E[i].weight, i);});
 
+  auto edgeLess = [&] (edgeAndIndex a, edgeAndIndex b) {
+    return (a.weight == b.weight) ? (a.id < b.id) : (a.weight < b.weight);};
+
+  // partition so minimum 4/3 n elements are at bottom
   size_t l = min(4*G.n/3,G.m);
-  std::nth_element(EI, EI+l, EI+G.m, edgeLess());
+  std::nth_element(EI.begin(), EI.begin()+l, EI.begin()+G.m, edgeLess);
 
-  std::sort(EI, EI+l, edgeLess());
+  // sort the prefix
+  std::sort(EI.begin(), EI.begin()+l, edgeLess);
 
-  vertexId *parent = pbbs::new_array<vertexId>(G.n);
-  for (size_t i=0; i < G.n; i++) parent[i] = -1;
+  // create union-find structure
+  unionFind<vertexId> UF(G.n);
 
-  vertexId *mst = pbbs::new_array<vertexId>(G.n);
-  size_t nInMst = unionFindLoop(EI, l, 0, parent, mst);
+  // mst will include the Ids of the edges in the MST
+  edgeId* mst = pbbs::new_array<edgeId>(G.n);
 
-  edgei *f = EI+l;
-  for (edgei*e = EI+l; e < EI + G.m; e++) {
-    vertexId u = find(e->u, parent);
-    vertexId v = find(e->v, parent);
-    if (u != v) *f++ = *e;
+  // run union-find over the prefix
+  size_t nInMst = unionFindLoop(EI.begin(), l, 0, UF, mst);
+
+  // pack down active edges
+  size_t k = 0;
+  for (size_t i = l; i < G.m; i++) {
+    vertexId u = UF.find(EI[i].u);
+    vertexId v = UF.find(EI[i].v);
+    if (u != v) EI[l + k++] = EI[i]; 
   }
-  size_t k = f - (EI+l);
 
-  std::sort(EI+l, f, edgeLess());
+  // sort remaining edges
+  std::sort(EI.begin()+l, EI.begin()+l+k, edgeLess);
 
-  nInMst = unionFindLoop(EI+l, k, nInMst, parent, mst);
+  // run union-find on remaining edges
+  nInMst = unionFindLoop(EI.begin()+l, k, nInMst, UF, mst);
 
   //cout << "n=" << G.n << " m=" << G.m << " nInMst=" << nInMst << endl;
-  pbbs::free_array(EI);
-  pbbs::free_array(parent);
-  return pbbs::sequence<vertexId>(mst, nInMst);
+  return pbbs::sequence<edgeId>(mst, nInMst);
 }

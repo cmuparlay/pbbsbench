@@ -4,34 +4,24 @@
 #include "graph.h"
 #include "parallel.h"
 #include "ST.h"
+#include "union_find.h"
 using namespace std;
 
-pbbs::sequence<vertexId> st(edgeArray<vertexId> const &EA) {
-  edge<vertexId>* E = EA.E.begin();
-  size_t m = EA.nonZeros;
-  size_t n = EA.numRows;
-  pbbs::sequence<vertexId> parents(n, (vertexId) -1);
+// vertexId needs to be signed
+pbbs::sequence<edgeId> st(edgeArray<vertexId> const &E) {
+  edgeId m = E.nonZeros;
+  vertexId n = E.numRows;
+  unionFind<vertexId> UF(n);
 
-  auto find = [&] (vertexId i) {
-    if ((parents[i]) < 0) return i;
-    vertexId j = parents[i];     
-    if (parents[j] < 0) return j;
-    do j = parents[j]; while (parents[j] >= 0);
-    parents[i] = j;
-    return j;
-  };
-
-  vertexId* st = pbbs::new_array<vertexId>(n);
+  edgeId* st = pbbs::new_array<edgeId>(n);
   size_t nInSt = 0; 
-  for (size_t i = 0; i < m; i++){
-    vertexId u = find(E[i].u);
-    vertexId v = find(E[i].v);
-    if(u != v){
-      if (parents[v] < parents[u]) swap(u,v);
-      parents[u] += parents[v];
-      parents[v] = u;
+  for (edgeId i = 0; i < m; i++){
+    vertexId u = UF.find(E[i].u);
+    vertexId v = UF.find(E[i].v);
+    if (u != v) {
+      UF.union_roots(u, v);
       st[nInSt++] = i;
     }
   } 
-  return pbbs::sequence<vertexId>(st, nInSt);
+  return pbbs::sequence<edgeId>(st, nInSt);
 }

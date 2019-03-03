@@ -85,7 +85,7 @@ struct UnionFindStep {
 
 
 
-pbbs::sequence<vertexId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) { 
+pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) { 
   timer t("mst", true);
   size_t m = E.m;
   size_t n = E.n;
@@ -149,7 +149,7 @@ pbbs::sequence<vertexId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) {
   speculative_for<vertexId>(UFStep2, 0, IWS.size(), 8);
   t.next("second union find loop");
 
-  pbbs::sequence<vertexId> mst = pbbs::pack_index<vertexId>(mstFlags);
+  pbbs::sequence<edgeId> mst = pbbs::pack_index<edgeId>(mstFlags);
   t.next("pack results");
 
   //cout << "n=" << n << " m=" << m << " nInMst=" << size << endl;

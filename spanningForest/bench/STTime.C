@@ -33,7 +33,7 @@ using namespace benchIO;
 
 void timeST(edgeArray<vertexId> In, int rounds, char* outFile) {
   timer t;
-  sequence<vertexId> Out;
+  sequence<edgeId> Out;
   for (size_t i=0; i < rounds; i++) {
     Out.clear();
     t.start();

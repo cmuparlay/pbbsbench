@@ -39,11 +39,11 @@ int main(int argc, char* argv[]) {
   char* oFile = fnames.second;
 
   edgeArray<vertexId> In = readEdgeArrayFromFile<vertexId>(iFile);
-  pbbs::sequence<vertexId> Out = readIntSeqFromFile<vertexId>(oFile);
+  pbbs::sequence<edgeId> Out = readIntSeqFromFile<edgeId>(oFile);
   size_t n = Out.size();
 
   //run serial ST
-  sequence<vertexId> serialST = st(In);
+  sequence<edgeId> serialST = st(In);
   if (n != serialST.size()){
     cout << "Wrong edge count: ST has " << serialST.size()
 	 << " edges but algorithm returned " << n << " edges\n";
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
   size_t m = E.size();
   
   edgeArray<vertexId> EA(std::move(E), In.numRows, In.numCols); 
-  sequence<vertexId> check = st(EA);
+  sequence<edgeId> check = st(EA);
 
   if (m != check.size()){
     cout << "Result is not a spanning tree " << endl;

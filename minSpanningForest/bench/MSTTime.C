@@ -34,7 +34,7 @@ using namespace benchIO;
 
 void timeMST(wghEdgeArray<vertexId,edgeWeight> const &In, int rounds, char* outFile) {
   timer t;
-  pbbs::sequence<vertexId> Out;
+  pbbs::sequence<edgeId> Out;
   for (size_t i=0; i < rounds; i++) {
     Out.clear();
     t.start();

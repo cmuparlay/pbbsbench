@@ -30,18 +30,17 @@
 #include "speculative_for.h"
 #include "union_find.h"
 
-template <class vertexId>
 struct unionFindStep {
   vertexId u;  vertexId v;  
   edgeArray<vertexId> const &E;
-  pbbs::sequence<reservation<vertexId>> &R;
+  pbbs::sequence<reservation<edgeId>> &R;
   unionFind<vertexId> &UF;
   unionFindStep(edgeArray<vertexId> const &E,
 		unionFind<vertexId> &UF,
-		pbbs::sequence<reservation<vertexId>> &R)
+		pbbs::sequence<reservation<edgeId>> &R)
     : E(E), R(R), UF(UF) {} 
 
-  bool reserve(vertexId i) {
+  bool reserve(edgeId i) {
     u = UF.find(E[i].u);
     v = UF.find(E[i].v);
     if (u > v) std::swap(u,v);
@@ -51,22 +50,22 @@ struct unionFindStep {
     } else return 0;
   }
 
-  bool commit(vertexId i) {
+  bool commit(edgeId i) {
     if (R[v].check(i)) { UF.link(v, u); return 1; }
     else return 0;
   }
 };
 
-pbbs::sequence<vertexId> st(edgeArray<vertexId> const &G){
+pbbs::sequence<edgeId> st(edgeArray<vertexId> const &G){
   size_t m = G.nonZeros;
   size_t n = G.numRows;
   unionFind<vertexId> UF(n);
-  pbbs::sequence<reservation<vertexId>> R(n);
-  unionFindStep<vertexId> UFStep(G, UF, R);
-  speculative_for<vertexId>(UFStep, 0, m, 100);
-  auto stIdx = pbbs::filter(R, [&] (reservation<vertexId> a) {
+  pbbs::sequence<reservation<edgeId>> R(n);
+  unionFindStep UFStep(G, UF, R);
+  speculative_for<edgeId>(UFStep, 0, m, 100);
+  auto stIdx = pbbs::filter(R, [&] (reservation<edgeId> a) {
       return a.reserved();});
   size_t l = stIdx.size();
   cout << "Tree size = " << l << endl;
-  return pbbs::sequence<vertexId>((vertexId*) stIdx.to_array(), l);
+  return pbbs::sequence<edgeId>((edgeId*) stIdx.to_array(), l);
 }
