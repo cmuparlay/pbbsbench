@@ -32,17 +32,21 @@
 
 using namespace std;
 
+
 int main(int argc, char* argv[]) { 
   commandLine P(argc,argv,"<inFile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
   char* oFile = fnames.second;
-  wghEdgeArray<intT> In = readWghEdgeArrayFromFile<intT>(iFile);
-  pbbs::sequence<intT> Out = readIntSeqFromFile<intT>(oFile);
-  intT n = Out.size();
-  intT in_m = In.m;
+  using WE = wghEdge<vertexId,edgeWeight>;
+  using graph = wghEdgeArray<vertexId,edgeWeight>;
+  
+  graph In = readWghEdgeArrayFromFile<vertexId,edgeWeight>(iFile);
+  pbbs::sequence<vertexId> Out = readIntSeqFromFile<vertexId>(oFile);
+  size_t n = Out.size();
+  size_t in_m = In.m;
   //check num edges
-  pbbs::sequence<intT> serialMST = mst(In);
+  pbbs::sequence<vertexId> serialMST = mst(In);
   if (n != serialMST.size()) {
     cout << "Wrong edge count: MST has " << serialMST.size()
 	 << " edges but algorithm returned " << n << " edges\n";
@@ -53,10 +57,10 @@ int main(int argc, char* argv[]) {
   sequence<bool> flags(in_m, false);
   parallel_for(0, n, [&] (size_t i) {flags[Out[i]] = true;});
   
-  pbbs::sequence<wghEdge<intT>> E = pbbs::pack(In.E, flags);
-  wghEdgeArray<intT> EA(std::move(E), In.n);
+  pbbs::sequence<WE> E = pbbs::pack(In.E, flags);
+  graph EA(std::move(E), In.n);
   
-  pbbs::sequence<intT> check = mst(EA);
+  pbbs::sequence<vertexId> check = mst(EA);
   if (n != check.size()){
     cout << "Result is not a spanning forest : it has a cycle" << endl;
     return (1);

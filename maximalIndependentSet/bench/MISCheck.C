@@ -34,13 +34,14 @@ using namespace std;
 using namespace benchIO;
 
 // Checks if valid maximal independent set
-int checkMaximalIndependentSet(graph<intT> const &G, pbbs::sequence<intT> const &Flags) {
-  intT n = G.n;
-  using P = std::pair<intT,intT>;
+int checkMaximalIndependentSet(graph<size_t> const &G,
+			       pbbs::sequence<size_t> const &Flags) {
+  size_t n = G.n;
+  using P = std::pair<size_t,size_t>;
   P R = pbbs::reduce(delayed_seq<P>(n, [&] (size_t i) -> P {
 	bool hasNeighbor = false;
-	for (intT j=0; j < G[i].degree; j++) {
-	  intT ngh = G[i].Neighbors[j];
+	for (size_t j=0; j < G[i].degree; j++) {
+	  size_t ngh = G[i].Neighbors[j];
 	  if (Flags[ngh] == 1) {
 	    hasNeighbor = true;
 	    if (Flags[i] == 1) return P(i, ngh);
@@ -67,8 +68,8 @@ int main(int argc, char* argv[]) {
   char* iFile = fnames.first;
   char* oFile = fnames.second;
 
-  graph<intT> G = readGraphFromFile<intT>(iFile);
-  pbbs::sequence<intT> Out = readIntSeqFromFile<intT>(oFile);
+  graph<size_t> G = readGraphFromFile<size_t>(iFile);
+  pbbs::sequence<size_t> Out = readIntSeqFromFile<size_t>(oFile);
   if (Out.size() != G.n) {
     cout << "checkMaximalIndependentSet: output file not of right length" << endl;
     return(1);

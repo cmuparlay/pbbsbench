@@ -3,28 +3,29 @@
 #include <limits.h>
 #include "graph.h"
 #include "parallel.h"
+#include "ST.h"
 using namespace std;
 
-pbbs::sequence<intT> st(edgeArray<intT> const &EA) {
-  edge<intT>* E = EA.E.begin();
-  intT m = EA.nonZeros;
-  intT n = EA.numRows;
-  pbbs::sequence<intT> parents(n, (intT) -1);
+pbbs::sequence<vertexId> st(edgeArray<vertexId> const &EA) {
+  edge<vertexId>* E = EA.E.begin();
+  size_t m = EA.nonZeros;
+  size_t n = EA.numRows;
+  pbbs::sequence<vertexId> parents(n, (vertexId) -1);
 
-  auto find = [&] (intT i) {
+  auto find = [&] (vertexId i) {
     if ((parents[i]) < 0) return i;
-    intT j = parents[i];     
+    vertexId j = parents[i];     
     if (parents[j] < 0) return j;
     do j = parents[j]; while (parents[j] >= 0);
     parents[i] = j;
     return j;
   };
 
-  intT* st = pbbs::new_array<intT>(n);
-  intT nInSt = 0; 
-  for(intT i = 0; i < m; i++){
-    intT u = find(E[i].u);
-    intT v = find(E[i].v);
+  vertexId* st = pbbs::new_array<vertexId>(n);
+  size_t nInSt = 0; 
+  for (size_t i = 0; i < m; i++){
+    vertexId u = find(E[i].u);
+    vertexId v = find(E[i].v);
     if(u != v){
       if (parents[v] < parents[u]) swap(u,v);
       parents[u] += parents[v];
@@ -32,5 +33,5 @@ pbbs::sequence<intT> st(edgeArray<intT> const &EA) {
       st[nInSt++] = i;
     }
   } 
-  return pbbs::sequence<intT>(st, nInSt);
+  return pbbs::sequence<vertexId>(st, nInSt);
 }

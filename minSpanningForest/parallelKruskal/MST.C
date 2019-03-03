@@ -41,25 +41,25 @@ using namespace std;
 // **************************************************************
 
 struct indexedEdge {
-  intT u; intT v; intT id;
-  indexedEdge(intT u, intT v, intT id) : u(u), v(v), id(id) {}
+  vertexId u; vertexId v; edgeId id;
+  indexedEdge(vertexId u, vertexId v, edgeId id) : u(u), v(v), id(id) {}
 };
 
-using weight_index = pair<double, intT>;
+using weight_index = pair<edgeWeight, edgeId>;
 
 struct UnionFindStep {
-  intT u;  intT v;  
- pbbs::sequence<indexedEdge> const &E;
- pbbs::sequence<reservation> &R;
- unionFind &UF;
- pbbs::sequence<bool> &inST;
+  vertexId u;  vertexId v;  
+  pbbs::sequence<indexedEdge> const &E;
+  pbbs::sequence<reservation<vertexId>> &R;
+  unionFind<vertexId> &UF;
+  pbbs::sequence<bool> &inST;
   UnionFindStep(pbbs::sequence<indexedEdge> const &E,
-		unionFind &UF,
-		pbbs::sequence<reservation> &R,
+		unionFind<vertexId> &UF,
+		pbbs::sequence<reservation<vertexId>> &R,
 		pbbs::sequence<bool> &inST) :
     E(E), R(R), UF(UF), inST(inST) {}
 
-  bool reserve(intT i) {
+  bool reserve(vertexId i) {
     u = UF.find(E[i].u);
     v = UF.find(E[i].v);
     if (u != v) {
@@ -69,7 +69,7 @@ struct UnionFindStep {
     } else return false;
   }
 
-  bool commit(intT i) {
+  bool commit(vertexId i) {
     if (R[v].check(i)) {
       R[u].checkReset(i); 
       UF.link(v, u); 
@@ -85,11 +85,11 @@ struct UnionFindStep {
 
 
 
-pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E) { 
+pbbs::sequence<vertexId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) { 
   timer t("mst", true);
   size_t m = E.m;
   size_t n = E.n;
-  intT k = min<intT>(5 * n / 4, m);
+  size_t k = min<size_t>(5 * n / 4, m);
   auto IW = pbbs::delayed_seq<weight_index>(m, [&] (size_t i) {
       return weight_index(E[i].weight, i);});
 
@@ -98,9 +98,9 @@ pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E) {
     : (a.first < b.first);};
       
   pbbs::random r;
-  pbbs::sequence<double> sample(1 + m/1000, [&] (size_t i) -> double {
+  pbbs::sequence<edgeWeight> sample(1 + m/1000, [&] (size_t i) -> edgeWeight {
       return E[r[i]%m].weight;});
-  double w = pbbs::sort(sample, std::less<double>())[k/1000];
+  edgeWeight w = pbbs::sort(sample, std::less<edgeWeight>())[k/1000];
   t.next("kth smallest");
   
   auto flags = pbbs::delayed_seq<bool>(m, [&] (size_t i) {
@@ -113,23 +113,23 @@ pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E) {
   pbbs::sort_inplace(IWS.slice(0,cnt), edgeLess);
   t.next("first sort");
 
-  pbbs::sequence<reservation> R(n);
+  pbbs::sequence<reservation<vertexId>> R(n);
   t.next("initialize nodes");
 
   pbbs::sequence<indexedEdge> Z(cnt, [&] (size_t i) {
-      intT j = IWS[i].second;
+      size_t j = IWS[i].second;
       return indexedEdge(E[j].u, E[j].v, j);
     });
   t.next("copy to edges");
 
   pbbs::sequence<bool> mstFlags(m, false);
-  unionFind UF(n);
+  unionFind<vertexId> UF(n);
   UnionFindStep UFStep(Z, UF, R,  mstFlags);
-  speculative_for(UFStep, 0, cnt, 8);
+  speculative_for<vertexId>(UFStep, 0, cnt, 8);
   t.next("first union find loop");
 
   auto f = [&] (weight_index wi) {
-      intT j = wi.second;
+      size_t j = wi.second;
       return UF.find(E[j].u) != UF.find(E[j].v);
   };
 
@@ -140,16 +140,16 @@ pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E) {
   t.next("second sort");
 
   Z = pbbs::sequence<indexedEdge>(IWS.size(), [&] (size_t i) {
-     intT j = IWS[i].second;
+     size_t j = IWS[i].second;
      return indexedEdge(E[j].u, E[j].v, j);
     });
   t.next("copy to edges");
 
   UnionFindStep UFStep2(Z, UF, R, mstFlags);
-  speculative_for(UFStep2, 0, IWS.size(), 8);
+  speculative_for<vertexId>(UFStep2, 0, IWS.size(), 8);
   t.next("second union find loop");
 
-  pbbs::sequence<intT> mst = pbbs::pack_index<intT>(mstFlags);
+  pbbs::sequence<vertexId> mst = pbbs::pack_index<vertexId>(mstFlags);
   t.next("pack results");
 
   //cout << "n=" << n << " m=" << m << " nInMst=" << size << endl;

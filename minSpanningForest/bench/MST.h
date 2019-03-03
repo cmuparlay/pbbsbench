@@ -2,5 +2,9 @@
 #include "parallel.h"
 #include "sequence.h"
 
-pbbs::sequence<intT> mst(wghEdgeArray<intT> const &E);
+using vertexId = uint;
+using edgeId = uint;
+using edgeWeight = float;
+
+pbbs::sequence<vertexId> mst(wghEdgeArray<vertexId,edgeWeight> const &E);
 

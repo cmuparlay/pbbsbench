@@ -148,7 +148,9 @@ namespace benchIO {
   }
 
   template <class T>
-  int writeSeqToFile(string header, sequence<T> const &A, char* fileName) {
+  int writeSeqToFile(string header,
+		     sequence<T> const &A,
+		     char* fileName) {
     ofstream file (fileName, ios::out | ios::binary);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -156,6 +158,23 @@ namespace benchIO {
     }
     file << header << endl;
     writeSeqToStream(file, A);
+    file.close();
+    return 0;
+  }
+
+  template <class T1, class T2>
+  int write2SeqToFile(string header,
+		      sequence<T1> const &A,
+		      sequence<T2> const &B,
+		      char* fileName) {
+    ofstream file (fileName, ios::out | ios::binary);
+    if (!file.is_open()) {
+      std::cout << "Unable to open file: " << fileName << std::endl;
+      return 1;
+    }
+    file << header << endl;
+    writeSeqToStream(file, A);
+    writeSeqToStream(file, B);
     file.close();
     return 0;
   }

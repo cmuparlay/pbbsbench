@@ -35,55 +35,55 @@ size_t loc2d(size_t n, size_t i1, size_t i2) {
   return ((i1 + n) % n)*n + (i2 + n) % n;
 }
 
-template <class intT>
-edgeArray<intT> edge2DMesh(intT n) {
-  intT dn = round(pow((float) n,1.0/2.0));
-  intT nn = dn*dn;
-  intT nonZeros = 2*nn;
-  pbbs::sequence<edge<intT>> E(nonZeros);
+template <class intV>
+edgeArray<intV> edge2DMesh(size_t n) {
+  size_t dn = round(pow((float) n,1.0/2.0));
+  size_t nn = dn*dn;
+  size_t nonZeros = 2*nn;
+  pbbs::sequence<edge<intV>> E(nonZeros);
   parallel_for (0, dn, [&] (size_t i) {
-    for (intT j=0; j < dn; j++) {
-      intT l = loc2d(dn,i,j);
-      E[2*l] = edge<intT>(l,loc2d(dn,i+1,j));
-      E[2*l+1] = edge<intT>(l,loc2d(dn,i,j+1));
+    for (size_t j=0; j < dn; j++) {
+      size_t l = loc2d(dn,i,j);
+      E[2*l] = edge<intV>(l,loc2d(dn,i+1,j));
+      E[2*l+1] = edge<intV>(l,loc2d(dn,i,j+1));
     }});
-  return edgeArray<intT>(std::move(E), nn, nn);
+  return edgeArray<intV>(std::move(E), nn, nn);
 }
 
 size_t loc3d(size_t n, size_t i1, size_t i2, size_t i3) {
   return ((i1 + n) % n)*n*n + ((i2 + n) % n)*n + (i3 + n) % n;
 }
 
-template <class intT>
-edgeArray<intT> edge3DMesh(intT n) {
-  intT dn = round(pow((float) n,1.0/3.0));
-  intT nn = dn*dn*dn;
-  intT nonZeros = 3*nn;
-  pbbs::sequence<edge<intT>> E(nonZeros);
+template <class intV>
+edgeArray<intV> edge3DMesh(size_t n) {
+  size_t dn = round(pow((float) n,1.0/3.0));
+  size_t nn = dn*dn*dn;
+  size_t nonZeros = 3*nn;
+  pbbs::sequence<edge<intV>> E(nonZeros);
   parallel_for (0, dn, [&] (size_t i) {
-    for (intT j=0; j < dn; j++) 
-      for (intT k=0; k < dn; k++) {
-	intT l = loc3d(dn,i,j,k);
-	E[3*l] =   edge<intT>(l,loc3d(dn,i+1,j,k));
-	E[3*l+1] = edge<intT>(l,loc3d(dn,i,j+1,k));
-	E[3*l+2] = edge<intT>(l,loc3d(dn,i,j,k+1));
+    for (size_t j=0; j < dn; j++) 
+      for (size_t k=0; k < dn; k++) {
+	size_t l = loc3d(dn,i,j,k);
+	E[3*l] =   edge<intV>(l,loc3d(dn,i+1,j,k));
+	E[3*l+1] = edge<intV>(l,loc3d(dn,i,j+1,k));
+	E[3*l+2] = edge<intV>(l,loc3d(dn,i,j,k+1));
       }});
-  return edgeArray<intT>(std::move(E), nn, nn);
+  return edgeArray<intV>(std::move(E), nn, nn);
 }
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-d {2,3}] [-j] [-o] n <outFile>");
   pair<int,char*> in = P.sizeAndFileName();
-  intT n = in.first;
+  size_t n = in.first;
   char* fname = in.second;
   int dims = P.getOptionIntValue("-d", 2);
   bool ordered = P.getOption("-o");
   bool adjArray = P.getOption("-j");
-  edgeArray<intT> EA;
+  edgeArray<size_t> EA;
   if (dims == 2) 
-    EA = edge2DMesh(n);
+    EA = edge2DMesh<size_t>(n);
   else if (dims == 3) 
-    EA = edge3DMesh(n);
+    EA = edge3DMesh<size_t>(n);
   else 
     P.badArgument();
   writeGraphFromEdges(EA, fname, adjArray, ordered);

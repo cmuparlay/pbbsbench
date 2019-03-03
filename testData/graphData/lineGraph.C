@@ -30,22 +30,21 @@ using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
-template <class intT>
-edgeArray<intT> genGraph(intT n) {
-  intT m = n-1;
-  sequence<edge<intT>> E(m, [&] (size_t i) {
-      return edge<intT>(i,i+1); });
-  return edgeArray<intT>(E,n,n);
+template <class intV>
+edgeArray<intV> genGraph(size_t n) {
+  size_t m = n-1;
+  sequence<edge<intV>> E(m, [&] (size_t i) {
+      return edge<intV>(i,i+1); });
+  return edgeArray<intV>(E,n,n);
 }
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-j] [-o] n <outFile>");
   pair<int,char*> in = P.sizeAndFileName();
-  intT n = in.first;
+  size_t n = in.first;
   char* fname = in.second;
   bool ordered = P.getOption("-o");
   bool adjArray = P.getOption("-j");
-  edgeArray<intT> EA;
-  EA = genGraph(n);
+  auto EA = genGraph<size_t>(n);
   writeGraphFromEdges(EA, fname, adjArray, ordered);
 }

@@ -1,3 +1,6 @@
 #include "graph.h"
+#include "sequence.h"
 
-pbbs::sequence<intT> st(edgeArray<intT> const &EA);
+using vertexId = uint;
+
+pbbs::sequence<vertexId> st(edgeArray<vertexId> const &EA);

@@ -22,20 +22,21 @@
 
 #include "sequence.h"
 
+template <class vertexId>
 struct unionFind {
-  pbbs::sequence<intT> parents;
+  pbbs::sequence<vertexId> parents;
 
   // initialize with all roots marked with -1
-  unionFind(intT n) {
-    parents = pbbs::sequence<intT>(n, (intT) -1);}
+  unionFind(size_t n) {
+    parents = pbbs::sequence<vertexId>(n, (vertexId) -1);}
 
-  intT find(intT i) {
+  vertexId find(vertexId i) {
     if (parents[i] < 0) return i;
-    intT j = parents[i];     
+    vertexId j = parents[i];     
     if (parents[j] < 0) return j;
     do j = parents[j]; 
     while (parents[j] >= 0);
-    intT tmp;
+    vertexId tmp;
     while ((tmp = parents[i]) != j) { 
       parents[i] = j;
       i = tmp;
@@ -43,6 +44,6 @@ struct unionFind {
     return j;
   }
 
-  void link(intT u, intT v) { 
+  void link(vertexId u, vertexId v) { 
     parents[u] = v;}
 };

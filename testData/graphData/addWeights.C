@@ -33,12 +33,19 @@ using namespace dataGen;
 using namespace std;
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"<inFile> <outFile>");
+  commandLine P(argc,argv,"[-d] <inFile> <outFile>");
+  // following means double
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
   char* oFile = fnames.second;
+  bool doub = P.getOption("-d");
 
-  edgeArray<intT> In = readEdgeArrayFromFile<intT>(iFile);
-  wghEdgeArray<intT> Out = addRandWeights(In);
-  return writeWghEdgeArrayToFile<intT>(Out, oFile);
+  auto In = readEdgeArrayFromFile<size_t>(iFile);
+  if (doub) {
+    auto Out = addRandWeights<size_t,double>(In);
+    return writeWghEdgeArrayToFile(Out, oFile);
+  } else {
+    auto Out = addRandWeights<size_t,float>(In);
+    return writeWghEdgeArrayToFile(Out, oFile);
+  }
 }

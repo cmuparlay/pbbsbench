@@ -41,193 +41,168 @@ namespace dataGen {
 
   //#define HASH_MAX_LONG ((unsigned long) 1 << 63)
 
-  template <class T> T hash(intT i);
+  template <class T> T hash(size_t i);
   
   template <>
-  inline intT hash<intT>(intT i) {
-    return pbbs::hash32(i) & (HASH_MAX_INT-1);}
+  inline int hash<int>(size_t i) {
+    return pbbs::hash64(i) & ((((size_t) 1) << 31) - 1);}
 
   template <>
-  inline uintT hash<uintT>(intT i) {
-    return pbbs::hash32(i);}
+  inline long  hash<long>(size_t i) {
+    return pbbs::hash64(i) & ((((size_t) 1) << 63) - 1);}
 
   template <>
-  inline double hash<double>(intT i) {
-    return ((double) hash<intT>(i)/((double) HASH_MAX_INT));}
+  inline unsigned int hash<unsigned int>(size_t i) {
+    return pbbs::hash64(i);}
 
+  template <>
+  inline size_t hash<size_t>(size_t i) {
+    return pbbs::hash64(i);}
+
+  template <>
+  inline double hash<double>(size_t i) {
+    return ((double) hash<int>(i)/((double) ((((size_t) 1) << 31) - 1)));}
+
+  template <>
+  inline float hash<float>(size_t i) {
+    return ((double) hash<int>(i)/((double) ((((size_t) 1) << 31) - 1)));}
 };
 
-template <class intT>
-wghEdgeArray<intT> addRandWeights(edgeArray<intT> const &G) {
+template <class intV, class Weight = DefaultWeight>
+wghEdgeArray<intV,Weight> addRandWeights(edgeArray<intV> const &G) {
+  using WE = wghEdge<intV,Weight>;
   pbbs::random r(257621);
-  intT m = G.nonZeros;
-  intT n = G.numRows;
-  sequence<wghEdge<intT>> E(m, [&] (size_t i) {
-      return wghEdge<intT>(G.E[i].u, G.E[i].v, dataGen::hash<double>(i));});
-  return wghEdgeArray<intT>(std::move(E), n);
+  intV m = G.nonZeros;
+  intV n = G.numRows;
+  sequence<WE> E(m, [&] (size_t i) {
+      return WE(G.E[i].u, G.E[i].v, (Weight) dataGen::hash<Weight>(i));});
+  return wghEdgeArray<intV,Weight>(std::move(E), n);
 }
 
-// template <class intT>
-// edgeArray<intT> edgesFromSparse(sparseRowMajor<double,intT> M) {
-//   pbbs::sequence<edge<intT>> E(M.nonZeros);
-//   intT k = 0;
-//   for (intT i=0; i < M.numRows; i++) {
-//     for (intT j=M.Starts[i]; j < M.Starts[i+1]; j++) {
-//       if (M.Values[j] != 0.0) {
-// 	E[k].u = i;
-// 	E[k].v = M.ColIds[j];
-// 	k++;
-//       }
-//     }
-//   }
-//   intT nonZeros = k;
-//   return edgeArray<intT>(std::move(E), M.numRows, M.numCols);
-// }
-
-edgeArray<intT> randomShuffle(edgeArray<intT> const &A) {
+template <class intV>
+edgeArray<intV> randomShuffle(edgeArray<intV> const &A) {
   auto E =  pbbs::random_shuffle(A.E);
-  return edgeArray<intT>(std::move(E), A.numRows, A.numCols);
+  return edgeArray<intV>(std::move(E), A.numRows, A.numCols);
 }
 
-template <class intT>
-edgeArray<intT> remDuplicates(edgeArray<intT> const &A) {
-  auto lessE = [&] (edge<intT> a, edge<intT> b) {
+template <class intV>
+edgeArray<intV> remDuplicates(edgeArray<intV> const &A) {
+  auto lessE = [&] (edge<intV> a, edge<intV> b) {
     return (a.u < b.u) || ((a.u == b.u) && (a.v < b.v));};
-  pbbs::sequence<edge<intT>> E =
+  pbbs::sequence<edge<intV>> E =
     pbbs::remove_duplicates_ordered(A.E, lessE);
-  return edgeArray<intT>(std::move(E), A.numRows, A.numCols);
+  return edgeArray<intV>(std::move(E), A.numRows, A.numCols);
 }
 
-template <class intT>
-edgeArray<intT> makeSymmetric(edgeArray<intT> const &A) {
-  pbbs::sequence<edge<intT>> EF = pbbs::filter(A.E, [&] (edge<intT> e) {
+template <class intV>
+edgeArray<intV> makeSymmetric(edgeArray<intV> const &A) {
+  pbbs::sequence<edge<intV>> EF = pbbs::filter(A.E, [&] (edge<intV> e) {
       return e.u != e.v;});
-  auto FE = pbbs::delayed_seq<edge<intT>>(EF.size(), [&] (size_t i) {
-      return edge<intT>(EF[i].v, EF[i].u);});
-  return remDuplicates(edgeArray<intT>(pbbs::append(EF, FE),
+  auto FE = pbbs::delayed_seq<edge<intV>>(EF.size(), [&] (size_t i) {
+      return edge<intV>(EF[i].v, EF[i].u);});
+  return remDuplicates(edgeArray<intV>(pbbs::append(EF, FE),
 				       A.numRows, A.numCols));
 }
 
-template <class intT>
-struct getuEdge {intT operator() (wghEdge<intT> e) const {return e.u;} };
+template <class intV, class intE = intV>
+graph<intV,intE> graphFromEdges(edgeArray<intV> const &EA, bool makeSym) {
+  edgeArray<intV> SA;
+  if (makeSym) SA = makeSymmetric<intV>(EA);
+  edgeArray<intV> const &A = (makeSym) ? SA : EA;
 
-template <class intT>
-graph<intT> graphFromEdges(edgeArray<intT> const &EA, bool makeSym) {
-  edgeArray<intT> SA;
-  if (makeSym) SA = makeSymmetric<intT>(EA);
-  edgeArray<intT> const &A = (makeSym) ? SA : EA;
-
-  intT m = A.nonZeros;
-  intT n = std::max(A.numCols, A.numRows);
+  size_t m = A.nonZeros;
+  size_t n = std::max(A.numCols, A.numRows);
 
   pbbs::sequence<size_t> counts;
-  pbbs::sequence<intT> offsets;
-  pbbs::sequence<edge<intT>> E;
+  pbbs::sequence<intE> offsets;
+  pbbs::sequence<edge<intV>> E;
   size_t nn;
-  auto getu = [&] (edge<intT> e) {return e.u;};
+  auto getu = [&] (edge<intV> e) {return e.u;};
   std::tie(E, counts) = pbbs::integer_sort_with_counts(A.E, getu, n);
-  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intT>(n+1, [&] (size_t i) {
-	return (i == n) ? 0 : counts[i];}), pbbs::addm<intT>());
+  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intE>(n+1, [&] (size_t i) {
+	return (i == n) ? 0 : counts[i];}), pbbs::addm<intE>());
 
-  return graph<intT>(std::move(offsets),
-		     sequence<intT>(m, [&] (size_t i) {return E[i].v;}),
-		     n);
+  return graph<intV,intE>(std::move(offsets),
+			  sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
+			  n);
 }
 
-template <class intT>
-wghGraph<intT> wghGraphFromEdges(wghEdgeArray<intT> const &A) {
-  intT n = A.n;
-  intT m = A.m;
+template <class intV, class Weight, class intE=intV>
+wghGraph<intV,Weight,intE>
+wghGraphFromEdges(wghEdgeArray<intV,Weight> const &A) {
+  using WE = wghEdge<intV,Weight>;
+  size_t n = A.n;
+  size_t m = A.m;
 
   pbbs::sequence<size_t> counts;
-  pbbs::sequence<intT> offsets;
-  pbbs::sequence<wghEdge<intT>> E;
+  pbbs::sequence<intE> offsets;
+  pbbs::sequence<WE> E;
   size_t nn;
-  auto getu = [&] (wghEdge<intT> e) {return e.u;};
+  auto getu = [&] (WE e) {return e.u;};
   std::tie(E, counts) = pbbs::integer_sort_with_counts(A.E, getu, n);
-  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intT>(n+1, [&] (size_t i) {
-	return (i == n) ? 0 : counts[i];}), pbbs::addm<intT>());
+  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intE>(n+1, [&] (size_t i) {
+	return (i == n) ? 0 : counts[i];}), pbbs::addm<intE>());
 
-  return wghGraph<intT>(std::move(offsets),
-			sequence<intT>(m, [&] (size_t i) {return E[i].v;}),
-			sequence<intT>(m, [&] (size_t i) {
-			    return (intT) 1000000000 * E[i].weight;}),
-			n);
+  return wghGraph<intV,Weight,intE>(std::move(offsets),
+				    sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
+				    sequence<Weight>(m, [&] (size_t i) {
+					return E[i].weight;}),
+				    n);
 }
 
-template <class intT>
-edgeArray<intT> edgesFromGraph(graph<intT> const &G) {
-  intT numRows = G.numVertices();
-  intT nonZeros = G.numEdges();
+template <class intV, class intE>
+edgeArray<intV> edgesFromGraph(graph<intV,intE> const &G) {
+  size_t numRows = G.numVertices();
+  size_t nonZeros = G.numEdges();
 
   // flatten
-  pbbs::sequence<edge<intT>> E(nonZeros);
+  pbbs::sequence<edge<intV>> E(nonZeros);
   parallel_for(0, numRows, [&] (size_t j) {
       size_t off = G.get_offsets()[j];
-      vertex<intT> v = G[j];
-      for (intT i = 0; i < v.degree; i++)
-	E[off+i] = edge<intT>(j, v.Neighbors[i]);
+      vertex<intV> v = G[j];
+      for (size_t i = 0; i < v.degree; i++)
+	E[off+i] = edge<intV>(j, v.Neighbors[i]);
     });
-  return edgeArray<intT>(std::move(E), numRows, numRows);
+  return edgeArray<intV>(std::move(E), numRows, numRows);
 }
 
-// template <class eType, class intT>
-// sparseRowMajor<eType,intT> sparseFromGraph(graph<intT> G) {
-//   intT numRows = G.n;
-//   intT nonZeros = G.m;
-//   vertex<intT>* V = G.V;
-//   intT *Starts = newA(intT,numRows+1);
-//   intT *ColIds = newA(intT,nonZeros);
-//   intT start = 0;
-//   for (intT i = 0; i < numRows; i++) {
-//     Starts[i] = start;
-//     start += V[i].degree;
-//   }
-//   Starts[numRows] = start;
-//   parallel_for (0, numRows, [&] (size_t j) {
-//     for (intT i = 0; i < (Starts[j+1] - Starts[j]); i++) {
-//       ColIds[Starts[j]+i] = V[j].Neighbors[i];
-//     }});
-//   return sparseRowMajor<eType,intT>(numRows,numRows,nonZeros,Starts,ColIds,NULL);
-// }
-
 // offset for start of each vertex if flattening the edge listd
-template <class intT>
-sequence<intT> getOffsets(sequence<vertex<intT>> const &V) {
+template <class intV, class intE>
+sequence<intE> getOffsets(sequence<vertex<intV>> const &V) {
   size_t n = V.size();
-  auto degrees = pbbs::delayed_seq<intT>(n+1, [&] (size_t i) {
+  auto degrees = pbbs::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
       return (i == n) ? 0 : V[i].degree;});
-  return pbbs::scan(degrees, pbbs::addm<intT>()).first;
+  return pbbs::scan(degrees, pbbs::addm<intE>()).first;
 }
 
 // if I is NULL then it randomly reorders
-template <class intT>
-graph<intT> graphReorder(graph<intT> const &Gr,
-			 pbbs::sequence<intT> const &I = pbbs::sequence<intT>(0)) {
-  intT n = Gr.numVertices();
-  intT m = Gr.numEdges();
+template <class intV, class intE>
+graph<intV,intE> graphReorder(graph<intV,intE> const &Gr,
+			      pbbs::sequence<intV> const &I = pbbs::sequence<intV>(0)) {
+  intV n = Gr.numVertices();
+  intV m = Gr.numEdges();
 
   bool noI = (I.size()==0);
-  pbbs::sequence<intT> const &II = noI ? pbbs::random_permutation<intT>(n) : I;
+  pbbs::sequence<intV> const &II = noI ? pbbs::random_permutation<intV>(n) : I;
 
   // now write vertices to new locations
   // inverse permutation
-  pbbs::sequence<vertex<intT>> V(n);
+  pbbs::sequence<vertex<intV>> V(n);
   parallel_for (0, n, [&] (size_t i) {
       V[II[i]] = Gr[i];});
-  pbbs::sequence<intT> offsets = getOffsets(V);
-  pbbs::sequence<intT> E(m);
+  pbbs::sequence<intE> offsets = getOffsets<intV,intE>(V);
+  pbbs::sequence<intV> E(m);
   parallel_for (0, n, [&] (size_t i) {
       size_t o = offsets[i];
-      for (intT j=0; j < V[i].degree; j++) 
+      for (size_t j=0; j < V[i].degree; j++) 
 	E[o + j] = II[V[i].Neighbors[j]];
       std::sort(E.begin() + o, E.begin() + o + V[i].degree);
     }, 1000);
-  return graph<intT>(std::move(offsets), std::move(E), n);
+  return graph<intV>(std::move(offsets), std::move(E), n);
 }
 
-template <class intT>
-int graphCheckConsistency(graph<intT> const &Gr) {
+template <class intV, class intE>
+int graphCheckConsistency(graph<intV,intE> const &Gr) {
   size_t n = Gr.numVertices();
   size_t m = Gr.numEdges();
   size_t edgecount = pbbs::reduce(pbbs::delayed_seq<size_t>(n, [&] (size_t i) {
@@ -238,7 +213,7 @@ int graphCheckConsistency(graph<intT> const &Gr) {
     return 1;
   }
   size_t error_loc = pbbs::reduce(pbbs::delayed_seq<size_t>(n, [&] (size_t i) {
-	for (intT j=0; j < Gr[i].degree; j++) 
+	for (size_t j=0; j < Gr[i].degree; j++) 
 	  if (Gr[i].Neighbors[j] >= n) return i;
 	return n;
       }), pbbs::minm<size_t>());
@@ -249,69 +224,71 @@ int graphCheckConsistency(graph<intT> const &Gr) {
   }
 }
 
-// template <class intT>
-// sparseRowMajor<double,intT> sparseFromCsrFile(const char* fname) {
+
+// The following two are used by the graph generators to write out in either format
+// and either with reordering or not
+template <class intV, class intE>
+void writeGraphFromAdj(graph<intV,intE> const &G,
+		       char* fname, bool adjArray, bool ordered) {
+  if (adjArray)
+    if (ordered) writeGraphToFile(G, fname);
+    else writeGraphToFile(graphReorder(G), fname);
+  else {
+    if (ordered)
+      writeEdgeArrayToFile(edgesFromGraph(G), fname);
+    else {
+      auto B = edgesFromGraph(graphReorder(G));
+      B = randomShuffle(B);
+      writeEdgeArrayToFile(B, fname);
+    }
+  }
+}
+
+template <class intV, class intE=intV>
+void writeGraphFromEdges(edgeArray<intV> const & EA, char* fname, bool adjArray, bool ordered) {
+  graph<intV,intE> const &G = graphFromEdges<intV,intE>(EA, adjArray);
+  writeGraphFromAdj(G, fname, adjArray, ordered);
+}
+
+// template <class intV>
+// sparseRowMajor<double,intV> sparseFromCsrFile(const char* fname) {
 //   FILE *f = fopen(fname,"r");
 //   if (f == NULL) {
 //     cout << "Trying to open nonexistant file: " << fname << endl;
 //     abort();
 //   }
 
-//   intT numRows;  intT numCols;  intT nonZeros;
-//   intT nc = fread(&numRows, sizeof(intT), 1, f);
-//   nc = fread(&numCols, sizeof(intT), 1, f);
-//   nc = fread(&nonZeros, sizeof(intT), 1, f); 
+//   intV numRows;  intV numCols;  intV nonZeros;
+//   intV nc = fread(&numRows, sizeof(intV), 1, f);
+//   nc = fread(&numCols, sizeof(intV), 1, f);
+//   nc = fread(&nonZeros, sizeof(intV), 1, f); 
 
 //   double *Values = (double *) malloc(sizeof(double)*nonZeros);
-//   intT *ColIds = (intT *) malloc(sizeof(intT)*nonZeros);
-//   intT *Starts = (intT *) malloc(sizeof(intT)*(1 + numRows));
+//   intV *ColIds = (intV *) malloc(sizeof(intV)*nonZeros);
+//   intV *Starts = (intV *) malloc(sizeof(intV)*(1 + numRows));
 //   Starts[numRows] = nonZeros;
 
 //   size_t r;
 //   r = fread(Values, sizeof(double), nonZeros, f);
-//   r = fread(ColIds, sizeof(intT), nonZeros, f);
-//   r = fread(Starts, sizeof(intT), numRows, f); 
+//   r = fread(ColIds, sizeof(intV), nonZeros, f);
+//   r = fread(Starts, sizeof(intV), numRows, f); 
 //   fclose(f);
-//   return sparseRowMajor<double,intT>(numRows,numCols,nonZeros,Starts,ColIds,Values);
+//   return sparseRowMajor<double,intV>(numRows,numCols,nonZeros,Starts,ColIds,Values);
 // }
 
-// The following two are used by the graph generators to write out in either format
-// and either with reordering or not
-template <typename intT>
-void writeGraphFromAdj(graph<intT> const &G, char* fname, bool adjArray, bool ordered) {
-  if (adjArray)
-    if (ordered) writeGraphToFile<intT>(G, fname);
-    else writeGraphToFile<intT>(graphReorder(G), fname);
-  else {
-    if (ordered)
-      writeEdgeArrayToFile<intT>(edgesFromGraph(G), fname);
-    else {
-      auto B = edgesFromGraph<intT>(graphReorder<intT>(G));
-      B = randomShuffle(B);
-      writeEdgeArrayToFile<intT>(B, fname);
-    }
-  }
-}
-
-template <typename intT>
-void writeGraphFromEdges(edgeArray<intT> const & EA, char* fname, bool adjArray, bool ordered) {
-  graph<intT> const &G = graphFromEdges<intT>(EA, adjArray);
-  writeGraphFromAdj(G, fname, adjArray, ordered);
-}
-
-// template <class intT>
-// edgeArray<intT> edgesFromMtxFile(const char* fname) {
+// template <class intV>
+// edgeArray<intV> edgesFromMtxFile(const char* fname) {
 //   ifstream file (fname, ios::in);
 //   char* line = newA(char,1000);
-//   intT i,j = 0;
+//   intV i,j = 0;
 //   while (file.peek() == '%') {
 //     j++;
 //     file.getline(line,1000);
 //   }
-//   intT numRows, numCols, nonZeros;
+//   intV numRows, numCols, nonZeros;
 //   file >> numRows >> numCols >> nonZeros;
 //   //cout << j << "," << numRows << "," << numCols << "," << nonZeros << endl;
-//   edge<intT> *E = newA(edge<intT>,nonZeros);
+//   edge<intV> *E = newA(edge<intV>,nonZeros);
 //   double toss;
 //   for (i=0, j=0; i < nonZeros; i++) {
 //     file >> E[j].u >> E[j].v >> toss;
@@ -322,6 +299,6 @@ void writeGraphFromEdges(edgeArray<intT> const & EA, char* fname, bool adjArray,
 //   nonZeros = j;
 //   //cout << "nonzeros = " << nonZeros << endl;
 //   file.close();  
-//   return edgeArray<intT>(E,numRows,numCols,nonZeros);
+//   return edgeArray<intV>(E,numRows,numCols,nonZeros);
 // }
 

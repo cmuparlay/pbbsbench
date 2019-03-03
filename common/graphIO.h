@@ -36,26 +36,26 @@
 
 using namespace benchIO;
 
-template <class intT>
-int xToStringLen(edge<intT> a) {
+template <class intV>
+int xToStringLen(edge<intV> a) {
   return xToStringLen(a.u) + xToStringLen(a.v) + 1;
 }
 
-template <class intT>
-void xToString(char* s, edge<intT> a) {
+template <class intV>
+void xToString(char* s, edge<intV> a) {
   int l = xToStringLen(a.u);
   xToString(s, a.u);
   s[l] = ' ';
   xToString(s+l+1, a.v);
 }
 
-template <class intT>
-int xToStringLen(wghEdge<intT> a) {
+template <class intV, class Weight>
+int xToStringLen(wghEdge<intV,Weight> a) {
   return xToStringLen(a.u) + xToStringLen(a.v) + xToStringLen(a.weight) + 2;
 }
 
-template <class intT>
-void xToString(char* s, wghEdge<intT> a) {
+template <class intV, class Weight>
+void xToString(char* s, wghEdge<intV, Weight> a) {
   int lu = xToStringLen(a.u);
   int lv = xToStringLen(a.v);
   xToString(s, a.u);
@@ -73,12 +73,12 @@ namespace benchIO {
   string WghEdgeArrayHeader = "WeightedEdgeArray";
   string WghAdjGraphHeader = "WeightedAdjacencyGraph";
 
-  template <class intT>
-  int writeGraphToFile(graph<intT> const &G, char* fname) {
-    intT m = G.numEdges();
-    intT n = G.numVertices();
-    intT totalLen = 2 + n + m;
-    pbbs::sequence<intT> Out(totalLen);
+  template <class intV, class intE>
+  int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+    size_t m = G.numEdges();
+    size_t n = G.numVertices();
+    size_t totalLen = 2 + n + m;
+    pbbs::sequence<size_t> Out(totalLen);
     Out[0] = n;
     Out[1] = m;
 
@@ -90,53 +90,54 @@ namespace benchIO {
     // write out edges to Out[2+n,..,2+n+m)
     parallel_for(0, n, [&] (size_t i) {
 	size_t o = offsets[i] + 2 + n;
-	vertex<intT> v = G[i];
-	for (intT j = 0; j < v.degree; j++)
-	  Out[o + j] = v.Neighbors[j];
+	for (intV j = 0; j < G[i].degree; j++)
+	  Out[o + j] = G[i].Neighbors[j];
       });
     int r = writeSeqToFile(AdjGraphHeader, Out, fname);
     return r;
   }
 
-  template <class intT>
-  int writeWghGraphToFile(wghGraph<intT> G, char* fname) {
-    intT m = G.m;
-    intT n = G.n;
-    intT totalLen = 2 + n + m*2;
-    pbbs::sequence<intT> Out(totalLen);
-    Out[0] = n;
-    Out[1] = m;
+  template <class intV, class Weight, class intE>
+  int writeWghGraphToFile(wghGraph<intV,Weight,intE> G, char* fname) {
+    size_t m = G.m;
+    size_t n = G.n;
+    // weights have to separate since they could be floats
+    pbbs::sequence<size_t> Out1(2 + n + m);
+    pbbs::sequence<Weight> Out2(m);
+    Out1[0] = n;
+    Out2[1] = m;
 
     // write offsets to Out[2,..,2+n)
     auto offsets = G.get_offsets();
     parallel_for (0, n, [&] (size_t i) {
-	Out[i+2] = offsets[i];});
+	Out1[i+2] = offsets[i];});
 
-    // write out edges to Out[2+n,..,2+n+m)
-    // and weights to Out[2+n+m,..,2+n+2*m)
+    // write out edges to Out1[2+n,..,2+n+m)
+    // and weights to Out2[0,..,m)
     parallel_for(0, n, [&] (size_t i) {
-	size_t o = offsets[i] + 2 + n;
-	wghVertex<intT> v = G[i];
-	for (intT j = 0; j < v.degree; j++) {
-	  Out[o + j] = v.Neighbors[j];
-	  Out[o + m + j] = v.nghWeights[j]; }
+	size_t o = offsets[i];
+	wghVertex<intV,Weight> v = G[i];
+	for (intV j = 0; j < v.degree; j++) {
+	  Out1[2 + n + o + j] = v.Neighbors[j];
+	  Out2[o + j] = v.nghWeights[j]; }
       });
-    int r = writeSeqToFile(WghAdjGraphHeader, Out, fname);
+    int r = write2SeqToFile(WghAdjGraphHeader, Out1, Out2, fname);
     return r;
   }
 
-  template <class intT>
-  int writeEdgeArrayToFile(edgeArray<intT> const &EA, char* fname) {
+  template <class intV>
+  int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
     return writeSeqToFile(EdgeArrayHeader, EA.E, fname);
   }
 
-  template <class intT>
-  int writeWghEdgeArrayToFile(wghEdgeArray<intT> const &EA, char* fname) {
+  template <class intV, class intE>
+  int writeWghEdgeArrayToFile(wghEdgeArray<intV,intE>
+			      const &EA, char* fname) {
     return writeSeqToFile(WghEdgeArrayHeader, EA.E, fname);
   }
 
-  template <class intT>
-  edgeArray<intT> readEdgeArrayFromFile(char* fname) {
+  template <class intV>
+  edgeArray<intV> readEdgeArrayFromFile(char* fname) {
     pbbs::sequence<char> S = readStringFromFile(fname);
     pbbs::sequence<char*> W = stringToWords(S);
     if (W[0] != EdgeArrayHeader) {
@@ -144,21 +145,22 @@ namespace benchIO {
       abort();
     }
     long n = (W.size()-1)/2;
-    pbbs::sequence<edge<intT>> E(n, [&] (long i) {
-	return edge<intT>(atol(W[2*i + 1]),
+    pbbs::sequence<edge<intV>> E(n, [&] (long i) {
+	return edge<intV>(atol(W[2*i + 1]),
 			  atol(W[2*i + 2]));});
 
-    auto mon = pbbs::make_monoid([&] (edge<intT> a, edge<intT> b) {
-	return edge<intT>(std::max(a.u, b.u), std::max(a.v, b.v));},
-      edge<intT>(0,0));
+    auto mon = pbbs::make_monoid([&] (edge<intV> a, edge<intV> b) {
+	return edge<intV>(std::max(a.u, b.u), std::max(a.v, b.v));},
+      edge<intV>(0,0));
     auto r = pbbs::reduce(E, mon);
 
-    intT maxrc = std::max(r.u, r.v) + 1;
-    return edgeArray<intT>(std::move(E), maxrc, maxrc);
+    intV maxrc = std::max(r.u, r.v) + 1;
+    return edgeArray<intV>(std::move(E), maxrc, maxrc);
   }
 
-  template <class intT>
-  wghEdgeArray<intT> readWghEdgeArrayFromFile(char* fname) {
+  template <class intV, class Weight>
+  wghEdgeArray<intV,Weight> readWghEdgeArrayFromFile(char* fname) {
+    using WE = wghEdge<intV,Weight>;
     pbbs::sequence<char> S = readStringFromFile(fname);
     pbbs::sequence<char*> W = stringToWords(S);
     if (W[0] != WghEdgeArrayHeader) {
@@ -166,21 +168,21 @@ namespace benchIO {
       abort();
     }
     long n = (W.size()-1)/3;
-    pbbs::sequence<wghEdge<intT>> E(n, [&] (size_t i) {
-	return wghEdge<intT>(atol(W[3*i + 1]),
-			     atol(W[3*i + 2]),
-			     atof(W[3*i + 3]));});
+    pbbs::sequence<WE> E(n, [&] (size_t i) {
+	return WE(atol(W[3*i + 1]),
+		  atol(W[3*i + 2]),
+		  (Weight) atof(W[3*i + 3]));});
 
-    auto mon = pbbs::make_monoid([&] (wghEdge<intT> a, wghEdge<intT> b) {
-	return wghEdge<int>(std::max(a.u, b.u), std::max(a.v, b.v), 0);},
-      wghEdge<intT>(0,0,0));
+    auto mon = pbbs::make_monoid([&] (WE a, WE b) {
+	return WE(std::max(a.u, b.u), std::max(a.v, b.v), 0);},
+      WE(0,0,0));
     auto r = pbbs::reduce(E, mon);
 
-    return wghEdgeArray<intT>(std::move(E), max<intT>(r.u, r.v) + 1);
+    return wghEdgeArray<intV,Weight>(std::move(E), max<intV>(r.u, r.v) + 1);
   }
 
-  template <class intT>
-  graph<intT> readGraphFromFile(char* fname) {
+  template <class intV, class intE=intV>
+  graph<intV, intE> readGraphFromFile(char* fname) {
     pbbs::sequence<char> S = readStringFromFile(fname);
     pbbs::sequence<char*> W = stringToWords(S);
     if (W[0] != AdjGraphHeader) {
@@ -197,12 +199,12 @@ namespace benchIO {
       abort(); }
     
     // tags on m at the end (so n+1 total offsets)
-    sequence<intT> offsets(n+1, [&] (size_t i) {
+    sequence<intE> offsets(n+1, [&] (size_t i) {
 	return (i == n) ? m : atol(W[i+3]);});
-    sequence<intT> edges(m, [&] (size_t i) {
+    sequence<intV> edges(m, [&] (size_t i) {
 	return atol(W[n+i+3]);});
 
-    return graph<intT>(std::move(offsets), std::move(edges), n);
+    return graph<intV, intE>(std::move(offsets), std::move(edges), n);
   }
 
   pbbs::sequence<char> mmapStringFromFile(const char *filename) {
@@ -233,8 +235,8 @@ namespace benchIO {
     return pbbs::sequence<char>(p, n);
   }
 
-  // template <class intT, class intE>
-  // graphC<intT, intE> readGraphCFromFile(char* fname, bool mmap=false) {
+  // template <class intV, class intV>
+  // graphC<intV, intV> readGraphCFromFile(char* fname, bool mmap=false) {
 
   //   pbbs::sequence<char*> W;
   //   if (mmap) {
@@ -267,16 +269,16 @@ namespace benchIO {
   //     cout << "Bad input file: length = "<<len<< " n+m+2 = " << n+m+2 << endl;
   //     abort();
   //   }
-  //   sequence<intT> offsets(n+1, [&] (size_t i) {
+  //   sequence<intV> offsets(n+1, [&] (size_t i) {
   // 	return (i == n) ? m : atol(W[i+3]);});
-  //   sequence<intE> edges(m, [&] (size_t i) {
+  //   sequence<intV> edges(m, [&] (size_t i) {
   // 	return atol(W[n+i+3]);});
 
-  //   return graphC<intT,intE>(offsets,edges,n,m);
+  //   return graphC<intV,intV>(offsets,edges,n,m);
   // }
 
-  template <class intT>
-  wghGraph<intT> readWghGraphFromFile(char* fname) {
+  template <class intV, class Weight, class intE>
+  wghGraph<intV, Weight, intE> readWghGraphFromFile(char* fname) {
     pbbs::sequence<char> S = readStringFromFile(fname);
     pbbs::sequence<char*> W = stringToWords(S);
     if (W[0] != WghAdjGraphHeader) {
@@ -287,82 +289,86 @@ namespace benchIO {
     long n = atol(W[1]);
     long m = atol(W[2]);
     if (W.size() != n + 2*m + 3) {
-      cout << "Bad input file: length = "<< W.size() << " n + 2*m + 3 = " << n+2*m+3 << endl;
+      cout << "Bad input file: length = "<< W.size()
+	   << " n + 2*m + 3 = " << n+2*m+3 << endl;
       abort(); }
     
     // tags on m at the end (so n+1 total offsets)
-    sequence<intT> offsets(n+1, [&] (size_t i) {
+    sequence<intE> offsets(n+1, [&] (size_t i) {
 	return (i == n) ? m : atol(W[i+3]);});
-    sequence<intT> edges(m, [&] (size_t i) {
+    sequence<intV> edges(m, [&] (size_t i) {
 	return atol(W[n+i+3]);});
-    sequence<intT> weights(m, [&] (size_t i) {
-	return atol(W[n+i+3+m]);});
+    sequence<Weight> weights(m, [&] (size_t i) {
+	return (Weight) atof(W[n+i+3+m]);});
 
-    return graph<intT>(std::move(offsets), std::move(edges), std::move(weights), n);
-  }
-
-  void errorOut(const char* s) {
-    cerr << s << endl;
-    throw s;
-  }
-  void packInt64(int64_t x, uint8_t buf[8]) {
-    uint64_t xu = x;
-    for (int i = 0; i < 8; ++i)
-      buf[i] = (xu >> (8 * i)) & 0xff;
-  }
-  int64_t unpackInt64(const uint8_t buf[8]) {
-    uint64_t xu = 0;
-    for (int i = 0; i < 8; ++i)
-      xu |= ((uint64_t)buf[i]) << (i * 8);
-    return (int64_t)xu;
+    return wghGraph<intV,Weight,intE>(std::move(offsets),
+				      std::move(edges),
+				      std::move(weights), n);
   }
 
-  void writeInt(ostream& out, char buf[8], int64_t x) {
-    packInt64(x, (uint8_t*)buf);
-    out.write(buf, 8);
-  }
-  int64_t readInt(istream& in, char buf[8]) {
-    in.read(buf, 8);
-    return unpackInt64((uint8_t*)buf);
-  }
+  // void errorOut(const char* s) {
+  //   cerr << s << endl;
+  //   throw s;
+  // }
 
-  // template<typename intT>
-  // void writeFlowGraph(ostream& out, FlowGraph<intT> g) {
+  // void packInt64(int64_t x, uint8_t buf[8]) {
+  //   uint64_t xu = x;
+  //   for (int i = 0; i < 8; ++i)
+  //     buf[i] = (xu >> (8 * i)) & 0xff;
+  // }
+  // int64_t unpackInt64(const uint8_t buf[8]) {
+  //   uint64_t xu = 0;
+  //   for (int i = 0; i < 8; ++i)
+  //     xu |= ((uint64_t)buf[i]) << (i * 8);
+  //   return (int64_t)xu;
+  // }
+
+  // void writeInt(ostream& out, char buf[8], int64_t x) {
+  //   packInt64(x, (uint8_t*)buf);
+  //   out.write(buf, 8);
+  // }
+  // int64_t readInt(istream& in, char buf[8]) {
+  //   in.read(buf, 8);
+  //   return unpackInt64((uint8_t*)buf);
+  // }
+
+  // template<typename intV>
+  // void writeFlowGraph(ostream& out, FlowGraph<intV> g) {
   //   char buf[8];
   //   out.write("FLOWFLOW", 8);
   //   writeInt(out, buf, g.g.n);
   //   writeInt(out, buf, g.g.m);
   //   writeInt(out, buf, g.source);
   //   writeInt(out, buf, g.sink);
-  //   intT o = 0;
-  //   for (intT i = 0; i < g.g.n; ++i) {
+  //   intV o = 0;
+  //   for (intV i = 0; i < g.g.n; ++i) {
   //     writeInt(out, buf, o);
   //     o += g.g.V[i].degree;
   //   }
-  //   for (intT i = 0; i < g.g.n; ++i) {
-  //     wghVertex<intT>& v = g.g.V[i];
-  //     for (intT j = 0; j < v.degree; ++j) {
+  //   for (intV i = 0; i < g.g.n; ++i) {
+  //     wghVertex<intV>& v = g.g.V[i];
+  //     for (intV j = 0; j < v.degree; ++j) {
   //       writeInt(out, buf, v.Neighbors[j]);
   //       writeInt(out, buf, v.nghWeights[j]);
   //     }
   //   }
   // }
-  // template<typename intT>
-  // FlowGraph<intT> readFlowGraph(istream& in) {
+  // template<typename intV>
+  // FlowGraph<intV> readFlowGraph(istream& in) {
   //   char buf[10];
   //   in.read(buf, 8);
   //   buf[8] = 0;
   //   if (strcmp(buf, "FLOWFLOW"))
   //     errorOut("Invalid flow graph input file");
-  //   intT n = readInt(in, buf);
-  //   intT m = readInt(in, buf);
-  //   intT S = readInt(in, buf);
-  //   intT T = readInt(in, buf);
-  //   intT *offset = newA(intT, n);
-  //   intT* adj = newA(intT, m);
-  //   intT* weights = newA(intT, m);
-  //   wghVertex<intT>* v = newA(wghVertex<intT>, n);
-  //   for (intT i = 0; i < n; ++i) {
+  //   intV n = readInt(in, buf);
+  //   intV m = readInt(in, buf);
+  //   intV S = readInt(in, buf);
+  //   intV T = readInt(in, buf);
+  //   intV *offset = newA(intV, n);
+  //   intV* adj = newA(intV, m);
+  //   intV* weights = newA(intV, m);
+  //   wghVertex<intV>* v = newA(wghVertex<intV>, n);
+  //   for (intV i = 0; i < n; ++i) {
   //     offset[i] = readInt(in, buf);
   //     v[i].Neighbors = adj + offset[i];
   //     v[i].nghWeights = weights + offset[i];
@@ -371,16 +377,16 @@ namespace benchIO {
   //   }
   //   v[n - 1].degree = m - offset[n - 1];
   //   free(offset);
-  //   for (intT i = 0; i < m; ++i) {
+  //   for (intV i = 0; i < m; ++i) {
   //     adj[i] = readInt(in, buf);
   //     weights[i] = readInt(in, buf);
   //   }
-  //   return FlowGraph<intT>(wghGraph<intT>(v, n, m, adj, weights), S, T);
+  //   return FlowGraph<intV>(wghGraph<intV>(v, n, m, adj, weights), S, T);
   // }
 
   // const char nl = '\n';
-  // template <typename intT>
-  // FlowGraph<intT> writeFlowGraphDimacs(ostream& out, FlowGraph<intT> g) {
+  // template <typename intV>
+  // FlowGraph<intV> writeFlowGraphDimacs(ostream& out, FlowGraph<intV> g) {
   //   out << "c DIMACS flow network description" << nl;
   //   out << "c (problem-id, nodes, arcs)" << nl;
   //   out << "p max " << g.g.n << " " << g.g.m << nl;
@@ -392,18 +398,18 @@ namespace benchIO {
 
   //   out << "c arc description (from, to, capacity)" << nl;
 
-  //   for (intT i = 0; i < g.g.n; ++i) {
-  //     wghVertex<intT>& v = g.g.V[i];
-  //     for (intT j = 0; j < v.degree; ++j) {
+  //   for (intV i = 0; i < g.g.n; ++i) {
+  //     wghVertex<intV>& v = g.g.V[i];
+  //     for (intV j = 0; j < v.degree; ++j) {
   //       out << "a " << i + 1 << " " << v.Neighbors[j] + 1 << " "
   //           << v.nghWeights[j] << nl;
   //     }
   //   }
   // }
 
-  // template<typename intT>
+  // template<typename intV>
   // struct intWghEdge {
-  //   intT from, to, w;
+  //   intV from, to, w;
   // };
   // int readDimacsLinePref(istream& in, const char* expected) {
   //   char type;
@@ -422,31 +428,31 @@ namespace benchIO {
   //   return EOF;
   // }
 
-  // template <typename intT>
-  // FlowGraph<intT> readFlowGraphDimacs(istream& in) {
+  // template <typename intV>
+  // FlowGraph<intV> readFlowGraphDimacs(istream& in) {
   //   string tmp;
-  //   intT n, m;
+  //   intV n, m;
   //   int type = readDimacsLinePref(in, "p");
   //   if (type == EOF)
   //     errorOut("Unexpected EOF while reading DIMACS file");
   //   in >> tmp >> n >> m;
-  //   intWghEdge<intT>* edges = newA(intWghEdge<intT>, m);
-  //   intT edgei = 0;
-  //   intT* pos = newA(intT, n + 1);
-  //   intT S = -1, T = -1;
+  //   intWghEdge<intV>* edges = newA(intWghEdge<intV>, m);
+  //   intV edgei = 0;
+  //   intV* pos = newA(intV, n + 1);
+  //   intV S = -1, T = -1;
   //   while (EOF != (type = readDimacsLinePref(in, "an"))) {
   //     if (type == 'n') {
-  //       intT x;
+  //       intV x;
   //       char st;
   //       in >> x >> st;
   //       x--;
   //       if (st == 's') S = x;
   //       else T = x;
   //     } else { // type == 'a'
-  //       intT from, to, cap;
+  //       intV from, to, cap;
   //       in >> from >> to >> cap;
   //       from--; to--;
-  //       edges[edgei] = (intWghEdge<intT>) { from, to, cap };
+  //       edges[edgei] = (intWghEdge<intV>) { from, to, cap };
   //       edgei++;
   //       pos[from + 1]++;
   //     }
@@ -457,23 +463,23 @@ namespace benchIO {
   //     errorOut("No sink was specified in DIMACS input file");
   //   if (m != edgei)
   //     errorOut("Inconsistent edge count in DIMACS input file");
-  //   intT* adj = newA(intT, m);
-  //   intT* weights = newA(intT, m);
-  //   wghVertex<intT>* v = newA(wghVertex<intT>, n);
-  //   for (intT i = 0; i < n; ++i) {
+  //   intV* adj = newA(intV, m);
+  //   intV* weights = newA(intV, m);
+  //   wghVertex<intV>* v = newA(wghVertex<intV>, n);
+  //   for (intV i = 0; i < n; ++i) {
   //     pos[i + 1] += pos[i];
   //     v[i].Neighbors = adj + pos[i];
   //     v[i].nghWeights = weights + pos[i];
   //     v[i].degree = pos[i + 1] - pos[i];
   //   }
-  //   for (intT i = 0; i < m; ++i) {
-  //     intT& p = pos[edges[i].from];
+  //   for (intV i = 0; i < m; ++i) {
+  //     intV& p = pos[edges[i].from];
   //     adj[p] = edges[i].to;
   //     weights[p] = edges[i].w;
   //     p++;
   //   }
   //   free(edges);
   //   free(pos);
-  //   return FlowGraph<intT>(wghGraph<intT>(v, n, m, adj, weights), S, T);
+  //   return FlowGraph<intV>(wghGraph<intV>(v, n, m, adj, weights), S, T);
   // }
 };

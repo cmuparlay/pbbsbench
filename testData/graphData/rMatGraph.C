@@ -30,64 +30,65 @@ using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
-template <class intT>
+template <class intV>
 struct rMat {
+  using edgeT = edge<intV>;
   double a, ab, abc;
-  intT n; 
-  intT h;
-  rMat(intT _n, intT _seed, 
+  size_t n; 
+  size_t h;
+  rMat(size_t _n, size_t _seed, 
        double _a, double _b, double _c) {
     n = _n; a = _a; ab = _a + _b; abc = _a+_b+_c;
-    h = dataGen::hash<uintT>(_seed);
+    h = dataGen::hash<size_t>(_seed);
     pbbs::assert_str(abc <= 1.0,
 		 "in rMat: a + b + c add to more than 1");
     pbbs::assert_str((1 << pbbs::log2_up(n)) == n, 
 		 "in rMat: n not a power of 2");
   }
 
-  edge<intT> rMatRec(intT nn, intT randStart, intT randStride) {
-    if (nn==1) return edge<intT>(0,0);
+  edgeT rMatRec(size_t nn, size_t randStart, size_t randStride) {
+    if (nn==1) return edgeT(0,0);
     else {
-      edge<intT> x = rMatRec(nn/2, randStart + randStride, randStride);
+      edgeT x = rMatRec(nn/2, randStart + randStride, randStride);
       double r = dataGen::hash<double>(randStart);
       if (r < a) return x;
-      else if (r < ab) return edge<intT>(x.u,x.v+nn/2);
-      else if (r < abc) return edge<intT>(x.u+nn/2, x.v);
-      else return edge<intT>(x.u+nn/2, x.v+nn/2);
+      else if (r < ab) return edgeT(x.u,x.v+nn/2);
+      else if (r < abc) return edgeT(x.u+nn/2, x.v);
+      else return edgeT(x.u+nn/2, x.v+nn/2);
     }
   }
 
-  edge<intT> operator() (intT i) {
-    intT randStart = dataGen::hash<uintT>((2*i)*h);
-    intT randStride = dataGen::hash<uintT>((2*i+1)*h);
+  edge<intV> operator() (size_t i) {
+    size_t randStart = dataGen::hash<size_t>((2*i)*h);
+    size_t randStride = dataGen::hash<size_t>((2*i+1)*h);
     return rMatRec(n, randStart, randStride);
   }
 };
 
-template <class intT>
-edgeArray<intT> edgeRmat(intT n, intT m, intT seed, 
-		   float a, float b, float c) {
-  intT nn = (1 << pbbs::log2_up(n));
-  rMat<intT> g(nn,seed,a,b,c);
-  sequence<edge<intT>> E(m, [&] (size_t i) {return g(i);});
-  return edgeArray<intT>(std::move(E), nn, nn);
+template <class intV>
+edgeArray<intV> edgeRmat(size_t n, size_t m, size_t seed, 
+			 double a, double b, double c) {
+  size_t nn = (1 << pbbs::log2_up(n));
+  rMat<intV> g(nn,seed,a,b,c);
+  sequence<edge<intV>> E(m, [&] (size_t i) {return g(i);});
+  return edgeArray<intV>(std::move(E), nn, nn);
 }
 
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,
 		"[-m <numedges>] [-s <intseed>] [-o] [-j] [-a <a>] [-b <b>] [-c <c>] n <outFile>");
-  pair<intT,char*> in = P.sizeAndFileName();
-  intT n = in.first;
+  pair<size_t,char*> in = P.sizeAndFileName();
+  size_t n = in.first;
   char* fname = in.second;
   double a = P.getOptionDoubleValue("-a",.5);
   double b = P.getOptionDoubleValue("-b",.1);
   double c = P.getOptionDoubleValue("-c", b);
-  intT m = P.getOptionLongValue("-m", 10*n);
-  intT seed = P.getOptionLongValue("-s", 1);
+  size_t m = P.getOptionLongValue("-m", 10*n);
+  size_t seed = P.getOptionLongValue("-s", 1);
   bool adjArray = P.getOption("-j");
   bool ordered = P.getOption("-o");
 
-  edgeArray<intT> EA = edgeRmat(n, m, seed, a, b, c);
+  edgeArray<size_t> EA = edgeRmat<size_t>(n, m, seed, a, b, c);
   writeGraphFromEdges(EA, fname, adjArray, ordered);
 }

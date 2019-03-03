@@ -32,7 +32,7 @@
 using namespace std;
 using namespace benchIO;
 
-void timeMIS(graph<intT> const &G, int rounds, char* outFile) {
+void timeMIS(graph<uint> const &G, int rounds, char* outFile) {
   timer t;
   sequence<char> flags = maximalIndependentSet(G);
   for (int i=0; i < rounds; i++) {
@@ -52,6 +52,6 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  graph<intT> G = readGraphFromFile<intT>(iFile);
+  graph<uint> G = readGraphFromFile<uint>(iFile);
   timeMIS(G, rounds, oFile);
 }

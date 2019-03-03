@@ -32,10 +32,10 @@
 using namespace std;
 using namespace benchIO;
 
-void timeMST(wghEdgeArray<intT> const &In, int rounds, char* outFile) {
+void timeMST(wghEdgeArray<vertexId,edgeWeight> const &In, int rounds, char* outFile) {
   timer t;
-  pbbs::sequence<intT> Out;
-  for (intT i=0; i < rounds; i++) {
+  pbbs::sequence<vertexId> Out;
+  for (size_t i=0; i < rounds; i++) {
     Out.clear();
     t.start();
     Out = mst(In);
@@ -50,6 +50,6 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  wghEdgeArray<intT> EA = readWghEdgeArrayFromFile<intT>(iFile);
+  wghEdgeArray<vertexId,edgeWeight> EA = readWghEdgeArrayFromFile<vertexId,edgeWeight>(iFile);
   timeMST(EA, rounds, oFile);
 }

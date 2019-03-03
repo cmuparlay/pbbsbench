@@ -13,10 +13,10 @@ int main(int argc, char* argv[]) {
   char* oFile = P.getOptionValue("-o");
   bool weighted = P.getOptionValue("-w");
   if(!weighted) {
-    edgeArray<intT> G = readEdgeArrayFromFile<intT>(iFile);
-    writeGraphToFile<intT>(graphFromEdges(G,1),oFile);
+    edgeArray<size_t> G = readEdgeArrayFromFile<size_t>(iFile);
+    writeGraphToFile(graphFromEdges(G,1),oFile);
   } else {
-    wghEdgeArray<intT> G = readWghEdgeArrayFromFile<intT>(iFile);
-    writeWghGraphToFile<intT>(wghGraphFromEdges(G),oFile);
+    wghEdgeArray<size_t,double> G = readWghEdgeArrayFromFile<size_t,double>(iFile);
+    writeWghGraphToFile(wghGraphFromEdges(G),oFile);
   }
 }

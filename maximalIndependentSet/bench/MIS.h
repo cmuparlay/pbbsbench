@@ -1,4 +1,8 @@
 #include "graph.h"
 
-pbbs::sequence<char> maximalIndependentSet(graph<intT> G);
+using vertexId = uint;
+using edgeId = uint;
+using Graph = graph<vertexId,edgeId>;
+
+pbbs::sequence<char> maximalIndependentSet(Graph G);
 

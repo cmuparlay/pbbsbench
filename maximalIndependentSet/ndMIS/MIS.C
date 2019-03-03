@@ -25,6 +25,7 @@
 #include "sequence.h"
 #include "graph.h"
 #include "parallel.h"
+#include "MIS.h"
 using namespace std;
 
 // **************************************************************
@@ -35,21 +36,21 @@ using namespace std;
 // and Flags[v] = 2 means vertex is not in MIS
 
 // nondeterministic greed algorithm
-pbbs::sequence<char> maximalIndependentSet(graph<intT> G) {
-  intT n = G.n;
+pbbs::sequence<char> maximalIndependentSet(Graph G) {
+  size_t n = G.n;
   pbbs::sequence<char> Flags(n, (char) 0);
   pbbs::sequence<bool> V(n, false);
   
   parallel_for(0, n, [&] (size_t i) {
-      intT v = i;
-      while(1){
+      size_t v = i;
+      while (1) {
 	//drop out if already in or out of MIS
-	if(Flags[v]) break;
+	if (Flags[v]) break;
 	//try to lock self and neighbors
 	if (pbbs::atomic_compare_and_swap<bool>(&V[v], false, true)) {
-	  intT k = 0;
-	  for(intT j=0; j<G[v].degree; j++){
-	    intT ngh = G[v].Neighbors[j];
+	  size_t k = 0;
+	  for (size_t j = 0; j < G[v].degree; j++){
+	    vertexId ngh = G[v].Neighbors[j];
 	    // if ngh is not in MIS or we successfully 
 	    // acquire lock, increment k
 	    if (Flags[ngh] == 2 || pbbs::atomic_compare_and_swap(&V[ngh], false, true))
@@ -59,16 +60,16 @@ pbbs::sequence<char> maximalIndependentSet(graph<intT> G) {
 	  if(k == G[v].degree){ 
 	    //win on self and neighbors so fill flags
 	    Flags[v] = 1;
-	    for(intT j=0;j<G[v].degree;j++){
-	      intT ngh = G[v].Neighbors[j]; 
+	    for(size_t j = 0; j < G[v].degree; j++){
+	      vertexId ngh = G[v].Neighbors[j]; 
 	      if(Flags[ngh] != 2) Flags[ngh] = 2;
 	    }
 	  } else { 
 	    //lose so reset V values up to point
 	    //where it lost
 	    V[v] = false;
-	    for(intT j = 0; j < k; j++){
-	      intT ngh = G[v].Neighbors[j];
+	    for(size_t j = 0; j < k; j++){
+	      vertexId ngh = G[v].Neighbors[j];
 	      if(Flags[ngh] != 2) V[ngh] = false;
 	    }
 	  }

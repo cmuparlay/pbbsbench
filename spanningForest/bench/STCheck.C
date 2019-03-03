@@ -32,25 +32,18 @@
 using namespace std;
 using namespace benchIO;
 
-using intT = int;
-
-// The serial spanning tree used for checking against
-//pair<int*,int> st(edgeArray<int> EA);
-
-// This needs to be augmented with a proper check
-
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<inFile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
   char* oFile = fnames.second;
 
-  edgeArray<intT> In = readEdgeArrayFromFile<intT>(iFile);
-  pbbs::sequence<intT> Out = readIntSeqFromFile<intT>(oFile);
-  intT n = Out.size();
+  edgeArray<vertexId> In = readEdgeArrayFromFile<vertexId>(iFile);
+  pbbs::sequence<vertexId> Out = readIntSeqFromFile<vertexId>(oFile);
+  size_t n = Out.size();
 
   //run serial ST
-  sequence<intT> serialST = st(In);
+  sequence<vertexId> serialST = st(In);
   if (n != serialST.size()){
     cout << "Wrong edge count: ST has " << serialST.size()
 	 << " edges but algorithm returned " << n << " edges\n";
@@ -62,11 +55,11 @@ int main(int argc, char* argv[]) {
   pbbs::sequence<bool> flags(In.nonZeros, false);
   parallel_for(0, n, [&] (size_t i) {
       flags[Out[i]] = true;});
-  pbbs::sequence<edge<intT>> E = pbbs::pack(In.E, flags);
+  pbbs::sequence<edge<vertexId>> E = pbbs::pack(In.E, flags);
   size_t m = E.size();
   
-  edgeArray<intT> EA(std::move(E), In.numRows, In.numCols); 
-  sequence<intT> check = st(EA);
+  edgeArray<vertexId> EA(std::move(E), In.numRows, In.numCols); 
+  sequence<vertexId> check = st(EA);
 
   if (m != check.size()){
     cout << "Result is not a spanning tree " << endl;

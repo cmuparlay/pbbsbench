@@ -31,10 +31,10 @@
 using namespace std;
 using namespace benchIO;
 
-void timeST(edgeArray<intT> In, int rounds, char* outFile) {
+void timeST(edgeArray<vertexId> In, int rounds, char* outFile) {
   timer t;
-  sequence<intT> Out;
-  for (intT i=0; i < rounds; i++) {
+  sequence<vertexId> Out;
+  for (size_t i=0; i < rounds; i++) {
     Out.clear();
     t.start();
     Out = st(In);
@@ -49,6 +49,6 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  edgeArray<intT> EA = readEdgeArrayFromFile<intT>(iFile);
+  edgeArray<vertexId> EA = readEdgeArrayFromFile<vertexId>(iFile);
   timeST(EA, rounds, oFile);
 }

@@ -27,6 +27,7 @@
 #include "parallel.h"
 #include "speculative_for.h"
 #include "get_time.h"
+#include "MIS.h"
 using namespace std;
 
 // **************************************************************
@@ -40,14 +41,14 @@ using namespace std;
 struct MISstep {
   char flag;
   pbbs::sequence<char> &Flags;
-  graph<intT> const &G;
-  MISstep(pbbs::sequence<char> & F, graph<intT> &G) : Flags(F), G(G) {}
+  Graph const &G;
+  MISstep(pbbs::sequence<char> & F, Graph &G) : Flags(F), G(G) {}
 
-  bool reserve(intT i) {
-    intT d = G[i].degree;
+  bool reserve(size_t i) {
+    size_t d = G[i].degree;
     flag = 1;
-    for (intT j = 0; j < d; j++) {
-      intT ngh = G[i].Neighbors[j];
+    for (size_t j = 0; j < d; j++) {
+      size_t ngh = G[i].Neighbors[j];
       if (ngh < i) {
 	if (Flags[ngh] == 1) { flag = 2; return 1;}
 	// need to wait for higher priority neighbor to decide
@@ -57,13 +58,13 @@ struct MISstep {
     return 1;
   }
 
-  bool commit(intT i) { return (Flags[i] = flag) > 0;}
+  bool commit(size_t i) { return (Flags[i] = flag) > 0;}
 };
 
-pbbs::sequence<char> maximalIndependentSet(graph<intT> GS) {
-  intT n = GS.n;
+pbbs::sequence<char> maximalIndependentSet(Graph GS) {
+  size_t n = GS.n;
   pbbs::sequence<char> Flags(n, (char) 0);
   MISstep mis(Flags, GS);
-  speculative_for(mis, 0, n, 20);
+  speculative_for<vertexId>(mis, 0, n, 20);
   return Flags;
 }

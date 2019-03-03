@@ -36,39 +36,39 @@ using namespace std;
 // a dim-dimensional space.   In particular an edge (i,j) will have
 // probability roughly proportional to (1/|i-j|)^{(d+1)/d}, giving 
 // separators of size about n^{(d-1)/d}.    
-template <class intT>
-edgeArray<intT> edgeRandomWithDimension(intT dim, intT degree, intT numRows) {
-  intT nonZeros = numRows*degree;
-  pbbs::sequence<edge<intT>> E(nonZeros, [&] (size_t k) {
-      intT i = k / degree;
-      intT j;
+template <class intV>
+edgeArray<intV> edgeRandomWithDimension(size_t dim, size_t degree, size_t numRows) {
+  size_t nonZeros = numRows*degree;
+  pbbs::sequence<edge<intV>> E(nonZeros, [&] (size_t k) {
+      size_t i = k / degree;
+      size_t j;
       if (dim==0) {
-	intT h = k;
+	size_t h = k;
 	do {
-	  j = ((h = dataGen::hash<intT>(h)) % numRows);
+	  j = ((h = dataGen::hash<intV>(h)) % numRows);
 	} while (j == i);
       } else {
-	intT pow = dim+2;
-	intT h = k;
+	size_t pow = dim+2;
+	size_t h = k;
 	do {
-	  while ((((h = dataGen::hash<intT>(h)) % 1000003) < 500001)) pow += dim;
-	  j = (i + ((h = dataGen::hash<intT>(h)) % (((long) 1) << pow))) % numRows;
+	  while ((((h = dataGen::hash<intV>(h)) % 1000003) < 500001)) pow += dim;
+	  j = (i + ((h = dataGen::hash<intV>(h)) % (((long) 1) << pow))) % numRows;
 	} while (j == i);
       }
-      return edge<intT>(i, j);
+      return edge<intV>(i, j);
     });
-  return edgeArray<intT>(std::move(E), numRows, numRows);
+  return edgeArray<intV>(std::move(E), numRows, numRows);
 }
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-m <numedges>] [-d <dims>] [-o] [-j] n <outFile>");
-  pair<intT,char*> in = P.sizeAndFileName();
-  intT n = in.first;
+  pair<size_t,char*> in = P.sizeAndFileName();
+  size_t n = in.first;
   char* fname = in.second;
   int dim = P.getOptionIntValue("-d", 0);
-  intT m = P.getOptionLongValue("-m", 10*n);
+  size_t m = P.getOptionLongValue("-m", 10*n);
   bool ordered = P.getOption("-o");
   bool adjArray = P.getOption("-j");
-  edgeArray<intT> EA = edgeRandomWithDimension<intT>(dim, m/n, n);
+  edgeArray<size_t> EA = edgeRandomWithDimension<size_t>(dim, m/n, n);
   writeGraphFromEdges(EA, fname, adjArray, ordered);
 }

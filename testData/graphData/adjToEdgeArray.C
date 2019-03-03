@@ -12,8 +12,8 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
 
-  graph<intT> G = readGraphFromFile<intT>(iFile);
-  edgeArray<intT> EA = edgesFromGraph(G);
+  graph<size_t> G = readGraphFromFile<size_t>(iFile);
+  edgeArray<size_t> EA = edgesFromGraph(G);
   EA = makeSymmetric(EA);
-  writeEdgeArrayToFile<intT>(EA,oFile);
+  writeEdgeArrayToFile(EA,oFile);
 }

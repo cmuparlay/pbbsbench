@@ -35,11 +35,11 @@ using namespace std;
 // **************************************************************
 
 // Assumes root is negative
-intT find(intT i, intT* parent) {
+vertexId find(vertexId i, vertexId* parent) {
   if (parent[i] < 0) return i;
   else {
-    intT j = i;
-    intT tmp;
+    vertexId j = i;
+    vertexId tmp;
 
     // Find root
     do j = parent[j]; while (parent[j] >= 0);
@@ -56,12 +56,12 @@ intT find(intT i, intT* parent) {
 // **************************************************************
 
 struct edgei {
-  intT u;
-  intT v;
+  vertexId u;
+  vertexId v;
   double weight;
-  intT id;
+  edgeId id;
   edgei() {}
-  edgei(intT _u, intT _v, double w, intT _id) 
+  edgei(vertexId _u, vertexId _v, double w, edgeId _id) 
     : u(_u), v(_v), id(_id), weight(w) {}
 };
 
@@ -70,10 +70,10 @@ struct edgeLess : std::binary_function <edgei ,edgei ,bool> {
   { return (a.weight == b.weight) ? (a.id < b.id) : (a.weight < b.weight); }
 };
 
-int unionFindLoop(edgei* E, intT m, intT nInMst, intT* parent, intT* mst) {
-  for (intT i = 0; i < m; i++) {
-    intT u = find(E[i].u, parent);
-    intT v = find(E[i].v, parent);
+int unionFindLoop(edgei* E, size_t m, size_t nInMst, vertexId* parent, vertexId* mst) {
+  for (size_t i = 0; i < m; i++) {
+    vertexId u = find(E[i].u, parent);
+    vertexId v = find(E[i].v, parent);
     
     // union operation 
     if (u != v) {
@@ -86,29 +86,29 @@ int unionFindLoop(edgei* E, intT m, intT nInMst, intT* parent, intT* mst) {
   return nInMst;
 }
 
-pbbs::sequence<intT> mst(wghEdgeArray<intT> const &G) { 
+pbbs::sequence<vertexId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
   edgei* EI = pbbs::new_array<edgei>(G.m);
-  for (intT i=0; i < G.m; i++) 
+  for (size_t i=0; i < G.m; i++) 
     EI[i] = edgei(G.E[i].u, G.E[i].v, G.E[i].weight, i);
 
-  intT l = min(4*G.n/3,G.m);
+  size_t l = min(4*G.n/3,G.m);
   std::nth_element(EI, EI+l, EI+G.m, edgeLess());
 
   std::sort(EI, EI+l, edgeLess());
 
-  intT *parent = pbbs::new_array<intT>(G.n);
-  for (intT i=0; i < G.n; i++) parent[i] = -1;
+  vertexId *parent = pbbs::new_array<vertexId>(G.n);
+  for (size_t i=0; i < G.n; i++) parent[i] = -1;
 
-  intT *mst = pbbs::new_array<intT>(G.n);
-  intT nInMst = unionFindLoop(EI, l, 0, parent, mst);
+  vertexId *mst = pbbs::new_array<vertexId>(G.n);
+  size_t nInMst = unionFindLoop(EI, l, 0, parent, mst);
 
   edgei *f = EI+l;
   for (edgei*e = EI+l; e < EI + G.m; e++) {
-    intT u = find(e->u, parent);
-    intT v = find(e->v, parent);
+    vertexId u = find(e->u, parent);
+    vertexId v = find(e->v, parent);
     if (u != v) *f++ = *e;
   }
-  intT k = f - (EI+l);
+  size_t k = f - (EI+l);
 
   std::sort(EI+l, f, edgeLess());
 
@@ -117,5 +117,5 @@ pbbs::sequence<intT> mst(wghEdgeArray<intT> const &G) {
   //cout << "n=" << G.n << " m=" << G.m << " nInMst=" << nInMst << endl;
   pbbs::free_array(EI);
   pbbs::free_array(parent);
-  return pbbs::sequence<intT>(mst, nInMst);
+  return pbbs::sequence<vertexId>(mst, nInMst);
 }
