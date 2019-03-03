@@ -21,37 +21,27 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <iostream>
-#include <algorithm>
-#include "get_time.h"
 #include "graph.h"
 #include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "sequence.h"
 #include "MIS.h"
-using namespace std;
-using namespace benchIO;
 
-void timeMIS(Graph const &G, int rounds, char* outFile) {
-  timer t;
-  sequence<char> flags = maximalIndependentSet(G);
-  for (int i=0; i < rounds; i++) {
-    flags.clear();
-    t.start();
-    flags = maximalIndependentSet(G);
-    t.next("");
+// **************************************************************
+//    MAXIMAL INDEPENDENT SET
+// **************************************************************
+
+pbbs::sequence<char> maximalIndependentSet(Graph G) {
+  size_t n = G.n;
+  pbbs::sequence<char> Flags(n, (char) 0);
+  for (size_t i = 0; i < n; i++) {
+    Flags[i] = 1;
+    for (size_t j = 0; j< G[i].degree; j++) {
+      vertexId ngh = G[i].Neighbors[j];
+      if (Flags[ngh] == 1) {
+	Flags[i] = 2;
+	break;
+      }
+    }
   }
-  cout << endl;
-
-  sequence<int> F(G.n, [&] (size_t i) {return flags[i];});
-  writeIntSeqToFile(F, outFile);
-}
-
-int main(int argc, char* argv[]) {
-  commandLine P(argc, argv, "[-o <outFile>] [-r <rounds>] <inFile>");
-  char* iFile = P.getArgument(0);
-  char* oFile = P.getOptionValue("-o");
-  int rounds = P.getOptionIntValue("-r",1);
-  Graph G = readGraphFromFile<vertexId,edgeId>(iFile);
-  timeMIS(G, rounds, oFile);
+  return Flags;
 }
