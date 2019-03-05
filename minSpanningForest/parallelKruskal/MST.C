@@ -1,5 +1,5 @@
 // This code is part of the Problem Based Benchmark Suite (PBBS)
-// Copyright (c) 2011 Guy Blelloch and the PBBS team
+// Copyright (c) 2011-2019 Guy Blelloch and the PBBS team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
@@ -30,7 +30,6 @@
 #include "sequence.h"
 #include "parallel.h"
 #include "get_time.h"
-#include "stlalgs.h"
 
 #include "MST.h"
 
@@ -40,12 +39,14 @@ using namespace std;
 //    PARALLEL VERSION OF KRUSKAL'S ALGORITHM
 // **************************************************************
 
+// need to tag each edge with an index so we can keep track of
+// which edges are added to the MST
 struct indexedEdge {
-  vertexId u; vertexId v; edgeId id;
-  indexedEdge(vertexId u, vertexId v, edgeId id) : u(u), v(v), id(id) {}
+  vertexId u; vertexId v; edgeId id; edgeWeight w;
+  indexedEdge(vertexId u, vertexId v, edgeId id, edgeWeight w)
+    : u(u), v(v), id(id), w(w){}
+  indexedEdge() {};
 };
-
-using weight_index = pair<edgeWeight, edgeId>;
 
 struct UnionFindStep {
   vertexId u;  vertexId v;  
@@ -83,75 +84,53 @@ struct UnionFindStep {
   }
 };
 
-
-
 pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) { 
   timer t("mst", true);
   size_t m = E.m;
   size_t n = E.n;
   size_t k = min<size_t>(5 * n / 4, m);
-  auto IW = pbbs::delayed_seq<weight_index>(m, [&] (size_t i) {
-      return weight_index(E[i].weight, i);});
 
-  auto edgeLess = [&] (weight_index a, weight_index b) { 
-    return (a.first == b.first) ? (a.second < b.second) 
-    : (a.first < b.first);};
-      
-  pbbs::random r;
-  pbbs::sequence<edgeWeight> sample(1 + m/1000, [&] (size_t i) -> edgeWeight {
-      return E[r[i]%m].weight;});
-  edgeWeight w = pbbs::sort(sample, std::less<edgeWeight>())[k/1000];
-  t.next("kth smallest");
-  
-  auto flags = pbbs::delayed_seq<bool>(m, [&] (size_t i) {
-      return IW[i].first > w;});
-  pbbs::sequence<weight_index> IWS;
-  size_t cnt;
-  std::tie(IWS, cnt) = pbbs::split_two(IW, flags);
-  t.next("partition");
+  // for equal edge weights will prioritize the earliest one
+  auto edgeLess = [&] (indexedEdge a, indexedEdge b) { 
+    return (a.w < b.w) || ((a.w == b.w) && (a.id < b.id));};
 
-  pbbs::sort_inplace(IWS.slice(0,cnt), edgeLess);
-  t.next("first sort");
+  // tag each edge with an index
+  auto IW = pbbs::delayed_seq<indexedEdge>(m, [&] (size_t i) {
+      return indexedEdge(E[i].u, E[i].v, i, E[i].weight);});
 
-  pbbs::sequence<reservation<vertexId>> R(n);
-  t.next("initialize nodes");
+  indexedEdge kth = pbbs::approximate_kth_smallest(IW, k, edgeLess);
+  t.next("approximate kth smallest");
+  cout << kth.w << endl;
+    
+  auto IW1 = pbbs::filter(IW, [&] (indexedEdge e) {
+      return edgeLess(e, kth);});
+  t.next("filter those less than kth smallest as prefix");
 
-  pbbs::sequence<indexedEdge> Z(cnt, [&] (size_t i) {
-      size_t j = IWS[i].second;
-      return indexedEdge(E[j].u, E[j].v, j);
-    });
-  t.next("copy to edges");
+  pbbs::sort_inplace(IW1.slice(), edgeLess);
+  t.next("sort prefix");
 
   pbbs::sequence<bool> mstFlags(m, false);
   unionFind<vertexId> UF(n);
-  UnionFindStep UFStep(Z, UF, R,  mstFlags);
-  speculative_for<vertexId>(UFStep, 0, cnt, 8);
-  t.next("first union find loop");
+  pbbs::sequence<reservation<vertexId>> R(n);
+  UnionFindStep UFStep1(IW1, UF, R,  mstFlags);
+  speculative_for<vertexId>(UFStep1, 0, IW1.size(), 8);
+  t.next("union find loop on prefix");
 
-  auto f = [&] (weight_index wi) {
-      size_t j = wi.second;
-      return UF.find(E[j].u) != UF.find(E[j].v);
-  };
-
-  IWS = pbbs::filter(IWS.slice(cnt,m), f);
-  t.next("filter out self edges");
+  auto IW2 = pbbs::filter(IW, [&] (indexedEdge e) {
+      return !edgeLess(e, kth) && UF.find(e.u) != UF.find(e.v);});
+  t.next("filter those that are not self edges");
   
-  pbbs::sort_inplace(IWS.slice(), edgeLess);
-  t.next("second sort");
+  pbbs::sort_inplace(IW2.slice(), edgeLess);
+  t.next("sort remaining");
 
-  Z = pbbs::sequence<indexedEdge>(IWS.size(), [&] (size_t i) {
-     size_t j = IWS[i].second;
-     return indexedEdge(E[j].u, E[j].v, j);
-    });
-  t.next("copy to edges");
-
-  UnionFindStep UFStep2(Z, UF, R, mstFlags);
-  speculative_for<vertexId>(UFStep2, 0, IWS.size(), 8);
-  t.next("second union find loop");
+  UnionFindStep UFStep2(IW2, UF, R, mstFlags);
+  speculative_for<vertexId>(UFStep2, 0, IW2.size(), 8);
+  t.next("union find loop on remaining");
 
   pbbs::sequence<edgeId> mst = pbbs::pack_index<edgeId>(mstFlags);
-  t.next("pack results");
+  t.next("pack out results");
 
   //cout << "n=" << n << " m=" << m << " nInMst=" << size << endl;
   return mst;
 }
+
