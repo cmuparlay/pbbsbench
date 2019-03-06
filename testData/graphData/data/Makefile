@@ -19,6 +19,9 @@ clean :
 rMatGraph_E_5_% : ../rMatGraph
 	../rMatGraph  -a .5 -b .1 -m `expr 5 \* $(subst rMatGraph_E_5_,,$@)` $(subst rMatGraph_E_5_,,$@) $@
 
+rMatGraph_E_10_% : ../rMatGraph
+	../rMatGraph  -a .5 -b .1 -m `expr 10 \* $(subst rMatGraph_E_10_,,$@)` $(subst rMatGraph_E_10_,,$@) $@
+
 rMatGraph_E_16_% : ../rMatGraph
 	../rMatGraph -a .57 -b .19 -m `expr 16 \* $(subst rMatGraph_E_16_,,$@)` $(subst rMatGraph_E_16_,,$@) $@
 

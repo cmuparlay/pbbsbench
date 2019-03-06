@@ -49,7 +49,6 @@ struct indexedEdge {
 };
 
 struct UnionFindStep {
-  vertexId u;  vertexId v;  
   pbbs::sequence<indexedEdge> const &E;
   pbbs::sequence<reservation<vertexId>> &R;
   unionFind<vertexId> &UF;
@@ -60,9 +59,9 @@ struct UnionFindStep {
 		pbbs::sequence<bool> &inST) :
     E(E), R(R), UF(UF), inST(inST) {}
 
-  bool reserve(vertexId i) {
-    u = UF.find(E[i].u);
-    v = UF.find(E[i].v);
+  bool reserve(edgeId i) {
+    vertexId u = E[i].u = UF.find(E[i].u);
+    vertexId v = E[i].v = UF.find(E[i].v);
     if (u != v) {
       R[v].reserve(i);
       R[u].reserve(i);
@@ -70,7 +69,9 @@ struct UnionFindStep {
     } else return false;
   }
 
-  bool commit(vertexId i) {
+  bool commit(edgeId i) {
+    vertexId u = E[i].u;
+    vertexId v = E[i].v;
     if (R[v].check(i)) {
       R[u].checkReset(i); 
       UF.link(v, u); 
@@ -90,42 +91,24 @@ pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) {
   size_t n = E.n;
   size_t k = min<size_t>(5 * n / 4, m);
 
-  // for equal edge weights will prioritize the earliest one
+  // if uncomment, equal edge weights will prioritize the earliest one
   auto edgeLess = [&] (indexedEdge a, indexedEdge b) { 
-    return (a.w < b.w) || ((a.w == b.w) && (a.id < b.id));};
+    return (a.w < b.w);}; 
+  //return (a.w < b.w) || ((a.w == b.w) && (a.id < b.id));};
 
   // tag each edge with an index
   auto IW = pbbs::delayed_seq<indexedEdge>(m, [&] (size_t i) {
       return indexedEdge(E[i].u, E[i].v, i, E[i].weight);});
 
-  indexedEdge kth = pbbs::approximate_kth_smallest(IW, k, edgeLess);
-  t.next("approximate kth smallest");
-  cout << kth.w << endl;
-    
-  auto IW1 = pbbs::filter(IW, [&] (indexedEdge e) {
-      return edgeLess(e, kth);});
-  t.next("filter those less than kth smallest as prefix");
-
-  pbbs::sort_inplace(IW1.slice(), edgeLess);
-  t.next("sort prefix");
+  auto IW1 = pbbs::sort(IW, edgeLess);
+  t.next("sort edges");
 
   pbbs::sequence<bool> mstFlags(m, false);
   unionFind<vertexId> UF(n);
   pbbs::sequence<reservation<vertexId>> R(n);
   UnionFindStep UFStep1(IW1, UF, R,  mstFlags);
-  speculative_for<vertexId>(UFStep1, 0, IW1.size(), 8);
-  t.next("union find loop on prefix");
-
-  auto IW2 = pbbs::filter(IW, [&] (indexedEdge e) {
-      return !edgeLess(e, kth) && UF.find(e.u) != UF.find(e.v);});
-  t.next("filter those that are not self edges");
-  
-  pbbs::sort_inplace(IW2.slice(), edgeLess);
-  t.next("sort remaining");
-
-  UnionFindStep UFStep2(IW2, UF, R, mstFlags);
-  speculative_for<vertexId>(UFStep2, 0, IW2.size(), 8);
-  t.next("union find loop on remaining");
+  speculative_for<vertexId>(UFStep1, 0, IW1.size(), 20, false);
+  t.next("union find loop");
 
   pbbs::sequence<edgeId> mst = pbbs::pack_index<edgeId>(mstFlags);
   t.next("pack out results");
