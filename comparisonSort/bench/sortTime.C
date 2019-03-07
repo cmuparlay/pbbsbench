@@ -92,6 +92,7 @@ int main(int argc, char* argv[]) {
     timeSort((double*) D.A, D.n, std::less<double>(), rounds, permute, oFile);
     break;
   case intPairT:
+    cout << "here" << endl;
     timeSort((intpair*) D.A, D.n, std::less<intpair>(), rounds, permute, oFile);
     break;
   case doublePairT:

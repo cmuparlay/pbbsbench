@@ -112,7 +112,7 @@ namespace benchIO {
       n = n/2;
       sequence<doublePair> A(n, [&] (long i) {
 	  return std::make_pair(atof(W[2*i+1]), atof(W[2*i+2]));});
-      return seqData((void*) A.to_array(), n, intPairT);
+      return seqData((void*) A.to_array(), n, doublePairT);
     } else if (header == seqHeader(stringIntPairT)) {
       n = n/2;
       sequence<stringIntPair> A(n, [&] (long i) {

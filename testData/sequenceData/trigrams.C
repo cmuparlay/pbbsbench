@@ -145,7 +145,7 @@ pbbs::sequence<char*> trigramWords(size_t s, size_t e) {
   nGramTable T = nGramTable();
   pbbs::sequence<long> L(n, [&] (size_t i) {
       return T.wordLength(100*(i+s),100);});
-  long m = pbbs::scan_inplace(L, pbbs::addm<long>());
+  long m = pbbs::scan_inplace(L.slice(), pbbs::addm<long>());
 
   char *AA = new char[m];
 
