@@ -147,7 +147,7 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
   // renumber characters densely
   // start numbering at 1 leaving 0 to indicate end-of-string
   size_t pad = 48;
-  sequence<uintT> flags(256, (uintT) 0);
+  pbbs::sequence<uintT> flags(256, (uintT) 0);
   parallel_for (0, n, [&] (size_t i) {
       if (!flags[ss[i]]) flags[ss[i]] = 1;});
   auto add = [&] (uintT a, uintT b) {return a + b;};
@@ -218,7 +218,7 @@ uintT* suffixArrayInternal(uchar* ss, size_t n) {
 	    Ci[j].first = (o >= n) ? 0 : ranks[o]; 
 	  }, 100);
 	auto less = [&] (intpair A, intpair B) {return A.first < B.first;};
-	if (l >= n/10) pbbs::sample_sort(Ci, l, less);
+	if (l >= n/10) pbbs::sample_sort_inplace(pbbs::range<intpair*>(Ci, Ci+l), less);
 	else pbbs::quicksort(Ci, l, less);
       }); 
     nextTimeM("sort");
