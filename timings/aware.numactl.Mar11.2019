@@ -1,0 +1,51 @@
+HOSTNAME: aware.aladdin.cs.cmu.edu
+
+suffixArray/serialDivsufsort
+1 : trigramString_10000000 :  -r 1 -o /tmp/ofile388202_934674 : '0.739'
+1 : trigramString_100000000 :  -r 1 -o /tmp/ofile972402_669069 : '13.636'
+3 : chr22.dna :  -r 1 -o /tmp/ofile890144_608795 : '2.745'
+1 : etext99 :  -r 1 -o /tmp/ofile260932_593550 : '12.911'
+1 : wikisamp.xml :  -r 1 -o /tmp/ofile517597_187205 : '11.588'
+serialDivsufsort : 1 : weighted time, min=6.729 median=6.729 mean=6.729
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 1 : '2.397'
+1 : trigramString_100000000 :  -r 1 : '32.099'
+3 : chr22.dna :  -r 1 : '12.402'
+1 : etext99 :  -r 1 : '48.386'
+1 : wikisamp.xml :  -r 1 : '43.417'
+parallelKS : 1 : weighted time, min=23.358 median=23.358 mean=23.358
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 3 : '0.777', '0.689', '0.693'
+1 : trigramString_100000000 :  -r 3 : '9.186', '9.143', '9.168'
+3 : chr22.dna :  -r 3 : '3.636', '3.648', '3.654'
+1 : etext99 :  -r 3 : '13.182', '13.134', '13.154'
+1 : wikisamp.xml :  -r 3 : '12.536', '12.619', '12.616'
+parallelKS : 4 : weighted time, min=6.63 median=6.654 mean=6.653
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 5 : '0.215', '0.218', '0.213', '0.208', '0.196'
+1 : trigramString_100000000 :  -r 5 : '2.467', '2.466', '2.471', '2.47', '2.463'
+3 : chr22.dna :  -r 5 : '1.03', '1.02', '1.021', '1.019', '1.019'
+1 : etext99 :  -r 5 : '3.586', '3.583', '3.604', '3.578', '3.578'
+1 : wikisamp.xml :  -r 5 : '3.443', '3.374', '3.372', '3.372', '3.375'
+parallelKS : 16 : weighted time, min=1.809 median=1.814 mean=1.817
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 5 : '0.131', '0.127', '0.127', '0.127', '0.125'
+1 : trigramString_100000000 :  -r 5 : '1.396', '1.392', '1.39', '1.391', '1.391'
+3 : chr22.dna :  -r 5 : '0.608', '0.603', '0.601', '0.597', '0.596'
+1 : etext99 :  -r 5 : '2.027', '2.036', '2.026', '2.022', '2.025'
+1 : wikisamp.xml :  -r 5 : '1.911', '1.902', '1.906', '1.904', '1.904'
+parallelKS : 32 : weighted time, min=1.032 median=1.036 mean=1.036
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 7 : '0.091', '0.085', '0.085', '0.086', '0.085', '0.086', '0.086'
+1 : trigramString_100000000 :  -r 7 : '0.885', '0.88', '0.88', '0.878', '0.877', '0.877', '0.874'
+3 : chr22.dna :  -r 7 : '0.396', '0.397', '0.393', '0.392', '0.392', '0.392', '0.393'
+1 : etext99 :  -r 7 : '1.281', '1.275', '1.268', '1.268', '1.27', '1.27', '1.265'
+1 : wikisamp.xml :  -r 7 : '1.259', '1.248', '1.229', '1.223', '1.213', '1.213', '1.208'
+parallelKS : 72 : weighted time, min=0.658 median=0.662 mean=0.663
+
+suffixArray/parallelKS
