@@ -49,3 +49,1774 @@ suffixArray/parallelKS
 parallelKS : 72 : weighted time, min=0.658 median=0.662 mean=0.663
 
 suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 7 : '0.081', '0.079', '0.08', '0.079', '0.079', '0.079', '0.08'
+1 : trigramString_100000000 :  -r 7 : '0.823', '0.823', '0.819', '0.825', '0.821', '0.821', '0.817'
+3 : chr22.dna :  -r 7 : '0.405', '0.401', '0.4', '0.396', '0.392', '0.393', '0.387'
+1 : etext99 :  -r 7 : '1.185', '1.183', '1.181', '1.187', '1.188', '1.182', '1.196'
+1 : wikisamp.xml :  -r 7 : '1.124', '1.129', '1.124', '1.125', '1.124', '1.124', '1.124'
+parallelKS : 108 : weighted time, min=0.623 median=0.628 mean=0.629
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 7 : '0.125', '0.119', '0.101', '0.112', '0.096', '0.094', '0.08'
+1 : trigramString_100000000 :  -r 7 : '0.781', '0.782', '0.802', '0.784', '0.806', '0.827', '0.796'
+3 : chr22.dna :  -r 7 : '0.481', '0.359', '0.356', '0.357', '0.358', '0.357', '0.358'
+1 : etext99 :  -r 7 : '1.137', '1.13', '1.136', '1.155', '1.13', '1.132', '1.355'
+1 : wikisamp.xml :  -r 7 : '1.093', '1.073', '1.074', '1.083', '1.085', '1.072', '1.096'
+parallelKS : 144 : weighted time, min=0.59 median=0.598 mean=0.611
+
+suffixArray/parallelKS
+1 : trigramString_10000000 :  -r 1 -o /tmp/ofile768052_696276 : '0.121'
+1 : trigramString_100000000 :  -r 1 -o /tmp/ofile552855_546801 : '0.778'
+3 : chr22.dna :  -r 1 -o /tmp/ofile759299_702648 : '0.36'
+('CheckOut:', 'Suffix Array Check: array is not a permutation\n')
+TEST TERMINATED ABNORMALLY:
+[./../bench/SACheck  ../sequenceData/data/etext99 /tmp/ofile699516_110856
+Suffix Array Check: array is not a permutation
+]
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 1 : '2.227'
+1 : trigramString_100000000 :  -r 1 : '28.368'
+3 : chr22.dna :  -r 1 : '10.061'
+1 : etext99 :  -r 1 : '46.682'
+1 : wikisamp.xml :  -r 1 : '40.858'
+parallelRange : 1 : weighted time, min=21.188 median=21.188 mean=21.188
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 3 : '0.756', '0.672', '0.67'
+1 : trigramString_100000000 :  -r 3 : '7.858', '7.845', '7.85'
+3 : chr22.dna :  -r 3 : '2.737', '2.748', '2.74'
+1 : etext99 :  -r 3 : '13.507', '13.52', '13.548'
+1 : wikisamp.xml :  -r 3 : '11.744', '11.724', '11.695'
+parallelRange : 4 : weighted time, min=5.99 median=5.998 mean=6.003
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 5 : '0.208', '0.21', '0.2', '0.188', '0.186'
+1 : trigramString_100000000 :  -r 5 : '2.091', '2.088', '2.086', '2.087', '2.092'
+3 : chr22.dna :  -r 5 : '0.781', '0.783', '0.773', '0.769', '0.763'
+1 : etext99 :  -r 5 : '3.562', '3.546', '3.548', '3.539', '3.547'
+1 : wikisamp.xml :  -r 5 : '3.165', '3.184', '3.204', '3.169', '3.177'
+parallelRange : 16 : weighted time, min=1.609 median=1.618 mean=1.619
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 5 : '0.12', '0.108', '0.108', '0.108', '0.109'
+1 : trigramString_100000000 :  -r 5 : '1.115', '1.112', '1.11', '1.11', '1.109'
+3 : chr22.dna :  -r 5 : '0.453', '0.43', '0.431', '0.432', '0.432'
+1 : etext99 :  -r 5 : '1.885', '1.883', '1.886', '1.882', '1.881'
+1 : wikisamp.xml :  -r 5 : '1.745', '1.765', '1.748', '1.753', '1.747'
+parallelRange : 32 : weighted time, min=0.876 median=0.878 mean=0.88
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 7 : '0.058', '0.056', '0.056', '0.056', '0.057', '0.055', '0.055'
+1 : trigramString_100000000 :  -r 7 : '0.555', '0.55', '0.548', '0.548', '0.549', '0.547', '0.545'
+3 : chr22.dna :  -r 7 : '0.256', '0.255', '0.241', '0.238', '0.239', '0.24', '0.237'
+1 : etext99 :  -r 7 : '0.997', '0.992', '0.989', '0.992', '0.99', '0.99', '0.988'
+1 : wikisamp.xml :  -r 7 : '1.082', '1.062', '1.068', '1.058', '1.058', '1.044', '1.033'
+parallelRange : 72 : weighted time, min=0.476 median=0.482 mean=0.484
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 7 : '0.065', '0.055', '0.053', '0.047', '0.047', '0.047', '0.047'
+1 : trigramString_100000000 :  -r 7 : '0.451', '0.445', '0.444', '0.444', '0.444', '0.443', '0.444'
+3 : chr22.dna :  -r 7 : '0.222', '0.222', '0.214', '0.212', '0.211', '0.213', '0.213'
+1 : etext99 :  -r 7 : '0.845', '0.84', '0.84', '0.841', '0.841', '0.842', '0.84'
+1 : wikisamp.xml :  -r 7 : '0.969', '0.931', '0.938', '0.932', '0.932', '0.929', '0.94'
+parallelRange : 108 : weighted time, min=0.413 median=0.415 mean=0.417
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 7 : '0.06', '0.071', '0.062', '0.076', '0.041', '0.041', '0.042'
+1 : trigramString_100000000 :  -r 7 : '0.52', '0.408', '0.395', '0.396', '0.394', '0.395', '0.397'
+3 : chr22.dna :  -r 7 : '0.233', '0.219', '0.234', '0.223', '0.217', '0.246', '0.219'
+1 : etext99 :  -r 7 : '0.927', '0.903', '0.849', '0.766', '0.763', '0.765', '0.761'
+1 : wikisamp.xml :  -r 7 : '0.895', '0.877', '0.889', '0.909', '0.878', '0.87', '0.881'
+parallelRange : 144 : weighted time, min=0.388 median=0.396 mean=0.408
+
+suffixArray/parallelRange
+1 : trigramString_10000000 :  -r 1 -o /tmp/ofile406273_845670 : '0.063'
+1 : trigramString_100000000 :  -r 1 -o /tmp/ofile491287_201107 : '0.431'
+3 : chr22.dna :  -r 1 -o /tmp/ofile530164_986782 : '0.208'
+1 : etext99 :  -r 1 -o /tmp/ofile580695_99990 : '0.873'
+1 : wikisamp.xml :  -r 1 -o /tmp/ofile828804_217494 : '0.906'
+parallelRange : 144 : weighted time, min=0.414 median=0.414 mean=0.414
+
+minSpanningForest/serialMST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+cd ..; make -s addWeights
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+minSpanningForest/parallelFilterKruskal
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_WE_5_40000000
+make -s randLocalGraph_E_5_40000000 
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+Makefile:44: recipe for target 'randLocalGraph_WE_5_40000000' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[2]: *** [randLocalGraph.o] Error 1
+make[1]: *** [../randLocalGraph] Error 2
+make: *** [randLocalGraph_WE_5_40000000] Error 2
+]
+
+spanningForest/serialST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/incrementalST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In instantiation of ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’:
+common/graphUtils.h:271:20:   required from ‘void writeGraphFromEdges(const edgeArray<intV>&, char*, bool, bool) [with intV = long unsigned int; intE = long unsigned int]’
+randLocalGraph.C:73:51:   required from here
+common/graphUtils.h:255:34: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     if (ordered) writeGraphToFile(G, fname);
+                  ~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:256:26: error: ‘writeGraphToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+     else writeGraphToFile(graphReorder(G), fname);
+          ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:78:7: note: ‘template<class intV, class intE> int benchIO::writeGraphToFile(const graph<intV, intE>&, char*)’ declared here, later in the translation unit
+   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+       ^~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:259:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h:263:27: error: ‘writeEdgeArrayToFile’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [-fpermissive]
+       writeEdgeArrayToFile(B, fname);
+       ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+In file included from randLocalGraph.C:27:0:
+common/graphIO.h:133:7: note: ‘template<class intV> int benchIO::writeEdgeArrayToFile(const edgeArray<intV>&, char*)’ declared here, later in the translation unit
+   int writeEdgeArrayToFile(edgeArray<intV> const &EA, char* fname) {
+       ^~~~~~~~~~~~~~~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+spanningForest/ndST
+TEST TERMINATED ABNORMALLY:
+[cd ../graphData/data; make randLocalGraph_E_5_40000000
+cd ..; make -s randLocalGraph
+Makefile:12: recipe for target 'randLocalGraph.o' failed
+Makefile:4: recipe for target '../randLocalGraph' failed
+In file included from common/graphIO.h:29:0,
+                 from randLocalGraph.C:27:
+common/graphUtils.h: In function ‘void writeGraphFromAdj(const graph<intV, intE>&, char*, bool, bool)’:
+common/graphUtils.h:255:18: error: ‘writeGraphToFile’ is not a member of ‘benchIO’
+     if (ordered) benchIO::writeGraphToFile(G, fname);
+                  ^~~~~~~
+common/graphUtils.h:256:10: error: ‘writeGraphToFile’ is not a member of ‘benchIO’
+     else benchIO::writeGraphToFile(graphReorder(G), fname);
+          ^~~~~~~
+common/graphUtils.h:259:7: error: ‘writeEdgeArrayToFile’ is not a member of ‘benchIO’
+       benchIO::writeEdgeArrayToFile(edgesFromGraph(G), fname);
+       ^~~~~~~
+common/graphUtils.h:263:7: error: ‘writeEdgeArrayToFile’ is not a member of ‘benchIO’
+       benchIO::writeEdgeArrayToFile(B, fname);
+       ^~~~~~~
+make[1]: *** [randLocalGraph.o] Error 1
+make: *** [../randLocalGraph] Error 2
+]
+
+breadthFirstSearch/serialBFS
+common/MakeBenchLink:27: recipe for target '../bench/BFSTime.o' failed
+[1, 4, 16, 32, 72, 108, 144]
+TEST TERMINATED ABNORMALLY:
+  cd breadthFirstSearch/serialBFS ; ./testInputs -r 1 -p 1

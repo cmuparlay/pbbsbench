@@ -14,9 +14,9 @@ tests = [
 #["rayCast/kdTree",True],
 
 #["suffixArray/serialKS",False],  
-["suffixArray/serialDivsufsort",False],  
-["suffixArray/parallelKS",True],
-["suffixArray/parallelRange",True],
+#["suffixArray/serialDivsufsort",False],  
+#["suffixArray/parallelKS",True],
+#["suffixArray/parallelRange",True],
 
 #["convexHull/quickHull",True],
 #["convexHull/serialHull",False],

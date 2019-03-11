@@ -245,32 +245,6 @@ int graphCheckConsistency(graph<intV,intE> const &Gr) {
   }
 }
 
-
-// The following two are used by the graph generators to write out in either format
-// and either with reordering or not
-template <class intV, class intE>
-void writeGraphFromAdj(graph<intV,intE> const &G,
-		       char* fname, bool adjArray, bool ordered) {
-  if (adjArray)
-    if (ordered) writeGraphToFile(G, fname);
-    else writeGraphToFile(graphReorder(G), fname);
-  else {
-    if (ordered)
-      writeEdgeArrayToFile(edgesFromGraph(G), fname);
-    else {
-      auto B = edgesFromGraph(graphReorder(G));
-      B = randomShuffle(B);
-      writeEdgeArrayToFile(B, fname);
-    }
-  }
-}
-
-template <class intV, class intE=intV>
-void writeGraphFromEdges(edgeArray<intV> const & EA, char* fname, bool adjArray, bool ordered) {
-  graph<intV,intE> const &G = graphFromEdges<intV,intE>(EA, adjArray);
-  writeGraphFromAdj(G, fname, adjArray, ordered);
-}
-
 // template <class intV>
 // sparseRowMajor<double,intV> sparseFromCsrFile(const char* fname) {
 //   FILE *f = fopen(fname,"r");
