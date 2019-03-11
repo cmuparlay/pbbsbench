@@ -1,0 +1,159 @@
+#!/usr/bin/python
+#
+# run all tests
+#
+
+import os
+import sys
+
+os.system("echo HOSTNAME: `hostname`")
+
+tests = [
+#["nBody/parallelCK",True],
+
+#["rayCast/kdTree",True],
+
+#["suffixArray/serialKS",False],  
+["suffixArray/serialDivsufsort",False],  
+["suffixArray/parallelKS",True],
+["suffixArray/parallelRange",True],
+
+#["convexHull/quickHull",True],
+#["convexHull/serialHull",False],
+
+#["delaunayTriangulation/serialDelaunay",False],
+#["delaunayTriangulation/incrementalDelaunay",True],
+
+#["delaunayRefine/incrementalRefine",True],
+
+["minSpanningForest/serialMST",False],
+["minSpanningForest/parallelKruskal",True],
+["minSpanningForest/parallelFilterKruskal",True],
+
+["spanningForest/serialST",False],
+["spanningForest/incrementalST",True],
+["spanningForest/ndST",True], 
+
+["breadthFirstSearch/serialBFS",False],
+["breadthFirstSearch/ndBFS",True],
+["breadthFirstSearch/deterministicBFS",True],
+
+#["maximalMatching/serialMatching",False],
+#["maximalMatching/ndMatching",True],
+["maximalMatching/incrementalMatching",True],
+
+["maximalIndependentSet/serialMIS",False],
+["maximalIndependentSet/ndMIS",True],
+["maximalIndependentSet/incrementalMIS",True],
+
+["integerSort/serialRadixSort",False],
+["integerSort/parallelRadixSort",True],
+
+#["removeDuplicates/serialHash",False],
+#["removeDuplicates/deterministicHash",True],
+
+#["dictionary/serialHash",False],
+#["dictionary/deterministicHash",True],
+
+["comparisonSort/serialSort",False],
+["comparisonSort/stlParallelSort",False],
+["comparisonSort/ips4o",False],
+["comparisonSort/sampleSort",True],
+["comparisonSort/quickSort",True],
+["comparisonSort/mergeSort",True],
+["comparisonSort/stableSampleSort",True],
+
+# ["nearestNeighbors/octTreeNeighbors",True],
+#["nearestNeighbors/octTree2Neighbors",True],
+
+#["setCover/manis",True],
+#["setCover/serialDFG",False],
+
+#["spmv/pSPMV",True],
+#["spmv/sSPMV",False],
+
+# ["nearestNeighbor/callahanKosaraju",True],
+
+# ["lassoRegression/parallelShootingLasso",True],
+#["lassoRegression/parallelShootingLasso2",True]
+]
+
+
+if (sys.argv.count("-only") > 0):
+    filteredTests = [l for l in tests if sys.argv.count(l[0]) == 1]
+    tests = filteredTests
+    print("Running only: ", tests)
+
+def detectCPUs():
+    """                                                                                                                                                  
+     Detects the number of CPUs on a system. Cribbed from pp.                                                                                            
+     """
+    # Linux, Unix and MacOS:                                                                                                                             
+    if hasattr(os, "sysconf"):
+       if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+           # Linux & Unix:                                                                                                                               
+           ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
+           if isinstance(ncpus, int) and ncpus > 0:
+               return ncpus
+       else: # OSX:                                                                                                                                      
+           return int(os.popen2("sysctl -n hw.ncpu")[1].read())
+    # Windows:                                                                                                                                           
+    if os.environ.has_key("NUMBER_OF_PROCESSORS"):
+           ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
+           if ncpus > 0:
+               return ncpus
+    return 1 # Default   
+
+
+
+maxcpus = detectCPUs()
+if maxcpus <= 16:
+    processors = [1]+range(2,maxcpus+1,2)
+elif maxcpus <= 32:
+    processors = [1,2]+range(4,maxcpus+1,4)
+elif maxcpus <= 64:
+    processors = [1,2,4]+range(8,maxcpus+1,8)
+elif maxcpus == 144:
+    processors = [1,4,16,32,72,108,144]
+elif maxcpus == 256:
+    processors = [1,4,16,32,64,128,256]
+else:
+    processors = [1,2,4,8]+range(16,maxcpus+1,16)
+print(processors)
+
+def runtest(dir,options,numactl) :
+  ss = "cd " + dir + " ; make -s cleanall ; make -s"
+  if numactl:
+      sc = "cd " + dir + " ; numactl -i all ./testInputs " + options
+  else:
+      sc = "cd " + dir + " ; ./testInputs " + options
+  os.system("echo")
+  os.system("echo " + dir)
+  os.system(ss)
+  x = os.system(sc)
+  if (x) :
+    raise NameError("  " + sc)
+
+usenumactl = True
+
+try :
+  for test in tests :
+    if (test[1]) :
+      for p in processors :
+        if (p == 1) :
+          runtest(test[0], "-x -r 1 -p " + `p`, False)
+        elif (p < 16) :
+          runtest(test[0], "-x -r 3 -p " + `p`, usenumactl)
+        elif (p < 64) :
+          runtest(test[0], "-x -r 5 -p " + `p`, usenumactl)
+        else :
+          runtest(test[0], "-x -r 7 -p " + `p`, usenumactl)
+      runtest(test[0],"-r 1 -p " + `processors[-1]`, usenumactl)
+    else :
+      runtest(test[0], "-r 1 -p 1", False)
+except NameError,v :
+  x, = v
+  print "TEST TERMINATED ABNORMALLY:\n"+x
+
+
+

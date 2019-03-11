@@ -5,15 +5,12 @@ import os
 
 def onPprocessors(command,p) :
   if os.environ.has_key("OPENMP"):
-    os.putenv("OMP_NUM_THREADS", "%d" %p)
+    return "OMP_NUM_THREADS="+`p`+" " + command
     return command  
-  elif os.environ.has_key("GCILK") or os.environ.has_key("CCILK") or os.environ.has_key("ICC"):
-    return "export CILK_NWORKERS="+`p`+"; " + command
   elif os.environ.has_key("CILK"):
-    return command + " -cilk_set_worker_count " + `p`
-  elif os.environ.has_key("MKLROOT"):
-    return "export CILK_NWORKERS="+`p`+"; " + command
-  return command
+    return "CILK_NWORKERS="+`p`+" " + command
+  else:
+    return "NUM_THREADS="+`p`+" " + command
   
 def shellGetOutput(str) :
   process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
