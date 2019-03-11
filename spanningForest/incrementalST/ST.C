@@ -30,14 +30,16 @@
 #include "speculative_for.h"
 #include "union_find.h"
 
+using reservation = pbbs::reservation<edgeId>;
+
 struct unionFindStep {
   vertexId u;  vertexId v;  
   edgeArray<vertexId> const &E;
-  pbbs::sequence<reservation<edgeId>> &R;
+  pbbs::sequence<reservation> &R;
   unionFind<vertexId> &UF;
   unionFindStep(edgeArray<vertexId> const &E,
 		unionFind<vertexId> &UF,
-		pbbs::sequence<reservation<edgeId>> &R)
+		pbbs::sequence<reservation> &R)
     : E(E), R(R), UF(UF) {} 
 
   bool reserve(edgeId i) {
@@ -60,10 +62,10 @@ pbbs::sequence<edgeId> st(edgeArray<vertexId> const &G){
   size_t m = G.nonZeros;
   size_t n = G.numRows;
   unionFind<vertexId> UF(n);
-  pbbs::sequence<reservation<edgeId>> R(n);
+  pbbs::sequence<reservation> R(n);
   unionFindStep UFStep(G, UF, R);
-  speculative_for<edgeId>(UFStep, 0, m, 100);
-  auto stIdx = pbbs::filter(R, [&] (reservation<edgeId> a) {
+  pbbs::speculative_for<edgeId>(UFStep, 0, m, 100);
+  auto stIdx = pbbs::filter(R, [&] (reservation a) {
       return a.reserved();});
   size_t l = stIdx.size();
   cout << "Tree size = " << l << endl;

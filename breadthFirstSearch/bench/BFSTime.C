@@ -1,5 +1,5 @@
 // This code is part of the Problem Based Benchmark Suite (PBBS)
-// Copyright (c) 2011 Guy Blelloch and the PBBS team
+// Copyright (c) 2011-2019 Guy Blelloch and the PBBS team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
@@ -28,25 +28,22 @@
 #include "IO.h"
 #include "graphIO.h"
 #include "parse_command_line.h"
-#include "matching.h"
+#include "BFS.h"
 using namespace std;
 using namespace benchIO;
 
-void timeMatching(edges E, int rounds, char* outFile) {
+void timeBFS(Graph const &G, int rounds, char* outFile) {
   timer t;
-  size_t m = E.nonZeros;
-  size_t n = max(E.numCols,E.numRows);
-  pbbs::sequence<edgeId> edgeIds;
-  for (size_t i = 0; i < rounds; i++) {
-    edgeIds.clear();
+  Graph GN = G;
+  BFS(0, GN);
+  for (int i=0; i < rounds; i++) {
+    GN = G;
     t.start();
-    edgeIds = maximalMatching(E);
+    BFS(0, GN);
     t.next("");
   }
   cout << endl;
-
-  if (outFile != NULL) 
-    writeIntSeqToFile(edgeIds, outFile);
+  if (outFile != NULL) writeGraphToFile(GN, outFile);
 }
 
 int main(int argc, char* argv[]) {
@@ -54,6 +51,7 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  edges EA = readEdgeArrayFromFile<vertexId>(iFile);
-  timeMatching(EA, rounds, oFile);
+  Graph G = readGraphFromFile<vertexId,edgeId>(iFile);
+  G.addDegrees();
+  timeBFS(G, rounds, oFile);
 }

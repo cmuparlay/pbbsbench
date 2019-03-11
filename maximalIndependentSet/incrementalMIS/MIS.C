@@ -65,6 +65,6 @@ pbbs::sequence<char> maximalIndependentSet(Graph GS) {
   size_t n = GS.n;
   pbbs::sequence<char> Flags(n, (char) 0);
   MISstep mis(Flags, GS);
-  speculative_for<vertexId>(mis, 0, n, 20);
+  pbbs::speculative_for<vertexId>(mis, 0, n, 20);
   return Flags;
 }

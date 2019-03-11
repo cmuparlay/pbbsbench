@@ -33,11 +33,11 @@ using namespace std;
 using reservation = pbbs::reservation<edgeId>;
 
 struct matchStep {
-  edges& E;
+  edges const &E;
   pbbs::sequence<reservation> &R;
   pbbs::sequence<bool> &matched;
 
-  matchStep(edges E,
+  matchStep(edges const &E,
 	    pbbs::sequence<reservation> &R,
 	    pbbs::sequence<bool> &matched)
     : E(E), R(R), matched(matched) {}
@@ -65,17 +65,21 @@ struct matchStep {
   }
 };
 
-pbbs::sequence<edgeId> maximalMatching(edges E) {
+pbbs::sequence<edgeId> maximalMatching(edges const &E) {
   size_t n = max(E.numCols,E.numRows);
   size_t m = E.nonZeros;
-
+  timer t("max matching", true);
+  
   pbbs::sequence<reservation> R(n);
   pbbs::sequence<bool> matched(n, false);
   matchStep mStep(E, R, matched);
-  pbbs::speculative_for<edgeId>(mStep, 0, m, 50, 0);
+  t.next("init");
+  pbbs::speculative_for<edgeId>(mStep, 0, m, 10, 0);
+  t.next("speculative for");
   pbbs::sequence<edgeId> matchingIdx =
     pbbs::pack(pbbs::delayed_seq<edgeId>(n, [&] (size_t i) {return R[i].r;}),
 	       pbbs::sequence<bool>(n, [&] (size_t i) {return R[i].reserved();}));
+  t.next("speculative for");
   cout << "number of matches = " << matchingIdx.size() << endl;
   return matchingIdx;
 }  

@@ -48,14 +48,16 @@ struct indexedEdge {
   indexedEdge() {};
 };
 
+using reservation = pbbs::reservation<edgeId>;
+
 struct UnionFindStep {
   pbbs::sequence<indexedEdge> const &E;
-  pbbs::sequence<reservation<vertexId>> &R;
+  pbbs::sequence<reservation> &R;
   unionFind<vertexId> &UF;
   pbbs::sequence<bool> &inST;
   UnionFindStep(pbbs::sequence<indexedEdge> const &E,
 		unionFind<vertexId> &UF,
-		pbbs::sequence<reservation<vertexId>> &R,
+		pbbs::sequence<reservation> &R,
 		pbbs::sequence<bool> &inST) :
     E(E), R(R), UF(UF), inST(inST) {}
 
@@ -91,10 +93,9 @@ pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) {
   size_t n = E.n;
   size_t k = min<size_t>(5 * n / 4, m);
 
-  // if uncomment, equal edge weights will prioritize the earliest one
-  auto edgeLess = [&] (indexedEdge a, indexedEdge b) { 
-    return (a.w < b.w);}; 
-  //return (a.w < b.w) || ((a.w == b.w) && (a.id < b.id));};
+  // equal edge weights will prioritize the earliest one
+  auto edgeLess = [&] (indexedEdge a, indexedEdge b) {
+    return (a.w < b.w) || ((a.w == b.w) && (a.id < b.id));};
 
   // tag each edge with an index
   auto IW = pbbs::delayed_seq<indexedEdge>(m, [&] (size_t i) {
@@ -105,9 +106,9 @@ pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) {
 
   pbbs::sequence<bool> mstFlags(m, false);
   unionFind<vertexId> UF(n);
-  pbbs::sequence<reservation<vertexId>> R(n);
+  pbbs::sequence<reservation> R(n);
   UnionFindStep UFStep1(IW1, UF, R,  mstFlags);
-  speculative_for<vertexId>(UFStep1, 0, IW1.size(), 20, false);
+  pbbs::speculative_for<vertexId>(UFStep1, 0, IW1.size(), 20, false);
   t.next("union find loop");
 
   pbbs::sequence<edgeId> mst = pbbs::pack_index<edgeId>(mstFlags);

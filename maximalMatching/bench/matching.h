@@ -4,5 +4,5 @@ using vertexId = uint;
 using edgeId = uint;
 using edges = edgeArray<vertexId>;
 
-pbbs::sequence<edgeId> maximalMatching(edges EA);
+pbbs::sequence<edgeId> maximalMatching(edges const &EA);
 

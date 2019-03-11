@@ -26,6 +26,7 @@
 #include <cstring>
 #include "../pbbslib/parallel.h"
 #include "IO.h"
+#include "graphUtils.h"
 
 #include <sys/mman.h>
 #include <stdio.h>
@@ -75,6 +76,8 @@ namespace benchIO {
 
   template <class intV, class intE>
   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
+    if (G.degrees.size() > 0)
+      return writeGraphToFile(packGraph(G), fname); 
     size_t m = G.numEdges();
     size_t n = G.numVertices();
     size_t totalLen = 2 + n + m;
@@ -83,7 +86,7 @@ namespace benchIO {
     Out[1] = m;
 
     // write offsets to Out[2,..,2+n)
-    auto offsets = G.get_offsets();
+    pbbs::sequence<intE> const &offsets = G.get_offsets();
     parallel_for (0, n, [&] (size_t i) {
 	Out[i+2] = offsets[i];});
 
@@ -93,6 +96,7 @@ namespace benchIO {
 	for (intV j = 0; j < G[i].degree; j++)
 	  Out[o + j] = G[i].Neighbors[j];
       });
+
     int r = writeSeqToFile(AdjGraphHeader, Out, fname);
     return r;
   }

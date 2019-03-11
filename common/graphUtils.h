@@ -74,7 +74,7 @@ wghEdgeArray<intV,Weight> addRandWeights(edgeArray<intV> const &G) {
   pbbs::random r(257621);
   intV m = G.nonZeros;
   intV n = G.numRows;
-  sequence<WE> E(m, [&] (size_t i) {
+  pbbs::sequence<WE> E(m, [&] (size_t i) {
       return WE(G.E[i].u, G.E[i].v, (Weight) dataGen::hash<Weight>(i));});
   return wghEdgeArray<intV,Weight>(std::move(E), n);
 }
@@ -123,7 +123,7 @@ graph<intV,intE> graphFromEdges(edgeArray<intV> const &EA, bool makeSym) {
 	return (i == n) ? 0 : counts[i];}), pbbs::addm<intE>());
 
   return graph<intV,intE>(std::move(offsets),
-			  sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
+			  pbbs::sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
 			  n);
 }
 
@@ -144,8 +144,8 @@ wghGraphFromEdges(wghEdgeArray<intV,Weight> const &A) {
 	return (i == n) ? 0 : counts[i];}), pbbs::addm<intE>());
 
   return wghGraph<intV,Weight,intE>(std::move(offsets),
-				    sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
-				    sequence<Weight>(m, [&] (size_t i) {
+				    pbbs::sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
+				    pbbs::sequence<Weight>(m, [&] (size_t i) {
 					return E[i].weight;}),
 				    n);
 }
@@ -168,11 +168,32 @@ edgeArray<intV> edgesFromGraph(graph<intV,intE> const &G) {
 
 // offset for start of each vertex if flattening the edge listd
 template <class intV, class intE>
-sequence<intE> getOffsets(sequence<vertex<intV>> const &V) {
+pbbs::sequence<intE> getOffsets(pbbs::sequence<vertex<intV>> const &V) {
   size_t n = V.size();
   auto degrees = pbbs::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
       return (i == n) ? 0 : V[i].degree;});
-  return pbbs::scan(degrees, pbbs::addm<intE>()).first;
+  auto x = pbbs::scan(degrees, pbbs::addm<intE>());
+  return x.first;
+}
+
+// packs a graph so that there are no gaps in the edge array (i.e. into CSR)
+template <class intV, class intE>
+graph<intV,intE> packGraph(graph<intV,intE> const &G) {
+  size_t n = G.numVertices();
+  auto degrees = pbbs::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
+      return (i == n) ? 0 : G[i].degree;});
+  // calculate new offsets
+  auto sr = pbbs::scan(degrees, pbbs::addm<intE>());
+  // allocate new edge array
+  pbbs::sequence<intV> outEdges(sr.second);
+  // copy edges so they are contiguous
+  parallel_for (0, G.n, [&] (size_t i) {
+      vertex<intV> v = G[i];
+      size_t offset = sr.first[i];
+      for (size_t j=0; j < v.degree; j++)
+	outEdges[offset + j] = v.Neighbors[j];
+    });
+  return graph<intV,intE>(std::move(sr.first), std::move(outEdges), n);
 }
 
 // if I is NULL then it randomly reorders

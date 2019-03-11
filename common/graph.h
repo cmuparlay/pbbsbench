@@ -98,16 +98,30 @@ struct graph {
   using VT = vertex<intV>;
   pbbs::sequence<intE> offsets;
   pbbs::sequence<intV> edges;
+  pbbs::sequence<intV> degrees; // not always used
   size_t n;
   size_t m;
   size_t numVertices() const {return n;}
-  size_t numEdges() const {return m;}
-  const pbbs::sequence<intV>& get_offsets() const {
+  size_t numEdges() const {
+    if (degrees.size() == 0) return m;
+    else {
+      cout << "hello numEdges" << endl;
+      auto dgs = pbbs::delayed_seq<intE>(n, [&] (size_t i) {
+	  return degrees[i];});
+      return pbbs::reduce(dgs, pbbs::addm<intE>());
+    }
+  }
+  const pbbs::sequence<intE>& get_offsets() const {
     return offsets;
+  }
+  void addDegrees() {
+    degrees = pbbs::sequence<intV>(n, [&] (size_t i) {
+	return offsets[i+1] - offsets[i];});
   }
   VT operator[] (const size_t i) const {
     return VT(edges.begin() + offsets[i],
-	      offsets[i+1] - offsets[i]);}
+	      (degrees.size() == 0)
+	      ? offsets[i+1] - offsets[i] : degrees[i]);}
   
   graph(pbbs::sequence<intE> offsets_,
 	pbbs::sequence<intV> edges_,
