@@ -23,7 +23,6 @@ pbbs::sequence<edgeId> st(edgeArray<vertexId> const &E){
 	v = UF.find(v);
 	if (u == v) break;
 	if (u > v) std::swap(u,v);
-	//if successful, store the ID of the edge used in hooks[u]
 	if (hooks[u] == m &&
 	    pbbs::atomic_compare_and_swap(&hooks[u], m, i)){
 	  UF.link(u, v);
