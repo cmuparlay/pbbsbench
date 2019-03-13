@@ -26,25 +26,25 @@ tests = [
 
 #["delaunayRefine/incrementalRefine",True],
 
-["minSpanningForest/serialMST",False],
-["minSpanningForest/parallelKruskal",True],
-["minSpanningForest/parallelFilterKruskal",True],
+# ["minSpanningForest/serialMST",False],
+# ["minSpanningForest/parallelKruskal",True],
+# ["minSpanningForest/parallelFilterKruskal",True],
 
-["spanningForest/serialST",False],
-["spanningForest/incrementalST",True],
-["spanningForest/ndST",True], 
+# ["spanningForest/serialST",False],
+# ["spanningForest/incrementalST",True],
+# ["spanningForest/ndST",True], 
 
-["breadthFirstSearch/serialBFS",False],
-["breadthFirstSearch/ndBFS",True],
-["breadthFirstSearch/deterministicBFS",True],
+# ["breadthFirstSearch/serialBFS",False],
+# ["breadthFirstSearch/ndBFS",True],
+# ["breadthFirstSearch/deterministicBFS",True],
 
-#["maximalMatching/serialMatching",False],
-#["maximalMatching/ndMatching",True],
-["maximalMatching/incrementalMatching",True],
+# #["maximalMatching/serialMatching",False],
+# #["maximalMatching/ndMatching",True],
+# ["maximalMatching/incrementalMatching",True],
 
-["maximalIndependentSet/serialMIS",False],
-["maximalIndependentSet/ndMIS",True],
-["maximalIndependentSet/incrementalMIS",True],
+# ["maximalIndependentSet/serialMIS",False],
+# ["maximalIndependentSet/ndMIS",True],
+# ["maximalIndependentSet/incrementalMIS",True],
 
 ["integerSort/serialRadixSort",False],
 ["integerSort/parallelRadixSort",True],

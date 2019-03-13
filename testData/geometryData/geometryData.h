@@ -20,57 +20,60 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef _GEOMETRY_DATA
-#define _GEOMETRY_DATA
+#pragma once
 
-#include "geometry.h"
-#include "dataGen.h"
-#include "parallel.h"
+#include "pbbslib/parallel.h"
+#include "common/geometry.h"
+#include "common/dataGen.h"
 
-point2d rand2d(uintT i) {
-  uintT s1 = i;
-  uintT s2 = i + dataGen::hash<uintT>(s1);
-  return point2d(2*dataGen::hash<double>(s1)-1,
-		 2*dataGen::hash<double>(s2)-1);
+template <class coord>
+point2d<coord> rand2d(size_t i) {
+  size_t s1 = i;
+  size_t s2 = i + dataGen::hash<size_t>(s1);
+  return point2d<coord>(2*dataGen::hash<double>(s1)-1,
+			2*dataGen::hash<double>(s2)-1);
 }
 
-point3d rand3d(intT i) {
-  uintT s1 = i;
-  uintT s2 = i + dataGen::hash<uintT>(s1);
-  uintT s3 = 2*i + dataGen::hash<uintT>(s2);
-  return point3d(2*dataGen::hash<double>(s1)-1,
-		 2*dataGen::hash<double>(s2)-1,
-		 2*dataGen::hash<double>(s3)-1);
+template <class coord>
+point3d<coord> rand3d(size_t i) {
+  size_t s1 = i;
+  size_t s2 = i + dataGen::hash<size_t>(s1);
+  size_t s3 = 2*i + dataGen::hash<size_t>(s2);
+  return point3d<coord>(2*dataGen::hash<double>(s1)-1,
+			2*dataGen::hash<double>(s2)-1,
+			2*dataGen::hash<double>(s3)-1);
 }
 
-point2d randInUnitSphere2d(intT i) {
-  intT j = 0;
-  vect2d v;
+template <class coord>
+point2d<coord> randInUnitSphere2d(size_t i) {
+  size_t j = 0;
+  vector2d<coord> v;
   do {
-    intT o = dataGen::hash<intT>(j++);
-    v = vect2d(rand2d(o+i));
+    size_t o = dataGen::hash<size_t>(j++);
+    v = vector2d<coord>(rand2d<coord>(o+i));
   } while (v.Length() > 1.0);
-  return point2d(v);
+  return point2d<coord>(v);
 }
 
-point3d randInUnitSphere3d(intT i) {
-  intT j = 0;
-  vect3d v;
+template <class coord>
+point3d<coord> randInUnitSphere3d(size_t i) {
+  size_t j = 0;
+  vector3d<coord> v;
   do {
-    intT o = dataGen::hash<intT>(j++);
-    v = vect3d(rand3d(o+i));
+    size_t o = dataGen::hash<size_t>(j++);
+    v = vector3d<coord>(rand3d<coord>(o+i));
   } while (v.Length() > 1.0);
-  return point3d(v);
+  return point3d<coord>(v);
 }
 
-point2d randOnUnitSphere2d(intT i) {
-  vect2d v = vect2d(randInUnitSphere2d(i));
-  return point2d(v/v.Length());
+template <class coord>
+point2d<coord> randOnUnitSphere2d(size_t i) {
+  vector2d<coord> v = vector2d<coord>(randInUnitSphere2d<coord>(i));
+  return point2d<coord>(v/v.Length());
 }
 
-point3d randOnUnitSphere3d(intT i) {
-  vect3d v = vect3d(randInUnitSphere3d(i));
-  return point3d(v/v.Length());
+template <class coord>
+point3d<coord> randOnUnitSphere3d(size_t i) {
+  vector3d<coord> v = vector3d<coord>(randInUnitSphere3d<coord>(i));
+  return point3d<coord>(v/v.Length());
 }
-
-#endif // _GEOMETRY_DATA

@@ -40,6 +40,7 @@ using namespace std;
 
 using coord = double;
 
+template <class coord>
 point2d<coord> randKuzmin(size_t i) {
   vector2d<coord> v = vector2d<coord>(randOnUnitSphere2d<coord>(i));
   size_t j = dataGen::hash<size_t>(i);
@@ -48,6 +49,7 @@ point2d<coord> randKuzmin(size_t i) {
   return point2d<coord>(v*r);
 }
 
+template <class coord>
 point3d<coord> randPlummer(size_t i) {
   vector3d<coord> v = vector3d<coord>(randOnUnitSphere3d<coord>(i));
   size_t j = dataGen::hash<size_t>(i);
@@ -64,11 +66,13 @@ int main(int argc, char* argv[]) {
   int dims = P.getOptionIntValue("-d", 2);
   bool inSphere = P.getOption("-s");
   bool onSphere = P.getOption("-S");
+  bool plummerOrKuzmin = P.getOption("-k") || P.getOption("-p");
 
   if (dims == 2) {
     sequence<point2d<coord>> Points(n, [&] (size_t i) {
 	if (inSphere) return randInUnitSphere2d<coord>(i);
 	else if (onSphere) return randOnUnitSphere2d<coord>(i);
+	else if (plummerOrKuzmin) return randKuzmin<coord>(i);
 	else return rand2d<coord>(i);
       });
     return writePointsToFile(Points,fname);
@@ -76,6 +80,7 @@ int main(int argc, char* argv[]) {
     sequence<point3d<coord>> Points(n, [&] (size_t i) {
 	if (inSphere) return randInUnitSphere3d<coord>(i);
 	else if (onSphere) return randOnUnitSphere3d<coord>(i);
+	else if (plummerOrKuzmin) return randPlummer<coord>(i);
 	else return rand3d<coord>(i);
       });
     return writePointsToFile(Points,fname);

@@ -1,0 +1,62 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Convex Hull</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Convex Hull (CH):</h2> 
+
+<p>
+Given a set of points in 2 dimensions return the set of points on the convex hull in
+sorted order.
+</p>
+
+<h3>Input and Output File Formats</h3>
+
+<p>
+The input needs to be in the <a href="benchmarks/geometryIO.html">2d
+points</a> file format.  The output needs to be in the <a
+href="benchmarks/sequenceIO.html">sequence</a> file format and must
+contain the integer index of each of the points in the convex hull.
+These indices need to be in sorted order with the leftmost point first
+(minimimum x value).
+</p>
+
+<h3>Default Input Distributions</h3>
+
+Each distribution should be run for <tt>n=10,000,000</tt>.  The
+weights used for average time are given in parentheses.  The
+distribution on the perimeter of a circle is given a lesser weight to
+account for the fact it is much more costly, and therefore would
+dominate without a weight adjustment.
+<ul>
+<li>
+(10) Points selected at random uniformly within a unit circle.
+<blockquote>
+<tt>uniform -s -d 2 &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(5) Points selected at random from the Kuzmin distribution.
+<blockquote>
+<tt>plummer -d 2 &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) Points selected at random uniformly on the perimiter of a unit circle.
+<blockquote>
+<tt>uniform -S -d 2 &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+</ul>
+
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

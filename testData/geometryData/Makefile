@@ -1,31 +1,26 @@
-include parallelDefs
+include common/parallelDefs
 
-COMMON = dataGen.h utils.h IO.h parseCommandLine.h geometry.h geometryIO.h parallel.h sequence.h
-GENERATORS = uniform plummer triangles addRays toNodes
+COMMON = common/IO.h pbbslib/parse_command_line.h common/geometry.h common/geometryIO.h pbbslib/parallel.h pbbslib/sequence.h
+GENERATORS = randPoints
+TO_UPDATE = triangles addRays toNodes
 
 .PHONY: all clean
 all: $(GENERATORS)
 
-$(COMMON) :
-	ln -s ../../common/$@ .
-
 %.o : %.C $(COMMON) 
-	$(PCC) $(PCFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-uniform : uniform.C geometryData.h $(COMMON) 
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ $@.C
+randPoints : randPoints.C geometryData.h $(COMMON) 
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
 toNodes : toNodes.C $(COMMON) 
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ $@.C
-
-plummer : plummer.C geometryData.h $(COMMON) 
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ $@.C
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
 triangles : triangles.C geometryData.h $(COMMON) 
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ $@.C
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
 addRays : addRays.C $(COMMON) 
-	$(PCC) $(PCFLAGS) $(PLFLAGS) -o $@ $@.C
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
 clean :
 	rm -f *.o $(GENERATORS)

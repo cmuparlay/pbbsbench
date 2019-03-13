@@ -68,7 +68,7 @@ namespace benchIO {
     return SA;
   }
 
-  int writeStringToFile(char* S, long n, char* fileName) {
+  int writeStringToFile(char* S, long n, char const *fileName) {
     ofstream file (fileName, ios::out | ios::binary);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -114,7 +114,8 @@ namespace benchIO {
   sequence<char> seqToString(Seq const &A) {
     size_t n = A.size();
     sequence<long> L(n, [&] (size_t i) -> size_t {
-	return xToStringLen(A[i])+1;});
+	typename Seq::value_type x = A[i];
+	return xToStringLen(x)+1;});
     size_t m;
     std::tie(L,m) = pbbs::scan(std::move(L), addm<size_t>());
 
@@ -150,7 +151,9 @@ namespace benchIO {
   template <class T>
   int writeSeqToFile(string header,
 		     sequence<T> const &A,
-		     char* fileName) {
+		     char const *fileName) {
+    auto a = A[0];
+    //xToStringLena(a);
     ofstream file (fileName, ios::out | ios::binary);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -166,7 +169,7 @@ namespace benchIO {
   int write2SeqToFile(string header,
 		      sequence<T1> const &A,
 		      sequence<T2> const &B,
-		      char* fileName) {
+		      char const *fileName) {
     ofstream file (fileName, ios::out | ios::binary);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -179,7 +182,7 @@ namespace benchIO {
     return 0;
   }
 
-  sequence<char> readStringFromFile(char *fileName) {
+  sequence<char> readStringFromFile(char const *fileName) {
     ifstream file (fileName, ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -197,12 +200,12 @@ namespace benchIO {
   string intHeaderIO = "sequenceInt";
 
   template <class T>
-  int writeIntSeqToFile(sequence<T> const &A, char* fileName) {
+  int writeIntSeqToFile(sequence<T> const &A, char const *fileName) {
     return writeSeqToFile(intHeaderIO, A, fileName);
   }
 
   template <class T>
-  sequence<T> readIntSeqFromFile(char *fileName) {
+  sequence<T> readIntSeqFromFile(char const *fileName) {
     sequence<char> S = readStringFromFile(fileName);
     sequence<char*> W = stringToWords(S);
     string header = (string) W[0];

@@ -24,49 +24,48 @@
 //   or kuzmin distribution (2d)
 
 #include <math.h>
-#include "parallel.h"
-#include "IO.h"
-#include "parseCommandLine.h"
-#include "geometry.h"
-#include "geometryIO.h"
+#include "pbbslib/parallel.h"
+#include "pbbslib/parse_command_line.h"
+#include "common/IO.h"
+#include "common/geometry.h"
+#include "common/geometryIO.h"
 #include "geometryData.h"
-#include "dataGen.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
- point2d randKuzmin(intT i) {
-   vect2d v = vect2d(randOnUnitSphere2d(i));
-   intT j = hash<intT>(i);
-   double s = hash<double>(j);
-   double r = sqrt(1.0/((1.0-s)*(1.0-s))-1.0);
-   return point2d(v*r);
- }
+using coord = double;
 
- point3d randPlummer(intT i) {
-   vect3d v = vect3d(randOnUnitSphere3d(i));
-   intT j = hash<intT>(i);
-   double s = pow(hash<double>(j),2.0/3.0);
-   double r = sqrt(s/(1-s));
-   return point3d(v*r);
- }
+point2d<coord> randKuzmin(size_t i) {
+  vector2d<coord> v = vector2d<coord>(randOnUnitSphere2d<coord>(i));
+  size_t j = dataGen::hash<size_t>(i);
+  double s = dataGen::hash<double>(j);
+  double r = sqrt(1.0/((1.0-s)*(1.0-s))-1.0);
+  return point2d<coord>(v*r);
+}
 
-int parallel_main(int argc, char* argv[]) {
+point3d<coord> randPlummer(size_t i) {
+  vector3d<coord> v = vector3d<coord>(randOnUnitSphere3d<coord>(i));
+  size_t j = dataGen::hash<size_t>(i);
+  double s = pow(dataGen::hash<double>(j),2.0/3.0);
+  double r = sqrt(s/(1-s));
+  return point3d<coord>(v*r);
+}
+
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-d {2,3}] n <outFile>");
-  pair<intT,char*> in = P.sizeAndFileName();
-  intT n = in.first;
+  pair<size_t,char*> in = P.sizeAndFileName();
+  size_t n = in.first;
   char* fname = in.second;
   int dims = P.getOptionIntValue("-d", 2);
   if (dims == 2) {
-    point2d* Points = newA(point2d,n);
-    parallel_for (intT i=0; i < n; i++) 
-      Points[i] = randKuzmin(i);
-    return writePointsToFile(Points,n,fname);
+    pbbs::sequence<point2d<coord>> Points(n, [&] (size_t i) {
+	return randKuzmin(i);});
+    return writePointsToFile(Points,fname);
   } else if (dims == 3) {
-    point3d* Points = newA(point3d,n);
-    parallel_for (intT i=0; i < n; i++) 
-      Points[i] = randPlummer(i);
-    return writePointsToFile(Points,n,fname);
+    pbbs::sequence<point3d<coord>> Points(n, [&] (size_t i) {
+	return randPlummer(i);});
+    return writePointsToFile(Points,fname);
   } 
   P.badArgument();
   return 1;
