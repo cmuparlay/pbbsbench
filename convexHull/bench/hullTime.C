@@ -37,7 +37,7 @@ using point = point2d<coord>;
 
 void timeHull(pbbs::sequence<point> const &P, int rounds, char const *outFile) {
   timer t;
-  sequence<indexT> I;
+  sequence<indexT> I = hull(P);
   for (size_t i = 0; i < rounds; i++) {
     I.clear();
     t.start();

@@ -16,7 +16,7 @@ all : $(BENCH) testInputs
 	cd ../bench; make -s $(CHECK)
 
 $(BENCH) : $(TIME) $(BENCH).h
-	$(CC) $(CFLAGS) $(LFLAGS) $(INCLUDE) -include $(BENCH).h -o $(BENCH) $(TIME)
+	$(CC) $(CFLAGS) $(INCLUDE) -include $(BENCH).h -o $(BENCH) $(TIME) $(LFLAGS)
 
 testInputs : ../bench/testInputs
 	cp ../bench/testInputs .

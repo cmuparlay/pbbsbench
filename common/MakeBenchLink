@@ -16,7 +16,7 @@ INCLUDE = -Icommon -Ipbbslib
 
 # Make benchmark
 $(BENCH) : $(TIME).o $(OBJS) $(CHECK) testInputs
-	$(CC) $(LFLAGS) -o $@ $(TIME).o $(OBJS) $(LIBS)
+	$(CC) -o $@ $(TIME).o $(OBJS) $(LFLAGS)
 
 # The check code
 $(CHECK) : $(CHECK).C

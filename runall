@@ -18,7 +18,7 @@ tests = [
 #["suffixArray/parallelKS",True],
 #["suffixArray/parallelRange",True],
 
-#["convexHull/quickHull",True],
+["convexHull/quickHull",True],
 #["convexHull/serialHull",False],
 
 #["delaunayTriangulation/serialDelaunay",False],
