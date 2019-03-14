@@ -28,6 +28,8 @@
 #include "hull.h"
 using namespace std;
 
+#include "serialHull.h"
+
 // The quickhull algorithm
 // Points are all the points
 // Idxs are the indices of the points (in Points) above the line defined by l-r.
@@ -38,7 +40,7 @@ pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
 				 pbbs::sequence<indexT> Idxs,
 				 point l, indexT mid, point r) {
   size_t n = Idxs.size();
-  if (n <= 1) return Idxs;
+  if (n <= 1) return Idxs; 
   else {
     using cipair = std::pair<coord,indexT>;
     using cipairs = std::pair<cipair,cipair>;

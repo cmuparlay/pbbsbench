@@ -57,7 +57,7 @@ tests = [
 
 ["comparisonSort/serialSort",False],
 ["comparisonSort/stlParallelSort",False],
-["comparisonSort/ips4o",False],
+["comparisonSort/ips4o",True],
 ["comparisonSort/sampleSort",True],
 ["comparisonSort/quickSort",True],
 ["comparisonSort/mergeSort",True],
