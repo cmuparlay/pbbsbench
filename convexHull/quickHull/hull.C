@@ -30,9 +30,8 @@ using namespace std;
 
 // The quickhull algorithm
 // Points are all the points
-// l-r defines a line s.t. Idxs are the indices from Points of exactly those
-//   that are above that line.
-// mid gives the index of the point furthest from l-r
+// Idxs are the indices of the points (in Points) above the line defined by l-r.
+// mid gives the index of the point furthest from the line defined by l-r
 // The algorithm identifies the points above the lines l-mid and mid-r
 //   and recurses on each
 pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
@@ -69,7 +68,7 @@ pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
     pbbs::sequence<indexT> right = pbbs::pack(Idxs, rightFlag);
     Idxs.clear(); // clear and use std::move to avoid O(n log n) memory usage
 
-    // recurse
+    // recurse in parallel
     pbbs::sequence<indexT> leftR, rightR;
     par_do_if(n > 400,
 	      [&] () {leftR = quickHull(Points, std::move(left), l, maxleft, midP);},
