@@ -18,8 +18,8 @@ tests = [
 #["suffixArray/parallelKS",True],
 #["suffixArray/parallelRange",True],
 
-["convexHull/quickHull",True],
-#["convexHull/serialHull",False],
+#["convexHull/quickHull",True],
+["convexHull/serialHull",False],
 
 #["delaunayTriangulation/serialDelaunay",False],
 #["delaunayTriangulation/incrementalDelaunay",True],
@@ -46,8 +46,8 @@ tests = [
 # ["maximalIndependentSet/ndMIS",True],
 # ["maximalIndependentSet/incrementalMIS",True],
 
-["integerSort/serialRadixSort",False],
-["integerSort/parallelRadixSort",True],
+# ["integerSort/serialRadixSort",False],
+# ["integerSort/parallelRadixSort",True],
 
 #["removeDuplicates/serialHash",False],
 #["removeDuplicates/deterministicHash",True],
@@ -55,13 +55,13 @@ tests = [
 #["dictionary/serialHash",False],
 #["dictionary/deterministicHash",True],
 
-["comparisonSort/serialSort",False],
-["comparisonSort/stlParallelSort",False],
-["comparisonSort/ips4o",True],
-["comparisonSort/sampleSort",True],
-["comparisonSort/quickSort",True],
-["comparisonSort/mergeSort",True],
-["comparisonSort/stableSampleSort",True],
+# ["comparisonSort/serialSort",False],
+# ["comparisonSort/stlParallelSort",False],
+# ["comparisonSort/ips4o",True],
+# ["comparisonSort/sampleSort",True],
+# ["comparisonSort/quickSort",True],
+# ["comparisonSort/mergeSort",True],
+# ["comparisonSort/stableSampleSort",True],
 
 # ["nearestNeighbors/octTreeNeighbors",True],
 #["nearestNeighbors/octTree2Neighbors",True],

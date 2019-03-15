@@ -26,7 +26,6 @@
 #include "sequence.h"
 using namespace std;
 
-// bulk of code in subfile, so can be shared by parallel version
 #include "serialHull.h"
 
 pbbs::sequence<indexT> hull(pbbs::sequence<point> const &S) {
@@ -42,8 +41,13 @@ pbbs::sequence<indexT> hull(pbbs::sequence<point> const &S) {
     if (P[i].x < P[l].x || ((P[i].x == P[l].x) && P[i].y < P[l].y)) 
       l = i;
   }
+  
+  auto aboveTop = [&] (indexT i) {
+    return triArea(P[l], P[r], P[i]) > 0.0;};
+  auto aboveBottom = [&] (indexT i) {
+    return triArea(P[r], P[l], P[i]) > 0.0;};
 
-  pair<size_t,size_t> nn = split(I, n, aboveLine(P, l, r), aboveLine(P, r, l));
+  pair<size_t,size_t> nn = split(I, n, aboveTop, aboveBottom);
   size_t n1 = nn.first;
   size_t n2 = nn.second;
 

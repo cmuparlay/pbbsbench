@@ -28,19 +28,23 @@
 #include "hull.h"
 using namespace std;
 
-#include "serialHull.h"
+//#include "serialHull.h"
 
 // The quickhull algorithm
 // Points are all the points
-// Idxs are the indices of the points (in Points) above the line defined by l-r.
-// mid gives the index of the point furthest from the line defined by l-r
-// The algorithm identifies the points above the lines l-mid and mid-r
+// Idxs are the indices of the points (in Points) above the line defined by l--r.
+// mid gives the index of the point furthest from the line defined by l--r
+// The algorithm identifies the points above the lines l--mid and mid--r
 //   and recurses on each
 pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
 				 pbbs::sequence<indexT> Idxs,
-				 point l, indexT mid, point r) {
+				 indexT l, indexT mid, indexT r) {
   size_t n = Idxs.size();
-  if (n <= 1) return Idxs; 
+  if (n <= 1) return Idxs;
+  //  serialQuickHull is slightly faster for the base case, but not as clean
+  //if (n <= 10000) { 
+  //  size_t r = serialQuickHull(Idxs.begin(), Points.begin(), n, l, r);
+  //  return pbbs::sequence<indexT>(r, [&] (size_t i) {return Idxs[i];});}
   else {
     using cipair = std::pair<coord,indexT>;
     using cipairs = std::pair<cipair,cipair>;
@@ -48,15 +52,15 @@ pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
       return cipairs((a.first.first > b.first.first) ? a.first : b.first,
 		     (a.second.first > b.second.first) ? a.second : b.second);};
 
-    // calculate furthest (positive) points from the lines l-mid and mid-r
+    // calculate furthest (positive) points from the lines l--mid and mid--r
     // at the same time set flags for those which are above each line
     pbbs::sequence<bool> leftFlag(n);
     pbbs::sequence<bool> rightFlag(n);
-    point midP = Points[mid];
+    point lP = Points[l], midP = Points[mid], rP = Points[r];
     auto P = pbbs::delayed_seq<cipairs>(n, [&] (size_t i) {
 	indexT j = Idxs[i];
-	coord lefta = triArea(l, midP, Points[j]);
-	coord righta = triArea(midP, r, Points[j]);
+	coord lefta = triArea(lP, midP, Points[j]);
+	coord righta = triArea(midP, rP, Points[j]);
 	leftFlag[i] = lefta > 0.0;
 	rightFlag[i] = righta > 0.0;
 	return cipairs(cipair(lefta,j),cipair(righta,j));
@@ -73,9 +77,9 @@ pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
     // recurse in parallel
     pbbs::sequence<indexT> leftR, rightR;
     par_do_if(n > 400,
-	      [&] () {leftR = quickHull(Points, std::move(left), l, maxleft, midP);},
-	      [&] () {rightR = quickHull(Points, std::move(right), midP, maxright, r);});
-
+	      [&] () {leftR = quickHull(Points, std::move(left), l, maxleft, mid);},
+	      [&] () {rightR = quickHull(Points, std::move(right), mid, maxright, r);});
+    
     // append the results together with mid in the middle
     pbbs::sequence<indexT> result(leftR.size() + rightR.size() + 1);
     pbbs::copy(leftR, result.slice(0, leftR.size()));
@@ -86,22 +90,22 @@ pbbs::sequence<indexT> quickHull(pbbs::sequence<point> const & Points,
 }
 
 // The top-level call has to find the maximum and minimum x coordinates
-//   and use them for the initial lines minp-maxp (for the upper hull)
-//   and maxp-minp (for the lower hull).
+//   and use them for the initial lines minp--maxp (for the upper hull)
+//   and maxp--minp (for the lower hull).
 pbbs::sequence<indexT> hull(pbbs::sequence<point> const &Points) {
-  timer t("hull", true);
+  timer t("hull", false);
   size_t n = Points.size();
   auto pntless = [&] (point a, point b) {
     return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y));};
 
   // min and max points by x coordinate
-  size_t minidx, maxidx, maxUpper, maxLower;
-  std::tie(minidx, maxidx) = pbbs::minmax_element(Points, pntless);
-  point minp = Points[minidx];
-  point maxp = Points[maxidx];
+  size_t min, max, maxUpper, maxLower;
+  std::tie(min, max) = pbbs::minmax_element(Points, pntless);
+  point minp = Points[min];
+  point maxp = Points[max];
   t.next("minmax");
 
-  // identify those above and below the line minp-maxp
+  // identify those above and below the line minp--maxp
   // and calculate furtherst in each direction
   pbbs::sequence<bool> upperFlag(n);
   pbbs::sequence<bool> lowerFlag(n);
@@ -112,7 +116,6 @@ pbbs::sequence<indexT> hull(pbbs::sequence<point> const &Points) {
     return a;
     });
   std::tie(maxLower, maxUpper) = pbbs::minmax_element(P, std::less<coord>());
-  
   t.next("flags");
 
   // pack the indices of those above and below
@@ -122,15 +125,15 @@ pbbs::sequence<indexT> hull(pbbs::sequence<point> const &Points) {
 
   // make parallel calls for upper and lower hulls
   pbbs::sequence<indexT> upperR, lowerR;
-  par_do([&] () {upperR = quickHull(Points, std::move(upper), minp, maxUpper, maxp);},
-	 [&] () {lowerR = quickHull(Points, std::move(lower), maxp, maxLower, minp);}
+  par_do([&] () {upperR = quickHull(Points, std::move(upper), min, maxUpper, max);},
+	 [&] () {lowerR = quickHull(Points, std::move(lower), max, maxLower, min);}
 	 );
   t.next("recurse");
-
+    
   pbbs::sequence<indexT> result(upperR.size() + lowerR.size() + 2);
-  result[0] = minidx;
+  result[0] = min;
   pbbs::copy(upperR, result.slice(1, 1 + upperR.size()));
-  result[1 + upperR.size()] = maxidx;
+  result[1 + upperR.size()] = max;
   pbbs::copy(lowerR, result.slice(upperR.size() + 2, result.size()));;
   t.next("append");
   return result;

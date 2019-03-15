@@ -10,7 +10,7 @@
 #    LFLAGS : compiler link flags
 # ********************
 
-TIME = ../bench/$(BENCH)Time
+TIME = $(BENCH)Time
 CHECK = ../bench/$(BENCH)Check
 INCLUDE = -Icommon -Ipbbslib
 
@@ -18,6 +18,10 @@ INCLUDE = -Icommon -Ipbbslib
 $(BENCH) : $(TIME).o $(OBJS) $(CHECK) testInputs
 	$(CC) -o $@ $(TIME).o $(OBJS) $(LFLAGS)
 
+# Timing Code
+$(TIME).o : ../bench/$(TIME).C 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c ../bench/$(TIME).C
+	
 # The check code
 $(CHECK) : $(CHECK).C
 	cd ../bench; make -s $(BENCH)Check
