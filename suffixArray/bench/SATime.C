@@ -29,10 +29,11 @@
 #include "parse_command_line.h"
 #include "sequence_ops.h"
 
+// SA.h defines indexT, which is the type of integer used for the elements of the
+// suffix array
 #include "SA.h"
 using namespace std;
 using namespace benchIO;
-using uint = unsigned int;
 using uchar = unsigned char;
 
 template<class F, class G, class H>
@@ -53,13 +54,12 @@ void loop(int rounds, F initf, G runf, H endf) {
 void timeSuffixArray(pbbs::sequence<char> const &s, int rounds, char* outFile) {
   size_t n = s.size();
   pbbs::sequence<uchar> ss(n, [&] (size_t i) {return (uchar) s[i];});
-  pbbs::sequence<uint> R;
+  pbbs::sequence<indexT> R;
   loop(rounds,
-       [&] () {R = sequence<uint>();},
+       [&] () {R.clear();},
        [&] () {R = suffixArray(ss);},
        [&] () {}
        );
-  //cout<<"Peak-memory: " <<getPeakRSS() / (1024*1024) << endl;
   cout << endl;
   if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
