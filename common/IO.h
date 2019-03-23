@@ -29,6 +29,7 @@
 #include "../pbbslib/sequence_ops.h"
 #include "../pbbslib/parallel.h"
 #include "../pbbslib/get_time.h"
+#include "../pbbslib/strings/string_basics.h"
 
 namespace benchIO {
   using namespace std;
@@ -66,17 +67,6 @@ namespace benchIO {
 	return Str.begin() + Offsets[j];});
     
     return SA;
-  }
-
-  int writeStringToFile(char* S, long n, char const *fileName) {
-    ofstream file (fileName, ios::out | ios::binary);
-    if (!file.is_open()) {
-      std::cout << "Unable to open file: " << fileName << std::endl;
-      return 1;
-    }
-    file.write(S, n);
-    file.close();
-    return 0;
   }
 
   inline int xToStringLen(long a) { return 21;}
@@ -206,15 +196,15 @@ namespace benchIO {
 
   template <class T>
   sequence<T> readIntSeqFromFile(char const *fileName) {
-    sequence<char> S = readStringFromFile(fileName);
-    sequence<char*> W = stringToWords(S);
-    string header = (string) W[0];
+    sequence<char> S = pbbs::char_seq_from_file(fileName);
+    sequence<range<char*>> W = pbbs::tokens(S, pbbs::is_space);
+    string header = (string) W[0].begin();
     if (header != intHeaderIO) {
       cout << "readIntSeqFromFile: bad input" << endl;
       abort();
     }
     long n = W.size()-1;
-    sequence<T> A(n, [&] (long i) {return atol(W[i+1]);});
+    sequence<T> A(n, [&] (long i) {return atol(W[i+1].begin());});
     return A;
   }
 };

@@ -28,6 +28,7 @@
 #include <cstring>
 #include "IO.h"
 #include "../pbbslib/sequence_ops.h"
+#include "../pbbslib/strings/string_basics.h"
 
 namespace benchIO {
   using namespace std;
@@ -88,17 +89,21 @@ namespace benchIO {
     void clear() {pbbs:free_array(A); A = NULL; n = 0;}
   };
 
-  seqData readSequenceFromFile(char* fileName) {
-    sequence<char> S = readStringFromFile(fileName);
-    sequence<char*> W = stringToWords(S);
+  seqData readSequenceFromFile(char const *fileName) {
+    pbbs::sequence<char> S = pbbs::char_seq_from_file(fileName);
+    pbbs::sequence<char*> W = pbbs::tokenize(S, pbbs::is_space);
     char* header = W[0];
     long n = W.size()-1;
+    auto read_long = [&] (size_t i) -> long {
+      return atoi(W[i]);};
+    auto read_double = [&] (size_t i) -> double {
+      return atof(W[i]);};
 
     if (header == seqHeader(intType)) {
-      sequence<int> A(n, [&] (long i) {return atoi(W[i+1]);});
+      sequence<int> A(n, [&] (long i) {return read_long(i+1);});
       return seqData((void*) A.to_array(), n, intType);
     } else if (header == seqHeader(doubleT)) {
-      sequence<double> A(n, [&] (long i) {return atof(W[i+1]);});
+      sequence<double> A(n, [&] (long i) {return read_double(i+1);});
       return seqData((void*) A.to_array(), n, doubleT);
     } else if (header == seqHeader(stringT)) {
       sequence<char*> A(n, [&] (long i) {return W[i+1];});
@@ -106,24 +111,24 @@ namespace benchIO {
     } else if (header == seqHeader(intPairT)) {
       n = n/2;
       sequence<intPair> A(n, [&] (long i) {
-	  return std::make_pair(atoi(W[2*i+1]), atoi(W[2*i+2]));});
+	  return std::make_pair(read_long(2*i+1), read_long(2*i+2));});
       return seqData((void*) A.to_array(), n, intPairT);
     } else if (header == seqHeader(doublePairT)) {
       n = n/2;
       sequence<doublePair> A(n, [&] (long i) {
-	  return std::make_pair(atof(W[2*i+1]), atof(W[2*i+2]));});
+	  return std::make_pair(read_double(2*i+1), read_double(2*i+2));});
       return seqData((void*) A.to_array(), n, doublePairT);
     } else if (header == seqHeader(stringIntPairT)) {
       n = n/2;
       sequence<stringIntPair> A(n, [&] (long i) {
-	  return std::make_pair(W[2*i+1], atoi(W[2*i+2]));});
+	  return std::make_pair(W[2*i+1], read_long(2*i+2));});
       return seqData((void*) A.to_array(), std::move(S), n, stringT);
     }
     abort();
   }
 
   template <class T>
-  int writeSequenceToFile(sequence<T> const &A, char* fileName) {
+  int writeSequenceToFile(sequence<T> const &A, char const *fileName) {
     elementType tp = dataType(A[0]);
     return writeSeqToFile(seqHeader(tp), A, fileName);
   }
