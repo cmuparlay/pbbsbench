@@ -1,7 +1,7 @@
 # pbbsbench
 New version of pbbs benchmarks (work in progress)
 
-This repository uses a submodule (pbbslib).    To pull the submodule:
+This repository uses a submodule (pbbslib).    To pull the submodule, in pbbsbench:
 
 \> git submodule init
 
