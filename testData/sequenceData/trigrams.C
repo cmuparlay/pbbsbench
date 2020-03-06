@@ -24,6 +24,7 @@
 #include <iostream>
 #include <fstream>
 #include <math.h>
+#include <limits.h>
 #include "pbbslib/parallel.h"
 #include "pbbslib/random.h"
 #include "pbbslib/sequence_ops.h"
