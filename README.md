@@ -3,7 +3,7 @@ New version of pbbs benchmarks (work in progress)
 
 This repository uses a submodule (pbbslib).    To pull the submodule:
 
-<prompt> git submodule init
+\> git submodule init
 
 <prompt> git submodule update
 
