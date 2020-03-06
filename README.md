@@ -5,14 +5,14 @@ This repository uses a submodule (pbbslib).    To pull the submodule:
 
 \> git submodule init
 
-<prompt> git submodule update
+\> git submodule update
 
 To run a test, for example, try:
 
-<prompt> cd comparisonSort/sampleSort
+\> cd comparisonSort/sampleSort
 
-<prompt> make
+\> make
 
-<prompt> ./testInputs -x -r 3
+\> ./testInputs -x -r 3
 
 The -x means don't check correctness, the -r 3 means do three trials.
