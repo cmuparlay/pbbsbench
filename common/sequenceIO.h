@@ -91,7 +91,7 @@ namespace benchIO {
 
   seqData readSequenceFromFile(char const *fileName) {
     pbbs::sequence<char> S = pbbs::char_seq_from_file(fileName);
-    pbbs::sequence<char*> W = pbbs::tokenize(S, pbbs::is_space);
+    pbbs::sequence<char*> W = pbbs::tokenize(S, benchIO::is_space);
     char* header = W[0];
     long n = W.size()-1;
     auto read_long = [&] (size_t i) -> long {

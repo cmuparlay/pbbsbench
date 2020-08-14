@@ -25,6 +25,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <string>
 #include <cstring>
 #include "../pbbslib/sequence_ops.h"
 #include "../pbbslib/parallel.h"
@@ -35,7 +36,7 @@ namespace benchIO {
   using namespace std;
   using namespace pbbs;
 
-  inline bool isSpace(char c) {
+  inline bool is_space(char c) {
     switch (c)  {
     case '\r': 
     case '\t': 
@@ -197,7 +198,7 @@ namespace benchIO {
   template <class T>
   sequence<T> readIntSeqFromFile(char const *fileName) {
     sequence<char> S = pbbs::char_seq_from_file(fileName);
-    sequence<range<char*>> W = pbbs::tokens(S, pbbs::is_space);
+    sequence<range<char*>> W = pbbs::tokens(S, is_space);
     string header = (string) W[0].begin();
     if (header != intHeaderIO) {
       cout << "readIntSeqFromFile: bad input" << endl;
