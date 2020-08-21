@@ -22,22 +22,22 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "graph.h"
-#include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/get_time.h"
+#include "common/graph.h"
+#include "common/IO.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "BFS.h"
 using namespace std;
 using namespace benchIO;
 
-void timeBFS(Graph const &G, int rounds, char* outFile) {
+void timeBFS(Graph &G, int rounds, char* outFile) {
   timer t;
   Graph GN = G;
   BFS(0, GN);
   for (int i=0; i < rounds; i++) {
-    GN = G;
+    //GN = G;
     t.start();
     BFS(0, GN);
     t.next("");

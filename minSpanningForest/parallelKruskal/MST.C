@@ -23,14 +23,12 @@
 #define NOTMAIN 1
 #include <iostream>
 #include <limits.h>
-#include "graph.h"
-#include "union_find.h"
-
-#include "speculative_for.h"
-#include "sequence.h"
-#include "parallel.h"
-#include "get_time.h"
-
+#include "parlay/sequence.h"
+#include "parlay/parallel.h"
+#include "common/graph.h"
+#include "common/union_find.h"
+#include "common/speculative_for.h"
+#include "common/get_time.h"
 #include "MST.h"
 
 using namespace std;
@@ -51,14 +49,14 @@ struct indexedEdge {
 using reservation = pbbs::reservation<edgeId>;
 
 struct UnionFindStep {
-  pbbs::sequence<indexedEdge> const &E;
-  pbbs::sequence<reservation> &R;
+  parlay::sequence<indexedEdge> &E;
+  parlay::sequence<reservation> &R;
   unionFind<vertexId> &UF;
-  pbbs::sequence<bool> &inST;
-  UnionFindStep(pbbs::sequence<indexedEdge> const &E,
+  parlay::sequence<bool> &inST;
+  UnionFindStep(parlay::sequence<indexedEdge> &E,
 		unionFind<vertexId> &UF,
-		pbbs::sequence<reservation> &R,
-		pbbs::sequence<bool> &inST) :
+		parlay::sequence<reservation> &R,
+		parlay::sequence<bool> &inST) :
     E(E), R(R), UF(UF), inST(inST) {}
 
   bool reserve(edgeId i) {
@@ -87,7 +85,7 @@ struct UnionFindStep {
   }
 };
 
-pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) { 
+parlay::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> &E) { 
   timer t("mst", true);
   size_t m = E.m;
   size_t n = E.n;
@@ -98,23 +96,22 @@ pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &E) {
     return (a.w < b.w) || ((a.w == b.w) && (a.id < b.id));};
 
   // tag each edge with an index
-  auto IW = pbbs::delayed_seq<indexedEdge>(m, [&] (size_t i) {
+  auto IW = parlay::delayed_seq<indexedEdge>(m, [&] (size_t i) {
       return indexedEdge(E[i].u, E[i].v, i, E[i].weight);});
 
-  auto IW1 = pbbs::sort(IW, edgeLess);
+  auto IW1 = parlay::sort(IW, edgeLess);
   t.next("sort edges");
 
-  pbbs::sequence<bool> mstFlags(m, false);
+  parlay::sequence<bool> mstFlags(m, false);
   unionFind<vertexId> UF(n);
-  pbbs::sequence<reservation> R(n);
+  parlay::sequence<reservation> R(n);
   UnionFindStep UFStep1(IW1, UF, R,  mstFlags);
   pbbs::speculative_for<vertexId>(UFStep1, 0, IW1.size(), 20, false);
   t.next("union find loop");
 
-  pbbs::sequence<edgeId> mst = pbbs::pack_index<edgeId>(mstFlags);
+  parlay::sequence<edgeId> mst = parlay::internal::pack_index<edgeId>(mstFlags);
   t.next("pack out results");
 
-  //cout << "n=" << n << " m=" << m << " nInMst=" << size << endl;
   return mst;
 }
 

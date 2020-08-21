@@ -1,4 +1,4 @@
-#include "graph.h"
+#include "common/graph.h"
 
 // vertexId needs to be signed
 using vertexId = int;

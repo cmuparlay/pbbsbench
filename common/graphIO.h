@@ -75,9 +75,11 @@ namespace benchIO {
   string WghAdjGraphHeader = "WeightedAdjacencyGraph";
 
   template <class intV, class intE>
-  int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
-    if (G.degrees.size() > 0)
-      return writeGraphToFile(packGraph(G), fname); 
+  int writeGraphToFile(graph<intV, intE> &G, char* fname) {
+    if (G.degrees.size() > 0) {
+      graph<intV, intE> GP = packGraph(G);
+      return writeGraphToFile(GP, fname);
+    }
     size_t m = G.numEdges();
     size_t n = G.numVertices();
     size_t totalLen = 2 + n + m;
@@ -88,13 +90,13 @@ namespace benchIO {
     // write offsets to Out[2,..,2+n)
     parlay::sequence<intE> const &offsets = G.get_offsets();
     parlay::parallel_for (0, n, [&] (size_t i) {
-	Out[i+2] = offsets[i];});
+    	Out[i+2] = offsets[i];});
 
     // write out edges to Out[2+n,..,2+n+m)
     parlay::parallel_for(0, n, [&] (size_t i) {
-	size_t o = offsets[i] + 2 + n;
-	for (intV j = 0; j < G[i].degree; j++)
-	  Out[o + j] = G[i].Neighbors[j];
+    	size_t o = offsets[i] + 2 + n;
+    	for (intV j = 0; j < G[i].degree; j++) 
+    	  Out[o + j] = G[i].Neighbors[j];
       });
 
     int r = writeSeqToFile(AdjGraphHeader, Out, fname);

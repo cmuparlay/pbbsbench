@@ -23,11 +23,12 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/IO.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "MST.h"
 
 using namespace std;
@@ -42,11 +43,11 @@ int main(int argc, char* argv[]) {
   using graph = wghEdgeArray<vertexId,edgeWeight>;
   
   graph In = readWghEdgeArrayFromFile<vertexId,edgeWeight>(iFile);
-  pbbs::sequence<edgeId> Out = readIntSeqFromFile<edgeId>(oFile);
+  parlay::sequence<edgeId> Out = readIntSeqFromFile<edgeId>(oFile);
   size_t n = Out.size();
   size_t in_m = In.m;
   //check num edges
-  pbbs::sequence<edgeId> serialMST = mst(In);
+  parlay::sequence<edgeId> serialMST = mst(In);
   if (n != serialMST.size()) {
     cout << "Wrong edge count: MST has " << serialMST.size()
 	 << " edges but algorithm returned " << n << " edges\n";
@@ -54,24 +55,24 @@ int main(int argc, char* argv[]) {
     }
   
   //check for cycles
-  sequence<bool> flags(in_m, false);
-  parallel_for(0, n, [&] (size_t i) {flags[Out[i]] = true;});
+  parlay::sequence<bool> flags(in_m, false);
+  parlay::parallel_for(0, n, [&] (size_t i) {flags[Out[i]] = true;});
   
-  pbbs::sequence<WE> E = pbbs::pack(In.E, flags);
+  parlay::sequence<WE> E = parlay::pack(In.E, flags);
   graph EA(std::move(E), In.n);
   
-  pbbs::sequence<edgeId> check = mst(EA);
+  parlay::sequence<edgeId> check = mst(EA);
   if (n != check.size()){
     cout << "Result is not a spanning forest : it has a cycle" << endl;
     return (1);
   }
   
   // check total weight
-  double total1 = pbbs::reduce(pbbs::delayed_seq<double>(n, [&] (size_t i) {
-	return In[Out[i]].weight;}), pbbs::addm<double>());
+  double total1 = parlay::reduce(parlay::delayed_seq<double>(n, [&] (size_t i) {
+	return In[Out[i]].weight;}), parlay::addm<double>());
 
-  double total2 = pbbs::reduce(pbbs::delayed_seq<double>(n, [&] (size_t i) {
-	return In[serialMST[i]].weight;}), pbbs::addm<double>());
+  double total2 = parlay::reduce(parlay::delayed_seq<double>(n, [&] (size_t i) {
+	return In[serialMST[i]].weight;}), parlay::addm<double>());
 
   // need to account for roundoff error, and possible equal weight trees
   if (fabs((total1 - total2)/total1) > 1e-9) {

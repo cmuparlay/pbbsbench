@@ -22,19 +22,19 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "graph.h"
-#include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/get_time.h"
+#include "common/graph.h"
+#include "common/IO.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "MST.h"
 using namespace std;
 using namespace benchIO;
 
-void timeMST(wghEdgeArray<vertexId,edgeWeight> const &In, int rounds, char* outFile) {
+void timeMST(wghEdgeArray<vertexId,edgeWeight> &In, int rounds, char* outFile) {
   timer t;
-  pbbs::sequence<edgeId> Out;
+  parlay::sequence<edgeId> Out;
   for (size_t i=0; i < rounds; i++) {
     Out.clear();
     t.start();

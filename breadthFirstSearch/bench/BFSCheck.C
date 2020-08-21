@@ -23,18 +23,18 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/IO.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "BFS.h"
 using namespace std;
 using namespace benchIO;
 
-using longseq = pbbs::sequence<long>;
+using longseq = parlay::sequence<long>;
 
-size_t levelNumber(size_t start, size_t level, longseq &P, longseq &L, Graph const &T) {
+size_t levelNumber(size_t start, size_t level, longseq &P, longseq &L, Graph &T) {
   if (L[start] != -1) {
     cout << "BFSCheck: not a tree" << endl;
     return 1;
@@ -49,7 +49,7 @@ size_t levelNumber(size_t start, size_t level, longseq &P, longseq &L, Graph con
 }
 
 // Checks if T is valid BFS tree relative to G starting at i
-int checkBFS(size_t start, Graph const &G, Graph const &T) {
+int checkBFS(size_t start, Graph &G, Graph &T) {
   size_t n = G.n;
   if (n != T.n) {
     cout << "BFSCheck: vertex counts don't match: " << G.n << ", " << T.n << endl;
@@ -59,12 +59,12 @@ int checkBFS(size_t start, Graph const &G, Graph const &T) {
      cout << "BFSCheck: too many edges in tree " << endl;
      return 1;
   }
-  sequence<long> P(n, (long) -1);
-  sequence<long> L(n, (long) -1);
+  parlay::sequence<long> P(n, (long) -1);
+  parlay::sequence<long> L(n, (long) -1);
 
   if (levelNumber(start, 0, P, L, T)) return 1;
   int error = 0;
-  parallel_for (0, G.n, [&] (size_t i) {
+  parlay::parallel_for (0, G.n, [&] (size_t i) {
       bool Check=0;
       if (L[i] == -1) {
 	for (size_t j=0; j < G[i].degree; j++) {

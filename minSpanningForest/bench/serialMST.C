@@ -20,14 +20,14 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define NOTMAIN 1
 #include <iostream>
 #include <algorithm>
-#include "graph.h"
-#include "get_time.h"
+#include "parlay/parallel.h"
+#include "common/graph.h"
+#include "common/get_time.h"
+#include "common/union_find.h"
 #include "MST.h"
-#include "parallel.h"
-#include "union_find.h"
+
 using namespace std;
 
 // **************************************************************
@@ -45,7 +45,7 @@ struct edgeAndIndex {
 };
 
 int unionFindLoop(edgeAndIndex* E, size_t m, size_t nInMst,
-		  unionFind<vertexId> &UF, edgeId* mst) {
+		  unionFind<vertexId> &UF, parlay::sequence<edgeId> &mst) {
   for (size_t i = 0; i < m; i++) {
     vertexId u = UF.find(E[i].u);
     vertexId v = UF.find(E[i].v);
@@ -53,15 +53,15 @@ int unionFindLoop(edgeAndIndex* E, size_t m, size_t nInMst,
     // union by rank
     if (u != v) {
       UF.union_roots(u,v);
-      mst[nInMst++] = E[i].id; // add edge to output
+      mst.push_back(E[i].id); // add edge to output
     }
   }
   return nInMst;
 }
 
-pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
+parlay::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
   // tag with edge id
-  pbbs::sequence<edgeAndIndex> EI(G.m, [&] (size_t i) {
+  auto EI = parlay::tabulate(G.m, [&] (size_t i) -> edgeAndIndex {
       return edgeAndIndex(G.E[i].u, G.E[i].v, G.E[i].weight, i);});
 
   auto edgeLess = [&] (edgeAndIndex a, edgeAndIndex b) {
@@ -77,8 +77,8 @@ pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
   // create union-find structure
   unionFind<vertexId> UF(G.n);
 
-  // mst will include the Ids of the edges in the MST
-  edgeId* mst = pbbs::new_array<edgeId>(G.n);
+  // mst edges added to this sequence
+  parlay::sequence<edgeId> mst;
 
   // run union-find over the prefix
   size_t nInMst = unionFindLoop(EI.begin(), l, 0, UF, mst);
@@ -97,6 +97,5 @@ pbbs::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
   // run union-find on remaining edges
   nInMst = unionFindLoop(EI.begin()+l, k, nInMst, UF, mst);
 
-  //cout << "n=" << G.n << " m=" << G.m << " nInMst=" << nInMst << endl;
-  return pbbs::sequence<edgeId>(mst, nInMst);
+  return mst;
 }

@@ -20,10 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define NOTMAIN 1
-#include "sequence.h"
-#include "graph.h"
-#include "parallel.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
 #include "BFS.h"
 #include <limits>
 using namespace std;
@@ -42,11 +40,10 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
   vertexId numVertices = G.numVertices();
   edgeId numEdges = G.m;
   vertexId maxIdx = std::numeric_limits<vertexId>::max();
-  
-  pbbs::sequence<edgeId> Offsets(numVertices+1);
-  pbbs::sequence<vertexId> Parents(numVertices, maxIdx);
-  //pbbs::sequence<reservation> R(numVertices);
-  pbbs::sequence<vertexId> Frontier(1, start);
+
+  auto Offsets = parlay::sequence<edgeId>::uninitialized(numVertices+1);
+  parlay::sequence<vertexId> Parents(numVertices, maxIdx);
+  parlay::sequence<vertexId> Frontier(1, start);
 
   Parents[start] = -1;
   size_t round = 0;
@@ -57,13 +54,13 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
     round++;
     
     // For each vertex in the frontier try to "hook" unvisited neighbors.
-    parallel_for (0, Frontier.size(), [&] (size_t i)  {
+    parlay::parallel_for (0, Frontier.size(), [&] (size_t i)  {
 	vertexId v = Frontier[i];
 	size_t k= 0;
 	for (size_t j=0; j < G[v].degree; j++) {
 	  size_t ngh = G[v].Neighbors[j];
 	  if (Parents[ngh] > v) {
-	    if (pbbs::write_min(&Parents[ngh], v, std::less<vertexId>())) {
+	    if (parlay::write_min(&Parents[ngh], v, std::less<vertexId>())) {
 	      G[v].Neighbors[k++] = ngh;
 	    }
 	  }
@@ -72,12 +69,12 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
       }, 50);
 
     // Find offsets to write the next frontier for each v in this frontier
-    size_t nr = pbbs::scan_inplace(Offsets.slice(0,Frontier.size()), pbbs::addm<edgeId>());
+    size_t nr = parlay::scan_inplace(Offsets.head(Frontier.size()));
     Offsets[Frontier.size()] = nr;
-    pbbs::sequence<vertexId> FrontierNext(nr);
+    parlay::sequence<vertexId> FrontierNext(nr);
     
     // Move hooked neighbors to next frontier.   
-    parallel_for (0, Frontier.size(), [&] (size_t i) {
+    parlay::parallel_for (0, Frontier.size(), [&] (size_t i) {
 	size_t v = Frontier[i];
 	size_t k = 0;
 	size_t o = Offsets[i];
@@ -95,7 +92,7 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
       }, 50);
 
     // Filter out the empty slots (marked with -1)
-    Frontier = pbbs::filter(FrontierNext, [&] (vertexId x) {return x >= 0;});
+    Frontier = parlay::filter(FrontierNext, [&] (vertexId x) {return x >= 0;});
   }
 
   return std::pair<vertexId,size_t>(totalVisited,round);

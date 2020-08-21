@@ -144,10 +144,10 @@ parlay::sequence<intE> getOffsets(parlay::sequence<vertex<intV>> const &V) {
 
 // packs a graph so that there are no gaps in the edge array (i.e. into CSR)
 template <class intV, class intE>
-graph<intV,intE> packGraph(graph<intV,intE> const &G) {
+graph<intV,intE> packGraph(graph<intV,intE> &G) {
   size_t n = G.numVertices();
   auto degrees = parlay::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
-      return (i == n) ? 0 : G[i].degree;});
+						  return (i == n) ? 0 : G[i].degree;});
   // calculate new offsets
   auto sr = parlay::scan(degrees, parlay::addm<intE>());
   // allocate new edge array
