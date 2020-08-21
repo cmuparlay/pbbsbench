@@ -27,12 +27,12 @@
 #include <string>
 #include <cstring>
 #include "IO.h"
-#include "../pbbslib/sequence_ops.h"
-#include "../pbbslib/strings/string_basics.h"
+#include "../parlay/primitives.h"
+#include "../parlay/string_basics.h"
 
 namespace benchIO {
   using namespace std;
-  using namespace pbbs;
+  using namespace parlay;
   
   typedef pair<int,int> intPair;
   typedef pair<unsigned int, unsigned int> uintPair;
@@ -81,54 +81,61 @@ namespace benchIO {
     void* A;
     long n;
     elementType dt;
-    sequence<char> s;  // backup store if A has pointers to strings
+    parlay::sequence<char> s;  // backup store if A has pointers to strings
     seqData(void* A, long n, elementType dt) 
-      : A(A), s(sequence<char>()), n(n), dt(dt) {}
-    seqData(void* A, sequence<char> s, long n, elementType dt)
+      : A(A), s(parlay::sequence<char>()), n(n), dt(dt) {}
+    seqData(void* A, parlay::sequence<char> s, long n, elementType dt)
       : A(A), s(std::move(s)), n(n), dt(dt) {}
-    void clear() {pbbs:free_array(A); A = NULL; n = 0;}
+    void clear() {free(A); A = NULL; n = 0;}
   };
 
+  template <class T>
+  void* toArray(parlay::sequence<T> &S) {
+    T* A = (T*) malloc(S.size()*sizeof(T)); // yes, primitive
+    parallel_for(0, S.size(), [&] (size_t i) {
+	A[i] = S[i];});
+    return (void*) A;
+  }
+		
   seqData readSequenceFromFile(char const *fileName) {
-    pbbs::sequence<char> S = pbbs::char_seq_from_file(fileName);
-    pbbs::sequence<char*> W = pbbs::tokenize(S, benchIO::is_space);
+    parlay::sequence<char> S = parlay::char_seq_from_file(fileName);
+    parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
     char* header = W[0];
     long n = W.size()-1;
     auto read_long = [&] (size_t i) -> long {
       return atoi(W[i]);};
     auto read_double = [&] (size_t i) -> double {
       return atof(W[i]);};
-
     if (header == seqHeader(intType)) {
-      sequence<int> A(n, [&] (long i) {return read_long(i+1);});
-      return seqData((void*) A.to_array(), n, intType);
+      auto A = tabulate(n, [&] (long i) -> int {return read_long(i+1);});
+      return seqData(toArray(A), n, intType);
     } else if (header == seqHeader(doubleT)) {
-      sequence<double> A(n, [&] (long i) {return read_double(i+1);});
-      return seqData((void*) A.to_array(), n, doubleT);
+      auto A = tabulate(n, [&] (long i) -> double {return read_double(i+1);});
+      return seqData(toArray(A), n, doubleT);
     } else if (header == seqHeader(stringT)) {
-      sequence<char*> A(n, [&] (long i) {return W[i+1];});
-      return seqData((void*) A.to_array(), std::move(S), n, stringT);
+      auto A = tabulate(n, [&] (long i) -> char* {return W[i+1];});
+      return seqData(toArray(A), std::move(S), n, stringT);
     } else if (header == seqHeader(intPairT)) {
       n = n/2;
-      sequence<intPair> A(n, [&] (long i) {
+      auto A = tabulate(n, [&] (long i) -> intPair {
 	  return std::make_pair(read_long(2*i+1), read_long(2*i+2));});
-      return seqData((void*) A.to_array(), n, intPairT);
+      return seqData(toArray(A), n, intPairT);
     } else if (header == seqHeader(doublePairT)) {
       n = n/2;
-      sequence<doublePair> A(n, [&] (long i) {
+      auto A = tabulate(n, [&] (long i) -> doublePair {
 	  return std::make_pair(read_double(2*i+1), read_double(2*i+2));});
-      return seqData((void*) A.to_array(), n, doublePairT);
+      return seqData(toArray(A), n, doublePairT);
     } else if (header == seqHeader(stringIntPairT)) {
       n = n/2;
-      sequence<stringIntPair> A(n, [&] (long i) {
+      auto A = tabulate(n, [&] (long i) -> stringIntPair {
 	  return std::make_pair(W[2*i+1], read_long(2*i+2));});
-      return seqData((void*) A.to_array(), std::move(S), n, stringT);
+      return seqData(toArray(A), std::move(S), n, stringT);
     }
     abort();
   }
 
   template <class T>
-  int writeSequenceToFile(sequence<T> const &A, char const *fileName) {
+  int writeSequenceToFile(parlay::sequence<T> const &A, char const *fileName) {
     elementType tp = dataType(A[0]);
     return writeSeqToFile(seqHeader(tp), A, fileName);
   }

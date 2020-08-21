@@ -1,6 +1,6 @@
-#include "pbbslib/merge_sort.h"
+#include "parlay/internal/merge_sort.h"
 
 template <class E, class BinPred>
 void compSort(E* A, unsigned int n, const BinPred& f) {
-  pbbs::merge_sort_inplace(pbbs::range<E*>(A, A+n), f);
+  parlay::internal::merge_sort_inplace(parlay::make_slice(A, A+n), f);
 }

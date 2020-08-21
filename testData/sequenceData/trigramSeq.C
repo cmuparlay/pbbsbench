@@ -1,5 +1,5 @@
 #include "common/sequenceIO.h"
-#include "pbbslib/parse_command_line.h"
+#include "common/parse_command_line.h"
 using namespace benchIO;
 
 sequence<char*> trigramWords(size_t s, size_t e);

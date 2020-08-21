@@ -21,8 +21,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <math.h>
-#include "pbbslib/parallel.h"
-#include "pbbslib/parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/parse_command_line.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"
@@ -33,7 +33,7 @@ using namespace std;
 template <class intV>
 edgeArray<intV> genGraph(size_t n) {
   size_t m = n-1;
-  sequence<edge<intV>> E(m, [&] (size_t i) {
+  auto E = parlay::tabulate(m, [&] (size_t i) -> edge<intV> {
       return edge<intV>(i,i+1); });
   return edgeArray<intV>(E,n,n);
 }

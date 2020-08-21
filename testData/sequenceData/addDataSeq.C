@@ -22,16 +22,16 @@
 
 #include "sequenceData.h"
 #include "common/sequenceIO.h"
-#include "pbbslib/parse_command_line.h"
-#include "pbbslib/random.h"
+#include "common/parse_command_line.h"
+#include "parlay/random.h"
 using namespace dataGen;
 using namespace benchIO;
 
 template <class T2, class T1>
 sequence<pair<T1,T2>> addData(T1* A, size_t n, size_t range) {
-  pbbs::random r(23);
+  parlay::random r(23);
   using par = pair<T1,T2>;
-  sequence<par> R(n, [&] (size_t i) {
+  auto R = parlay::tabulate(n, [&] (size_t i) -> par {
       return std::make_pair(A[i], (T2) (r.ith_rand(i) % range));;
     });
   return R;

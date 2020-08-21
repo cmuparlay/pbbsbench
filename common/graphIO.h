@@ -24,7 +24,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <cstring>
-#include "../pbbslib/parallel.h"
+#include "../parlay/parallel.h"
 #include "IO.h"
 #include "graphUtils.h"
 
@@ -81,17 +81,17 @@ namespace benchIO {
     size_t m = G.numEdges();
     size_t n = G.numVertices();
     size_t totalLen = 2 + n + m;
-    pbbs::sequence<size_t> Out(totalLen);
+    parlay::sequence<size_t> Out(totalLen);
     Out[0] = n;
     Out[1] = m;
 
     // write offsets to Out[2,..,2+n)
-    pbbs::sequence<intE> const &offsets = G.get_offsets();
-    parallel_for (0, n, [&] (size_t i) {
+    parlay::sequence<intE> const &offsets = G.get_offsets();
+    parlay::parallel_for (0, n, [&] (size_t i) {
 	Out[i+2] = offsets[i];});
 
     // write out edges to Out[2+n,..,2+n+m)
-    parallel_for(0, n, [&] (size_t i) {
+    parlay::parallel_for(0, n, [&] (size_t i) {
 	size_t o = offsets[i] + 2 + n;
 	for (intV j = 0; j < G[i].degree; j++)
 	  Out[o + j] = G[i].Neighbors[j];
@@ -106,19 +106,19 @@ namespace benchIO {
     size_t m = G.m;
     size_t n = G.n;
     // weights have to separate since they could be floats
-    pbbs::sequence<size_t> Out1(2 + n + m);
-    pbbs::sequence<Weight> Out2(m);
+    parlay::sequence<size_t> Out1(2 + n + m);
+    parlay::sequence<Weight> Out2(m);
     Out1[0] = n;
     Out2[1] = m;
 
     // write offsets to Out[2,..,2+n)
     auto offsets = G.get_offsets();
-    parallel_for (0, n, [&] (size_t i) {
+    parlay::parallel_for (0, n, [&] (size_t i) {
 	Out1[i+2] = offsets[i];});
 
     // write out edges to Out1[2+n,..,2+n+m)
     // and weights to Out2[0,..,m)
-    parallel_for(0, n, [&] (size_t i) {
+    parlay::parallel_for(0, n, [&] (size_t i) {
 	size_t o = offsets[i];
 	wghVertex<intV,Weight> v = G[i];
 	for (intV j = 0; j < v.degree; j++) {
@@ -142,21 +142,21 @@ namespace benchIO {
 
   template <class intV>
   edgeArray<intV> readEdgeArrayFromFile(char* fname) {
-    pbbs::sequence<char> S = readStringFromFile(fname);
-    pbbs::sequence<char*> W = stringToWords(S);
+    parlay::sequence<char> S = readStringFromFile(fname);
+    parlay::sequence<char*> W = stringToWords(S);
     if (W[0] != EdgeArrayHeader) {
       cout << "Bad input file" << endl;
       abort();
     }
     long n = (W.size()-1)/2;
-    pbbs::sequence<edge<intV>> E(n, [&] (long i) {
+    auto E = parlay::tabulate(n, [&] (long i) -> edge<intV> {
 	return edge<intV>(atol(W[2*i + 1]),
 			  atol(W[2*i + 2]));});
 
-    auto mon = pbbs::make_monoid([&] (edge<intV> a, edge<intV> b) {
+    auto mon = parlay::make_monoid([&] (edge<intV> a, edge<intV> b) {
 	return edge<intV>(std::max(a.u, b.u), std::max(a.v, b.v));},
       edge<intV>(0,0));
-    auto r = pbbs::reduce(E, mon);
+    auto r = parlay::reduce(E, mon);
 
     intV maxrc = std::max(r.u, r.v) + 1;
     return edgeArray<intV>(std::move(E), maxrc, maxrc);
@@ -165,30 +165,30 @@ namespace benchIO {
   template <class intV, class Weight>
   wghEdgeArray<intV,Weight> readWghEdgeArrayFromFile(char* fname) {
     using WE = wghEdge<intV,Weight>;
-    pbbs::sequence<char> S = readStringFromFile(fname);
-    pbbs::sequence<char*> W = stringToWords(S);
+    parlay::sequence<char> S = readStringFromFile(fname);
+    parlay::sequence<char*> W = stringToWords(S);
     if (W[0] != WghEdgeArrayHeader) {
       cout << "Bad input file" << endl;
       abort();
     }
     long n = (W.size()-1)/3;
-    pbbs::sequence<WE> E(n, [&] (size_t i) {
+    auto E = parlay::tabulate(n, [&] (size_t i) -> WE {
 	return WE(atol(W[3*i + 1]),
 		  atol(W[3*i + 2]),
 		  (Weight) atof(W[3*i + 3]));});
 
-    auto mon = pbbs::make_monoid([&] (WE a, WE b) {
+    auto mon = parlay::make_monoid([&] (WE a, WE b) {
 	return WE(std::max(a.u, b.u), std::max(a.v, b.v), 0);},
       WE(0,0,0));
-    auto r = pbbs::reduce(E, mon);
+    auto r = parlay::reduce(E, mon);
 
     return wghEdgeArray<intV,Weight>(std::move(E), max<intV>(r.u, r.v) + 1);
   }
 
   template <class intV, class intE=intV>
   graph<intV, intE> readGraphFromFile(char* fname) {
-    pbbs::sequence<char> S = readStringFromFile(fname);
-    pbbs::sequence<char*> W = stringToWords(S);
+    parlay::sequence<char> S = readStringFromFile(fname);
+    parlay::sequence<char*> W = stringToWords(S);
     if (W[0] != AdjGraphHeader) {
       cout << "Bad input file: missing header: " << AdjGraphHeader << endl;
       abort();
@@ -203,51 +203,51 @@ namespace benchIO {
       abort(); }
     
     // tags on m at the end (so n+1 total offsets)
-    sequence<intE> offsets(n+1, [&] (size_t i) {
+    auto offsets = parlay::tabulate(n+1, [&] (size_t i) -> intE {
 	return (i == n) ? m : atol(W[i+3]);});
-    sequence<intV> edges(m, [&] (size_t i) {
+    auto edges = parlay::tabulate(m, [&] (size_t i) -> intV {
 	return atol(W[n+i+3]);});
 
     return graph<intV, intE>(std::move(offsets), std::move(edges), n);
   }
 
-  pbbs::sequence<char> mmapStringFromFile(const char *filename) {
-    struct stat sb;
-    int fd = open(filename, O_RDONLY);
-    if (fd == -1) {
-      perror("open");
-      exit(-1);
-    }
-    if (fstat(fd, &sb) == -1) {
-      perror("fstat");
-      exit(-1);
-    }
-    if (!S_ISREG (sb.st_mode)) {
-      perror("not a file\n");
-      exit(-1);
-    }
-    char *p = static_cast<char*>(mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
-    if (p == MAP_FAILED) {
-      perror("mmap");
-      exit(-1);
-    }
-    if (close(fd) == -1) {
-      perror("close");
-      exit(-1);
-    }
-    size_t n = sb.st_size;
-    return pbbs::sequence<char>(p, n);
-  }
+  // parlay::sequence<char> mmapStringFromFile(const char *filename) {
+  //   struct stat sb;
+  //   int fd = open(filename, O_RDONLY);
+  //   if (fd == -1) {
+  //     perror("open");
+  //     exit(-1);
+  //   }
+  //   if (fstat(fd, &sb) == -1) {
+  //     perror("fstat");
+  //     exit(-1);
+  //   }
+  //   if (!S_ISREG (sb.st_mode)) {
+  //     perror("not a file\n");
+  //     exit(-1);
+  //   }
+  //   char *p = static_cast<char*>(mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+  //   if (p == MAP_FAILED) {
+  //     perror("mmap");
+  //     exit(-1);
+  //   }
+  //   if (close(fd) == -1) {
+  //     perror("close");
+  //     exit(-1);
+  //   }
+  //   size_t n = sb.st_size;
+  //   return parlay::sequence<char>(p, n); // Yikes!
+  // }
 
   // template <class intV, class intV>
   // graphC<intV, intV> readGraphCFromFile(char* fname, bool mmap=false) {
 
-  //   pbbs::sequence<char*> W;
+  //   parlay::sequence<char*> W;
   //   if (mmap) {
   //     cout << "mmapping file" << endl;
-  //     pbbs::sequence<char> S = mmapStringFromFile(fname);
+  //     parlay::sequence<char> S = mmapStringFromFile(fname);
   //     // copy to new sequence
-  //     pbbs::sequence<char> bytes = S;
+  //     parlay::sequence<char> bytes = S;
   //     // and unmap
   //     if (munmap(S.begin(), S.size()) == -1) {
   //       perror("munmap");
@@ -283,8 +283,8 @@ namespace benchIO {
 
   template <class intV, class Weight, class intE>
   wghGraph<intV, Weight, intE> readWghGraphFromFile(char* fname) {
-    pbbs::sequence<char> S = readStringFromFile(fname);
-    pbbs::sequence<char*> W = stringToWords(S);
+    parlay::sequence<char> S = readStringFromFile(fname);
+    parlay::sequence<char*> W = stringToWords(S);
     if (W[0] != WghAdjGraphHeader) {
       cout << "Bad input file" << endl;
       abort();
@@ -298,11 +298,11 @@ namespace benchIO {
       abort(); }
     
     // tags on m at the end (so n+1 total offsets)
-    sequence<intE> offsets(n+1, [&] (size_t i) {
+    auto offsets = parlay::tabulate(n+1, [&] (size_t i) -> intE {
 	return (i == n) ? m : atol(W[i+3]);});
-    sequence<intV> edges(m, [&] (size_t i) {
+    auto edges = parlay::tabulate(m, [&] (size_t i) -> intV {
 	return atol(W[n+i+3]);});
-    sequence<Weight> weights(m, [&] (size_t i) {
+    auto weights = parlay::tabulate(m, [&] (size_t i) -> Weight {
 	return (Weight) atof(W[n+i+3+m]);});
 
     return wghGraph<intV,Weight,intE>(std::move(offsets),
@@ -313,7 +313,7 @@ namespace benchIO {
   // The following two are used by the graph generators to write out in either format
   // and either with reordering or not
   template <class intV, class intE>
-    void writeGraphFromAdj(graph<intV,intE> const &G,
+  void writeGraphFromAdj(graph<intV,intE> const &G,
 			   char* fname, bool adjArray, bool ordered) {
     if (adjArray)
       if (ordered) writeGraphToFile(G, fname);
@@ -330,9 +330,9 @@ namespace benchIO {
   }
 
   template <class intV, class intE=intV>
-    void writeGraphFromEdges(edgeArray<intV> const & EA, char* fname, bool adjArray, bool ordered) {
-    graph<intV,intE> const &G = graphFromEdges<intV,intE>(EA, adjArray);
-    writeGraphFromAdj(G, fname, adjArray, ordered);
+  void writeGraphFromEdges(edgeArray<intV> &EA, char* fname, bool adjArray, bool ordered) {
+    writeGraphFromAdj(graphFromEdges<intV,intE>(EA, adjArray),
+		      fname, adjArray, ordered);
   }
 
   // void errorOut(const char* s) {

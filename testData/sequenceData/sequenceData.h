@@ -23,11 +23,10 @@
 #include <iostream>
 #include <fstream>
 #include <math.h>
-#include "pbbslib/sequence_ops.h"
-#include "pbbslib/random.h"
+#include "parlay/primitives.h"
+#include "parlay/random.h"
 
 namespace dataGen {
-  using namespace pbbs;
 
   struct payload {
     double key;
@@ -42,43 +41,43 @@ namespace dataGen {
   };
 
   template<typename T>
-  sequence<T> randIntRange(size_t s, size_t e, size_t m) {
-    pbbs::random r(0);
-    sequence<T> In(e-s, [&] (size_t i) {return
+  parlay::sequence<T> randIntRange(size_t s, size_t e, size_t m) {
+    parlay::random r(0);
+    auto In = parlay::tabulate(e-s, [&] (size_t i) -> T {return
 	  r.ith_rand(i+s)%m;});
     return In;
   }
 
   template<typename T>
-  sequence<T> rand(size_t s, size_t e) {
-    pbbs::random r(0);
-    sequence<T> In(e-s, [&] (size_t i) {return
+  parlay::sequence<T> rand(size_t s, size_t e) {
+    parlay::random r(0);
+    auto In = parlay::tabulate(e-s, [&] (size_t i) -> T{return
 	  r.ith_rand(i+s);});
     return In;
   }
 
   template <class T>
-  sequence<T> almostSorted(size_t s, size_t e, size_t swaps) { 
+  parlay::sequence<T> almostSorted(size_t s, size_t e, size_t swaps) { 
     size_t n = e - s;
-    pbbs::random r(0);
-    sequence<T> A(n, [&] (long i) {return i;});
+    parlay::random r(0);
+    auto A = parlay::tabulate(n, [&] (long i) -> T {return i;});
     for (size_t i = s; i < s+swaps; i++)
       std::swap(A[r.ith_rand(2*i)%n],A[r.ith_rand(2*i+1)%n]);
     return A;
   }
 
   template <class T>
-  sequence<T> same(size_t n, T v) {
-    sequence<T> A(n,v);
+  parlay::sequence<T> same(size_t n, T v) {
+    parlay::sequence<T> A(n,v);
     return A;
   }
 
   template <class T>
-  sequence<T> expDist(size_t s, size_t e) { 
+  parlay::sequence<T> expDist(size_t s, size_t e) { 
     size_t n = e - s;
-    size_t lg = pbbs::log2_up(n)+1;
-    pbbs::random r(0);
-    sequence<T> A(n, [&] (long i) {
+    size_t lg = parlay::log2_up(n)+1;
+    parlay::random r(0);
+    auto A = parlay::tabulate(n, [&] (long i) -> T {
       size_t range = (1 << (r.ith_rand(2*(i+s))%lg));
       return r.ith_rand((size_t)(range + r.ith_rand(2*(i+s)+1)%range))%n;
       });

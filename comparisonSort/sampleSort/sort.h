@@ -1,6 +1,6 @@
-#include "pbbslib/sample_sort.h"
+#include "parlay/internal/sample_sort.h"
 
 template <class E, class BinPred>
 void compSort(E* A, unsigned int n, const BinPred& f) {
-  pbbs::sample_sort_inplace(pbbs::make_range(A, A+ n), f);
+  parlay::internal::sample_sort_inplace(parlay::make_slice(A, A+ n), f);
 }

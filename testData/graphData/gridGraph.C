@@ -21,8 +21,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <math.h>
-#include "pbbslib/parallel.h"
-#include "pbbslib/parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/parse_command_line.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"
@@ -40,8 +40,8 @@ edgeArray<intV> edge2DMesh(size_t n) {
   size_t dn = round(pow((float) n,1.0/2.0));
   size_t nn = dn*dn;
   size_t nonZeros = 2*nn;
-  pbbs::sequence<edge<intV>> E(nonZeros);
-  parallel_for (0, dn, [&] (size_t i) {
+  parlay::sequence<edge<intV>> E(nonZeros);
+  parlay::parallel_for (0, dn, [&] (size_t i) {
     for (size_t j=0; j < dn; j++) {
       size_t l = loc2d(dn,i,j);
       E[2*l] = edge<intV>(l,loc2d(dn,i+1,j));
@@ -59,8 +59,8 @@ edgeArray<intV> edge3DMesh(size_t n) {
   size_t dn = round(pow((float) n,1.0/3.0));
   size_t nn = dn*dn*dn;
   size_t nonZeros = 3*nn;
-  pbbs::sequence<edge<intV>> E(nonZeros);
-  parallel_for (0, dn, [&] (size_t i) {
+  parlay::sequence<edge<intV>> E(nonZeros);
+  parlay::parallel_for (0, dn, [&] (size_t i) {
     for (size_t j=0; j < dn; j++) 
       for (size_t k=0; k < dn; k++) {
 	size_t l = loc3d(dn,i,j,k);

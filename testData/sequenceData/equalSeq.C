@@ -1,6 +1,6 @@
 #include "sequenceData.h"
 #include "common/sequenceIO.h"
-#include "pbbslib/parse_command_line.h"
+#include "common/parse_command_line.h"
 using namespace benchIO;
 using namespace dataGen;
 
@@ -16,12 +16,14 @@ int main(int argc, char* argv[]) {
   sequence<double> B;
   
   switch(tp) {
-  case intType:
-    A = sequence<long>(n, [&] (size_t i) {return r;});
+  case intType: {
+    auto A = parlay::tabulate(n, [&] (size_t i) -> long {return r;});
     return writeSequenceToFile(A, fname);
-  case doubleT:
-    B = sequence<double>(n, [&] (size_t i) {return (double) r;});
+  }
+  case doubleT: {
+    auto B = parlay::tabulate(n, [&] (size_t i) -> double {return (double) r;});
     return writeSequenceToFile(B, fname);
+  }
   default: cout << "genSeqRand: not a valid type" << endl;
   }
 }

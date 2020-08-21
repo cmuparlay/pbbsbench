@@ -23,10 +23,10 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "sample_sort.h"
-#include "sequenceIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/sequenceIO.h"
+#include "common/parse_command_line.h"
 using namespace std;
 using namespace benchIO;
 
@@ -34,13 +34,12 @@ template <class T, class LESS>
 void checkIntegerSort(void* In, void* Out, size_t n, LESS less) {
   T* A = (T*) In;
   T* B = (T*) Out;
-  pbbs::range<T*> AA(A,A+n);
-  pbbs::sample_sort_inplace(AA, less, true);
+  auto C = parlay::stable_sort(make_slice(A,A+n), less);
   //std::stable_sort(A, A+n, less);
   size_t error = n;
   parallel_for (0, n, [&] (size_t i) {
-      if (A[i] != B[i]) 
-	pbbs::write_min(&error,i,std::less<size_t>());
+      if (B[i] != C[i]) 
+	parlay::write_min(&error,i,std::less<size_t>());
     });
   if (error < n) {
     cout << "integer sort: check failed at i=" << error << endl;
@@ -52,13 +51,12 @@ template <class T, class LESS>
 void checkIntegerSortPair(void* In, void* Out, size_t n, LESS less) {
   T* A = (T*) In;
   T* B = (T*) Out;
-  pbbs::range<T*> AA(A,A+n);
-  pbbs::sample_sort_inplace(AA, less, true);
+  auto C = parlay::stable_sort(make_slice(A,A+n), less);  
   //std::stable_sort(A, A+n, less);
   size_t error = n;
   parallel_for (0, n, [&] (size_t i) {
-      if (A[i] != B[i]) 
-	pbbs::write_min(&error,i,std::less<size_t>());
+      if (B[i] != C[i]) 
+	parlay::write_min(&error,i,std::less<size_t>());
     });
   if (error < n) {
     cout << "integer sort: check failed at i=" << error << endl;

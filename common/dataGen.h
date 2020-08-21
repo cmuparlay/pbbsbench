@@ -1,5 +1,5 @@
 #pragma once
-#include "../pbbslib/utilities.h"
+#include "../parlay/utilities.h"
 
 namespace dataGen {
 
@@ -11,19 +11,19 @@ namespace dataGen {
   
   template <>
   inline int hash<int>(size_t i) {
-    return pbbs::hash64(i) & ((((size_t) 1) << 31) - 1);}
+    return parlay::hash64(i) & ((((size_t) 1) << 31) - 1);}
 
   template <>
   inline long  hash<long>(size_t i) {
-    return pbbs::hash64(i) & ((((size_t) 1) << 63) - 1);}
+    return parlay::hash64(i) & ((((size_t) 1) << 63) - 1);}
 
   template <>
   inline unsigned int hash<unsigned int>(size_t i) {
-    return pbbs::hash64(i);}
+    return parlay::hash64(i);}
 
   template <>
   inline size_t hash<size_t>(size_t i) {
-    return pbbs::hash64(i);}
+    return parlay::hash64(i);}
 
   template <>
   inline double hash<double>(size_t i) {

@@ -23,10 +23,10 @@
 #include <iostream>
 #include <algorithm>
 #include "get_time.h"
-#include "random_shuffle.h"
-#include "parallel.h"
-#include "sequenceIO.h"
-#include "parseCommandLine.h"
+#include "parlay/random.h"
+#include "parlay/parallel.h"
+#include "common/sequenceIO.h"
+#include "common/parseCommandLine.h"
 
 using namespace std;
 using namespace benchIO;
@@ -34,8 +34,8 @@ using namespace benchIO;
 template <class T, class CMP>
 void timeSort(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
   timer t;
-  sequence<T> A(Ap,n);
-  if (permute) A = pbbs::random_shuffle(A);
+  sequence<T> A = parlay::tabulate(n, [&] (size_t i) -> T {return Ap[i];});
+  if (permute) A = parlay::random_shuffle(A);
   sequence<T> B(n);
   parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
   compSort(B.begin(), n, f); // run one sort to "warm things up"
@@ -52,10 +52,8 @@ void timeSort(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
 template <class T, class CMP>
 void timeSortPair(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
   timer t;
-  sequence<T> A(Ap,n);
-  cout << sizeof(T) << endl;
-  cout << A[0].first << endl;
-  if (permute) A = pbbs::random_shuffle(A);
+  sequence<T> A = parlay::tabulate(n, [&] (size_t i) -> T {return Ap[i];});
+  if (permute) A = parlay::random_shuffle(A);
   sequence<T> B(n);
   parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
   compSort(B.begin(), n, f); // run one sort to "warm things up"

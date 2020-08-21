@@ -24,8 +24,8 @@
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"
-#include "pbbslib/parse_command_line.h"
-#include "pbbslib/parallel.h"
+#include "common/parse_command_line.h"
+#include "parlay/parallel.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
@@ -40,10 +40,14 @@ struct rMat {
        double _a, double _b, double _c) {
     n = _n; a = _a; ab = _a + _b; abc = _a+_b+_c;
     h = dataGen::hash<size_t>(_seed);
-    pbbs::assert_str(abc <= 1.0,
-		 "in rMat: a + b + c add to more than 1");
-    pbbs::assert_str((1 << pbbs::log2_up(n)) == n, 
-		 "in rMat: n not a power of 2");
+    if (!(abc <= 1.0)) {
+      std::cout << "in rMat: a + b + c add to more than 1" << std::endl;
+      abort();
+    }
+    if (!((1 << parlay::log2_up(n)) == n)) {
+      std::cout << "in rMat: n not a power of 2" << std::endl;
+      abort();
+    }		 
   }
 
   edgeT rMatRec(size_t nn, size_t randStart, size_t randStride) {
@@ -68,9 +72,9 @@ struct rMat {
 template <class intV>
 edgeArray<intV> edgeRmat(size_t n, size_t m, size_t seed, 
 			 double a, double b, double c) {
-  size_t nn = (1 << pbbs::log2_up(n));
+  size_t nn = (1 << parlay::log2_up(n));
   rMat<intV> g(nn,seed,a,b,c);
-  sequence<edge<intV>> E(m, [&] (size_t i) {return g(i);});
+  auto E = parlay::tabulate(m, [&] (size_t i) -> edge<intV> {return g(i);});
   return edgeArray<intV>(std::move(E), nn, nn);
 }
 

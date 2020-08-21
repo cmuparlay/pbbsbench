@@ -1,3 +1,6 @@
 [submodule "pbbslib"]
 	path = pbbslib
 	url = git@github.com:cmuparlay/pbbslib.git
+[submodule "parlaylib"]
+	path = parlaylib
+	url = git@github.com:cmuparlay/parlaylib.git

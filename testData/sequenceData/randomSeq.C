@@ -1,6 +1,6 @@
 #include "sequenceData.h"
 #include "common/sequenceIO.h"
-#include "pbbslib/parse_command_line.h"
+#include "common/parse_command_line.h"
 using namespace benchIO;
 using namespace dataGen;
 

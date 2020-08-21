@@ -23,8 +23,8 @@
 // Adds a random double precision weight to each edge
 
 #include <math.h>
-#include "pbbslib/parallel.h"
-#include "pbbslib/parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/parse_command_line.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"

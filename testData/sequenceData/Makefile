@@ -1,8 +1,9 @@
 include common/parallelDefs
 
-COMMON = common/sequenceIO.h common/IO.h
-LIB = pbbslib/parse_command_line.h pbbslib/parallel.h
-SEQUENCEGEN = $(COMMON) $(LIB)
+COMMON = common/sequenceIO.h common/IO.h common/parse_command_line.h
+LIB = parlay/parallel.h
+PBBS = 
+SEQUENCEGEN = $(COMMON) $(LIB) $(PBBS)
 GENERATORS = equalSeq randomSeq almostSortedSeq exptSeq trigramSeq addDataSeq trigramString
 
 .PHONY: all clean

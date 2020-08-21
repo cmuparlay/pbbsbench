@@ -1,19 +1,19 @@
 #define NOTMAIN 1
 #include <iostream>
 #include <limits.h>
-#include "graph.h"
-#include "parallel.h"
+#include "common/graph.h"
+#include "common/union_find.h"
+#include "parlay/primitives.h"
 #include "ST.h"
-#include "union_find.h"
 using namespace std;
 
 // vertexId needs to be signed
-pbbs::sequence<edgeId> st(edgeArray<vertexId> const &E) {
+parlay::sequence<edgeId> st(edgeArray<vertexId> const &E) {
   edgeId m = E.nonZeros;
   vertexId n = E.numRows;
   unionFind<vertexId> UF(n);
 
-  edgeId* st = pbbs::new_array<edgeId>(n);
+  parlay::sequence<edgeId> st(n);
   size_t nInSt = 0; 
   for (edgeId i = 0; i < m; i++){
     vertexId u = UF.find(E[i].u);
@@ -23,5 +23,5 @@ pbbs::sequence<edgeId> st(edgeArray<vertexId> const &E) {
       st[nInSt++] = i;
     }
   } 
-  return pbbs::sequence<edgeId>(st, nInSt);
+  return parlay::sequence<edgeId>(st.begin(), st.begin() + nInSt);
 }

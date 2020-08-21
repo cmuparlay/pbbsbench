@@ -24,8 +24,8 @@
 
 #include <iostream>
 #include <algorithm>
-#include "../pbbslib/parallel.h"
-#include "../pbbslib/sequence.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
 
 // IntV and IntE should be set depending on the size of the graphs
 //  intV should have enough range to represent |V|
@@ -48,11 +48,11 @@ struct edge {
 
 template <class intV = DefaultIntV>
 struct edgeArray {
-  pbbs::sequence<edge<intV>> E;
+  parlay::sequence<edge<intV>> E;
   size_t numRows;
   size_t numCols;
   size_t nonZeros;
-  edgeArray(pbbs::sequence<edge<intV>> EE, size_t r, size_t c) :
+  edgeArray(parlay::sequence<edge<intV>> EE, size_t r, size_t c) :
     E(std::move(EE)), numRows(r), numCols(c), nonZeros(E.size()) {}
   edgeArray() {}
   edge<intV> operator[] (const size_t i) const {return E[i];}
@@ -73,9 +73,9 @@ struct wghEdge {
 template <class intV = DefaultIntV, class Weight=DefaultWeight>
 struct wghEdgeArray {
   using W = Weight;
-  pbbs::sequence<wghEdge<intV,W>> E;
+  parlay::sequence<wghEdge<intV,W>> E;
   size_t n; size_t m;
-  wghEdgeArray(pbbs::sequence<wghEdge<intV,W>> E_, intV n) 
+  wghEdgeArray(parlay::sequence<wghEdge<intV,W>> E_, intV n) 
     : E(std::move(E_)), n(n), m(E.size()) {}
   wghEdgeArray() {}
   wghEdge<intV> operator[] (const size_t i) const {return E[i];}
@@ -87,47 +87,47 @@ struct wghEdgeArray {
 
 template <class intV = DefaultIntV>
 struct vertex {
-  intV* Neighbors;
+  const intV* Neighbors;
   intV degree;
-  vertex(intV* N, intV d) : Neighbors(N), degree(d) {}
+  vertex(const intV* N, intV d) : Neighbors(N), degree(d) {}
   vertex() : Neighbors(NULL), degree(0) {}
 };
 
 template <class intV = DefaultIntV, class intE = intV>
 struct graph {
   using VT = vertex<intV>;
-  pbbs::sequence<intE> offsets;
-  pbbs::sequence<intV> edges;
-  pbbs::sequence<intV> degrees; // not always used
+  const parlay::sequence<intE> offsets;
+  parlay::sequence<intV> edges;
+  parlay::sequence<intV> degrees; // not always used
   size_t n;
   size_t m;
   size_t numVertices() const {return n;}
   size_t numEdges() const {
     if (degrees.size() == 0) return m;
     else {
-      cout << "hello numEdges" << endl;
-      auto dgs = pbbs::delayed_seq<intE>(n, [&] (size_t i) {
+      std::cout << "hello numEdges" << std::endl;
+      auto dgs = parlay::delayed_seq<intE>(n, [&] (size_t i) {
 	  return degrees[i];});
-      return pbbs::reduce(dgs, pbbs::addm<intE>());
+      return parlay::reduce(dgs, parlay::addm<intE>());
     }
   }
-  const pbbs::sequence<intE>& get_offsets() const {
+  const parlay::sequence<intE>& get_offsets() const {
     return offsets;
   }
   void addDegrees() {
-    degrees = pbbs::sequence<intV>(n, [&] (size_t i) {
+    degrees = parlay::sequence<intV>(n, [&] (size_t i) {
 	return offsets[i+1] - offsets[i];});
   }
   VT operator[] (const size_t i) const {
-    return VT(edges.begin() + offsets[i],
+    return VT(edges.data() + offsets[i],
 	      (degrees.size() == 0)
 	      ? offsets[i+1] - offsets[i] : degrees[i]);}
   
-  graph(pbbs::sequence<intE> offsets_,
-	pbbs::sequence<intV> edges_,
+  graph(parlay::sequence<intE> offsets_,
+	parlay::sequence<intV> edges_,
 	size_t n) 
     : offsets(std::move(offsets_)), edges(std::move(edges_)), n(n), m(edges.size()) {
-    if (offsets.size() != n + 1) { cout << "error in graph constructor" << endl;}
+    if (offsets.size() != n + 1) { std::cout << "error in graph constructor" << std::endl;}
   }
 };
 
@@ -148,14 +148,14 @@ template <class intV = DefaultIntV, class Weight=DefaultWeight,
 struct wghGraph {
   using VT = wghVertex<intV,Weight>;
   using W = Weight;
-  pbbs::sequence<intE> offsets;
-  pbbs::sequence<intV> edges;
-  pbbs::sequence<Weight> weights;
+  parlay::sequence<intE> offsets;
+  parlay::sequence<intV> edges;
+  parlay::sequence<Weight> weights;
   size_t n;
   size_t m;
   size_t numVertices() const {return n;}
   size_t numEdges() const {return m;}
-  const pbbs::sequence<intV>& get_offsets() const {
+  const parlay::sequence<intV>& get_offsets() const {
     return offsets;
   }
   VT operator[] (const size_t i) const {
@@ -163,14 +163,14 @@ struct wghGraph {
 	      weights.begin() + offsets[i],
 	      offsets[i+1] - offsets[i]);}
 
-wghGraph(pbbs::sequence<intE> offsets_,
-	   pbbs::sequence<intV> edges_,
-	   pbbs::sequence<Weight> weights_,
+wghGraph(parlay::sequence<intE> offsets_,
+	 parlay::sequence<intV> edges_,
+	 parlay::sequence<Weight> weights_,
 	   size_t n) 
     : offsets(std::move(offsets_)), edges(std::move(edges_)),
       weights(std::move(weights_)), n(n), m(edges.size()) {
     if (offsets.size() != n + 1 || weights.size() != edges.size()) {
-      cout << "error in weighted graph constructor" << endl;}
+      std::cout << "error in weighted graph constructor" << std::endl;}
   }
 };
 

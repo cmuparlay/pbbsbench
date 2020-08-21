@@ -23,12 +23,12 @@
 #define NOTMAIN 1
 #include <iostream>
 #include <limits.h>
-#include "sequence.h"
-#include "parallel.h"
-#include "graph.h"
-#include "ST.h"
-#include "speculative_for.h"
-#include "union_find.h"
+#include "parlay/primitives.h"
+#include "parlay/parallel.h"
+#include "common/graph.h"
+#include "common/ST.h"
+#include "common/speculative_for.h"
+#include "common/union_find.h"
 
 using reservation = pbbs::reservation<edgeId>;
 

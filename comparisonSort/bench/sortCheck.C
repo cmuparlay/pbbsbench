@@ -23,11 +23,10 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "quicksort.h"
-#include "sample_sort.h"
-#include "sequenceIO.h"
-#include "parseCommandLine.h"
+#include "parlay/parallel.h"
+#include "parlay/internal/quicksort.h"
+#include "common/sequenceIO.h"
+#include "common/parseCommandLine.h"
 using namespace std;
 using namespace benchIO;
 
@@ -51,7 +50,7 @@ int main(int argc, char* argv[]) {
     double* A = (double*) In.A;
     double* B = (double*) Out.A;
     auto less = [&] (double a, double b) {return a < b;};
-    pbbs::quicksort(A, n, less);
+    parlay::internal::quicksort(A, n, less);
     for(size_t i=0; i < n; i++) {
       if (A[i] != B[i]) {
 	cout << "compSortCheck: check failed at i=" << i << endl;
@@ -63,7 +62,7 @@ int main(int argc, char* argv[]) {
     dp* A = (dp*) In.A;
     dp* B = (dp*) Out.A;
     auto less = [&] (dp a, dp b) {return a < b;};
-    pbbs::quicksort(A, n, less);
+    parlay::internal::quicksort(A, n, less);
     for(size_t i=0; i < n; i++) {
       if (A[i].first != B[i].first) {
 	cout << "compSortCheck: check failed at i=" << i << endl;
@@ -74,9 +73,7 @@ int main(int argc, char* argv[]) {
     char** A = (char**) In.A;
     char** B = (char**) Out.A;
     auto strless = [&] (char* a, char* b) {return strcmp(a,b) < 0;};
-    //char** C = pbbs::new_array_no_init<char*>(n,1);
-    //pbbs::p_quicksort(sequence<char*>(A,n), sequence<char*>(C, n), strless, 1);
-    pbbs::quicksort(A, n, strless);
+    parlay::internal::quicksort(A, n, strless);
     for(size_t i=0; i < n; i++) {
       if (strcmp(A[i],B[i])) {
 	cout << "compSortCheck: check failed at i=" << i << endl;
@@ -87,7 +84,7 @@ int main(int argc, char* argv[]) {
     int* A = (int*) In.A;
     int* B = (int*) Out.A;
     auto less = [&] (int a, int b) {return a < b;};
-    pbbs::quicksort(A, n, less);
+    parlay::internal::quicksort(A, n, less);
     for(size_t i=0; i < n; i++) {
       if (A[i] != B[i]) {
 	cout << "compSortCheck: check failed at i=" << i << endl;

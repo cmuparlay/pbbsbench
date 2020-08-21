@@ -27,14 +27,12 @@
 #include <string>
 #include <string>
 #include <cstring>
-#include "../pbbslib/sequence_ops.h"
-#include "../pbbslib/parallel.h"
-#include "../pbbslib/get_time.h"
-#include "../pbbslib/strings/string_basics.h"
+#include "../parlay/primitives.h"
+#include "../parlay/parallel.h"
+#include "../parlay/string_basics.h"
 
 namespace benchIO {
   using namespace std;
-  using namespace pbbs;
 
   inline bool is_space(char c) {
     switch (c)  {
@@ -50,21 +48,21 @@ namespace benchIO {
   // parallel code for converting a string to word pointers
   // side effects string by setting to null after each word
   template <class Seq>
-  sequence<char*> stringToWords(Seq &Str) {
+    parlay::sequence<char*> stringToWords(Seq &Str) {
     size_t n = Str.size();
     
-    parallel_for(0, n, [&] (long i) {
-	if (isSpace(Str[i])) Str[i] = 0;}); 
+    parlay::parallel_for(0, n, [&] (long i) {
+	if (is_space(Str[i])) Str[i] = 0;}); 
 
     // mark start of words
-    sequence<bool> FL(n, [&] (long i) {
+    auto FL = parlay::tabulate(n, [&] (long i) -> bool {
 	return (i==0) ? Str[0] : Str[i] && !Str[i-1];});
     
     // offset for each start of word
-    sequence<long> Offsets = pbbs::pack_index<long>(FL);
+    auto Offsets = parlay::pack_index<long>(FL);
 
     // pointer to each start of word
-    sequence<char*> SA(Offsets.size(), [&] (long j) {
+    auto SA = parlay::tabulate(Offsets.size(), [&] (long j) -> char* {
 	return Str.begin() + Offsets[j];});
     
     return SA;
@@ -102,38 +100,38 @@ namespace benchIO {
   }
 
   template <class Seq>
-  sequence<char> seqToString(Seq const &A) {
+  parlay::sequence<char> seqToString(Seq const &A) {
     size_t n = A.size();
-    sequence<long> L(n, [&] (size_t i) -> size_t {
+    auto L = parlay::tabulate(n, [&] (size_t i) -> long {
 	typename Seq::value_type x = A[i];
 	return xToStringLen(x)+1;});
     size_t m;
-    std::tie(L,m) = pbbs::scan(std::move(L), addm<size_t>());
+    std::tie(L,m) = parlay::scan(std::move(L));
 
-    sequence<char> B(m+1, (char) 0);
+    parlay::sequence<char> B(m+1, (char) 0);
     char* Bs = B.begin();
 
-    parallel_for(0, n-1, [&] (long i) {
+    parlay::parallel_for(0, n-1, [&] (long i) {
       xToString(Bs + L[i], A[i]);
       Bs[L[i+1] - 1] = '\n';
       });
     xToString(Bs + L[n-1], A[n-1]);
     Bs[m] = Bs[m-1] = '\n';
     
-    sequence<char> C = pbbs::filter(B, [&] (char c) {return c != 0;}); 
+    parlay::sequence<char> C = parlay::filter(B, [&] (char c) {return c != 0;}); 
     C[C.size()-1] = 0;
     return C;
   }
 
   template <class T>
-  void writeSeqToStream(ofstream& os, sequence<T> const &A) {
+  void writeSeqToStream(ofstream& os, parlay::sequence<T> const &A) {
     size_t bsize = 10000000;
     size_t offset = 0;
     size_t n = A.size();
     while (offset < n) {
       // Generates a string for a sequence of size at most bsize
       // and then wrties it to the output stream
-      sequence<char> S = seqToString(A.slice(offset, min(offset + bsize, n)));
+      parlay::sequence<char> S = seqToString(A.cut(offset, min(offset + bsize, n)));
       os.write(S.begin(), S.size()-1);
       offset += bsize;
     }
@@ -141,7 +139,7 @@ namespace benchIO {
 
   template <class T>
   int writeSeqToFile(string header,
-		     sequence<T> const &A,
+		     parlay::sequence<T> const &A,
 		     char const *fileName) {
     auto a = A[0];
     //xToStringLena(a);
@@ -158,8 +156,8 @@ namespace benchIO {
 
   template <class T1, class T2>
   int write2SeqToFile(string header,
-		      sequence<T1> const &A,
-		      sequence<T2> const &B,
+		      parlay::sequence<T1> const &A,
+		      parlay::sequence<T2> const &B,
 		      char const *fileName) {
     ofstream file (fileName, ios::out | ios::binary);
     if (!file.is_open()) {
@@ -173,7 +171,7 @@ namespace benchIO {
     return 0;
   }
 
-  sequence<char> readStringFromFile(char const *fileName) {
+  parlay::sequence<char> readStringFromFile(char const *fileName) {
     ifstream file (fileName, ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -182,30 +180,31 @@ namespace benchIO {
     long end = file.tellg();
     file.seekg (0, ios::beg);
     long n = end - file.tellg();
-    sequence<char> bytes(n, (char) 0);
+    parlay::sequence<char> bytes(n, (char) 0);
     file.read (bytes.begin(), n);
     file.close();
     return bytes;
   }
 
-  string intHeaderIO = "sequenceInt";
+  string intHeaderIO = "parlay::sequenceInt";
 
   template <class T>
-  int writeIntSeqToFile(sequence<T> const &A, char const *fileName) {
+  int writeIntSeqToFile(parlay::sequence<T> const &A, char const *fileName) {
     return writeSeqToFile(intHeaderIO, A, fileName);
   }
 
   template <class T>
-  sequence<T> readIntSeqFromFile(char const *fileName) {
-    sequence<char> S = pbbs::char_seq_from_file(fileName);
-    sequence<range<char*>> W = pbbs::tokens(S, is_space);
-    string header = (string) W[0].begin();
+  parlay::sequence<T> readIntSeqFromFile(char const *fileName) {
+    parlay::sequence<char> S = parlay::char_seq_from_file(fileName);
+    parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
+    //parlay::sequence<parlay::slice<char*,char*>> W = parlay::tokens(S, is_space);
+    string header(W[0]);
     if (header != intHeaderIO) {
       cout << "readIntSeqFromFile: bad input" << endl;
       abort();
     }
     long n = W.size()-1;
-    sequence<T> A(n, [&] (long i) {return atol(W[i+1].begin());});
+    auto A = parlay::tabulate(n, [&] (long i) -> T {return atol(W[i+1]);});
     return A;
   }
 };

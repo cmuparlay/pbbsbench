@@ -23,11 +23,11 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
-#include "sequence.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "ST.h"
 using namespace std;
 using namespace benchIO;
@@ -39,11 +39,11 @@ int main(int argc, char* argv[]) {
   char* oFile = fnames.second;
 
   edgeArray<vertexId> In = readEdgeArrayFromFile<vertexId>(iFile);
-  pbbs::sequence<edgeId> Out = readIntSeqFromFile<edgeId>(oFile);
+  parlay::sequence<edgeId> Out = readIntSeqFromFile<edgeId>(oFile);
   size_t n = Out.size();
 
   //run serial ST
-  sequence<edgeId> serialST = st(In);
+  parlay::sequence<edgeId> serialST = st(In);
   if (n != serialST.size()){
     cout << "Wrong edge count: ST has " << serialST.size()
 	 << " edges but algorithm returned " << n << " edges\n";
@@ -52,14 +52,14 @@ int main(int argc, char* argv[]) {
   
   //check if ST has cycles by running serial ST on it
   //and seeing if result changes
-  pbbs::sequence<bool> flags(In.nonZeros, false);
-  parallel_for(0, n, [&] (size_t i) {
+  parlay::sequence<bool> flags(In.nonZeros, false);
+  parlay::parallel_for(0, n, [&] (size_t i) {
       flags[Out[i]] = true;});
-  pbbs::sequence<edge<vertexId>> E = pbbs::pack(In.E, flags);
+  parlay::sequence<edge<vertexId>> E = parlay::pack(In.E, flags);
   size_t m = E.size();
   
   edgeArray<vertexId> EA(std::move(E), In.numRows, In.numCols); 
-  sequence<edgeId> check = st(EA);
+  parlay::sequence<edgeId> check = st(EA);
 
   if (m != check.size()){
     cout << "Result is not a spanning tree " << endl;

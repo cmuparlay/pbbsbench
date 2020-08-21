@@ -25,15 +25,15 @@
 #include <fstream>
 #include <math.h>
 #include <limits.h>
-#include "pbbslib/parallel.h"
-#include "pbbslib/random.h"
-#include "pbbslib/sequence_ops.h"
+#include "parlay/parallel.h"
+#include "parlay/random.h"
+#include "parlay/primitives.h"
 
 #define TRIGRAM_FILE "trigrams.txt"
 
 struct nGramTable {
   int len;
-  pbbs::random r;
+  parlay::random r;
 
   struct tableEntry {
     char str[10];
@@ -52,7 +52,7 @@ struct nGramTable {
   nGramTable() {
     std::ifstream ifile(TRIGRAM_FILE);
     if (!ifile.is_open()) {
-      std::cout << "nGramTable: Unable to open trigram file" << endl;
+      std::cout << "nGramTable: Unable to open trigram file" << std::endl;
       abort();
     } else {
       int i=0;
@@ -141,16 +141,16 @@ char* trigramString(size_t s, size_t e) {
 }
 
 // allocates all words one after the other
-pbbs::sequence<char*> trigramWords(size_t s, size_t e) { 
+parlay::sequence<char*> trigramWords(size_t s, size_t e) { 
   size_t n = e - s;
   nGramTable T = nGramTable();
-  pbbs::sequence<long> L(n, [&] (size_t i) {
+  auto L = parlay::tabulate(n, [&] (size_t i) -> long {
       return T.wordLength(100*(i+s),100);});
-  long m = pbbs::scan_inplace(L.slice(), pbbs::addm<long>());
+  long m = parlay::scan_inplace(L);
 
   char *AA = new char[m];
 
-  pbbs::sequence<char*> A(n, [&] (size_t i) {
+  auto A = parlay::tabulate(n, [&] (size_t i) -> char* {
       char* r = AA + L[i];
       T.word(100*(i+s),r,100);
       return r;

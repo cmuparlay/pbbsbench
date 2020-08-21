@@ -27,11 +27,9 @@
 #include <cstdlib>
 #include <math.h>
 #include "graph.h"
-#include "../pbbslib/parallel.h"
-#include "../pbbslib/quicksort.h"
-#include "../pbbslib/stlalgs.h"
-#include "../pbbslib/random_shuffle.h"
-#include "../pbbslib/integer_sort.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
+#include "../parlay/random.h"
 #include "dataGen.h"
 
 using namespace std;
@@ -39,17 +37,17 @@ using namespace std;
 template <class intV, class Weight = DefaultWeight>
 wghEdgeArray<intV,Weight> addRandWeights(edgeArray<intV> const &G) {
   using WE = wghEdge<intV,Weight>;
-  pbbs::random r(257621);
+  parlay::random r(257621);
   intV m = G.nonZeros;
   intV n = G.numRows;
-  pbbs::sequence<WE> E(m, [&] (size_t i) {
+  auto E = parlay::tabulate(m, [&] (size_t i) -> WE {
       return WE(G.E[i].u, G.E[i].v, (Weight) dataGen::hash<Weight>(i));});
   return wghEdgeArray<intV,Weight>(std::move(E), n);
 }
 
 template <class intV>
 edgeArray<intV> randomShuffle(edgeArray<intV> const &A) {
-  auto E =  pbbs::random_shuffle(A.E);
+  auto E =  parlay::random_shuffle(A.E);
   return edgeArray<intV>(std::move(E), A.numRows, A.numCols);
 }
 
@@ -57,23 +55,23 @@ template <class intV>
 edgeArray<intV> remDuplicates(edgeArray<intV> const &A) {
   auto lessE = [&] (edge<intV> a, edge<intV> b) {
     return (a.u < b.u) || ((a.u == b.u) && (a.v < b.v));};
-  pbbs::sequence<edge<intV>> E =
-    pbbs::remove_duplicates_ordered(A.E, lessE);
+  parlay::sequence<edge<intV>> E =
+    parlay::remove_duplicates_ordered(A.E, lessE);
   return edgeArray<intV>(std::move(E), A.numRows, A.numCols);
 }
 
 template <class intV>
 edgeArray<intV> makeSymmetric(edgeArray<intV> const &A) {
-  pbbs::sequence<edge<intV>> EF = pbbs::filter(A.E, [&] (edge<intV> e) {
+  parlay::sequence<edge<intV>> EF = parlay::filter(A.E, [&] (edge<intV> e) {
       return e.u != e.v;});
-  auto FE = pbbs::delayed_seq<edge<intV>>(EF.size(), [&] (size_t i) {
+  auto FE = parlay::delayed_seq<edge<intV>>(EF.size(), [&] (size_t i) {
       return edge<intV>(EF[i].v, EF[i].u);});
-  return remDuplicates(edgeArray<intV>(pbbs::append(EF, FE),
+  return remDuplicates(edgeArray<intV>(parlay::append(EF, FE),
 				       A.numRows, A.numCols));
 }
 
 template <class intV, class intE = intV>
-graph<intV,intE> graphFromEdges(edgeArray<intV> const &EA, bool makeSym) {
+graph<intV,intE> graphFromEdges(edgeArray<intV> &EA, bool makeSym) {
   edgeArray<intV> SA;
   if (makeSym) SA = makeSymmetric<intV>(EA);
   edgeArray<intV> const &A = (makeSym) ? SA : EA;
@@ -81,17 +79,17 @@ graph<intV,intE> graphFromEdges(edgeArray<intV> const &EA, bool makeSym) {
   size_t m = A.nonZeros;
   size_t n = std::max(A.numCols, A.numRows);
 
-  pbbs::sequence<size_t> counts;
-  pbbs::sequence<intE> offsets;
-  pbbs::sequence<edge<intV>> E;
+  parlay::sequence<size_t> counts;
+  parlay::sequence<intE> offsets;
+  parlay::sequence<edge<intV>> E;
   size_t nn;
   auto getu = [&] (edge<intV> e) {return e.u;};
-  std::tie(E, counts) = pbbs::integer_sort_with_counts(A.E, getu, n);
-  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intE>(n+1, [&] (size_t i) {
-	return (i == n) ? 0 : counts[i];}), pbbs::addm<intE>());
+  std::tie(E, counts) = parlay::internal::integer_sort_with_counts(parlay::make_slice(A.E), getu, n);
+  std::tie(offsets,nn) = parlay::scan(parlay::delayed_seq<intE>(n+1, [&] (size_t i) {
+	return (i == n) ? 0 : counts[i];}), parlay::addm<intE>());
 
   return graph<intV,intE>(std::move(offsets),
-			  pbbs::sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
+			  parlay::tabulate(m, [&] (size_t i) -> intV {return E[i].v;}),
 			  n);
 }
 
@@ -102,18 +100,18 @@ wghGraphFromEdges(wghEdgeArray<intV,Weight> const &A) {
   size_t n = A.n;
   size_t m = A.m;
 
-  pbbs::sequence<size_t> counts;
-  pbbs::sequence<intE> offsets;
-  pbbs::sequence<WE> E;
+  parlay::sequence<size_t> counts;
+  parlay::sequence<intE> offsets;
+  parlay::sequence<WE> E;
   size_t nn;
   auto getu = [&] (WE e) {return e.u;};
-  std::tie(E, counts) = pbbs::integer_sort_with_counts(A.E, getu, n);
-  std::tie(offsets,nn) = pbbs::scan(pbbs::delayed_seq<intE>(n+1, [&] (size_t i) {
-	return (i == n) ? 0 : counts[i];}), pbbs::addm<intE>());
+  std::tie(E, counts) = parlay::internal::integer_sort_with_counts(parlay::make_slice(A.E), getu, n);
+  std::tie(offsets,nn) = parlay::scan(parlay::delayed_seq<intE>(n+1, [&] (size_t i) {
+	return (i == n) ? 0 : counts[i];}), parlay::addm<intE>());
 
   return wghGraph<intV,Weight,intE>(std::move(offsets),
-				    pbbs::sequence<intV>(m, [&] (size_t i) {return E[i].v;}),
-				    pbbs::sequence<Weight>(m, [&] (size_t i) {
+				    parlay::tabulate(m, [&] (size_t i)->intV {return E[i].v;}),
+				    parlay::tabulate(m, [&] (size_t i) -> Weight {
 					return E[i].weight;}),
 				    n);
 }
@@ -124,8 +122,8 @@ edgeArray<intV> edgesFromGraph(graph<intV,intE> const &G) {
   size_t nonZeros = G.numEdges();
 
   // flatten
-  pbbs::sequence<edge<intV>> E(nonZeros);
-  parallel_for(0, numRows, [&] (size_t j) {
+  parlay::sequence<edge<intV>> E(nonZeros);
+  parlay::parallel_for(0, numRows, [&] (size_t j) {
       size_t off = G.get_offsets()[j];
       vertex<intV> v = G[j];
       for (size_t i = 0; i < v.degree; i++)
@@ -136,11 +134,11 @@ edgeArray<intV> edgesFromGraph(graph<intV,intE> const &G) {
 
 // offset for start of each vertex if flattening the edge listd
 template <class intV, class intE>
-pbbs::sequence<intE> getOffsets(pbbs::sequence<vertex<intV>> const &V) {
+parlay::sequence<intE> getOffsets(parlay::sequence<vertex<intV>> const &V) {
   size_t n = V.size();
-  auto degrees = pbbs::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
+  auto degrees = parlay::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
       return (i == n) ? 0 : V[i].degree;});
-  auto x = pbbs::scan(degrees, pbbs::addm<intE>());
+  auto x = parlay::scan(degrees, parlay::addm<intE>());
   return x.first;
 }
 
@@ -148,14 +146,14 @@ pbbs::sequence<intE> getOffsets(pbbs::sequence<vertex<intV>> const &V) {
 template <class intV, class intE>
 graph<intV,intE> packGraph(graph<intV,intE> const &G) {
   size_t n = G.numVertices();
-  auto degrees = pbbs::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
+  auto degrees = parlay::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
       return (i == n) ? 0 : G[i].degree;});
   // calculate new offsets
-  auto sr = pbbs::scan(degrees, pbbs::addm<intE>());
+  auto sr = parlay::scan(degrees, parlay::addm<intE>());
   // allocate new edge array
-  pbbs::sequence<intV> outEdges(sr.second);
+  parlay::sequence<intV> outEdges(sr.second);
   // copy edges so they are contiguous
-  parallel_for (0, G.n, [&] (size_t i) {
+  parlay::parallel_for (0, G.n, [&] (size_t i) {
       vertex<intV> v = G[i];
       size_t offset = sr.first[i];
       for (size_t j=0; j < v.degree; j++)
@@ -167,21 +165,21 @@ graph<intV,intE> packGraph(graph<intV,intE> const &G) {
 // if I is NULL then it randomly reorders
 template <class intV, class intE>
 graph<intV,intE> graphReorder(graph<intV,intE> const &Gr,
-			      pbbs::sequence<intV> const &I = pbbs::sequence<intV>(0)) {
+			      parlay::sequence<intV> const &I = parlay::sequence<intV>(0)) {
   intV n = Gr.numVertices();
   intV m = Gr.numEdges();
 
   bool noI = (I.size()==0);
-  pbbs::sequence<intV> const &II = noI ? pbbs::random_permutation<intV>(n) : I;
+  parlay::sequence<intV> const &II = noI ? parlay::random_permutation<intV>(n) : I;
 
   // now write vertices to new locations
   // inverse permutation
-  pbbs::sequence<vertex<intV>> V(n);
-  parallel_for (0, n, [&] (size_t i) {
+  parlay::sequence<vertex<intV>> V(n);
+  parlay::parallel_for (0, n, [&] (size_t i) {
       V[II[i]] = Gr[i];});
-  pbbs::sequence<intE> offsets = getOffsets<intV,intE>(V);
-  pbbs::sequence<intV> E(m);
-  parallel_for (0, n, [&] (size_t i) {
+  parlay::sequence<intE> offsets = getOffsets<intV,intE>(V);
+  parlay::sequence<intV> E(m);
+  parlay::parallel_for (0, n, [&] (size_t i) {
       size_t o = offsets[i];
       for (size_t j=0; j < V[i].degree; j++) 
 	E[o + j] = II[V[i].Neighbors[j]];
@@ -194,18 +192,18 @@ template <class intV, class intE>
 int graphCheckConsistency(graph<intV,intE> const &Gr) {
   size_t n = Gr.numVertices();
   size_t m = Gr.numEdges();
-  size_t edgecount = pbbs::reduce(pbbs::delayed_seq<size_t>(n, [&] (size_t i) {
-	return Gr[i].degree;}), pbbs::addm<size_t>());
+  size_t edgecount = parlay::reduce(parlay::delayed_seq<size_t>(n, [&] (size_t i) {
+	return Gr[i].degree;}), parlay::addm<size_t>());
   if (m != edgecount) {
     cout << "bad edge count in graphCheckConsistency: m = " 
 	 << m << " sum of degrees = " << edgecount << endl;
     return 1;
   }
-  size_t error_loc = pbbs::reduce(pbbs::delayed_seq<size_t>(n, [&] (size_t i) {
+  size_t error_loc = parlay::reduce(parlay::delayed_seq<size_t>(n, [&] (size_t i) {
 	for (size_t j=0; j < Gr[i].degree; j++) 
 	  if (Gr[i].Neighbors[j] >= n) return i;
 	return n;
-      }), pbbs::minm<size_t>());
+      }), parlay::minm<size_t>());
   if (error_loc < n) {
     cout << "edge out of range in graphCheckConsistency: at i = " 
 	 << error_loc << endl;

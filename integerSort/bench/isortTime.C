@@ -20,12 +20,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "get_time.h"
-#include "parallel.h"
-#include "parse_command_line.h"
-#include "sequence_ops.h"
-
-#include "sequenceIO.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/get_time.h"
+#include "common/parse_command_line.h"
+#include "common/sequenceIO.h"
 #include <iostream>
 #include <algorithm>
 using namespace std;
@@ -45,7 +44,7 @@ void loop(int rounds, F initf, G runf) {
 }
   
 template <class T>
-void timeIntegerSort(sequence<T> A, int rounds, int bits, char* outFile) {
+void timeIntegerSort(slice<T*,T*> A, int rounds, int bits, char* outFile) {
   sequence<T> R;
   loop(rounds,
        [&] () {R.clear();},
@@ -66,12 +65,13 @@ int main(int argc, char* argv[]) {
   using upair = pair<uint,int>;
   switch (dt) {
   case intType: 
-    timeIntegerSort<uint>(sequence<uint>((uint*) D.A, D.n),
+    timeIntegerSort<uint>(make_slice((uint*) D.A, (uint*) D.A + D.n),
 			  rounds, bits, oFile);
     break;
   case intPairT: 
-    timeIntegerSort<upair>(sequence<upair>((upair*) D.A, D.n),
-			   rounds, bits, oFile);  break;
+    timeIntegerSort<upair>(make_slice((upair*) D.A, (upair*) D.A + D.n),
+			   rounds, bits, oFile);
+    break;
   default:
     cout << "integer Sort: input file not of right type" << endl;
     return(1);

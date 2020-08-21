@@ -20,9 +20,9 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "pbbslib/parallel.h"
-#include "pbbslib/parse_command_line.h"
-#include "pbbslib/get_time.h"
+#include "parlay/parallel.h"
+#include "common/parse_command_line.h"
+#include "common/get_time.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"
@@ -39,7 +39,7 @@ using namespace std;
 template <class intV>
 edgeArray<intV> edgeRandomWithDimension(size_t dim, size_t degree, size_t numRows) {
   size_t nonZeros = numRows*degree;
-  pbbs::sequence<edge<intV>> E(nonZeros, [&] (size_t k) {
+  auto E = parlay::tabulate(nonZeros, [&] (size_t k) -> edge<intV> {
       size_t i = k / degree;
       size_t j;
       if (dim==0) {
