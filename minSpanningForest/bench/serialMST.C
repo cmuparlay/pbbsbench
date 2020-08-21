@@ -59,7 +59,7 @@ int unionFindLoop(edgeAndIndex* E, size_t m, size_t nInMst,
   return nInMst;
 }
 
-parlay::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> const &G) {
+parlay::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> &G) {
   // tag with edge id
   auto EI = parlay::tabulate(G.m, [&] (size_t i) -> edgeAndIndex {
       return edgeAndIndex(G.E[i].u, G.E[i].v, G.E[i].weight, i);});
