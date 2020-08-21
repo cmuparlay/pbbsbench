@@ -22,18 +22,18 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "parallel.h"
-#include "graph.h"
-#include "graphIO.h"
+#include "parlay/parallel.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/get_time.h"
+#include "common/parse_command_line.h"
 #include "ST.h"
-#include "parse_command_line.h"
 using namespace std;
 using namespace benchIO;
 
 void timeST(edgeArray<vertexId> In, int rounds, char* outFile) {
   timer t;
-  sequence<edgeId> Out;
+  parlay::sequence<edgeId> Out;
   for (size_t i=0; i < rounds; i++) {
     Out.clear();
     t.start();

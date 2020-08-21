@@ -20,8 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "parallel.h"
-#include "sequence.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
 #include <limits>
 
 namespace pbbs {
@@ -34,7 +34,8 @@ namespace pbbs {
     idxT r;
     static constexpr idxT max_idx = std::numeric_limits<idxT>::max();
     reservation() : r(max_idx) {}
-    bool reserve(idxT i) { return pbbs::write_min(&r, i, std::less<idxT>());}
+    idxT get() { return r;}
+    bool reserve(idxT i) { return parlay::write_min(&r, i, std::less<idxT>());}
     bool reserved() { return (r < max_idx);}
     void reset() {r = max_idx;}
     void freeze() {r = -1;}
@@ -51,12 +52,13 @@ namespace pbbs {
     if (maxTries < 0) maxTries = 100 + 200*granularity;
     long maxRoundSize = (e-s)/granularity+1;
     long currentRoundSize = maxRoundSize/4;
-    pbbs::sequence<idxT> I(maxRoundSize);
-    pbbs::sequence<bool> keep(maxRoundSize);
-    pbbs::sequence<idxT> Ihold;
-    pbbs::sequence<S> state;
+    // integer types, do not need to be initialized
+    auto I = parlay::sequence<idxT>::uninitialized(maxRoundSize);
+    auto keep = parlay::sequence<bool>::uninitialized(maxRoundSize);
+    parlay::sequence<idxT> Ihold;  // initially empty
+    parlay::sequence<S> state;
     if (hasState)
-      state = pbbs::sequence<S>(maxRoundSize, [&] (size_t i) {return step;});
+      state = parlay::tabulate(maxRoundSize, [&] (size_t i) -> S {return step;});
 
     long round = 0;
     long numberDone = s; // number of iterations done
@@ -72,31 +74,32 @@ namespace pbbs {
       size_t loop_granularity = 0;
 
       if (hasState) {
-        parallel_for (0, size, [&] (size_t i) {
+        parlay::parallel_for (0, size, [&] (size_t i) {
   	  I[i] = (i < numberKeep) ? Ihold[i] : numberDone + i;
   	  keep[i] = state[i].reserve(I[i]);
   	}, loop_granularity);
       } else {
-        parallel_for (0, size, [&] (size_t i) {
+        parlay::parallel_for (0, size, [&] (size_t i) {
   	  I[i] = (i < numberKeep) ? Ihold[i] : numberDone + i;
   	  keep[i] = step.reserve(I[i]);
   	}, loop_granularity);
       }
 
       if (hasState) {
-        parallel_for (0, size, [&] (size_t i) {
+        parlay::parallel_for (0, size, [&] (size_t i) {
   	  if (keep[i]) keep[i] = !state[i].commit(I[i]);}, loop_granularity);
       } else {
-        parallel_for (0, size, [&] (size_t i) {
+        parlay::parallel_for (0, size, [&] (size_t i) {
   	  if (keep[i]) keep[i] = !step.commit(I[i]);}, loop_granularity);
       }
 
       // keep iterations that failed for next round
-      Ihold = pbbs::pack(I.slice(0,size), keep.slice(0,size));
+      Ihold = parlay::pack(I.head(size), keep.head(size));
       numberKeep = Ihold.size();
       numberDone += size - numberKeep;
 
-      cout << size << " : " << numberKeep << " : " << numberDone << " : " << currentRoundSize << endl;
+      std::cout << size << " : " << numberKeep << " : "
+		<< numberDone << " : " << currentRoundSize << std::endl;
 
       // adjust round size based on number of failed attempts
       if (float(numberKeep)/float(size) > .2)

@@ -26,20 +26,20 @@
 #include "parlay/primitives.h"
 #include "parlay/parallel.h"
 #include "common/graph.h"
-#include "common/ST.h"
 #include "common/speculative_for.h"
 #include "common/union_find.h"
+#include "ST.h"
 
 using reservation = pbbs::reservation<edgeId>;
 
 struct unionFindStep {
   vertexId u;  vertexId v;  
   edgeArray<vertexId> const &E;
-  pbbs::sequence<reservation> &R;
+  parlay::sequence<reservation> &R;
   unionFind<vertexId> &UF;
   unionFindStep(edgeArray<vertexId> const &E,
 		unionFind<vertexId> &UF,
-		pbbs::sequence<reservation> &R)
+		parlay::sequence<reservation> &R)
     : E(E), R(R), UF(UF) {} 
 
   bool reserve(edgeId i) {
@@ -58,16 +58,14 @@ struct unionFindStep {
   }
 };
 
-pbbs::sequence<edgeId> st(edgeArray<vertexId> const &G){
+parlay::sequence<edgeId> st(edgeArray<vertexId> const &G){
   size_t m = G.nonZeros;
   size_t n = G.numRows;
   unionFind<vertexId> UF(n);
-  pbbs::sequence<reservation> R(n);
+  parlay::sequence<reservation> R(n);
   unionFindStep UFStep(G, UF, R);
   pbbs::speculative_for<edgeId>(UFStep, 0, m, 100);
-  auto stIdx = pbbs::filter(R, [&] (reservation a) {
-      return a.reserved();});
-  size_t l = stIdx.size();
-  cout << "Tree size = " << l << endl;
-  return pbbs::sequence<edgeId>((edgeId*) stIdx.to_array(), l);
+  return parlay::internal::filter_map(R,
+		  [&] (reservation a) -> bool {return a.reserved();},
+		  [&] (reservation a) -> edgeId {return a.get();});
 }
