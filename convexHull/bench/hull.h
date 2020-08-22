@@ -1,9 +1,9 @@
 #include "geometry.h"
-#include "sequence.h"
+#include "parlay/primitives.h"
 
 using indexT = unsigned int;
 using coord = double;
 using point = point2d<coord>;
 
-pbbs::sequence<indexT> hull(pbbs::sequence<point> const &S);
+parlay::sequence<indexT> hull(parlay::sequence<point> const &S);
 

@@ -22,11 +22,11 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "geometry.h"
-#include "parallel.h"
-#include "geometryIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/get_time.h"
+#include "common/geometry.h"
+#include "common/geometryIO.h"
+#include "common/parse_command_line.h"
 #include "hull.h"
 
 using namespace std;
@@ -35,9 +35,9 @@ using namespace benchIO;
 using coord = double;
 using point = point2d<coord>;
 
-void timeHull(pbbs::sequence<point> const &P, int rounds, char const *outFile) {
+void timeHull(parlay::sequence<point> const &P, int rounds, char const *outFile) {
   timer t;
-  sequence<indexT> I = hull(P);
+  parlay::sequence<indexT> I = hull(P);
   for (size_t i = 0; i < rounds; i++) {
     I.clear();
     t.start();
@@ -55,6 +55,6 @@ int main(int argc, char* argv[]) {
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
 
-  sequence<point> Points = readPointsFromFile<point>(iFile);
+  parlay::sequence<point> Points = readPointsFromFile<point>(iFile);
   timeHull(Points, rounds, oFile);
 }

@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <math.h>
 #include <iomanip>
-#include "../pbbslib/parallel.h"
-#include "../pbbslib/sequence.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
 using namespace std;
 
 // *************************************************************
@@ -27,7 +27,7 @@ using namespace std;
     vector3d(coord x, coord y, coord z) : x(x), y(y), z(z) {}
     vector3d() :x(0), y(0), z(0) {}
     vector3d(point p);
-    vector3d(pbbs::range<coord*> p) : x(p[0]), y(p[1]), z(p[2]) {};
+    vector3d(parlay::slice<coord*,coord*> p) : x(p[0]), y(p[1]), z(p[2]) {};
     vector operator+(vector op2) {
       return vector(x + op2.x, y + op2.y, z + op2.z);}
     vector operator-(vector op2) {
@@ -57,7 +57,7 @@ using namespace std;
     point3d(coord x, coord y, coord z) : x(x), y(y), z(z) {}
     point3d() : x(0), y(0), z(0) {}
     point3d(vector v) : x(v.x), y(v.y), z(v.z) {};
-    point3d(pbbs::range<coord*> p) : x(p[0]), y(p[1]), z(p[2]) {};
+    point3d(parlay::slice<coord*,coord*> p) : x(p[0]), y(p[1]), z(p[2]) {};
     void print() {cout << ":(" << x << "," << y << "," << z << "):";}
     vector operator-(point op2) {
       return vector(x - op2.x, y - op2.y, z - op2.z);}
@@ -117,7 +117,7 @@ using namespace std;
     vector2d(coord x, coord y) : x(x), y(y) {}
     vector2d() : x(0), y(0)  {}
     vector2d(point p);
-    vector2d(pbbs::range<coord*> p) : x(p[0]), y(p[1]) {};
+    vector2d(parlay::slice<coord*,coord*> p) : x(p[0]), y(p[1]) {};
     vector operator+(vector op2) {return vector(x + op2.x, y + op2.y);}
     vector operator-(vector op2) {return vector(x - op2.x, y - op2.y);}
     point operator+(point op2);
@@ -152,7 +152,7 @@ using namespace std;
     point2d(coord x, coord y) : x(x), y(y) {}
     point2d() : x(0), y(0) {}
     point2d(vector v) : x(v.x), y(v.y) {};
-    point2d(pbbs::range<coord*> p) : x(p[0]), y(p[1]) {};
+    point2d(parlay::slice<coord*,coord*> p) : x(p[0]), y(p[1]) {};
     void print() {cout << ":(" << x << "," << y << "):";}
     vector operator-(point op2) {return vector(x - op2.x, y - op2.y);}
     point operator+(vector op2) {return point(x + op2.x, y + op2.y);}

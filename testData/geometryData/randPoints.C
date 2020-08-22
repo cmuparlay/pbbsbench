@@ -28,8 +28,8 @@
 //   Only one of -s or -S should be used
 
 #include <math.h>
-#include "pbbslib/parallel.h"
-#include "pbbslib/parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/parse_command_line.h"
 #include "common/IO.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   bool plummerOrKuzmin = P.getOption("-k") || P.getOption("-p");
 
   if (dims == 2) {
-    sequence<point2d<coord>> Points(n, [&] (size_t i) {
+    auto Points = parlay::tabulate(n, [&] (size_t i) -> point2d<coord> {
 	if (inSphere) return randInUnitSphere2d<coord>(i);
 	else if (onSphere) return randOnUnitSphere2d<coord>(i);
 	else if (plummerOrKuzmin) return randKuzmin<coord>(i);
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
       });
     return writePointsToFile(Points,fname);
   } else if (dims == 3) {
-    sequence<point3d<coord>> Points(n, [&] (size_t i) {
+    auto Points = parlay::tabulate(n, [&] (size_t i) -> point3d<coord> {
 	if (inSphere) return randInUnitSphere3d<coord>(i);
 	else if (onSphere) return randOnUnitSphere3d<coord>(i);
 	else if (plummerOrKuzmin) return randPlummer<coord>(i);

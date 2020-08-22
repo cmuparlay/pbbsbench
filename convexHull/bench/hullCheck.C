@@ -23,27 +23,27 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "IO.h"
-#include "geometry.h"
-#include "geometryIO.h"
-#include "sequence.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/IO.h"
+#include "common/geometry.h"
+#include "common/geometryIO.h"
+#include "common/parse_command_line.h"
 using namespace std;
 using namespace benchIO;
 
 using coord = double;
 using point = point2d<coord>;
 
-bool checkHull(pbbs::sequence<point> const &P, pbbs::sequence<size_t> const &I) {
+bool checkHull(parlay::sequence<point> const &P, parlay::sequence<size_t> const &I) {
   size_t n = P.size();
   size_t nOut = I.size();
-  sequence<point> PO(nOut, [&] (size_t i) {return P[I[i]];});
+  auto PO = parlay::tabulate(nOut, [&] (size_t i) -> point {return P[I[i]];});
   auto pless = [&] (point a, point b) {
     return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y));};
   auto eq = [&] (point a, point b) {return (a.x == b.x) && (a.y == b.y);};
-  size_t idx = pbbs::max_element(PO, pless);
-  pbbs::sequence<point> PS= pbbs::sort(P, pless);
+  size_t idx = parlay::max_element(PO, pless) - PO.begin();
+  parlay::sequence<point> PS= parlay::sort(P, pless);
   if (!eq(PS[0], PO[0])) { 
     cout << "checkHull: bad leftmost point" << endl;
     PS[0].print();  PO[0].print(); cout << endl;
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
   char* iFile = fnames.first;
   char* oFile = fnames.second;
 
-  sequence<point> PIn = readPointsFromFile<point>(iFile);
-  sequence<size_t> I = readIntSeqFromFile<size_t>(oFile);
+  parlay::sequence<point> PIn = readPointsFromFile<point>(iFile);
+  parlay::sequence<size_t> I = readIntSeqFromFile<size_t>(oFile);
   return checkHull(PIn, I);
 }

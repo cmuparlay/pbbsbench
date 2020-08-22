@@ -21,18 +21,18 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <algorithm>
-#include "geometry.h"
+#include "common/geometry.h"
+#include "parlay/primitives.h"
 #include "hull.h"
-#include "sequence.h"
 using namespace std;
 
 #include "serialHull.h"
 
-pbbs::sequence<indexT> hull(pbbs::sequence<point> const &S) {
-  point* P = S.begin();
+parlay::sequence<indexT> hull(parlay::sequence<point> const &S) {
+  auto P = S.begin();
   size_t n = S.size();
-  indexT* I = pbbs::new_array<indexT>(n);
-  for (size_t i=0; i < n; i++) I[i] = i;
+  auto I = parlay::tabulate(n, [] (size_t i) -> indexT {return i;});
+  auto Idata = I.data();
 
   size_t l = 0;
   size_t r = 0;
@@ -47,19 +47,18 @@ pbbs::sequence<indexT> hull(pbbs::sequence<point> const &S) {
   auto aboveBottom = [&] (indexT i) {
     return triArea(P[r], P[l], P[i]) > 0.0;};
 
-  pair<size_t,size_t> nn = split(I, n, aboveTop, aboveBottom);
+  pair<size_t,size_t> nn = split(Idata, n, aboveTop, aboveBottom);
   size_t n1 = nn.first;
   size_t n2 = nn.second;
 
-  size_t m1 = serialQuickHull(I, P, n1, l, r);
-  size_t m2 = serialQuickHull(I+n-n2, P, n2, r, l);
+  size_t m1 = serialQuickHull(Idata, P, n1, l, r);
+  size_t m2 = serialQuickHull(Idata+n-n2, P, n2, r, l);
 
-  pbbs::sequence<indexT> RI(m1+2+m2);
+  parlay::sequence<indexT> RI(m1+2+m2);
   for (size_t i=m1; i > 0; i--) RI[i] = I[i-1];
   for (size_t i=0; i < m2; i++) RI[i+m1+2] = I[i+n-n2];
   RI[0] = l;
   RI[m1+1] = r;
-  pbbs::free_array(I);
   return RI;
 }
 

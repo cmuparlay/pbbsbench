@@ -21,8 +21,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "../pbbslib/parallel.h"
-#include "../pbbslib/sequence.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
 #include "geometry.h"
 #include "IO.h"
 
@@ -80,34 +80,34 @@ namespace benchIO {
   string HeaderTriangles = "pbbs_triangles";
 
   template <class Point>
-  int writePointsToFile(sequence<Point> const &P, char const *fname) {
+    int writePointsToFile(parlay::sequence<Point> const &P, char const *fname) {
     string Header = (Point::dim == 2) ? HeaderPoint2d : HeaderPoint3d;
     int r = writeSeqToFile(Header, P, fname);
     return r;
   }
 
   template <class Point, class Seq>
-  pbbs::sequence<Point> parsePoints(Seq W) {
+  parlay::sequence<Point> parsePoints(Seq W) {
     using coord = typename Point::coord;
     int d = Point::dim;
     size_t n = W.size()/d;
-    pbbs::sequence<coord> a(d * n, [&] (size_t i) {
+    auto a = parlay::tabulate(d * n, [&] (size_t i) -> coord {
 	return atof(W[i]);});
-    pbbs::sequence<Point> points(n, [&] (size_t i) {
-	return Point(a.slice(d*i,(d+i)*i));});
+    auto points = parlay::tabulate(n, [&] (size_t i) -> Point {
+	return Point(a.cut(d*i,d*(i + 1)));});
     return points;
   }
 
   template <class Point>
-  pbbs::sequence<Point> readPointsFromFile(char const *fname) {
-    pbbs::sequence<char> S = readStringFromFile(fname);
-    pbbs::sequence<char*> W = stringToWords(S);
+  parlay::sequence<Point> readPointsFromFile(char const *fname) {
+    parlay::sequence<char> S = readStringFromFile(fname);
+    parlay::sequence<char*> W = stringToWords(S);
     int d = Point::dim;
     if (W.size() == 0 || W[0] != (d == 2 ? HeaderPoint2d : HeaderPoint3d)) {
       cout << "readPointsFromFile wrong file type" << endl;
       abort();
     }
-    return parsePoints<Point>(W.slice(1,W.size()));
+    return parsePoints<Point>(W.cut(1,W.size()));
   }
 
   // triangles<point2d> readTrianglesFromFileNodeEle(char const *fname) {

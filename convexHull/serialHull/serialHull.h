@@ -24,7 +24,7 @@ pair<long,long> split(ET* A, long n, FL lf, FR rf) {
   return pair<long,long>(n1,n2);
 }
 
-indexT serialQuickHull(indexT* I, point* P, indexT n, indexT l, indexT r) {
+indexT serialQuickHull(indexT* I, const point* P, indexT n, indexT l, indexT r) {
   if (n < 2) return n;
   indexT maxP = I[0];
   coord maxArea = triArea(P[l],P[r],P[maxP]);

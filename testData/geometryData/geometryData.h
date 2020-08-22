@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "pbbslib/parallel.h"
+#include "parlay/parallel.h"
 #include "common/geometry.h"
 #include "common/dataGen.h"
 

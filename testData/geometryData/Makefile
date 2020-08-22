@@ -1,6 +1,6 @@
 include common/parallelDefs
 
-COMMON = common/IO.h pbbslib/parse_command_line.h common/geometry.h common/geometryIO.h pbbslib/parallel.h pbbslib/sequence.h
+COMMON = common/IO.h common/parse_command_line.h common/geometry.h common/geometryIO.h parlay/parallel.h parlay/primitives.h
 GENERATORS = randPoints
 TO_UPDATE = triangles addRays toNodes
 
