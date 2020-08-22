@@ -23,16 +23,16 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "utilities.h"
-#include "IO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/IO.h"
+#include "common/parse_command_line.h"
 using namespace std;
 using namespace benchIO;
 
 typedef unsigned char uchar;
 
-bool strLessBounded (uchar* s1, uchar* s2, long n, uchar* end) {
+bool strLessBounded (const uchar* s1, const uchar* s2, long n, const uchar* end) {
   while (*s1==*s2) {
     if (n-- < 0) return 1;
     if (++s1 == end) return 1;
@@ -41,22 +41,22 @@ bool strLessBounded (uchar* s1, uchar* s2, long n, uchar* end) {
   return (*s1 < *s2);
 }
 
-bool isPermutation(sequence<long> const &SA) {
+bool isPermutation(parlay::sequence<long> const &SA) {
   size_t n = SA.size();
-  sequence<long> seen(n,(long) 0);
-  parallel_for (0, n, [&] (size_t i) {seen[SA[i]] = 1;});
-  long nseen = pbbs::reduce(seen, pbbs::addm<long>());
+  parlay::sequence<long> seen(n,(long) 0);
+  parlay::parallel_for (0, n, [&] (size_t i) {seen[SA[i]] = 1;});
+  long nseen = parlay::reduce(seen, parlay::addm<long>());
   return (nseen == n);
 }
 
-bool isSorted(sequence<uchar> const &s, sequence<long> const &SA) {
-  uchar* p = s.begin();
+bool isSorted(parlay::sequence<uchar> const &s, parlay::sequence<long> const &SA) {
+  auto p = s.begin();
   size_t n = s.size();
   int checkLen = 100;
   size_t error = n;
-  parallel_for (0, n-1, [&] (size_t i) {
+  parlay::parallel_for (0, n-1, [&] (size_t i) {
       if (!strLessBounded(p+SA[i], p+SA[i+1], checkLen, p + n)) {
-	pbbs::write_min(&error,i,std::less<size_t>());
+	parlay::write_min(&error,i,std::less<size_t>());
       }
     });
   if (error != n) {
@@ -70,10 +70,10 @@ bool isSorted(sequence<uchar> const &s, sequence<long> const &SA) {
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<infile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
-  sequence<char> InX = readStringFromFile(fnames.first);
-  sequence<uchar> In(InX.size(),[&] (size_t i) -> uchar {
+  parlay::sequence<char> InX = readStringFromFile(fnames.first);
+  auto In = parlay::tabulate(InX.size(), [&] (size_t i) -> uchar {
       return (uchar) InX[i];});
-  sequence<long> Out = readIntSeqFromFile<long>(fnames.second);
+  parlay::sequence<long> Out = readIntSeqFromFile<long>(fnames.second);
   if (In.size() != Out.size()) {
     cout << "Suffix Array Check: lengths don't match" << endl;
     return 1;

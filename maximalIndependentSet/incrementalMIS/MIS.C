@@ -20,13 +20,12 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define NOTMAIN 1
 #include <iostream>
-#include "sequence.h"
-#include "graph.h"
-#include "parallel.h"
-#include "speculative_for.h"
-#include "get_time.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/graph.h"
+#include "common/speculative_for.h"
+#include "common/get_time.h"
 #include "MIS.h"
 using namespace std;
 
@@ -40,9 +39,9 @@ using namespace std;
 //   Flags = 2 indicates a neighbor is chosen
 struct MISstep {
   char flag;
-  pbbs::sequence<char> &Flags;
+  parlay::sequence<char> &Flags;
   Graph const &G;
-  MISstep(pbbs::sequence<char> & F, Graph &G) : Flags(F), G(G) {}
+  MISstep(parlay::sequence<char> & F, Graph &G) : Flags(F), G(G) {}
 
   bool reserve(size_t i) {
     size_t d = G[i].degree;
@@ -61,9 +60,9 @@ struct MISstep {
   bool commit(size_t i) { return (Flags[i] = flag) > 0;}
 };
 
-pbbs::sequence<char> maximalIndependentSet(Graph GS) {
+parlay::sequence<char> maximalIndependentSet(Graph GS) {
   size_t n = GS.n;
-  pbbs::sequence<char> Flags(n, (char) 0);
+  parlay::sequence<char> Flags(n, (char) 0);
   MISstep mis(Flags, GS);
   pbbs::speculative_for<vertexId>(mis, 0, n, 20);
   return Flags;

@@ -27,15 +27,11 @@
 // It includes code for finding the LCP
 //   Written by Guy Blelloch and Julian Shun
 
-#define NOTMAIN 1
 #include <iostream>
-#include "sequence_ops.h"
-#include "integer_sort.h"
-#include "parallel.h"
-#include "get_time.h"
-#include "merge.h"
-#include "sample_sort.h"
-//#include "rangeMin.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/get_time.h"
+//#include "common/range_min.h"
 using namespace std;
 
 using uchar = unsigned char;
@@ -74,32 +70,32 @@ timer t("KS SA", false);
 
 // This recursive version requires s[n]=s[n+1]=s[n+2] = 0
 // K is the maximum value of any element in s
-pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
-				    size_t K, bool findLCPs) {
+parlay::sequence<uint> suffixArrayRec(parlay::sequence<uint> const &s,
+				      size_t K, bool findLCPs) {
   t.next("head");
   size_t n = s.size() - 3; // padded with 3 nulls
   n = n+1;
   size_t n0=(n+2)/3, n1=(n+1)/3, n12=n-n0;
-  pbbs::sequence<uint> sorted12(n12);
-  pbbs::sequence<uint> name12(n12);
+  auto sorted12 = parlay::sequence<uint>::uninitialized(n12);
+  auto name12 = parlay::sequence<uint>::uninitialized(n12);
   auto get_first = [&] (uintPair p) {return p.first;};
-  size_t bits = pbbs::log2_up(K);
+  size_t bits = parlay::log2_up(K);
   //cout << n << ", " << bits << endl;
   
   if (3*bits <= 8*sizeof(uint)) {
     // if 3 chars fit into a uint then just do one radix sort
-    pbbs::sequence<uintPair> C(n12, [&] (size_t i) {
+    auto C = parlay::tabulate(n12, [&] (size_t i) -> uintPair {
       size_t j = 1+(3*i)/2;
-      return make_pair((((uint) s[j]) << 2*bits) +
-		       (((uint) s[j+1]) << bits) +
-		       s[j+2],
-		       j);
+      return std::make_pair((((uint) s[j]) << 2*bits) +
+			    (((uint) s[j+1]) << bits) +
+			    s[j+2],
+			    j);
       });
 
-    pbbs::integer_sort_inplace(C.slice(), get_first, 3*bits);
+    parlay::internal::integer_sort_inplace(make_slice(C), get_first, 3*bits);
     
     // copy sorted results into sorted12
-    parallel_for (1, n12, [&] (size_t i) {
+    parlay::parallel_for (1, n12, [&] (size_t i) {
 	sorted12[i] = C[i].second;
 	name12[i] = (C[i].first != C[i-1].first);
       });
@@ -109,7 +105,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
   } else {
     // otherwise do a comparison sort on 128 bit integers
     // with three characters and index packed in
-    pbbs::sequence<longInt> C(n12, [&] (size_t i) {
+    auto C = parlay::tabulate(n12, [&] (size_t i) -> longInt {
 	size_t j = 1+(3*i)/2;
 	longInt r = ((((longInt) s[j]) << 2*bits) +
 		     (((size_t) s[j+1]) << bits) +
@@ -117,11 +113,11 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 	return (r << 32) + j;
       });
 
-    pbbs::sample_sort_inplace(C.slice(), std::less<longInt>());
+    parlay::internal::sample_sort_inplace(make_slice(C), std::less<longInt>());
 
     // copy sorted results into sorted12
     longInt mask = ((((longInt) 1) << 32)-1);
-    parallel_for (1, n12, [&] (size_t i) {
+    parlay::parallel_for (1, n12, [&] (size_t i) {
 	sorted12[i] = C[i] & mask;
 	name12[i] = (C[i] >> 32) != (C[i-1] >> 32);
       });
@@ -130,18 +126,17 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
     t.next("comp sort");
   }
 
-  size_t num_names = pbbs::scan_inplace(name12.slice(), pbbs::addm<uint>(),
-					pbbs::fl_scan_inclusive);
+  size_t num_names = parlay::scan_inclusive_inplace(name12, parlay::addm<uint>());
   //cout << "here c: " << name12[0] << endl;
-  pbbs::sequence<uint> SA12;
-  //pbbs::sequence<uint> LCP12;
+  parlay::sequence<uint> SA12;
+  //parlay::sequence<uint> LCP12;
   // recurse if names are not yet unique
   if (num_names < n12) {
-    pbbs::sequence<uint> s12(n12 + 3);
+    auto s12 = parlay::sequence<uint>::uninitialized(n12 + 3);
     s12[n12] = s12[n12+1] = s12[n12+2] = 0; // pad with 3 nulls
 
     // move mod 1 suffixes to bottom half and and mod 2 suffixes to top
-    parallel_for (0, n12, [&] (size_t i) {
+    parlay::parallel_for (0, n12, [&] (size_t i) {
 	uint div3 = sorted12[i]/3;
 	if (sorted12[i]-3*div3 == 1) s12[div3] = name12[i];
 	else s12[div3+n1] = name12[i];
@@ -156,7 +151,7 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
     s12.clear();
     
     // restore proper indices into original array
-    parallel_for (0, n12, [&] (size_t i) {
+    parlay::parallel_for (0, n12, [&] (size_t i) {
 	size_t l = SA12[i]; 
 	SA12[i] = (l<n1) ? 3*l+1 : 3*(l-n1)+2;
       });
@@ -173,25 +168,25 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
   // place ranks for the mod12 elements in full length array
   // mod0 locations of rank will contain garbage
   t.next("to rank");
-  pbbs::sequence<uint> rank(n+2);
+  auto rank = parlay::sequence<uint>::uninitialized(n+2);
   rank[n]=1; rank[n+1] = 0;
-  parallel_for (0, n12, [&] (size_t i) {rank[SA12[i]] = i+2;});
+  parlay::parallel_for (0, n12, [&] (size_t i) {rank[SA12[i]] = i+2;});
   t.next("set rank");
   // stably sort the mod 0 suffixes 
   // uses the fact that we already have the tails sorted in SA12
   auto mod3is1 = [&] (size_t i) {return i%3 == 1;};
-  pbbs::sequence<uint> s0 = pbbs::filter(SA12, mod3is1);
+  parlay::sequence<uint> s0 = parlay::filter(SA12, mod3is1);
   size_t s0n = s0.size();
   t.next("filter");
-  pbbs::sequence<uintPair> D(n0);
+  auto D = parlay::sequence<uintPair>::uninitialized(n0);
   D[0] = make_pair(s[n-1], n-1);
-  parallel_for (0, s0n, [&] (size_t i) {
+  parlay::parallel_for (0, s0n, [&] (size_t i) {
       D[i+n0-s0n] = make_pair(s[s0[i]-1], s0[i]-1);});
   s0.clear();
   t.next("to sort");
-  pbbs::integer_sort_inplace(D.slice(), get_first, bits);
+  parlay::internal::integer_sort_inplace(make_slice(D), get_first, bits);
   t.next("sort");
-  pbbs::sequence<uint> SA0(n0, [&] (size_t i) {return D[i].second;});
+  auto SA0 = parlay::tabulate(n0, [&] (size_t i) -> uint {return D[i].second;});
   D.clear();
 
   auto less = [&] (size_t i, size_t j) {
@@ -203,14 +198,14 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
 	      make_tuple(s[j], s[j+1], rank[j+2]));
   };
 
-  //pbbs::sequence<uint> SA(n-1);
+  //parlay::sequence<uint> SA(n-1);
   int offset = (n%3 == 1);
-  pbbs::sequence<uint> SA = pbbs::merge(SA0.slice(offset, n0),
-				  SA12.slice(1 - offset, n12),
-				  less);
+  parlay::sequence<uint> SA = parlay::merge(SA0.cut(offset, n0),
+					  SA12.cut(1 - offset, n12),
+					  less);
 
   t.next("merge");
-  //pbbs::sequence<uint> LCP;
+  //parlay::sequence<uint> LCP;
 
   //get LCP from LCP12
   // if(findLCPs){
@@ -241,18 +236,18 @@ pbbs::sequence<uint> suffixArrayRec(pbbs::sequence<uint> const &s,
   return SA;
 }
 
-pbbs::sequence<unsigned int> suffixArray(pbbs::sequence<unsigned char> const &s) {
+parlay::sequence<unsigned int> suffixArray(parlay::sequence<unsigned char> const &s) {
   //cout << "here 0" << endl;
   bool findLCPs = false;
   size_t n = s.size();
-  pbbs::sequence<uint> ss(n + 3, [&] (size_t i) -> uint {
+  auto ss = parlay::tabulate(n + 3, [&] (size_t i) -> uint {
       if (i >= n) return 0; // pad with three nulls
       else return ((uint) s[i]) + (uint) 1;
     });
-  size_t k = 1 + pbbs::reduce(ss, pbbs::maxm<uint>());
+  size_t k = 1 + parlay::reduce(ss, parlay::maxm<uint>());
 
   //cout << "here" << endl;
-  pbbs::sequence<uint> SA = suffixArrayRec(ss, k, findLCPs);
+  parlay::sequence<uint> SA = suffixArrayRec(ss, k, findLCPs);
   //cout << "here2" << endl;
   return SA;
 }

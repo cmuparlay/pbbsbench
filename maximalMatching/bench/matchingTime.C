@@ -22,12 +22,12 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "graph.h"
-#include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/get_time.h"
+#include "common/graph.h"
+#include "common/IO.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "matching.h"
 using namespace std;
 using namespace benchIO;
@@ -36,7 +36,7 @@ void timeMatching(edges E, int rounds, char* outFile) {
   timer t;
   size_t m = E.nonZeros;
   size_t n = max(E.numCols,E.numRows);
-  pbbs::sequence<edgeId> edgeIds;
+  parlay::sequence<edgeId> edgeIds;
   for (size_t i = 0; i < rounds; i++) {
     edgeIds.clear();
     t.start();

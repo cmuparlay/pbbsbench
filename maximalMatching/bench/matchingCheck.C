@@ -23,23 +23,23 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/IO.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 using namespace std;
 using namespace benchIO;
 
 // Checks for every vertex if locally maximally matched
-int checkMaximalMatching(edgeArray<size_t> const &E, sequence<size_t> const &EI) {
+int checkMaximalMatching(edgeArray<size_t> const &E, parlay::sequence<size_t> const &EI) {
   size_t m = E.nonZeros;
   size_t nMatches = EI.size();
   size_t n = max(E.numCols,E.numRows);
-  sequence<long> V(n, (long) -1);
-  sequence<bool> flags(m, false);
+  parlay::sequence<long> V(n, (long) -1);
+  parlay::sequence<bool> flags(m, false);
 
-  parallel_for (0, nMatches, [&] (size_t i) {
+  parlay::parallel_for (0, nMatches, [&] (size_t i) {
       long idx = EI[i];
       V[E[idx].u] = V[E[idx].v] = idx;
       flags[idx] = 1;
@@ -71,6 +71,6 @@ int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<inFile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
   edgeArray<size_t> E = readEdgeArrayFromFile<size_t>(fnames.first);
-  sequence<size_t> Out = readIntSeqFromFile<size_t>(fnames.second);
+  parlay::sequence<size_t> Out = readIntSeqFromFile<size_t>(fnames.second);
   return checkMaximalMatching(E, Out);
 }

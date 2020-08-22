@@ -21,18 +21,17 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <iostream>
-#include "graph.h"
-#include "parallel.h"
-#include "sequence.h"
+#include "parlay/primitives.h"
+#include "common/graph.h"
 #include "MIS.h"
 
 // **************************************************************
 //    MAXIMAL INDEPENDENT SET
 // **************************************************************
 
-pbbs::sequence<char> maximalIndependentSet(Graph G) {
+parlay::sequence<char> maximalIndependentSet(Graph G) {
   size_t n = G.n;
-  pbbs::sequence<char> Flags(n, (char) 0);
+  parlay::sequence<char> Flags(n, (char) 0);
   for (size_t i = 0; i < n; i++) {
     Flags[i] = 1;
     for (size_t j = 0; j< G[i].degree; j++) {

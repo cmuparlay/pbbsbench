@@ -22,11 +22,11 @@
 
 #define NOTMAIN 1
 #include <iostream>
-#include "sequence.h"
-#include "parallel.h"
-#include "graph.h"
-#include "speculative_for.h"
-#include "get_time.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/graph.h"
+#include "common/speculative_for.h"
+#include "common/get_time.h"
 #include "matching.h"
 using namespace std;
 
@@ -34,12 +34,12 @@ using reservation = pbbs::reservation<edgeId>;
 
 struct matchStep {
   edges const &E;
-  pbbs::sequence<reservation> &R;
-  pbbs::sequence<bool> &matched;
+  parlay::sequence<reservation> &R;
+  parlay::sequence<bool> &matched;
 
   matchStep(edges const &E,
-	    pbbs::sequence<reservation> &R,
-	    pbbs::sequence<bool> &matched)
+	    parlay::sequence<reservation> &R,
+	    parlay::sequence<bool> &matched)
     : E(E), R(R), matched(matched) {}
 
   bool reserve(edgeId i) {
@@ -65,20 +65,20 @@ struct matchStep {
   }
 };
 
-pbbs::sequence<edgeId> maximalMatching(edges const &E) {
+parlay::sequence<edgeId> maximalMatching(edges const &E) {
   size_t n = max(E.numCols,E.numRows);
   size_t m = E.nonZeros;
   timer t("max matching", true);
   
-  pbbs::sequence<reservation> R(n);
-  pbbs::sequence<bool> matched(n, false);
+  parlay::sequence<reservation> R(n);
+  parlay::sequence<bool> matched(n, false);
   matchStep mStep(E, R, matched);
   t.next("init");
   pbbs::speculative_for<edgeId>(mStep, 0, m, 10, 0);
   t.next("speculative for");
-  pbbs::sequence<edgeId> matchingIdx =
-    pbbs::pack(pbbs::delayed_seq<edgeId>(n, [&] (size_t i) {return R[i].r;}),
-	       pbbs::sequence<bool>(n, [&] (size_t i) {return R[i].reserved();}));
+  parlay::sequence<edgeId> matchingIdx =
+    parlay::pack(parlay::delayed_seq<edgeId>(n, [&] (size_t i) {return R[i].r;}),
+		 parlay::tabulate(n, [&] (size_t i) -> bool {return R[i].reserved();}));
   t.next("speculative for");
   cout << "number of matches = " << matchingIdx.size() << endl;
   return matchingIdx;

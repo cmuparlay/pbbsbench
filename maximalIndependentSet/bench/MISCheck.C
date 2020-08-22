@@ -23,22 +23,22 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include "parallel.h"
-#include "IO.h"
-#include "graph.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
-#include "sequence.h"
-#include "stlalgs.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/IO.h"
+#include "common/graph.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
+
 using namespace std;
 using namespace benchIO;
 
 // Checks if valid maximal independent set
 int checkMaximalIndependentSet(graph<size_t> const &G,
-			       pbbs::sequence<size_t> const &Flags) {
+			       parlay::sequence<size_t> const &Flags) {
   size_t n = G.n;
   using P = std::pair<size_t,size_t>;
-  P R = pbbs::reduce(delayed_seq<P>(n, [&] (size_t i) -> P {
+  P R = parlay::reduce(parlay::delayed_seq<P>(n, [&] (size_t i) -> P {
 	bool hasNeighbor = false;
 	for (size_t j=0; j < G[i].degree; j++) {
 	  size_t ngh = G[i].Neighbors[j];
@@ -49,7 +49,7 @@ int checkMaximalIndependentSet(graph<size_t> const &G,
 	}
 	if ((Flags[i] != 1) && !hasNeighbor) return P(i,n);
 	return P(n,n);
-      }), minm<P>());
+      }), parlay::minm<P>());
   if (R.first < n) {
     if (R.second < n) 
       cout << "checkMaximalIndependentSet: bad edge ("
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   char* oFile = fnames.second;
 
   graph<size_t> G = readGraphFromFile<size_t>(iFile);
-  pbbs::sequence<size_t> Out = readIntSeqFromFile<size_t>(oFile);
+  parlay::sequence<size_t> Out = readIntSeqFromFile<size_t>(oFile);
   if (Out.size() != G.n) {
     cout << "checkMaximalIndependentSet: output file not of right length" << endl;
     return(1);

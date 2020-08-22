@@ -1,5 +1,6 @@
+#include "parlay/primitives.h"
 
 using indexT = unsigned int;
 
-pbbs::sequence<indexT> suffixArray(pbbs::sequence<unsigned char> const &s);
+parlay::sequence<indexT> suffixArray(parlay::sequence<unsigned char> const &s);
 

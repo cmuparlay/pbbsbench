@@ -1,8 +1,8 @@
-#include "graph.h"
+#include "common/graph.h"
 
 using vertexId = uint;
 using edgeId = uint;
 using Graph = graph<vertexId,edgeId>;
 
-pbbs::sequence<char> maximalIndependentSet(Graph G);
+parlay::sequence<char> maximalIndependentSet(Graph G);
 

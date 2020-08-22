@@ -22,12 +22,12 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "parallel.h"
-#include "IO.h"
-#include "sequenceIO.h"
-#include "parse_command_line.h"
-#include "sequence_ops.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/get_time.h"
+#include "common/IO.h"
+#include "common/sequenceIO.h"
+#include "common/parse_command_line.h"
 
 // SA.h defines indexT, which is the type of integer used for the elements of the
 // suffix array
@@ -51,10 +51,10 @@ void loop(int rounds, F initf, G runf, H endf) {
   }
 }
 
-void timeSuffixArray(pbbs::sequence<char> const &s, int rounds, char* outFile) {
+void timeSuffixArray(parlay::sequence<char> const &s, int rounds, char* outFile) {
   size_t n = s.size();
-  pbbs::sequence<uchar> ss(n, [&] (size_t i) {return (uchar) s[i];});
-  pbbs::sequence<indexT> R;
+  auto ss = parlay::tabulate(n, [&] (size_t i) -> uchar {return (uchar) s[i];});
+  parlay::sequence<indexT> R;
   loop(rounds,
        [&] () {R.clear();},
        [&] () {R = suffixArray(ss);},
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  pbbs::sequence<char> S = readStringFromFile(iFile);
+  parlay::sequence<char> S = readStringFromFile(iFile);
   
   timeSuffixArray(S, rounds, oFile);
 }

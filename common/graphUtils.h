@@ -71,7 +71,7 @@ edgeArray<intV> makeSymmetric(edgeArray<intV> const &A) {
 }
 
 template <class intV, class intE = intV>
-graph<intV,intE> graphFromEdges(edgeArray<intV> &EA, bool makeSym) {
+graph<intV,intE> graphFromEdges(edgeArray<intV> const &EA, bool makeSym) {
   edgeArray<intV> SA;
   if (makeSym) SA = makeSymmetric<intV>(EA);
   edgeArray<intV> const &A = (makeSym) ? SA : EA;
@@ -144,7 +144,7 @@ parlay::sequence<intE> getOffsets(parlay::sequence<vertex<intV>> const &V) {
 
 // packs a graph so that there are no gaps in the edge array (i.e. into CSR)
 template <class intV, class intE>
-graph<intV,intE> packGraph(graph<intV,intE> &G) {
+graph<intV,intE> packGraph(graph<intV,intE> const &G) {
   size_t n = G.numVertices();
   auto degrees = parlay::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
 						  return (i == n) ? 0 : G[i].degree;});

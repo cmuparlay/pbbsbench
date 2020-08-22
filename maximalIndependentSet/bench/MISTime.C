@@ -22,19 +22,19 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
-#include "graph.h"
-#include "parallel.h"
-#include "IO.h"
-#include "graphIO.h"
-#include "parse_command_line.h"
+#include "parlay/parallel.h"
+#include "common/get_time.h"
+#include "common/graph.h"
+#include "common/IO.h"
+#include "common/graphIO.h"
+#include "common/parse_command_line.h"
 #include "MIS.h"
 using namespace std;
 using namespace benchIO;
 
 void timeMIS(Graph const &G, int rounds, char* outFile) {
   timer t;
-  sequence<char> flags = maximalIndependentSet(G);
+  parlay::sequence<char> flags = maximalIndependentSet(G);
   for (int i=0; i < rounds; i++) {
     flags.clear();
     t.start();
@@ -42,8 +42,8 @@ void timeMIS(Graph const &G, int rounds, char* outFile) {
     t.next("");
   }
   cout << endl;
-
-  sequence<int> F(G.n, [&] (size_t i) {return flags[i];});
+  
+  auto F = parlay::tabulate(G.n, [&] (size_t i) -> int {return flags[i];});
   writeIntSeqToFile(F, outFile);
 }
 

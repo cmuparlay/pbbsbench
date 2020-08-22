@@ -75,7 +75,7 @@ namespace benchIO {
   string WghAdjGraphHeader = "WeightedAdjacencyGraph";
 
   template <class intV, class intE>
-  int writeGraphToFile(graph<intV, intE> &G, char* fname) {
+  int writeGraphToFile(graph<intV, intE> const &G, char* fname) {
     if (G.degrees.size() > 0) {
       graph<intV, intE> GP = packGraph(G);
       return writeGraphToFile(GP, fname);
@@ -316,7 +316,7 @@ namespace benchIO {
   // and either with reordering or not
   template <class intV, class intE>
   void writeGraphFromAdj(graph<intV,intE> const &G,
-			   char* fname, bool adjArray, bool ordered) {
+			 char* fname, bool adjArray, bool ordered) {
     if (adjArray)
       if (ordered) writeGraphToFile(G, fname);
       else writeGraphToFile(graphReorder(G), fname);

@@ -86,15 +86,24 @@ struct wghEdgeArray {
 // **************************************************************
 
 template <class intV = DefaultIntV>
-struct vertex {
+struct mod_vertex {
   intV* Neighbors;
   intV degree;
-  vertex(intV* N, intV d) : Neighbors(N), degree(d) {}
+  mod_vertex(intV* N, intV d) : Neighbors(N), degree(d) {}
+  mod_vertex() : Neighbors(NULL), degree(0) {}
+};
+
+template <class intV = DefaultIntV>
+struct vertex {
+  const intV* Neighbors;
+  const intV degree;
+  vertex(const intV* N, const intV d) : Neighbors(N), degree(d) {}
   vertex() : Neighbors(NULL), degree(0) {}
 };
 
 template <class intV = DefaultIntV, class intE = intV>
 struct graph {
+  using MVT = mod_vertex<intV>;
   using VT = vertex<intV>;
   parlay::sequence<intE> offsets;
   parlay::sequence<intV> edges;
@@ -121,22 +130,16 @@ struct graph {
 	return offsets[i+1] - offsets[i];});
   }
 
-  VT operator[] (const size_t i) {
-    return VT(edges.data() + offsets[i],
-  	      (degrees.size() == 0)
-  	      ? offsets[i+1] - offsets[i] : degrees[i]);}
+  MVT operator[] (const size_t i) {
+    return MVT(edges.data() + offsets[i],
+	       (degrees.size() == 0)
+	       ? offsets[i+1] - offsets[i] : degrees[i]);}
 
-  VT operator[] (const size_t i) const {
-    VT r(edges.data() + offsets[i],
-	     (degrees.size() == 0)
-	     ? offsets[i+1] - offsets[i] : degrees[i]);
-    return r;
-  }
-
-  VT at(size_t i) {
+  const VT operator[] (const size_t i) const {
     return VT(edges.data() + offsets[i],
 	      (degrees.size() == 0)
-	      ? offsets[i+1] - offsets[i] : degrees[i]);}
+	      ? offsets[i+1] - offsets[i] : degrees[i]);
+  }
   
   graph(parlay::sequence<intE> offsets_,
 	parlay::sequence<intV> edges_,
