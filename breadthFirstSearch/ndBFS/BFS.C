@@ -20,12 +20,12 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define NOTMAIN 1
-#include "sequence.h"
-#include "graph.h"
-#include "parallel.h"
-#include "BFS.h"
 #include <limits>
+#include "parlay/primitives.h"
+#include "parlay/parallel.h"
+#include "common/graph.h"
+#include "BFS.h"
+
 using namespace std;
 
 // **************************************************************
@@ -41,10 +41,10 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
   vertexId numVertices = G.numVertices();
   edgeId numEdges = G.m;
   vertexId maxIdx = std::numeric_limits<vertexId>::max();
-  
-  pbbs::sequence<edgeId> Offsets(numVertices+1);
-  pbbs::sequence<bool> Visited(numVertices, false);
-  pbbs::sequence<vertexId> Frontier(1, start);
+
+  auto Offsets = parlay::sequence<edgeId>::uninitialized(numVertices+1);
+  parlay::sequence<bool> Visited(numVertices, false);
+  parlay::sequence<vertexId> Frontier(1, start);
 
   Visited[start] = true;
   size_t round = 0;
@@ -54,22 +54,22 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
     totalVisited += Frontier.size();
     round++;
 
-    parallel_for (0, Frontier.size(), [&] (size_t i) {
+    parlay::parallel_for (0, Frontier.size(), [&] (size_t i) {
 	Offsets[i] = G[Frontier[i]].degree; });
     
     // Find offsets to write the next frontier for each v in this frontier
-    size_t nr = pbbs::scan_inplace(Offsets.slice(0,Frontier.size()), pbbs::addm<edgeId>());
+    size_t nr = parlay::scan_inplace(Offsets.head(Frontier.size()));
     Offsets[Frontier.size()] = nr;
-    pbbs::sequence<vertexId> FrontierNext(nr);
+    auto FrontierNext = parlay::sequence<vertexId>::uninitialized(nr);
 
     // For each vertex in the frontier try to "hook" unvisited neighbors.
-    parallel_for (0, Frontier.size(), [&] (size_t i) {
+    parlay::parallel_for (0, Frontier.size(), [&] (size_t i) {
 	size_t k = 0;
 	vertexId v = Frontier[i];
 	edgeId o = Offsets[i];
 	for (size_t j=0; j < G[v].degree; j++) {
 	  vertexId ngh = G[v].Neighbors[j];
-	  if (!Visited[ngh] && pbbs::atomic_compare_and_swap(&Visited[ngh], false, true)) {
+	  if (!Visited[ngh] && parlay::atomic_compare_and_swap(&Visited[ngh], false, true)) {
 	    FrontierNext[o+j] = G[v].Neighbors[k++] = ngh;
 	  }
 	  else FrontierNext[o+j] = -1;
@@ -78,7 +78,7 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
       });
 
     // Filter out the empty slots (marked with -1)
-    Frontier = pbbs::filter(FrontierNext, [&] (vertexId x) {return x >= 0;});
+    Frontier = parlay::filter(FrontierNext, [&] (vertexId x) {return x >= 0;});
   }
 
   return std::pair<vertexId,size_t>(totalVisited,round);

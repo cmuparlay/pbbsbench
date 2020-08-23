@@ -71,7 +71,7 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
     // Find offsets to write the next frontier for each v in this frontier
     size_t nr = parlay::scan_inplace(Offsets.head(Frontier.size()));
     Offsets[Frontier.size()] = nr;
-    parlay::sequence<vertexId> FrontierNext(nr);
+    auto FrontierNext = parlay::sequence<vertexId>::uninitialized(nr);
     
     // Move hooked neighbors to next frontier.   
     parlay::parallel_for (0, Frontier.size(), [&] (size_t i) {

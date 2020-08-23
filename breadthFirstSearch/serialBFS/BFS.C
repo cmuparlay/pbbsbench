@@ -20,9 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define NOTMAIN = 1
-#include "graph.h"
-#include "sequence.h"
+#include "common/graph.h"
+#include "parlay/primitives.h"
 #include "BFS.h"
 using namespace std;
 
@@ -37,8 +36,8 @@ using namespace std;
 // **************************************************************
 
 std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
-  pbbs::sequence<vertexId> Frontier(G.numVertices());
-  pbbs::sequence<bool> Visited(G.numVertices(), false);
+  parlay::sequence<vertexId> Frontier(G.numVertices());
+  parlay::sequence<bool> Visited(G.numVertices(), false);
 
   size_t bot = 0;
   size_t top = 1;

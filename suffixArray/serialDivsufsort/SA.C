@@ -20,18 +20,16 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define NOTMAIN 1
 #include "stdlib.h"
 #include "divsufsort.h"
-#include "sequence_ops.h"
 #include "SA.h"
 
 using uint = unsigned int;
 using uchar = unsigned char;
 
-pbbs::sequence<uint> suffixArray(pbbs::sequence<uchar> const &s) {
+parlay::sequence<uint> suffixArray(parlay::sequence<uchar> const &s) {
   size_t n = s.size();
-  pbbs::sequence<uint> A(n);
+  parlay::sequence<uint> A(n);
   divsufsort(s.begin(), (int*) A.begin(), (int) n);
   return A;
 }

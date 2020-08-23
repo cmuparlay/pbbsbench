@@ -1,4 +1,4 @@
-include common/seqDefs
+include common/parallelDefs
 
 BENCH = BFS
 OBJS = BFS.o

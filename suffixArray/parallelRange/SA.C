@@ -86,7 +86,7 @@ void split_segment(parlay::slice<seg<indexT>*,seg<indexT>*> segOut,
     segOut[l-1] = seg<indexT>(name+start,l-name);
 
   } else { // parallel version
-    parlay::sequence<indexT> names(l);
+    auto names = parlay::sequence<indexT>::uninitialized(l);
 
     // mark start of each segment with equal keys
     parlay::parallel_for (1, l, [&] (size_t i) {
@@ -116,7 +116,7 @@ split_segment_top(parlay::sequence<seg<indexT>> &segOut,
 		  parlay::sequence<indexT> &ranks,
 		  parlay::sequence<uint128> const &Cs) {
   size_t n = segOut.size();
-  parlay::sequence<indexT> names(n);
+  auto names = parlay::sequence<indexT>::uninitialized(n);
   size_t mask = ((((size_t) 1) << 32) - 1);
 
   // mark start of each segment with equal keys
@@ -127,7 +127,7 @@ split_segment_top(parlay::sequence<seg<indexT>> &segOut,
   // scan start i across each segment ???
   parlay::scan_inclusive_inplace(names, parlay::maxm<indexT>());
 
-  parlay::sequence<ipair<indexT>> C(n);
+  auto C = parlay::sequence<ipair<indexT>>::uninitialized(n);
   // write new rank into original location
   parlay::parallel_for (0, n, [&] (size_t i) {
       ranks[Cs[i] & mask] = names[i]+1;
@@ -183,8 +183,8 @@ parlay::sequence<indexT> suffix_array_t(parlay::sequence<uchar> const &ss) {
   sa_timer.next("sort");
 
   // identify segments of equal values
-  parlay::sequence<indexT> ranks(n);
-  parlay::sequence<seg<indexT>> seg_outs(n);
+  auto ranks = parlay::sequence<indexT>::uninitialized(n);
+  auto seg_outs = parlay::sequence<seg<indexT>>::uninitialized(n); 
   parlay::sequence<ipair<indexT>> C = split_segment_top(seg_outs, ranks, Cl);
   Cl.clear();
   sa_timer.next("split top");
@@ -207,7 +207,7 @@ parlay::sequence<indexT> suffix_array_t(parlay::sequence<uchar> const &ss) {
     if (nSegs == 0) break;
     sa_timer.next("filter and scan");
 
-    parlay::sequence<indexT> offsets(nSegs);
+    auto offsets = parlay::sequence<indexT>::uninitialized(nSegs);
     parlay::parallel_for (0, nSegs, [&] (size_t i) {
 	indexT start = Segs[i].start;
 	indexT l = Segs[i].length;
