@@ -1,0 +1,22 @@
+#!/usr/bin/python
+
+bnchmrk="neighbors"
+benchmark="Nearest Neighbors"
+checkProgram="../common/neighborsCheck"
+dataDir = "../geometryData/data"
+
+tests = [
+    [1, "2DinCube_10M","-d 2 -k 1", "-d 2 -k 1"],
+    [1, "2Dkuzmin_10M","-d 2 -k 1", "-d 2 -k 1"],
+    
+    [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DonSphere_10M","-d 3 -k 1", "-d 3 -k 1"],
+
+    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
+    [1, "3Dplummer_10M","-d 3 -k 10", "-d 3 -k 10"]
+
+    ]
+
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+

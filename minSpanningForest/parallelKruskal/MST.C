@@ -109,7 +109,7 @@ parlay::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> &E) {
   pbbs::speculative_for<vertexId>(UFStep1, 0, IW1.size(), 20, false);
   t.next("union find loop");
 
-  parlay::sequence<edgeId> mst = parlay::internal::pack_index<edgeId>(mstFlags);
+  parlay::sequence<edgeId> mst = parlay::pack_index<edgeId>(mstFlags);
   t.next("pack out results");
 
   return mst;
