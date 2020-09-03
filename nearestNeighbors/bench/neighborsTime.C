@@ -41,7 +41,7 @@ using point2 = point2d<coord>;
 
 template <class PT, int KK>
 struct vertex {
-  typedef PT pointT;
+  using pointT = PT;
   int identifier;
   pointT pt;         // the point itself
   vertex* ngh[KK];    // the list of neighbors
@@ -72,15 +72,16 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
     ANN<maxK>(v, k);
     t.next("");
   }
-  cout << endl;
 
-  int m = n * k;
-  parlay::sequence<int> Pout(m);
-  parlay::parallel_for (0, n, [&] (size_t i) {
-    for (int j=0; j < k; j++)
-      Pout[maxK*i + j] = (v[i]->ngh[j])->identifier;
-    });
-  if (outFile != NULL) writeIntSeqToFile(Pout, outFile);
+  if (outFile != NULL) {
+    int m = n * k;
+    parlay::sequence<int> Pout(m);
+    parlay::parallel_for (0, n, [&] (size_t i) {
+	for (int j=0; j < k; j++)
+	  Pout[maxK*i + j] = (v[i]->ngh[j])->identifier;
+      });
+    writeIntSeqToFile(Pout, outFile);
+  }
 }
 
 int main(int argc, char* argv[]) {

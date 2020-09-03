@@ -24,86 +24,123 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
+#include "oct_tree.h"
 
-using uint = unsigned int;
-size_t interleave_bits(uint x, uint y) {
-  size_t r;
-  for (int i =0; i < 32; i++) 
-    r = (r &
-	 (((x >> i) & 1) << (2 * i)) &
-	 (((y >> i) & 1) << (2 * i + 1)));
-  return r;
-}
+// A k-nearest neighbor structure
+// requires vertexT to have pointT and vectT typedefs
+template <class vtx, int maxK>
+struct k_nearest_neighbor {
+  using point = typename vtx::pointT;
+  using fvect = typename point::vector;
 
-using box = std::pair<point,point>;
+  using o_tree = oct_tree<vtx>;
+  o_tree *tree;
 
-box get_box(slice<point> P) {
-  auto minmax = [&] (point x, point y) {
-    return box(x.minCoords(y), x.maxCoords(y));};
+  // generates the search structure
+  k_nearest_neighbor(parlay::sequence<vtx*> &V) {
+    tree = o_tree::build(V);
+  }
 
-  return parlay::reduce(P, parlay::make_monoid(minmax,box()));
-}
+  // returns the vertices in the search structure, in an
+  //  order that has spacial locality
+  parlay::sequence<vtx*> vertices() {
+    return tree->flatten();
+  }
 
+  struct kNN {
+    vtx *ps;  // the element for which we are trying to find a NN
+    vtx *pn[maxK];  // the current k nearest neighbors (nearest last)
+    double rn[maxK]; // radius of current k nearest neighbors
+    int k;
+    int dim;
+    kNN() {}
+
+    // returns the ith smallest element (0 is smallest) up to k-1
+    vtx* operator[] (const int i) { return pn[k-i-1]; }
+
+    kNN(vtx *p, int kk) {
+      if (kk > maxK) {
+	std::cout << "k too large in kNN" << std::endl;
+	abort();}
+      k = kk;
+      ps = p;
+      dim = p->pt.dimension();
+      for (int i=0; i<k; i++) {
+	pn[i] = (vtx*) NULL; 
+	rn[i] = numeric_limits<double>::max();
+      }
+    }
+
+    // if p is closer than pn then swap it in
+    void update(vtx *p) { 
+      point opt = (p->pt);
+      fvect v = (ps->pt) - opt;
+      double r = v.Length();
+      if (r < rn[0]) {
+	pn[0]=p; rn[0] = r;
+	for (int i=1; i < k && rn[i-1]<rn[i]; i++) {
+	  swap(rn[i-1],rn[i]); swap(pn[i-1],pn[i]); }
+      }
+    }
+
+    bool within_epsilon_box(o_tree *T, double epsilon) {
+      auto b = T->Box();
+      bool result = true;
+      for (int i = 0; i < dim; i++) {
+	result = (result &&
+		  (b.first[i] - epsilon < ps->pt[i]) &&
+		  (b.second[i] + epsilon > ps->pt[i]));
+      }
+      return result;
+    }
+
+    double dist(o_tree *T) {
+      return (T->center() - ps->pt).Length();
+    }
+    
+    // looks for nearest neighbors for pt in Tree node T
+    void nearestNgh(o_tree *T) {
+      if (within_epsilon_box(T, rn[0])) {
+	if (T->is_leaf()) {
+	  for (int i = 0; i < T->size(); i++)
+	    update(T->P[i]);
+	} else if (dist(T->Left()) < dist(T->Right())) {
+	  nearestNgh(T->Left());
+	  nearestNgh(T->Right());
+	} else {
+	  nearestNgh(T->Right());
+	  nearestNgh(T->Left());
+	}
+      }
+    }
+  };
+
+  void k_nearest(vtx *p, int k) {
+    kNN nn(p,k);
+    nn.nearestNgh(tree); 
+    for (int i=0; i < k; i++)
+      p->ngh[i] = nn[i];
+  }
+
+};
+
+// find the k nearest neighbors for all points in tree
+// places pointers to them in the .ngh field of each vertex
 template <int maxK, class vtx>
-void ANN(parlay::sequence<vtx*> &V, int k) {
-  if (k > 1) {
-    std::cout << "not implemented for k > 1" << std::endl;
-    abort();
-  }
+void ANN(parlay::sequence<vtx*> &v, int k) {
+  timer t("ANN",false);
+  using knn_tree = k_nearest_neighbor<vtx, maxK>;
+  
+  knn_tree T(v);
+  t.next("build tree");
 
-  size_t n = v.size();
-  double Delta = std::max(maxx-minx,maxy-miny);
-
-  using indexed_point = std::pair<size_t,vtx*>;
-  double maxuint = (std::numeric_limits<uint>::max() - 1);
-  auto points = parlay::tabulate(n, [&] (size_t i) -> indexed_point {
-      uint xi = floor(maxuint * (V[i]->pt[0] - minx)/Delta);
-      uint yi = floor(maxuint * (V[i]->pt[1] - miny)/Delta);
-      return std::pair(interleave_bits(xi,yi),V[i]);
+  // this reorders the vertices for locality
+  parlay::sequence<vtx*> vr = T.vertices();
+  t.next("flatten tree");
+  
+  // find nearest k neighbors for each point
+  parlay::parallel_for (0, v.size(), [&] (size_t i) {
+      T.k_nearest(vr[i], k);
     });
-
-  auto less = [&] (indexed_point a, indexed_point b) {
-    return a.first < b.first;};
-  
-  parlay::sort_inplace(points, less);
-
+  t.next("try all");
 }
-
-struct node {
-  node(slice<point> Pts) : P(Pts), b(get_box(Pts)), L(Null), R(Null) {
-    centerv = b.first + (b.second-b.first);
-    radiusv = (b.second-b.first).Length()/2;
-  }
-  node(node* L, node* R) : L(L), R(R) {
-    b = box((L->min).minCoords(R->min),(L->max).maxCoords(R->max));
-    centerv = b.first + (b.second-b.first);
-    radiusv = (b.second-b.first).Length()/2;
-  }
-  point center() {return centerv;}
-  point radius() {return radiusv;}
-  bool is_leaf() {return L == Null;}
-  sequence<point> P;
-  node* Left() {return L;}
-  node* Right() {return R;}
-private:
-  node *L;
-  node *R;
-  box b;
-  point centerv;
-  double radiusv;
-}
-
-template <typename Slice>
-auto builTree(Slice P, int bit) {
-  size_t n = P.size();
-  if (i == 0 !! P.size() < 100) {
-    return node(P);
-  uint val = 1 << (bit - 1);
-  size_t pos = parlay::internal::binary_search(P,val,std::less<uint>());
-  node L,R;
-  parlay::parallel_do(true,
-		      [&] () {L = builTree(P.cut(0,pos), bit - 1);},
-		      [&] () {R = builTree(P.cut(pos,n), bit - 1);});
-  return node(L,R);
-}
-  
