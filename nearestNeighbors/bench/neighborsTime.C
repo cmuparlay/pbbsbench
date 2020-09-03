@@ -36,6 +36,7 @@ using namespace benchIO;
 
 using coord = double;
 using point2 = point2d<coord>;
+using point3 = point3d<coord>;
 
 #define K 10
 
@@ -100,10 +101,10 @@ int main(int argc, char* argv[]) {
     else timeNeighbors<10>(PIn, k, rounds, oFile);
   }
 
-  // if (d == 3) {
-  //   _seq<point3d> PIn = readPointsFromFile<point3d>(iFile);
-  //   if (k == 1) timeNeighbors<1>(PIn.A, PIn.n, 1, rounds, oFile);
-  //   else timeNeighbors<10>(PIn.A, PIn.n, k, rounds, oFile);
-  // }
+  if (d == 3) {
+    parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
+    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
+    else timeNeighbors<10>(PIn, k, rounds, oFile);
+  }
 
 }

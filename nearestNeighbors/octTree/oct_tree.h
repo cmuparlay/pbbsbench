@@ -51,7 +51,7 @@ struct oct_tree {
   oct_tree* Parent() {return parent;}
 
 private:
-  constexpr static int key_bits = 32;
+  constexpr static int key_bits = 64;
   double cut_plane;
   int cut_dim;
   size_t n;
@@ -61,7 +61,8 @@ private:
   box b;
   point centerv;
   double radiusv;
-			   
+  static parlay::type_allocator<oct_tree> node_alloc;
+    
   // takes a point, rounds each coordinate to an integer, and interleaves
   // the bits into "key_bits" total bits.
   // minp is the minimmum x,y,z coordinate for all points
@@ -74,7 +75,7 @@ private:
     for (int i = 0; i < dim; i++) 
       ip[i] = floor(maxval * (p[i] - minp[i])/delta);
 
-    size_t r;
+    size_t r = 0;
     int loc = 0;
     for (int i =0; i < bits; i++)
       for (int d = 0; d < dim; d++) 
@@ -114,14 +115,14 @@ private:
     auto less = [] (indexed_point a, indexed_point b) {
       return a.first < b.first;};
     
-    return parlay::sort(points, less);
-    //t.next("sort");
-    //return x;
+    auto x = parlay::sort(points, less);
+    t.next("sort");
+    return x;
   }
 
   void set_center_radius() {			   
-    centerv = b.first + (b.second-b.first);
-    radiusv = (b.second-b.first).Length()/2;
+    centerv = b.first + (b.second-b.first)/2;
+    //radiusv = (b.second-b.first).Length()/2;
   }
 
 public:
@@ -136,22 +137,25 @@ public:
     //  std::cout << pts[i].first << ", " << pts[i].second->pt[0] << ", ";
     //std::cout << std::endl;
     //std::cout << "here" << std::endl;
-    auto r = new oct_tree<vtx>(make_slice(pts), dims*(key_bits/dims));
+    oct_tree* r = node_alloc.alloc();
+    new (r) oct_tree<vtx>(make_slice(pts), nullptr, dims*(key_bits/dims));
     t.next("build");
     return r;
   }
 
-  oct_tree(slice_t Pts, int bit) {
+  oct_tree(slice_t Pts, oct_tree* parentp, int bit) {
     n = Pts.size();
+    parent = parentp;
+    int cutoff = 20;
     //std::cout << "size = " << n << std::endl;
-    if (bit == 0 || Pts.size() < 20) {
+    if (bit == 0 || Pts.size() < cutoff) {
       P = parlay::tabulate(Pts.size(), [&] (size_t i) -> vtx* {
 	  return Pts[i].second;});
       L = R = nullptr;
       b = get_box(P);
     } else {
       size_t val = ((size_t) 1) << (bit - 1);
-      size_t mask = ~(~0 << bit);
+      size_t mask = (bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << bit);
       auto less = [&] (indexed_point x) {
 	return (x.first & mask) < val;
       };
@@ -159,16 +163,24 @@ public:
       // for (int i=0; i < n; i++) 
       //   std::cout << Pts[i].first << ", ";
       // std::cout << std::endl;
-      // std::cout << "mask = " << mask << ", bit = " << bit << ", val = " << val << ", pos = " << pos << std::endl;
+      // std::cout << "size = " << n << ", mask = " << mask << ", bit = "
+      //           << bit << ", val = " << val << ", pos = " << pos << std::endl;
       if (pos == 0 || pos == n) {
-	*this = oct_tree(Pts, bit - 1);
+	*this = oct_tree(Pts, parentp, bit - 1);
 	return;
       }
-      parlay::par_do([&] () {L = new oct_tree(Pts.cut(0,pos), bit - 1);},
-		     [&] () {R = new oct_tree(Pts.cut(pos,n), bit - 1);});
+      parlay::par_do(
+		     ([&] () {
+		       oct_tree* l = node_alloc.alloc();
+		       L = new (l) oct_tree(Pts.cut(0,pos), this, bit - 1);}),
+		     ([&] () {
+		       oct_tree* r = node_alloc.alloc();
+		       R = new (r) oct_tree(Pts.cut(pos,n), this, bit - 1);})
+		     );
       b = box(L->b.first.minCoords(R->b.first),L->b.second.maxCoords(R->b.second));
     }
     set_center_radius();
+    //std::cout << center()[0] << ", " << center()[1] << std::endl;
   }
 
   static void flatten_rec(oct_tree<vtx> *T, slice_v R) {
@@ -183,6 +195,26 @@ public:
     }
   }
 
+  template <typename F>
+  void map(F f) {
+    if (is_leaf())
+      for (int i=0; i < size(); i++) f(P[i],this);
+    else {
+      parlay::par_do([&] () {L->map(f);},
+		     [&] () {R->map(f);});
+    }
+  }
+
+  size_t depth() {
+    if (is_leaf()) return 0;
+    else {
+      size_t l, r;
+      parlay::par_do([&] () {l = L->depth();},
+		     [&] () {r = R->depth();});
+      return 1 + std::max(l,r);
+    }
+  }
+  
   parlay::sequence<vtx*> flatten() {
     parlay::sequence<vtx*> r(n);
     flatten_rec(this, parlay::make_slice(r));

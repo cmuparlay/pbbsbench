@@ -35,7 +35,9 @@ struct k_nearest_neighbor {
 
   using o_tree = oct_tree<vtx>;
   o_tree *tree;
-
+  std::atomic<size_t> leaf_cnt = 0;
+  std::atomic<size_t> internal_cnt = 0;
+  
   // generates the search structure
   k_nearest_neighbor(parlay::sequence<vtx*> &V) {
     tree = o_tree::build(V);
@@ -53,6 +55,8 @@ struct k_nearest_neighbor {
     double rn[maxK]; // radius of current k nearest neighbors
     int k;
     int dim;
+    size_t leaf_cnt;
+    size_t internal_cnt;
     kNN() {}
 
     // returns the ith smallest element (0 is smallest) up to k-1
@@ -65,6 +69,7 @@ struct k_nearest_neighbor {
       k = kk;
       ps = p;
       dim = p->pt.dimension();
+      leaf_cnt = internal_cnt = 0;
       for (int i=0; i<k; i++) {
 	pn[i] = (vtx*) NULL; 
 	rn[i] = numeric_limits<double>::max();
@@ -102,12 +107,15 @@ struct k_nearest_neighbor {
     void nearestNgh(o_tree *T) {
       if (within_epsilon_box(T, rn[0])) {
 	if (T->is_leaf()) {
+	  leaf_cnt++;
 	  for (int i = 0; i < T->size(); i++)
-	    update(T->P[i]);
+	  if (T->P[i] != ps) update(T->P[i]);
 	} else if (dist(T->Left()) < dist(T->Right())) {
+	  internal_cnt++;
 	  nearestNgh(T->Left());
 	  nearestNgh(T->Right());
 	} else {
+	  internal_cnt++;
 	  nearestNgh(T->Right());
 	  nearestNgh(T->Left());
 	}
@@ -117,7 +125,9 @@ struct k_nearest_neighbor {
 
   void k_nearest(vtx *p, int k) {
     kNN nn(p,k);
-    nn.nearestNgh(tree); 
+    nn.nearestNgh(tree);
+    leaf_cnt += nn.leaf_cnt;
+    internal_cnt += nn.internal_cnt;
     for (int i=0; i < k; i++)
       p->ngh[i] = nn[i];
   }
@@ -133,6 +143,8 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
   
   knn_tree T(v);
   t.next("build tree");
+  size_t d = T.tree->depth();
+  //std::cout << "depth = " << d << std::endl;
 
   // this reorders the vertices for locality
   parlay::sequence<vtx*> vr = T.vertices();
@@ -142,5 +154,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
   parlay::parallel_for (0, v.size(), [&] (size_t i) {
       T.k_nearest(vr[i], k);
     });
+  //std::cout << "leaves = " << T.leaf_cnt.load()/((double) v.size()) 
+  //          << ", internal = " << T.internal_cnt.load()/((double) v.size()) << std::endl;
   t.next("try all");
 }
