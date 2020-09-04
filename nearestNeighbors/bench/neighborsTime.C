@@ -47,7 +47,7 @@ struct vertex {
   pointT pt;         // the point itself
   vertex* ngh[KK];    // the list of neighbors
   vertex(pointT p, int id) : pt(p), identifier(id) {}
-
+  size_t counter;
 };
 
 // *************************************************************
