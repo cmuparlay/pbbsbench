@@ -57,9 +57,11 @@ struct oct_tree {
     node(slice_t Pts) {
       n = Pts.size();
       parent = nullptr;
+
+      // strips off the integer tag, no longer needed
       P = leaf_seq(n);
       for (int i = 0; i < n; i++)
-	P[i] = Pts[i].second;
+	P[i] = Pts[i].second;  
       L = R = nullptr;
       b = get_box(P);
       set_center();
@@ -83,8 +85,8 @@ struct oct_tree {
     static node* new_node(node* L, node* R) {
       node* nd = alloc_node();
       new (nd) node(L, R);
-      L->parent = nd;
-      R->parent = nd;
+      // both children point to this node as their parent
+      L->parent = R->parent = nd;
       return nd;
     }
     
@@ -100,6 +102,9 @@ struct oct_tree {
       return r;
     }
 
+    // map a function f(p,node_ptr) over the points, passing
+    // in the point, and a pointer to the leaf node it is in.
+    // f should return void
     template <typename F>
     void map(F f) {
       if (is_leaf())
@@ -120,12 +125,21 @@ struct oct_tree {
       }
     }
 
+    // recursively frees the tree
     static void free_tree(node* T) {
       if (T != nullptr) {
 	T->~node();
 	node::free_node(T);
       }
     }
+
+    // disable copy and move constructors/assignment since
+    // they are dangerous with with free
+    // probably should use unique pointers
+    node(const node&) = delete;
+    node(node&&) = delete;
+    node& operator=(node const&) = delete;
+    node& operator=(node&&) = delete;
 
   private:
 
@@ -140,6 +154,7 @@ struct oct_tree {
       centerv = b.first + (b.second-b.first)/2;
     }
 
+    // uses the parlay memory manager
     static parlay::type_allocator<node> node_allocator;
     static node* alloc_node() {
       //return (node*) malloc(sizeof(node));
@@ -164,6 +179,7 @@ struct oct_tree {
 
   };
 
+  // build a tre given a sequence of pointers to points
   template <typename Seq>
   static node* build(Seq &P) {
     timer t("oct_tree",false);
@@ -180,22 +196,21 @@ private:
   
   // takes a point, rounds each coordinate to an integer, and interleaves
   // the bits into "key_bits" total bits.
-  // minp is the minimmum x,y,z coordinate for all points
-  // delta is the largest range across the three dimensions
-  static size_t interleave_bits(point p, point minp, double delta) {
+  // min_point is the minimmum x,y,z coordinate for all points
+  // delta is the largest range of any of the three dimensions
+  static size_t interleave_bits(point p, point min_point, double delta) {
     int dim = p.dimension();
     int bits = key_bits/dim;
     uint maxval = (((size_t) 1) << bits) - 1;
     uint ip[dim];
     for (int i = 0; i < dim; i++) 
-      ip[i] = floor(maxval * (p[i] - minp[i])/delta);
+      ip[i] = floor(maxval * (p[i] - min_point[i])/delta);
 
     size_t r = 0;
     int loc = 0;
     for (int i =0; i < bits; i++)
       for (int d = 0; d < dim; d++) 
 	r = r | (((ip[d] >> i) & (size_t) 1) << (loc++));
-    //std::cout << "r = " << r << ", " << ip[0] << ", " << ip[1] <<std::endl;
     return r;
   }
 
@@ -207,22 +222,28 @@ private:
     auto minmax = [&] (box x, box y) {
       return box(x.first.minCoords(y.first),
 		 x.second.maxCoords(y.second));};
+
+    // uses a delayed sequence to avoid making a copy
     auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
 	return box(V[i]->pt, V[i]->pt);});
     box identity = pts[0];
     return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
   }
 
+  // tags each point (actually a pointer to it), with an interger
+  // consisting of the interleaved bits for the x,y,z coordinates.
+  // Also sorts based the integer.
   static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V) {
     timer t("tag",false);
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
-    
+
+    // find box around points, and size along largest axis
     box b = get_box(V);
     double Delta = 0;
     for (int i = 0; i < dims; i++) 
       Delta = std::max(Delta, b.second[i] - b.first[i]);
-    
+
     auto points = parlay::tabulate(n, [&] (size_t i) -> indexed_point {
 	return std::pair(interleave_bits(V[i]->pt, b.first, Delta), V[i]);
       });
@@ -236,22 +257,33 @@ private:
     return x;
   }
 
+  // each point is a pair consisting of an interleave integer along with
+  // the pointer to the point.   The bit specifies which bit of the integer
+  // we are working on (starts at top, and goes down).
   static node* build_recursive(slice_t Pts, int bit) {
     size_t n = Pts.size();
     if (n == 0) abort();
     int cutoff = 20;
-    if (bit == 0 && n > 100) std::cout << n << std::endl;
+
+    // if run out of bit, or small then generate a leaf
     if (bit == 0 || n < cutoff) {
       return node::new_leaf(Pts);
     } else {
+
+      // the following defines a less based on the bit
       size_t val = ((size_t) 1) << (bit - 1);
       size_t mask = (bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << bit);
       auto less = [&] (indexed_point x) {
 	return (x.first & mask) < val;
       };
+      // and then we binary search for the cut point
       size_t pos = parlay::internal::binary_search(Pts, less);
+
+      // if all points are on one side, then move onto the next bit
       if (pos == 0 || pos == n) 
 	return build_recursive(Pts, bit - 1);
+
+      // otherwise recurse on the two parts, also moving to next bit
       else {
 	node *L, *R;
 	parlay::par_do(
