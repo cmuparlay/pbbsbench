@@ -20,12 +20,12 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#define report_stats false
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "oct_tree.h"
-#define report_stats false
 
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
@@ -114,8 +114,9 @@ struct k_nearest_neighbors {
       if (within_epsilon_box(T, distances[0])) {
 	if (T->is_leaf()) {
 	  if (report_stats) leaf_cnt++;
+	  auto &Vtx = T->Vertices();
 	  for (int i = 0; i < T->size(); i++)
-	  if (T->P[i] != vertex) update_nearest(T->P[i]);
+	    if (Vtx[i] != vertex) update_nearest(Vtx[i]);
 	} else if (distance(T->Left()) < distance(T->Right())) {
 	  k_nearest_rec(T->Left());
 	  k_nearest_rec(T->Right());

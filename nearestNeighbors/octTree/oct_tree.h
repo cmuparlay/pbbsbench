@@ -51,7 +51,7 @@ struct oct_tree {
     node* Left() {return L;}
     node* Right() {return R;}
     node* Parent() {return parent;}
-    leaf_seq P;
+    leaf_seq& Vertices() {return P;};
 
     // construct a leaf node with a sequence of points directly in it
     node(slice_t Pts) {
@@ -111,8 +111,9 @@ struct oct_tree {
       if (is_leaf())
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {
-	parlay::par_do([&] () {L->map(f);},
-		       [&] () {R->map(f);});
+	parlay::par_do_if(n > 1000,
+			  [&] () {L->map(f);},
+			  [&] () {R->map(f);});
       }
     }
 
@@ -120,8 +121,9 @@ struct oct_tree {
       if (is_leaf()) return 0;
       else {
 	size_t l, r;
-	parlay::par_do([&] () {l = L->depth();},
-		       [&] () {r = R->depth();});
+	parlay::par_do_if(n > 1000,
+			  [&] () {l = L->depth();},
+			  [&] () {r = R->depth();});
 	return 1 + std::max(l,r);
       }
     }
@@ -130,7 +132,7 @@ struct oct_tree {
     static void delete_tree(node* T) {
       if (T != nullptr) {
 	T->~node();
-	//node::free_node(T);
+	node::free_node(T);
       }
     }
 
@@ -149,6 +151,7 @@ struct oct_tree {
     node *R;
     box b;
     point centerv;
+    leaf_seq P;
 
     void set_center() {			   
       centerv = b.first + (b.second-b.first)/2;
@@ -168,11 +171,11 @@ struct oct_tree {
       else {
 	size_t n_left = T->L->size();
 	size_t n = T->size();
-	parlay::par_do([&] () {flatten_rec(T->L, R.cut(0, n_left));},
-		       [&] () {flatten_rec(T->R, R.cut(n_left, n));});
+	parlay::par_do_if(n > 1000,
+	  [&] () {flatten_rec(T->L, R.cut(0, n_left));},
+	  [&] () {flatten_rec(T->R, R.cut(n_left, n));});
       }
     }
-
   };
   
   // A unique pointer to a tree node to ensure the tree is
@@ -183,7 +186,7 @@ struct oct_tree {
   // build a tre given a sequence of pointers to points
   template <typename Seq>
   static tree_ptr build(Seq &P) {
-    timer t("oct_tree",true);
+    timer t("oct_tree",false);
     int dims = (P[0]->pt).dimension();
     auto pts = tag_points(P);
     t.next("tag");
@@ -235,7 +238,7 @@ private:
   // consisting of the interleaved bits for the x,y,z coordinates.
   // Also sorts based the integer.
   static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V) {
-    timer t("tag",true);
+    timer t("tag",false);
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
 
@@ -244,17 +247,17 @@ private:
     double Delta = 0;
     for (int i = 0; i < dims; i++) 
       Delta = std::max(Delta, b.second[i] - b.first[i]);
-
-    auto points = parlay::tabulate(n, [&] (size_t i) -> indexed_point {
+    t.next("get box");
+    
+    auto points = parlay::delayed_seq<indexed_point>(n, [&] (size_t i) -> indexed_point {
 	return std::pair(interleave_bits(V[i]->pt, b.first, Delta), V[i]);
       });
-    t.next("tabulate");
     
     auto less = [] (indexed_point a, indexed_point b) {
       return a.first < b.first;};
     
     auto x = parlay::sort(points, less);
-    t.next("sort");
+    t.next("tabulate and sort");
     return x;
   }
 
@@ -287,7 +290,7 @@ private:
       // otherwise recurse on the two parts, also moving to next bit
       else {
 	node *L, *R;
-	parlay::par_do(
+	parlay::par_do_if(n > 1000,
            [&] () {L = build_recursive(Pts.cut(0, pos), bit - 1);},
 	   [&] () {R = build_recursive(Pts.cut(pos, n), bit - 1);});
 	return node::new_node(L,R);
