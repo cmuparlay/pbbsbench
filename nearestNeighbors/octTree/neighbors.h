@@ -25,28 +25,25 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "oct_tree.h"
-#define stats true
+#define report_stats false
 
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
-template <class vtx, int maxK>
-struct k_nearest_neighbor {
+template <class vtx, int max_k>
+struct k_nearest_neighbors {
   using point = typename vtx::pointT;
   using fvect = typename point::vector;
   using o_tree = oct_tree<vtx>;
-  using tree_node = typename o_tree::node;
+  using node = typename o_tree::node;
+  using tree_ptr = typename o_tree::tree_ptr;
 
-  tree_node *tree;
+  tree_ptr tree;
 
   // generates the search structure
-  k_nearest_neighbor(parlay::sequence<vtx*> &V) {
+  k_nearest_neighbors(parlay::sequence<vtx*> &V) {
     tree = o_tree::build(V);
   }
 
-  ~k_nearest_neighbor() {
-    tree_node::free_tree(tree);
-  }
-  
   // returns the vertices in the search structure, in an
   //  order that has spacial locality
   parlay::sequence<vtx*> vertices() {
@@ -54,73 +51,77 @@ struct k_nearest_neighbor {
   }
 
   struct kNN {
-    vtx *ps;  // the element for which we are trying to find a NN
-    vtx *pn[maxK];  // the current k nearest neighbors (nearest last)
-    double rn[maxK]; // radius of current k nearest neighbors
+    vtx *vertex;  // the vertex for which we are trying to find a NN
+    vtx *neighbors[max_k];  // the current k nearest neighbors (nearest last)
+    double distances[max_k]; // distance to current k nearest neighbors
     int k;
-    int dim;
+    int dimensions;
     size_t leaf_cnt;
     size_t internal_cnt;
     kNN() {}
 
     // returns the ith smallest element (0 is smallest) up to k-1
-    vtx* operator[] (const int i) { return pn[k-i-1]; }
+    vtx* operator[] (const int i) { return neighbors[k-i-1]; }
 
     kNN(vtx *p, int kk) {
-      if (kk > maxK) {
+      if (kk > max_k) {
 	std::cout << "k too large in kNN" << std::endl;
 	abort();}
       k = kk;
-      ps = p;
-      dim = p->pt.dimension();
+      vertex = p;
+      dimensions = p->pt.dimension();
       leaf_cnt = internal_cnt = 0;
+      // initialize nearest neighbors to point to Null with
+      // distance "infinity".
       for (int i=0; i<k; i++) {
-	pn[i] = (vtx*) NULL; 
-	rn[i] = numeric_limits<double>::max();
+	neighbors[i] = (vtx*) NULL; 
+	distances[i] = numeric_limits<double>::max();
       }
     }
 
-    // if p is closer than pn then swap it in
-    void update(vtx *p) { 
-      point opt = (p->pt);
-      fvect v = (ps->pt) - opt;
-      double r = v.Length();
-      if (r < rn[0]) {
-	pn[0]=p; rn[0] = r;
-	for (int i=1; i < k && rn[i-1]<rn[i]; i++) {
-	  swap(rn[i-1],rn[i]); swap(pn[i-1],pn[i]); }
+    // if p is closer than neighbors[0] then swap it in
+    void update_nearest(vtx *other) { 
+      auto dist = (vertex->pt - other->pt).Length();
+      if (dist < distances[0]) {
+	neighbors[0] = other;
+	distances[0] = dist;
+	for (int i = 1;
+	     i < k && distances[i-1] < distances[i];
+	     i++) {
+	  swap(distances[i-1], distances[i]);
+	  swap(neighbors[i-1], neighbors[i]); }
       }
     }
 
-    bool within_epsilon_box(tree_node *T, double epsilon) {
-      auto b = T->Box();
+    bool within_epsilon_box(node* T, double epsilon) {
+      auto box = T->Box();
       bool result = true;
-      for (int i = 0; i < dim; i++) {
+      for (int i = 0; i < dimensions; i++) {
 	result = (result &&
-		  (b.first[i] - epsilon < ps->pt[i]) &&
-		  (b.second[i] + epsilon > ps->pt[i]));
+		  (box.first[i] - epsilon < vertex->pt[i]) &&
+		  (box.second[i] + epsilon > vertex->pt[i]));
       }
       return result;
     }
 
-    double dist(tree_node *T) {
-      return (T->center() - ps->pt).Length();
+    double distance(node* T) {
+      return (T->center() - vertex->pt).Length();
     }
     
     // looks for nearest neighbors for pt in Tree node T
-    void nearestNgh(tree_node *T) {
-      if (stats) internal_cnt++;
-      if (within_epsilon_box(T, rn[0])) {
+    void k_nearest_rec(node* T) {
+      if (report_stats) internal_cnt++;
+      if (within_epsilon_box(T, distances[0])) {
 	if (T->is_leaf()) {
-	  if (stats) leaf_cnt++;
+	  if (report_stats) leaf_cnt++;
 	  for (int i = 0; i < T->size(); i++)
-	  if (T->P[i] != ps) update(T->P[i]);
-	} else if (dist(T->Left()) < dist(T->Right())) {
-	  nearestNgh(T->Left());
-	  nearestNgh(T->Right());
+	  if (T->P[i] != vertex) update_nearest(T->P[i]);
+	} else if (distance(T->Left()) < distance(T->Right())) {
+	  k_nearest_rec(T->Left());
+	  k_nearest_rec(T->Right());
 	} else {
-	  nearestNgh(T->Right());
-	  nearestNgh(T->Left());
+	  k_nearest_rec(T->Right());
+	  k_nearest_rec(T->Left());
 	}
       }
     }
@@ -128,8 +129,8 @@ struct k_nearest_neighbor {
 
   void k_nearest(vtx *p, int k) {
     kNN nn(p,k);
-    nn.nearestNgh(tree);
-    if (stats) p->counter = nn.internal_cnt;
+    nn.k_nearest_rec(tree.get());
+    if (report_stats) p->counter = nn.internal_cnt;
     for (int i=0; i < k; i++)
       p->ngh[i] = nn[i];
   }
@@ -138,32 +139,35 @@ struct k_nearest_neighbor {
 
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
-template <int maxK, class vtx>
+template <int max_k, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k) {
-  timer t("ANN",stats);
-  using knn_tree = k_nearest_neighbor<vtx, maxK>;
+  timer t("ANN",report_stats);
 
-  knn_tree T(v);
-  t.next("build tree");
+  {
+    using knn_tree = k_nearest_neighbors<vtx, max_k>;
+    knn_tree T(v);
+    t.next("build tree");
 
-  if (stats) 
-    std::cout << "depth = " << T.tree->depth() << std::endl;
+    if (report_stats) 
+      std::cout << "depth = " << T.tree->depth() << std::endl;
 
-  // this reorders the vertices for locality
-  parlay::sequence<vtx*> vr = T.vertices();
-  t.next("flatten tree");
+    // this reorders the vertices for locality
+    parlay::sequence<vtx*> vr = T.vertices();
+    t.next("flatten tree");
   
-  // find nearest k neighbors for each point
-  parlay::parallel_for (0, v.size(), [&] (size_t i) {
-				       T.k_nearest(vr[i], k);}, 1);
+    // find nearest k neighbors for each point
+    parlay::parallel_for (0, v.size(), [&] (size_t i) {
+					 T.k_nearest(vr[i], k);}, 1);
 
-  t.next("try all");
-  if (stats) {
-    auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
-    size_t i = parlay::max_element(s) - s.begin();
-    size_t sum = parlay::reduce(s);
-    std::cout << "max internal = " << s[i] 
-	      << ", average internal = " << sum/((double) v.size()) << std::endl;
-    t.next("stats");
+    t.next("try all");
+    if (report_stats) {
+      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
+      size_t i = parlay::max_element(s) - s.begin();
+      size_t sum = parlay::reduce(s);
+      std::cout << "max internal = " << s[i] 
+		<< ", average internal = " << sum/((double) v.size()) << std::endl;
+      t.next("stats");
+    }
   }
+  t.next("delete tree");
 }

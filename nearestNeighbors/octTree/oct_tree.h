@@ -91,9 +91,10 @@ struct oct_tree {
     }
     
     ~node() {
-      parlay::par_do([&] () { free_tree(L);},
-		     [&] () { free_tree(R);});
-      //P.~sequence();
+      // need to collect in parallel
+      parlay::par_do_if(n > 1000,
+			[&] () { delete_tree(L);},
+			[&] () { delete_tree(R);});
     }
 
     parlay::sequence<vtx*> flatten() {
@@ -126,16 +127,15 @@ struct oct_tree {
     }
 
     // recursively frees the tree
-    static void free_tree(node* T) {
+    static void delete_tree(node* T) {
       if (T != nullptr) {
 	T->~node();
-	node::free_node(T);
+	//node::free_node(T);
       }
     }
 
     // disable copy and move constructors/assignment since
-    // they are dangerous with with free
-    // probably should use unique pointers
+    // they are dangerous with with free.
     node(const node&) = delete;
     node(node&&) = delete;
     node& operator=(node const&) = delete;
@@ -154,16 +154,12 @@ struct oct_tree {
       centerv = b.first + (b.second-b.first)/2;
     }
 
-    // uses the parlay memory manager
+    // uses the parlay memory manager, could be replaced will alloc/free
     static parlay::type_allocator<node> node_allocator;
     static node* alloc_node() {
-      //return (node*) malloc(sizeof(node));
-      return node_allocator.alloc();
-    }
+      return node_allocator.alloc();}
     static void free_node(node* T) {
-      //free(T);
-      node_allocator.free(T);
-    }
+      node_allocator.free(T);}
 
     static void flatten_rec(node *T, slice_v R) {
       if (T->is_leaf())
@@ -178,17 +174,22 @@ struct oct_tree {
     }
 
   };
+  
+  // A unique pointer to a tree node to ensure the tree is
+  // destructed when the pointer is, and that  no copies are made.
+  struct delete_tree {void operator() (node *T) const {node::delete_tree(T);}};
+  using tree_ptr = std::unique_ptr<node,delete_tree>;
 
   // build a tre given a sequence of pointers to points
   template <typename Seq>
-  static node* build(Seq &P) {
-    timer t("oct_tree",false);
+  static tree_ptr build(Seq &P) {
+    timer t("oct_tree",true);
     int dims = (P[0]->pt).dimension();
     auto pts = tag_points(P);
     t.next("tag");
     node* r = build_recursive(make_slice(pts), dims*(key_bits/dims));
     t.next("build");
-    return r;
+    return tree_ptr(r);
   }
 
 private:
@@ -234,7 +235,7 @@ private:
   // consisting of the interleaved bits for the x,y,z coordinates.
   // Also sorts based the integer.
   static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V) {
-    timer t("tag",false);
+    timer t("tag",true);
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
 
