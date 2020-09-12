@@ -247,23 +247,17 @@ using namespace std;
   //    TRIANGLES
   // *************************************************************
 
-  struct triangle {
-    int C[3];
-    triangle(int p1, int p2, int p3) {
-      C[0] = p1; C[1] = p2; C[2] = p3;
-    }
-  };
+  using tri = std::array<int,3>;
 
   template <class point>
   struct triangles {
-    size_t numPoints;
-    size_t numTriangles;
-    point* P;
-    triangle* T;
+    size_t numPoints() {return P.size();};
+    size_t numTriangles() {return T.size();}
+    parlay::sequence<point> P;
+    parlay::sequence<tri> T;
     triangles() {}
-    void del() {free(P); free(T);}
-    triangles(size_t np, size_t nt, point* _P, triangle* _T) 
-      : numPoints(np), numTriangles(nt), P(_P), T(_T) {}
+    triangles(parlay::sequence<point> P, parlay::sequence<tri> T) 
+      : P(std::move(P)), T(std::move(T)) {}
   };
 
   template <class point>

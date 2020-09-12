@@ -1,0 +1,16 @@
+#!/usr/bin/python
+
+bnchmrk="delaunay"
+benchmark="Delaunay Triangulation"
+checkProgram="../common/delaunayCheck"
+dataDir = "../geometryData/data"
+
+tests = [
+    [1, "2DinCube_10M","",""],
+    [1, "2Dkuzmin_10M","",""]
+    ]
+
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+
+

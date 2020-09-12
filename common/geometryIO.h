@@ -142,51 +142,51 @@ namespace benchIO {
   //   return Tr;
   // }
 
-  // template <class pointT>
-  //   triangles<pointT> readTrianglesFromFile(char const *fname, intT offset) {
-  //   int d = pointT::dim;
-  //   _seq<char> S = readStringFromFile(fname);
-  //   words W = stringToWords(S.A, S.n);
-  //   if (W.Strings[0] != HeaderTriangles) {
-  //     cout << "readTrianglesFromFile wrong file type" << endl;
-  //     abort();
-  //   }
+  template <class pointT>
+  triangles<pointT> readTrianglesFromFile(char const *fname, size_t offset) {
+    int d = pointT::dim;
+    parlay::sequence<char> S = readStringFromFile(fname);
+    parlay::sequence<char*> W = stringToWords(S);
+    if (W[0] != HeaderTriangles) {
+      cout << "readTrianglesFromFile wrong file type" << endl;
+      abort();
+    }
 
-  //   int headerSize = 3;
-  //   triangles<pointT> Tr;
-  //   Tr.numPoints = atol(W.Strings[1]);
-  //   Tr.numTriangles = atol(W.Strings[2]);
-  //   if (W.m != headerSize + 3 * Tr.numTriangles + d * Tr.numPoints) {
-  //     cout << "readTrianglesFromFile inconsistent length" << endl;
-  //     abort();
-  //   }
+    int headerSize = 3;
+    size_t n = atol(W[1]);
+    size_t m = atol(W[2]);
+    if (W.size() != headerSize + 3 * m + d * n) {
+      cout << "readTrianglesFromFile inconsistent length" << endl;
+      abort();
+    }
 
-  //   Tr.P = newA(pointT, Tr.numPoints);
-  //   parsePoints(W.Strings + headerSize, Tr.P, Tr.numPoints);
+    auto pts_slice = W.cut(headerSize, headerSize + n);
+    auto tri_slice = W.cut(headerSize + n, W.size());
+    parlay::sequence<pointT> Pts = parsePoints<pointT>(pts_slice);
+    auto Tri = parlay::tabulate(m, [&] (size_t i ) -> tri {
+				    return {atol(tri_slice[3*i]),
+					    atol(tri_slice[3*i+1]),
+					    atol(tri_slice[3*i+2])};});
+    return triangles<pointT>(Pts,Tri);
+  }
 
-  //   Tr.T = newA(triangle, Tr.numTriangles);
-  //   char** Triangles = W.Strings + headerSize + d * Tr.numPoints;
-  //   for (long i=0; i < Tr.numTriangles; i++)
-  //     for (int j=0; j < 3; j++)
-  // 	Tr.T[i].C[j] = atol(Triangles[3*i + j])-offset;
-  //   return Tr;
-  // }
-
-  // template <class pointT>
-  // int writeTrianglesToFile(triangles<pointT> Tr, char* fileName) {
-  //   ofstream file (fileName, ios::binary);
-  //   if (!file.is_open()) {
-  //     std::cout << "Unable to open file: " << fileName << std::endl;
-  //     return 1;
-  //   }
-  //   file << HeaderTriangles << endl;
-  //   file << Tr.numPoints << endl; 
-  //   file << Tr.numTriangles << endl; 
-  //   writeArrayToStream(file, Tr.P, Tr.numPoints);
-  //   writeArrayToStream(file, Tr.T, Tr.numTriangles);
-  //   file.close();
-  //   return 0;
-  // }
+  template <class pointT>
+  int writeTrianglesToFile(triangles<pointT> Tr, char* fileName) {
+    ofstream file (fileName, ios::binary);
+    if (!file.is_open()) {
+      std::cout << "Unable to open file: " << fileName << std::endl;
+      return 1;
+    }
+    file << HeaderTriangles << endl;
+    file << Tr.numPoints() << endl; 
+    file << Tr.numTriangles() << endl; 
+    writeSeqToStream(file, Tr.P);
+    auto A = parlay::tabulate(3*Tr.numTriangles(), [&] (size_t i) -> int {
+      						     return (Tr.T[i/3])[i%3];});
+    writeSeqToStream(file, A);
+    file.close();
+    return 0;
+  }
 
 };
 
