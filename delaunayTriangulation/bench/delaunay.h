@@ -5,4 +5,4 @@
 using coord = double;
 using point = point2d<coord>;
 
-triangles<point> delaunay(parlay::sequence<point>);
+triangles<point> delaunay(parlay::sequence<point>& P);

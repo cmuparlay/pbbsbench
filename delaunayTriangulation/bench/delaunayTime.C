@@ -47,7 +47,7 @@ void timeDelaunay(parlay::sequence<point> pts, int rounds, char* outFile) {
   if (outFile != NULL) writeTrianglesToFile(R, outFile);
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");

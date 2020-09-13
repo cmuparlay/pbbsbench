@@ -26,8 +26,8 @@
 #include "common/geometry.h"
 #include "common/get_time.h"
 
-// vtx must support v->pt
-// and v->pt must support pt.dimension(), pt[i],
+// vtx must support v.pt and v::point_t
+// and v.pt must support pt.dimension(), pt[i],
 //    (pt1 - pt2).Length(), pt1 + (pt2 - pt3)
 //    pt1.minCoords(pt2), pt1.maxCoords(pt2),
 template <typename vtx>

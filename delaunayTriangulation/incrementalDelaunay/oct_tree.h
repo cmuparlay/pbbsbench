@@ -33,7 +33,7 @@
 template <typename vtx>
 struct oct_tree {
 
-  using point = typename vtx::pointT;
+  using point = typename vtx::point_t;
   using uint = unsigned int;
   using box = std::pair<point,point>;
   using indexed_point = std::pair<size_t,vtx*>;

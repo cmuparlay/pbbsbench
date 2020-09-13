@@ -28,54 +28,46 @@
 
 // A simplified version of STL vectors.   Fully upward compatible, but seems to be
 // significantly faster when used in parallel.
-template <class ET>
-struct myVector {
-  ET* vals;
-  intT max, top;
-  myVector() {
-    top = 0;
-    max = 50;
-    vals = newA(ET, max);
-  }
-  void push_back(ET v) {
-    if (top == max) {
-      ET *x = newA(ET, 2*max);
-      for (int j=0; j<top; j++) x[j] = vals[j];
-      free(vals);
-      vals = x;
-      max = 2*max;
-    }
-    vals[top++] = v;
-  }
-  void clear() {top = 0;}
-  intT size() { return top;}
-  ET operator [] (intT i) {return vals[i];}
-  void del() {free(vals);}
-  ~myVector() {free(vals);}
-};
+// template <class ET>
+// struct myVector {
+//   ET* vals;
+//   intT max, top;
+//   myVector() {
+//     top = 0;
+//     max = 50;
+//     vals = newA(ET, max);
+//   }
+//   void push_back(ET v) {
+//     if (top == max) {
+//       ET *x = newA(ET, 2*max);
+//       for (int j=0; j<top; j++) x[j] = vals[j];
+//       free(vals);
+//       vals = x;
+//       max = 2*max;
+//     }
+//     vals[top++] = v;
+//   }
+//   void clear() {top = 0;}
+//   intT size() { return top;}
+//   ET operator [] (intT i) {return vals[i];}
+//   void del() {free(vals);}
+//   ~myVector() {free(vals);}
+// };
 
 // Holds vertex and simplex queues used to store the cavity created 
 // while searching from a vertex between when it is initially searched 
 // and later checked to see if all corners are reserved.
+template <typename point>
 struct Qs {
-  myVector<vertex*> vertexQ;
-  myVector<simplex> simplexQ;
+  vector<vertex<point>*> vertexQ;
+  vector<simplex<point>> simplexQ;
+  Qs() {
+    vertexQ.reserve(50);
+    simplexQ.reserve(50);
+  }
 };
 
 // A Queue for each vertex to be inserted in parallel to keep info
 // between the reserve and commit phases.
 // The size n puts a limit on how many can be run in parallel
-struct vertexQs {
-  Qs **qs;
-  int n;
-  vertexQs(int _n) {
-    n = _n;
-    qs = newA(Qs*, n);
-    for (intT i=0; i < n; i++) qs[i] = new Qs;
-  }
-  void del() { 
-    for (int i=0; i < n; i++) delete qs[i];
-    free(qs); 
-  }
-  Qs* operator [] (intT i) {return qs[i];}
-};
+

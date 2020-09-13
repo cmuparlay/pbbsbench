@@ -1,11 +1,7 @@
-include parallelDefs
+include common/parallelDefs
 
-# required files
-NEAREST_NEIGHBORS = geometry.h nearestNeighbors.h blockRadixSort.h quickSort.h transpose.h
-DELAUNAY = topology.h delaunayQs.h delaunayDefs.h delaunay.C 
-GLOBAL_REQUIRE = parallel.h sequence.h $(NEAREST_NEIGHBORS) $(DELAUNAY)
-LOCAL_REQUIRE = octTree.h
-OBJS = delaunay.o 
+BENCH = delaunay
+OBJS = delaunay.o
+REQUIRE = oct_tree.h neighbors.h delaunayQs.h common/topology.h
 
-include ../common/timeRequiredFiles
-include MakeBench
+include common/MakeBenchLink

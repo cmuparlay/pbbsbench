@@ -217,7 +217,7 @@ using namespace std;
 
   template <class coord>
   inline vector3d<coord> onParabola(vector2d<coord> v) {
-    return vect3d(v.x, v.y, v.x*v.x + v.y*v.y);}
+    return vector3d<coord>(v.x, v.y, v.x*v.x + v.y*v.y);}
 
   // Returns TRUE if the point d is inside the circle defined by the
   // points a, b, c. 

@@ -31,7 +31,7 @@
 // requires vertexT to have pointT and vectT typedefs
 template <class vtx, int max_k>
 struct k_nearest_neighbors {
-  using point = typename vtx::pointT;
+  using point = typename vtx::point_t;
   using fvect = typename point::vector;
   using o_tree = oct_tree<vtx>;
   using node = typename o_tree::node;
@@ -134,6 +134,13 @@ struct k_nearest_neighbors {
     if (report_stats) p->counter = nn.internal_cnt;
     for (int i=0; i < k; i++)
       p->ngh[i] = nn[i];
+  }
+  
+  vtx* nearest(vtx *p) {
+    kNN nn(p,1);
+    nn.k_nearest_rec(tree.get());
+    if (report_stats) p->counter = nn.internal_cnt;
+    return nn[0];
   }
 
 };
