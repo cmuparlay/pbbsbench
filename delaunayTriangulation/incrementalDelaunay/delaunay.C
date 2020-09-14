@@ -109,9 +109,8 @@ void reserve_for_insert(vertex_t *v, simplex_t t, Qs_t *q) {
   // the maximum id new vertex that tries to reserve a boundary vertex 
   // will have its id written.  reserve starts out as -1
   for (size_t i = 0; i < q->vertexQ.size(); i++) {
-    //cout << "trying to reserve: " << (q->vertexQ)[i]->reserve << ", " << v->id;
+    //cout << "trying to reserve: " << (q->vertexQ)[i]->reserve << ", " << v->id << endl;
     parlay::write_max(&((q->vertexQ)[i]->reserve), v->id, std::less<int>());
-    //cout << ", " << (q->vertexQ)[i]->reserve << endl;
   }
 }
 
@@ -129,7 +128,9 @@ bool insert(vertex_t *v, simplex_t t, Qs_t *q) {
     triang_t* t2 = t1 + 1;  
     // the following 3 lines do all the side effects to the mesh.
     t.split(v, t1, t2);
+    //cout << "just split: " << q->simplexQ.size() << endl;
     for (size_t i = 0; i<q->simplexQ.size(); i++) {
+      //cout << "flipping: " << i << endl;
       (q->simplexQ)[i].flip();
     }
   }
@@ -142,30 +143,28 @@ bool insert(vertex_t *v, simplex_t t, Qs_t *q) {
 //    CHECKING THE TRIANGULATION
 // *************************************************************
 
-// void checkDelaunay(tri *triangs, size_t n, size_t boundarySize) {
-//   size_t *bcount = newA(size_t,n);
-//   parallel_for(size_t j=0; j<n; j++) bcount[j] = 0;
-//   parallel_for (size_t i=0; i<n; i++) {
-//     if (triangs[i].initialized >= 0) {
-//       simplex t = simplex(&triangs[i],0);
-//       for (int i=0; i < 3; i++) {
-// 	simplex a = t.across();
-// 	if (a.valid()) {
-// 	  vertex* v = a.rotClockwise().firstVertex();
-// 	  if (!t.outside(v)) {
-// 	    cout << "Inside Out: "; v->pt.print(); t.print();}
-// 	  if (t.inCirc(v)) {
-// 	    cout << "In Circle Violation: "; v->pt.print(); t.print(); }
-// 	} else bcount[i]++;
-// 	t = t.rotClockwise();
-//       }
-//     }
-//   }
-//   if (boundarySize != sequence::plusReduce(bcount,n))
-//     cout << "Wrong boundary size: should be " << boundarySize 
-// 	 << " is " << bcount << endl;
-//   free(bcount);
-// }
+void checkDelaunay(sequence<triang_t> &Triangles, size_t boundary_size) {
+  size_t n = Triangles.size();
+  sequence<size_t> boundary_count(n, 0);
+  parallel_for (0, n, [&] (size_t i) {
+    if (Triangles[i].initialized >= 0) {
+      simplex_t t = simplex(&Triangles[i], 0);
+      for (int i=0; i < 3; i++) {
+	simplex_t a = t.across();
+	if (a.valid()) {
+	  vertex_t* v = a.rotClockwise().firstVertex();
+	  if (!t.outside(v)) {
+	    cout << "Inside Out: "; v->pt.print(); t.print();}
+	  if (t.inCirc(v)) {
+	    cout << "In Circle Violation: "; v->pt.print(); t.print(); }
+	} else boundary_count[i]++;
+	t = t.rotClockwise();
+      }
+    } });
+  if (boundary_size != reduce(boundary_count))
+    cout << "Wrong boundary size: should be " << boundary_size 
+	 << " is " << reduce(boundary_count) << endl;
+}
 
 // *************************************************************
 //    CREATING A BOUNDING CIRCULAR REGION AND FILL WITH INITIAL SIMPLICES
@@ -217,15 +216,15 @@ void incrementally_add_points(sequence<vertex_t*> v, vertex_t* start) {
   size_t n = v.size();
   
   // various structures needed for each parallel insertion
-  size_t max_block_size = (size_t) (n/200) + 1; // maximum number to try in parallel
-
+  size_t max_block_size = (size_t) (n/1000) + 1; // maximum number to try in parallel ??
+									  
   sequence<vertex_t*> done(n);  // holds all completed vertices
   sequence<vertex_t*> buffer(max_block_size);// initially empty, holds leftofvers from prev round
   sequence<vertex_t*> remain;  // holds remaining from previous round
   sequence<simplex_t> t(max_block_size);
   sequence<bool> flags(max_block_size);
-  sequence<Qs_t> VQ(max_block_size);
-
+  auto VQ = tabulate(max_block_size, [&] (size_t i) -> Qs_t {return Qs_t();});
+  
   // create a point location structure
   using KNN = k_nearest_neighbors<vertex_t,1>;
   sequence<vertex_t*> init(1,start);
@@ -244,15 +243,16 @@ void incrementally_add_points(sequence<vertex_t*> v, vertex_t* start) {
     // every once in a while create a new point location
     // structure using all points inserted so far
     if (num_done >= num_next_rebuild && num_done <= n/multiplier) {
-      cout << "size = " << num_done << endl;
+      // cout << "size = " << num_done << endl;
       auto vtxs = parlay::to_sequence(done.cut(0,num_done));
       knn = KNN(vtxs); // should change to pass slice
       num_next_rebuild *= multiplier;
     }
 
     // determine how many vertices to try in parallel
-    size_t num_round = std::min(1 + num_done/50, n-num_done);  // 50 is pulled out of a hat
-    // cout << "here 1: " << num_round << endl;
+    size_t num_round = std::min(std::min(1 + num_done/50, n-num_done), max_block_size);
+    // 50 is pulled out of a hat
+    // cout << "enter loop: " << rounds << ", " << num_round << ", " << num_done << ", " << num_remain << endl;
     
     // for trial vertices find containing triangle, determine cavity 
     // and reserve vertices on boundary of cavity
@@ -261,22 +261,22 @@ void incrementally_add_points(sequence<vertex_t*> v, vertex_t* start) {
       vertex_t *u = knn.nearest(buffer[j]);
       t[j] = find(buffer[j], simplex(u->t, 0));
       reserve_for_insert(buffer[j], t[j], &VQ[j]);});
-    //cout << "here 2" << endl;
     
     // For trial vertices check if they own their boundary and
     // update mesh if so.  flags[i] is 1 if failed (need to retry)
     parallel_for (0, num_round, [&] (size_t j) {
-      flags[j] = insert(buffer[j], t[j], &VQ[j]);});
+				  flags[j] = insert(buffer[j], t[j], &VQ[j]);});
     //cout << "here 3: " << flags[0] << endl;
-    
+
     // Pack failed vertices back onto Q and successful
     // ones up above (needed for point location structure)
-    remain = pack(buffer, flags);
+    remain = pack(buffer.cut(0,num_round), flags.cut(0,num_round));
     num_remain = remain.size();
     size_t num_done_in_round = num_round - num_remain;
-    cout << "finished " << num_done_in_round << " in round " << rounds << endl;
+    //cout << "finished " << num_done_in_round << " in round " << rounds << ", " << num_remain << endl;
     auto not_flags = delayed_seq<bool>(num_round, [&] (size_t i) -> bool {return !flags[i];});
-    pack_out(buffer, not_flags, done.cut(num_done, num_done + num_done_in_round));
+    //auto not_flags = tabulate(num_round, [&] (size_t i) -> bool {return !flags[i];});
+    pack_out(buffer.cut(0,num_round), not_flags, done.cut(num_done, num_done + num_done_in_round));
 
     num_failed += num_remain;
     num_done += num_done_in_round;
@@ -293,19 +293,19 @@ void incrementally_add_points(sequence<vertex_t*> v, vertex_t* start) {
 // *************************************************************
 
 triangles<point> delaunay(sequence<point> &P) {
-  timer t;
+  timer t("delaunay", false);
   t.start();
   size_t boundary_size = 10;
   size_t n = P.size();
 
   // All vertices needed
   size_t num_vertices = n + boundary_size;
-  sequence<vertex_t> Vertices(num_vertices);
+  auto Vertices = sequence<vertex_t>(num_vertices);
 
   // All triangles needed
   size_t boundary_triangles = (boundary_size - 2);
   size_t num_triangles = 2 * n + boundary_triangles;
-  sequence<triang_t> Triangles(num_triangles); 
+  auto Triangles = sequence<triang_t>(num_triangles); 
 
   // random permutation to put points in a random order
   sequence<size_t> perm = random_permutation<size_t>(n);
