@@ -126,6 +126,20 @@ struct k_nearest_neighbors {
 	}
       }
     }
+
+    // finds a point that is vaguely near
+    void near_rec(node* T) {
+      if (T->is_leaf()) {
+	auto &Vtx = T->Vertices();
+	for (int i = 0; i < T->size(); i++)
+	  if (Vtx[i] != vertex) update_nearest(Vtx[i]);
+      } else if (distance(T->Left()) < distance(T->Right())) {
+	near_rec(T->Left());
+      } else {
+	near_rec(T->Right());
+      }
+    }
+
   };
 
   void k_nearest(vtx *p, int k) {
@@ -140,6 +154,12 @@ struct k_nearest_neighbors {
     kNN nn(p,1);
     nn.k_nearest_rec(tree.get());
     if (report_stats) p->counter = nn.internal_cnt;
+    return nn[0];
+  }
+
+  vtx* near(vtx *p) {
+    kNN nn(p,1);
+    nn.near_rec(tree.get());
     return nn[0];
   }
 

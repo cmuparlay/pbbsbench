@@ -28,7 +28,6 @@
 #include "common/topology.h"
 #include "neighbors.h"
 #include "delaunay.h"
-#include "delaunayQs.h"
 
 using parlay::parallel_for;
 using parlay::sequence;
@@ -50,6 +49,16 @@ using simplex_t = simplex<point>;
 using triang_t = triangle<point>;
 using simplex_t = simplex<point>;
 using vect = typename point::vector;
+
+template <typename point>
+struct Qs {
+  vector<vertex<point>*> vertexQ;
+  vector<simplex<point>> simplexQ;
+  Qs() {
+    vertexQ.reserve(50);
+    simplexQ.reserve(50);
+  }
+};
 using Qs_t = Qs<point>;
 
 // *************************************************************
