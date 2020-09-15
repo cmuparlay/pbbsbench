@@ -1,0 +1,60 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Delaunay Refinement</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Delaunay Refinement (DR):</h2> 
+
+<p>
+Given a Delaunay triangulation in 2 dimensions, return a Delaunay triangulation
+that includes all original points plus additional points such that no triangle
+has an angle smaller than a threshold <strong>Theta</strong>.
+</p>
+
+<h3>Input and Output File Formats</h3>
+
+<p>
+Both the input and output need to be in the <a
+href="benchmarks/geometryIO.html">Triangles</a> file format.  The input
+must be a valid Delaunay triangulation of its points.  The output must
+include all input points, plus any number of additional points, and
+must be a valid Delaunay Triangulation of all its points.
+</p>
+
+<h3>Default Input Distributions</h3>
+
+Each distribution should be run for <tt>n=2,000,000</tt>.  
+For this benchmark the input triangulation is generated using a Delaunay
+triangulation on various point distributions.   These triangulations
+are generated using the PBBS code for Delaunay triangulations, which also adds
+in a small number of boundary points beyond the original input points.
+The point sets are non degenerate.
+<ul>
+<li>
+(1) Points selected at random uniformly within a unit circle.
+<blockquote>
+<tt>uniform -s -d 2 &lt;n&gt; &lt;tmpname&gt;</tt><br>
+<tt>delaunay -o &lt;filename&gt; &lt;tmpname&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) Points selected at random from the Kuzmin distribution.  This is a 2d
+version of the 3d Plummer distribution with points highly concentrated around the origin,
+but some points far off.
+<blockquote>
+<tt>plummer -d 2 &lt;n&gt; &lt;tmpname&gt;</tt><br>
+<tt>delaunay -o &lt;filename&gt; &lt;tmpname&gt;</tt>
+</blockquote>
+</li>
+</ul>
+
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

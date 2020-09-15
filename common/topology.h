@@ -57,8 +57,10 @@ struct triangle {
   void setV(vtx_t *v1, vtx_t *v2, vtx_t *v3) {
     vtx[0] = v1; vtx[1] = v2; vtx[2] = v3; }
   int locate(tri_t *t) {
-    for (int i=0; i < 3; i++)
+    for (int i=0; i < 3; i++) {
+      //cout << t << ", " << ngh[i] << endl;
       if (ngh[i] == t) return i;
+    }
     cout<<"did not locate back pointer in triangulation\n";
     abort(); // did not find
   }

@@ -21,49 +21,39 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <iostream>
-#include "float.h"
 #include <algorithm>
-#include <cstring>
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
+#include "common/get_time.h"
 #include "common/geometry.h"
-#include "common/topology.h"
 #include "common/geometryIO.h"
-#include "common/parseCommandLine.h"
+#include "common/parse_command_line.h"
+#include "parlay/primitives.h"
+#include "refine.h"
 
-#include "delaunay.h"
-#include "common/topology_from_triangles.h"
 using namespace std;
 using namespace benchIO;
 
-using vertex_t = vertex<point>;
-using simplex_t = simplex<point>;
-using triang_t = triangle<point>;
+void timeRefine(triangles<point> &Tri, int rounds, char* outFile) {
+  timer t;
+  triangles<point> R;
+  for (int i=0; i < rounds; i++) {
+    R.P.clear(); R.T.clear();
+    t.start();
+    R = refine(Tri);
+    t.next("");
+  }
 
-bool check(triangles<point> &Tri, parlay::sequence<point> &P) {
-  size_t m = Tri.numTriangles();
-  for (size_t i=0; i < P.size(); i++)
-    if (P[i].x != Tri.P[i].x || P[i].y != Tri.P[i].y) {
-      cout << "checkDelaunay: prefix of points don't match input at " 
-	   << i << endl;
-      cout << P[i] << " " << Tri.P[i] << endl;
-      return 0;
-    }
-  auto TriangsVertices = topology_from_triangles(Tri);
-  return check_delaunay(TriangsVertices.first, 10);
+  if (outFile != NULL) writeTrianglesToFile(R, outFile);
 }
-    
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,
-		"[-r <numtests>] <inFile> <outfile>");
-  pair<char*,char*> fnames = P.IOFileNames();
-  char* iFile = fnames.first;
-  char* oFile = fnames.second;
+  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] [-e] <inFile>");
+  char* iFile = P.getArgument(0);
+  char* oFile = P.getOptionValue("-o");
+  bool nodeelemfiles = P.getOption("-e");
+  int rounds = P.getOptionIntValue("-r",1);
 
-  parlay::sequence<point> PIn = readPointsFromFile<point>(iFile);
-  triangles<point> T = readTrianglesFromFile<point>(oFile,0);
-  check(T, PIn);
-
-  return 0;
+  
+  //if (nodeelemfiles) T = readTrianglesFromFileNodeEle(iFile);
+  triangles<point> T = readTrianglesFromFile<point>(iFile,0);
+  timeRefine(T, rounds, oFile);
 }

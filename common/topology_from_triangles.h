@@ -22,11 +22,11 @@
 
 #include <iostream>
 #include <algorithm>
-#include "parlay/hash_table.h"
-#include "parlay/primitives.h"
-#include "common/get_time.h"
-#include "common/geometry.h"
-#include "common/topology.h"
+#include "../parlay/hash_table.h"
+#include "../parlay/primitives.h"
+#include "get_time.h"
+#include "geometry.h"
+#include "topology.h"
 
 using parlay::parallel_for;
 using parlay::hash64;
@@ -72,21 +72,21 @@ EdgeTable makeEdgeTable(size_t m) {
   return EdgeTable(m,hashEdges());}
 
 std::pair<sequence<triang_t>,sequence<vertex_t>>
-topology_from_triangles(triangles<point> &Tri) {
+topology_from_triangles(triangles<point> &Tri, size_t extra_points = 0) {
   size_t n = Tri.numPoints();
   size_t m = Tri.numTriangles();
 
-  auto V = tabulate(n, [&] (size_t i) {
-     return vertex_t(Tri.P[i], i);});
+  auto V = tabulate(n + extra_points, [&] (size_t i) {
+    return (i < n) ? vertex_t(Tri.P[i], i) : vertex_t();});
 
-  sequence<triang_t> Triangs(m);
+  sequence<triang_t> Triangs(m + 2 * extra_points);
   sequence<edge> E(m*3);
   EdgeTable ET = makeEdgeTable(m*6);
   parallel_for (0, m, [&] (size_t i) {
     for (int j=0; j<3; j++) {
       E[i*3 + j] = edge(index_pair(Tri.T[i][j], Tri.T[i][(j+1)%3]), &Triangs[i]);
       ET.insert(&E[i*3+j]);
-      Triangs[i].vtx[(j+2)%3] = &v[Tri.T[i][j]];
+      Triangs[i].vtx[(j+2)%3] = &V[Tri.T[i][j]];
     }});
 
   parallel_for (0, m, [&] (size_t i) {
@@ -104,7 +104,7 @@ topology_from_triangles(triangles<point> &Tri) {
       }
     }
   });
-  return std::pair(Triangs,V);
+  return std::pair(std::move(Triangs),std::move(V));
 }
 
 // Note that this is not currently a complete test of correctness

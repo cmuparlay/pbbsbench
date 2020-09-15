@@ -24,35 +24,51 @@
 #include "float.h"
 #include <algorithm>
 #include <cstring>
-#include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
-#include "common/topology.h"
 #include "common/geometryIO.h"
-#include "common/parseCommandLine.h"
-
-#include "delaunay.h"
+#include "common/topology.h"
+#include "common/parse_command_line.h"
+#include "refine.h"
 #include "common/topology_from_triangles.h"
-using namespace std;
+
+using std::cout;
+using std::endl;
+using parlay::sequence;
+using parlay::tabulate;
+using parlay::reduce;
+
 using namespace benchIO;
 
-using vertex_t = vertex<point>;
-using simplex_t = simplex<point>;
-using triang_t = triangle<point>;
+#define MIN_ANGLE 30.0
 
-bool check(triangles<point> &Tri, parlay::sequence<point> &P) {
-  size_t m = Tri.numTriangles();
-  for (size_t i=0; i < P.size(); i++)
-    if (P[i].x != Tri.P[i].x || P[i].y != Tri.P[i].y) {
-      cout << "checkDelaunay: prefix of points don't match input at " 
-	   << i << endl;
-      cout << P[i] << " " << Tri.P[i] << endl;
-      return 0;
-    }
-  auto TriangsVertices = topology_from_triangles(Tri);
-  return check_delaunay(TriangsVertices.first, 10);
+bool skinnyTriangle(triangle<point> *t) {
+  if (minAngleCheck(t->vtx[0]->pt, t->vtx[1]->pt, t->vtx[2]->pt, MIN_ANGLE))
+    return 1;
+  return 0;
 }
-    
+
+// double angle(tri *t) {
+//   return min(angle(t->vtx[0]->pt, t->vtx[1]->pt, t->vtx[2]->pt),
+// 	     min(angle(t->vtx[1]->pt, t->vtx[0]->pt, t->vtx[2]->pt),
+// 		 angle(t->vtx[2]->pt, t->vtx[0]->pt, t->vtx[1]->pt)));
+// }
+
+bool check(triangles<point> &Tri) {
+  size_t m = Tri.numTriangles();
+  sequence<vertex<point>> Vertices;
+  sequence<triangle<point>> Triangles;
+  std::tie(Triangles,Vertices) = topology_from_triangles(Tri);
+  if (check_delaunay(Triangles, 10)) return 1;
+  
+  size_t num_bad = reduce(tabulate(m, [&] (size_t i) -> size_t {
+					return skinnyTriangle(&Triangles[i]);}));
+  if (num_bad > 0) {
+    cout << "Delaunay refine check: " << num_bad << " skinny triangles" << endl;
+    return 1;
+  }
+  return 0;
+}
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,
@@ -61,9 +77,6 @@ int main(int argc, char* argv[]) {
   char* iFile = fnames.first;
   char* oFile = fnames.second;
 
-  parlay::sequence<point> PIn = readPointsFromFile<point>(iFile);
   triangles<point> T = readTrianglesFromFile<point>(oFile,0);
-  check(T, PIn);
-
-  return 0;
+  return check(T);
 }
