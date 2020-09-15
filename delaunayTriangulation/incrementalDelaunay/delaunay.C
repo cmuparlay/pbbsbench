@@ -47,7 +47,6 @@ using std::endl;
 using vertex_t = vertex<point>;
 using simplex_t = simplex<point>;
 using triang_t = triangle<point>;
-using simplex_t = simplex<point>;
 using vect = typename point::vector;
 
 template <typename point>
@@ -152,7 +151,7 @@ bool insert(vertex_t *v, simplex_t t, Qs_t *q) {
 //    CHECKING THE TRIANGULATION
 // *************************************************************
 
-void checkDelaunay(sequence<triang_t> &Triangles, size_t boundary_size) {
+void check_delaunay(sequence<triang_t> &Triangles, size_t boundary_size) {
   size_t n = Triangles.size();
   sequence<size_t> boundary_count(n, 0);
   parallel_for (0, n, [&] (size_t i) {
@@ -341,7 +340,7 @@ triangles<point> delaunay(sequence<point> &P) {
   incrementally_add_points(V, v0);
   t.next("add points");
 
-  //if (CHECK) checkDelaunay(Triangles, boundary_size);
+  if (CHECK) check_delaunay(Triangles, boundary_size);
 
   // just the three corner ids for each triangle
   auto result_triangles = tabulate(num_triangles, [&] (size_t i) -> tri {
@@ -351,7 +350,9 @@ triangles<point> delaunay(sequence<point> &P) {
 
   // just the points, including the added boundary points
   auto result_points = tabulate(num_vertices, [&] (size_t i) {
-    return (i < n) ? P[i] : Vertices[i].pt;});
+    point r = (i < n) ? P[i] : Vertices[i].pt;
+    //cout << r[0] << ", " << r[1] << endl;
+    return r;});
 
   t.next("generate output");
 

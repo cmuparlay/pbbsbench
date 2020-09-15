@@ -31,11 +31,13 @@
 #include "common/geometryIO.h"
 #include "common/parseCommandLine.h"
 #include "delaunay.h"
+#include "topology_from_triangles.h"
 using namespace std;
 using namespace benchIO;
 
-// Implemented in topologyFromTri.C
-bool checkDelaunay(parlay::sequence<tri> &triangs, long boundarySize);
+using vertex_t = vertex<point>;
+using simplex_t = simplex<point>;
+using triang_t = triangle<point>;
 
 bool check(triangles<point> &Tri, parlay::sequence<point> &P) {
   size_t m = Tri.numTriangles();
@@ -46,10 +48,8 @@ bool check(triangles<point> &Tri, parlay::sequence<point> &P) {
       cout << P[i] << " " << Tri.P[i] << endl;
       return 0;
     }
-  //vertex* V = NULL;
-  //tri* Triangs = NULL;
-  //topologyFromTriangles(Tri, &V, &Triangs);
-  return true; //checkDelaunay(Triangs, m, 10);
+  auto Triangs = topology_from_triangles(Tri);
+  return check_delaunay(Triangs, 10);
 }
     
 
@@ -59,9 +59,6 @@ int main(int argc, char* argv[]) {
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
   char* oFile = fnames.second;
-
-  // number of random points to test
-  int r = P.getOptionIntValue("-r",10);
 
   parlay::sequence<point> PIn = readPointsFromFile<point>(iFile);
   triangles<point> T = readTrianglesFromFile<point>(oFile,0);

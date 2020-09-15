@@ -58,22 +58,22 @@ using namespace benchIO;
     xToString(s+lx+ly+2, a.z);
   }
 
+  // inline int xToStringLen(tri a) { 
+  //   return xToStringLen(a[0]) + xToStringLen(a[1]) + xToStringLen(a[2]) + 2;
+  // }
+
+  // inline void xToString(char* s, tri a) { 
+  //   int lx = xToStringLen(a[0]);
+  //   int ly = xToStringLen(a[1]);
+  //   xToString(s, a[0]);
+  //   s[lx] = ' ';
+  //   xToString(s+lx+1, a[1]);
+  //   s[lx+ly+1] = ' ';
+  //   xToString(s+lx+ly+2, a[2]);
+  // }
+
 namespace benchIO {
   using namespace std;
-
-  // inline int xToStringLen(triangle a) { 
-  //   return xToStringLen(a.C[0]) + xToStringLen(a.C[1]) + xToStringLen(a.C[2]) + 2;
-  // }
-
-  // inline void xToString(char* s, triangle a) { 
-  //   int lx = xToStringLen(a.C[0]);
-  //   int ly = xToStringLen(a.C[1]);
-  //   xToString(s, a.C[0]);
-  //   s[lx] = ' ';
-  //   xToString(s+lx+1, a.C[1]);
-  //   s[lx+ly+1] = ' ';
-  //   xToString(s+lx+ly+2, a.C[2]);
-  // }
 
   string HeaderPoint2d = "pbbs_sequencePoint2d";
   string HeaderPoint3d = "pbbs_sequencePoint3d";
@@ -160,8 +160,8 @@ namespace benchIO {
       abort();
     }
 
-    auto pts_slice = W.cut(headerSize, headerSize + n);
-    auto tri_slice = W.cut(headerSize + n, W.size());
+    auto pts_slice = W.cut(headerSize, headerSize + d * n);
+    auto tri_slice = W.cut(headerSize + d * n, W.size());
     parlay::sequence<pointT> Pts = parsePoints<pointT>(pts_slice);
     auto Tri = parlay::tabulate(m, [&] (size_t i ) -> tri {
 				    return {atol(tri_slice[3*i]),
@@ -181,6 +181,7 @@ namespace benchIO {
     file << Tr.numPoints() << endl; 
     file << Tr.numTriangles() << endl; 
     writeSeqToStream(file, Tr.P);
+    //writeSeqToStream(file, Tr.T);
     auto A = parlay::tabulate(3*Tr.numTriangles(), [&] (size_t i) -> int {
       						     return (Tr.T[i/3])[i%3];});
     writeSeqToStream(file, A);
