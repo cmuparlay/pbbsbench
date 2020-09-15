@@ -71,13 +71,13 @@ using EdgeTable = hashtable<hashEdges>;
 EdgeTable makeEdgeTable(size_t m) {
   return EdgeTable(m,hashEdges());}
 
-sequence<triang_t> topology_from_triangles(triangles<point> &Tri) {
+std::pair<sequence<triang_t>,sequence<vertex_t>>
+topology_from_triangles(triangles<point> &Tri) {
   size_t n = Tri.numPoints();
   size_t m = Tri.numTriangles();
 
-  auto v = tabulate(n, [&] (size_t i) {
+  auto V = tabulate(n, [&] (size_t i) {
      return vertex_t(Tri.P[i], i);});
-
 
   sequence<triang_t> Triangs(m);
   sequence<edge> E(m*3);
@@ -104,7 +104,7 @@ sequence<triang_t> topology_from_triangles(triangles<point> &Tri) {
       }
     }
   });
-  return Triangs;
+  return std::pair(Triangs,V);
 }
 
 // Note that this is not currently a complete test of correctness

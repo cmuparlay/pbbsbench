@@ -35,7 +35,7 @@ using namespace benchIO;
 //  TIMING
 // *************************************************************
 
-void timeDelaunay(parlay::sequence<point> pts, int rounds, char* outFile) {
+void timeDelaunay(parlay::sequence<point> &pts, int rounds, char* outFile) {
   timer t;
   triangles<point> R;
   for (int i=0; i < rounds; i++) {
