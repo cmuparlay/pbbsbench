@@ -131,7 +131,7 @@ namespace benchIO {
     while (offset < n) {
       // Generates a string for a sequence of size at most bsize
       // and then wrties it to the output stream
-      parlay::sequence<char> S = seqToString(A.subseq(offset, min(offset + bsize, n)));
+      parlay::sequence<char> S = seqToString(A.cut(offset, min(offset + bsize, n)));
       os.write(S.begin(), S.size()-1);
       offset += bsize;
     }
