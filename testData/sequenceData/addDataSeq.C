@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   elementType dataDT = elementTypeFromString(P.getOptionValue("-t","int"));
 
   auto S = get_tokens(ifile);
-  elementType dt = elementTypeFromString(S[0]);
+  elementType dt = elementTypeFromHeader(S[0]);
   size_t n = S.size() - 1;
   if (dataDT == none) dataDT = dt;
 

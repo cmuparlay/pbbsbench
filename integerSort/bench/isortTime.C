@@ -45,8 +45,8 @@ void loop(int rounds, F initf, G runf) {
   
 template <class T>
 void timeIntegerSort(sequence<sequence<char>> In, int rounds, int bits, char* outFile) {
-  size_t n = In.size()-1;
-  auto in_vals = parseElements<T>(In.cut(1, n+1));
+  auto in_vals = parseElements<T>(In.cut(1, In.size()));
+  size_t n = in_vals.size();
   sequence<T> R;
   loop(rounds,
        [&] () {R.clear();},
@@ -62,7 +62,8 @@ int main(int argc, char* argv[]) {
   int bits = P.getOptionIntValue("-b",0);
 
   auto In = get_tokens(iFile);
-  elementType in_type = elementTypeFromString(In[0]);
+  elementType in_type = elementTypeFromHeader(In[0]);
+  cout << In[0] << ", " << seqHeader(in_type) << endl;
 
   switch (in_type) {
   case intType: 

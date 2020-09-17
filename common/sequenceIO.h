@@ -32,7 +32,9 @@
 
 namespace benchIO {
   using namespace std;
-  using namespace parlay;
+  using parlay::sequence;
+  using parlay::tabulate;
+  using parlay::make_slice;
 
   typedef unsigned int uint;
   typedef pair<int,int> intPair;
@@ -73,6 +75,18 @@ namespace benchIO {
   }
 
   template <typename Range>
+  elementType elementTypeFromHeader(Range R) {
+    string s(R.begin(), R.end());
+    if (s == "sequenceInt") return intType;
+    else if (s == "sequenceDouble") return doubleT;
+    else if (s == "sequenceChar") return stringT;
+    else if (s == "sequenceIntPair") return intPairT;
+    else if (s == "sequenceStringIntPair") return stringIntPairT;
+    else if (s == "sequenceDoublePair") return doublePairT;
+    else return none;
+  }
+
+  template <typename Range>
   elementType elementTypeFromString(Range R) {
     string s(R.begin(), R.end());
     if (s == "double") return doubleT;
@@ -81,10 +95,10 @@ namespace benchIO {
     else return none;
   }
 
-  long read_long(parlay::sequence<char> S) {
+  long read_long(sequence<char> S) {
     return parlay::char_range_to_l(S);}
 
-  double read_double(parlay::sequence<char> S) {
+  double read_double(sequence<char> S) {
     return parlay::char_range_to_d(S);}
 
   using charseq_slice = decltype(make_slice(sequence<sequence<char>>()));
@@ -136,8 +150,8 @@ namespace benchIO {
     return sequence<stringIntPair>(0);
   }  
 
-  parlay::sequence<parlay::sequence<char>> get_tokens(char const *fileName) {
-    parlay::sequence<char> S = parlay::char_seq_from_file(fileName);
+  sequence<sequence<char>> get_tokens(char const *fileName) {
+    sequence<char> S = parlay::char_seq_from_file(fileName);
     return parlay::tokens(S, benchIO::is_space);
   }
 
@@ -161,7 +175,7 @@ namespace benchIO {
   }
   
   template <class T>
-  int writeSequenceToFile(parlay::sequence<T> const &A, char const *fileName) {
+  int writeSequenceToFile(sequence<T> const &A, char const *fileName) {
     elementType tp = dataType(A[0]);
     return writeSeqToFile(seqHeader(tp), A, fileName);
   }

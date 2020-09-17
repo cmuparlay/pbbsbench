@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstring>
 #include "parlay/parallel.h"
+#include "parlay/parallel_io.h"
 #include "parlay/primitives.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
@@ -34,17 +35,20 @@ template <class T, class LESS>
 void checkSort(sequence<sequence<char>> In,
 	       sequence<sequence<char>> Out,
 	       LESS less) {
-  size_t n = In.size()-1;
-  auto in_vals = parseElements<T>(In.cut(1, n+1));
-  auto out_vals = parseElements<T>(Out.cut(1, n+1));
+  sequence<T> in_vals = parseElements<T>(In.cut(1, In.size()));
+  sequence<T> out_vals = parseElements<T>(Out.cut(1, In.size()));
+  size_t n = in_vals.size();
   auto sorted_in = parlay::stable_sort(in_vals, less);
   size_t error = n;
-  parallel_for (0, n, [&] (size_t i) {
-      if (in_vals[i] != sorted_in[i]) 
+  parlay::parallel_for (0, n, [&] (size_t i) {
+      if (out_vals[i] != sorted_in[i]) 
 	parlay::write_min(&error,i,std::less<size_t>());
   });
   if (error < n) {
-    cout << "integer sort: check failed at location i=" << error << endl;
+    auto expected = parlay::to_char_seq(sorted_in[error]);
+    auto got = parlay::to_char_seq(out_vals[error]);
+    cout << "integer sort: check failed at location i=" << error
+	 << " expected " << expected << " got " << got << endl;
     abort();
   }
 }
@@ -56,11 +60,11 @@ int main(int argc, char* argv[]) {
   char* outfile = fnames.second;
   
   auto In = get_tokens(infile);
-  elementType in_type = elementTypeFromString(In[0]);
+  elementType in_type = elementTypeFromHeader(In[0]);
   size_t in_n = In.size() - 1;
 
   auto Out = get_tokens(outfile);
-  elementType out_type = elementTypeFromString(Out[0]);
+  elementType out_type = elementTypeFromHeader(Out[0]);
   size_t out_n = In.size() - 1;
 
   if (in_type != out_type) {
