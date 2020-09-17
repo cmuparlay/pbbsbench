@@ -164,9 +164,9 @@ namespace benchIO {
     auto tri_slice = W.cut(headerSize + d * n, W.size());
     parlay::sequence<pointT> Pts = parsePoints<pointT>(pts_slice);
     auto Tri = parlay::tabulate(m, [&] (size_t i ) -> tri {
-				    return {atol(tri_slice[3*i]),
-					    atol(tri_slice[3*i+1]),
-					    atol(tri_slice[3*i+2])};});
+				     return {(int) atol(tri_slice[3*i]),
+					     (int) atol(tri_slice[3*i+1]),
+					     (int) atol(tri_slice[3*i+2])};});
     return triangles<pointT>(Pts,Tri);
   }
 

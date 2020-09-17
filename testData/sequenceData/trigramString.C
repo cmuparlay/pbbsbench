@@ -1,6 +1,6 @@
 #include "parlay/parallel.h"
 #include "common/parse_command_line.h"
-#include "parlay/string_basics.h"
+#include "parlay/parallel_io.h"
 #include "common/sequenceIO.h"
 using namespace benchIO;
 

@@ -31,37 +31,20 @@ using namespace std;
 using namespace benchIO;
 
 template <class T, class LESS>
-void checkIntegerSort(void* In, void* Out, size_t n, LESS less) {
-  T* A = (T*) In;
-  T* B = (T*) Out;
-  auto C = parlay::stable_sort(make_slice(A,A+n), less);
-  //std::stable_sort(A, A+n, less);
+void checkSort(sequence<sequence<char>> In,
+	       sequence<sequence<char>> Out,
+	       LESS less) {
+  size_t n = In.size()-1;
+  auto in_vals = parseElements<T>(In.cut(1, n+1));
+  auto out_vals = parseElements<T>(Out.cut(1, n+1));
+  auto sorted_in = parlay::stable_sort(in_vals, less);
   size_t error = n;
   parallel_for (0, n, [&] (size_t i) {
-      if (B[i] != C[i]) 
+      if (in_vals[i] != sorted_in[i]) 
 	parlay::write_min(&error,i,std::less<size_t>());
-    });
+  });
   if (error < n) {
-    cout << "integer sort: check failed at i=" << error << endl;
-    abort();
-  }
-}
-
-template <class T, class LESS>
-void checkIntegerSortPair(void* In, void* Out, size_t n, LESS less) {
-  T* A = (T*) In;
-  T* B = (T*) Out;
-  auto C = parlay::stable_sort(make_slice(A,A+n), less);  
-  //std::stable_sort(A, A+n, less);
-  size_t error = n;
-  parallel_for (0, n, [&] (size_t i) {
-      if (B[i] != C[i]) 
-	parlay::write_min(&error,i,std::less<size_t>());
-    });
-  if (error < n) {
-    cout << "integer sort: check failed at i=" << error << endl;
-    size_t i = error;
-    cout << A[i].first << ", " <<  A[i].second << ", " << B[i].first << ", " <<  B[i].second <<endl;
+    cout << "integer sort: check failed at location i=" << error << endl;
     abort();
   }
 }
@@ -69,28 +52,37 @@ void checkIntegerSortPair(void* In, void* Out, size_t n, LESS less) {
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<inFile> <outFile>");
   pair<char*,char*> fnames = P.IOFileNames();
-  seqData In = readSequenceFromFile(fnames.first);
-  seqData Out = readSequenceFromFile(fnames.second);
-  size_t n = In.n;
-  elementType dt = In.dt;
-  if (dt != Out.dt) {
-    cout << argv[0] << ": types don't match" << endl;
-    return(1);
-  }
-  if (n != Out.n) {
-    cout << argv[0] << ": lengths dont' match" << endl;
-    return(1);
-  }
-  using uint = unsigned int;
-  using upair = pair<uint,int>;
-  auto less = [&] (uint a, uint b) {return a < b;};
-  auto lessp = [&] (upair a, upair b) {return a.first < b.first;};
+  char* infile = fnames.first;
+  char* outfile = fnames.second;
   
-  switch (dt) {
-  case intType:
-    checkIntegerSort<uint>(In.A, Out.A, n, less); break;
-  case intPairT:
-    checkIntegerSortPair<upair>(In.A, Out.A, n, lessp); break;
+  auto In = get_tokens(infile);
+  elementType in_type = elementTypeFromString(In[0]);
+  size_t in_n = In.size() - 1;
+
+  auto Out = get_tokens(outfile);
+  elementType out_type = elementTypeFromString(Out[0]);
+  size_t out_n = In.size() - 1;
+
+  if (in_type != out_type) {
+    cout << argv[0] << ": in and out types don't match" << endl;
+    return(1);
+  }
+  
+  if (in_n != out_n) {
+    cout << argv[0] << ": in and out lengths don't match" << endl;
+    return(1);
+  }
+
+  auto less = [&] (uint a, uint b) {return a < b;};
+  auto lessp = [&] (uintPair a, uintPair b) {return a.first < b.first;};
+  
+  switch (in_type) {
+  case intType: 
+    checkSort<uint>(In, Out, less);
+    break; 
+  case intPairT: 
+    checkSort<uintPair>(In, Out, lessp);
+    break; 
   default:
     cout << argv[0] << ": input files not of right type" << endl;
     return(1);

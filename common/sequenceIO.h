@@ -28,12 +28,13 @@
 #include <cstring>
 #include "IO.h"
 #include "../parlay/primitives.h"
-#include "../parlay/string_basics.h"
+#include "../parlay/parallel_io.h"
 
 namespace benchIO {
   using namespace std;
   using namespace parlay;
-  
+
+  typedef unsigned int uint;
   typedef pair<int,int> intPair;
   typedef pair<unsigned int, unsigned int> uintPair;
   typedef pair<unsigned int, int> uintIntPair;
@@ -43,10 +44,11 @@ namespace benchIO {
 
   enum elementType { none, intType, intPairT, doublePairT,
 		     stringIntPairT, doubleT, stringT};
+  
   //elementType dataType(long a) { return longT;}
   elementType dataType(long a) { return intType;}
   elementType dataType(int a) { return intType;}
-  elementType dataType(unsigned int a) { return intType;}
+  elementType dataType(uint a) { return intType;}
   elementType dataType(double a) { return doubleT;}
   elementType dataType(char* a) { return stringT;}
   elementType dataType(intPair a) { return intPairT;}
@@ -70,70 +72,94 @@ namespace benchIO {
     }
   }
 
-  elementType elementTypeFromString(string s) {
+  template <typename Range>
+  elementType elementTypeFromString(Range R) {
+    string s(R.begin(), R.end());
     if (s == "double") return doubleT;
     else if (s == "string") return stringT;
     else if (s == "int") return intType;
     else return none;
   }
 
-  struct seqData { 
-    void* A;
-    long n;
-    elementType dt;
-    parlay::sequence<char> s;  // backup store if A has pointers to strings
-    seqData(void* A, long n, elementType dt) 
-      : A(A), s(parlay::sequence<char>()), n(n), dt(dt) {}
-    seqData(void* A, parlay::sequence<char> s, long n, elementType dt)
-      : A(A), s(std::move(s)), n(n), dt(dt) {}
-    void clear() {free(A); A = NULL; n = 0;}
-  };
+  long read_long(parlay::sequence<char> S) {
+    return parlay::char_range_to_l(S);}
 
-  template <class T>
-  void* toArray(parlay::sequence<T> &S) {
-    T* A = (T*) malloc(S.size()*sizeof(T)); // yes, primitive
-    parallel_for(0, S.size(), [&] (size_t i) {
-	A[i] = S[i];});
-    return (void*) A;
+  double read_double(parlay::sequence<char> S) {
+    return parlay::char_range_to_d(S);}
+
+  using charseq_slice = decltype(make_slice(sequence<sequence<char>>()));
+  
+  template <typename T>
+  sequence<T> parseElements(charseq_slice S);
+
+  // specialized parsing functions
+  template<>
+  sequence<double> parseElements<double>(charseq_slice S) {
+    return tabulate(S.size(), [&] (long i) -> double {return read_double(S[i]);});
   }
-		
-  seqData readSequenceFromFile(char const *fileName) {
+
+  template<>
+  sequence<int> parseElements<int>(charseq_slice S) {
+    return tabulate(S.size(), [&] (long i) -> int {return (int) read_long(S[i]);});
+  }
+
+  template<>
+  sequence<uint> parseElements<uint>(charseq_slice S) {
+    return tabulate(S.size(), [&] (long i) -> uint {return (uint) read_long(S[i]);});
+  }
+
+  template<>
+  sequence<intPair> parseElements<intPair>(charseq_slice S) {
+    return tabulate((S.size())/2, [&] (long i) -> intPair {
+      return std::make_pair((int) read_long(S[2*i]), (int) read_long(S[2*i+1]));});
+  }
+
+  template<>
+  sequence<uintPair> parseElements<uintPair>(charseq_slice S) {
+    return tabulate((S.size())/2, [&] (long i) -> uintPair {
+      return std::make_pair((uint) read_long(S[2*i]), (uint) read_long(S[2*i+1]));});
+  }
+
+  template<>
+  sequence<doublePair> parseElements<doublePair>(charseq_slice S) {
+    return tabulate((S.size())/2, [&] (long i) -> doublePair {
+      return std::make_pair(read_double(S[2*i]), read_double(S[2*i+1]));});
+  }
+
+  template<>
+  sequence<char*> parseElements<char*>(charseq_slice S) {
+    return sequence<char*>(0);
+  }
+
+  template<>
+  sequence<stringIntPair> parseElements<stringIntPair>(charseq_slice S) {
+    return sequence<stringIntPair>(0);
+  }  
+
+  parlay::sequence<parlay::sequence<char>> get_tokens(char const *fileName) {
     parlay::sequence<char> S = parlay::char_seq_from_file(fileName);
-    parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
-    char* header = W[0];
-    long n = W.size()-1;
-    auto read_long = [&] (size_t i) -> long {
-      return atoi(W[i]);};
-    auto read_double = [&] (size_t i) -> double {
-      return atof(W[i]);};
-    if (header == seqHeader(intType)) {
-      auto A = tabulate(n, [&] (long i) -> int {return read_long(i+1);});
-      return seqData(toArray(A), n, intType);
-    } else if (header == seqHeader(doubleT)) {
-      auto A = tabulate(n, [&] (long i) -> double {return read_double(i+1);});
-      return seqData(toArray(A), n, doubleT);
-    } else if (header == seqHeader(stringT)) {
-      auto A = tabulate(n, [&] (long i) -> char* {return W[i+1];});
-      return seqData(toArray(A), std::move(S), n, stringT);
-    } else if (header == seqHeader(intPairT)) {
-      n = n/2;
-      auto A = tabulate(n, [&] (long i) -> intPair {
-	  return std::make_pair(read_long(2*i+1), read_long(2*i+2));});
-      return seqData(toArray(A), n, intPairT);
-    } else if (header == seqHeader(doublePairT)) {
-      n = n/2;
-      auto A = tabulate(n, [&] (long i) -> doublePair {
-	  return std::make_pair(read_double(2*i+1), read_double(2*i+2));});
-      return seqData(toArray(A), n, doublePairT);
-    } else if (header == seqHeader(stringIntPairT)) {
-      n = n/2;
-      auto A = tabulate(n, [&] (long i) -> stringIntPair {
-	  return std::make_pair(W[2*i+1], read_long(2*i+2));});
-      return seqData(toArray(A), std::move(S), n, stringT);
-    }
-    abort();
+    return parlay::tokens(S, benchIO::is_space);
   }
 
+  template <typename T, typename CharRange>
+  void check_header(CharRange& S) {
+    T a;
+    string header(S[0].begin(), S[0].end());
+    string type_str = seqHeader(dataType(a));
+    if (header != type_str) {
+      cout << "bad header: expected " << type_str << " got " << header << endl;
+      abort();
+    }
+  }
+
+  // reads file, tokenizes and then dispatches to specialized parsing function
+  template <typename T>
+  sequence<T> readSequenceFromFile(char const *fileName) {
+    auto S = get_tokens(fileName);
+    check_header<T>(S[0]);
+    return parseElements<T>(S.cut(1,S.size()));
+  }
+  
   template <class T>
   int writeSequenceToFile(parlay::sequence<T> const &A, char const *fileName) {
     elementType tp = dataType(A[0]);

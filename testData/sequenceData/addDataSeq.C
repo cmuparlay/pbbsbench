@@ -28,10 +28,10 @@ using namespace dataGen;
 using namespace benchIO;
 
 template <class T2, class T1>
-sequence<pair<T1,T2>> addData(T1* A, size_t n, size_t range) {
+sequence<pair<T1,T2>> addData(sequence<T1> const &A, size_t range) {
   parlay::random r(23);
   using par = pair<T1,T2>;
-  auto R = parlay::tabulate(n, [&] (size_t i) -> par {
+  auto R = parlay::tabulate(A.size(), [&] (size_t i) -> par {
       return std::make_pair(A[i], (T2) (r.ith_rand(i) % range));;
     });
   return R;
@@ -42,10 +42,11 @@ int main(int argc, char* argv[]) {
   pair<char*,char*> fnames = P.IOFileNames();
   char* ifile = fnames.first;
   char* ofile = fnames.second;
-  seqData D = readSequenceFromFile(ifile);
-  elementType dt = D.dt;
-  size_t n = D.n;
   elementType dataDT = elementTypeFromString(P.getOptionValue("-t","int"));
+
+  auto S = get_tokens(ifile);
+  elementType dt = elementTypeFromString(S[0]);
+  size_t n = S.size() - 1;
   if (dataDT == none) dataDT = dt;
 
   char* rangeString = P.getOptionValue("-r");
@@ -55,24 +56,29 @@ int main(int argc, char* argv[]) {
   switch(dt) {
   case intType: 
     switch (dataDT) {
-    case intType: 
-      return writeSequenceToFile(addData<uint>((uint*) D.A, n, range),ofile);
+    case intType: {
+      auto x = tabulate(S.size()-1, [&] (long i) -> uint {return read_long(S[i+1]);});
+      return writeSequenceToFile(addData<uint>(x, range), ofile); }
     default:
       cout << "addData: not a valid type" << endl;
       return 1;
     }
   case doubleT: 
     switch (dataDT) {
-    case doubleT: 
-      return writeSequenceToFile(addData<double>((double*) D.A, n, range),ofile);
+    case doubleT: {
+      auto y = tabulate(S.size()-1, [&] (long i) -> double {return read_double(S[i+1]);});
+      return writeSequenceToFile(addData<double>(y, range), ofile);}
     default:
       cout << "addData: not a valid type" << endl;
       return 1;
     }
   case stringT: 
     switch (dataDT) {
-    case intType: 
-      return writeSequenceToFile(addData<uint>((char**) D.A, n, range),ofile);
+    case intType: {
+      auto z = tabulate(S.size()-1, [&] (long i) -> sequence<char> {return S[i+1];});
+      cout << "NYI" << endl;
+      return 1;}
+      //return writeSequenceToFile(addData<uint>(z, range), ofile);}
     default:
       cout << "addData: not a valid type" << endl;
       return 1;

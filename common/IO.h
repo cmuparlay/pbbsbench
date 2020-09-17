@@ -29,7 +29,7 @@
 #include <cstring>
 #include "../parlay/primitives.h"
 #include "../parlay/parallel.h"
-#include "../parlay/string_basics.h"
+#include "../parlay/parallel_io.h"
 
 namespace benchIO {
   using namespace std;
@@ -131,7 +131,7 @@ namespace benchIO {
     while (offset < n) {
       // Generates a string for a sequence of size at most bsize
       // and then wrties it to the output stream
-      parlay::sequence<char> S = seqToString(A.cut(offset, min(offset + bsize, n)));
+      parlay::sequence<char> S = seqToString(A.subseq(offset, min(offset + bsize, n)));
       os.write(S.begin(), S.size()-1);
       offset += bsize;
     }
@@ -196,15 +196,15 @@ namespace benchIO {
   template <class T>
   parlay::sequence<T> readIntSeqFromFile(char const *fileName) {
     parlay::sequence<char> S = parlay::char_seq_from_file(fileName);
-    parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
-    //parlay::sequence<parlay::slice<char*,char*>> W = parlay::tokens(S, is_space);
-    string header(W[0]);
+    //parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
+    auto W = parlay::tokens(S, is_space);
+    string header(W[0].begin(),W[0].end());
     if (header != intHeaderIO) {
       cout << "readIntSeqFromFile: bad input" << endl;
       abort();
     }
     long n = W.size()-1;
-    auto A = parlay::tabulate(n, [&] (long i) -> T {return atol(W[i+1]);});
+    auto A = parlay::tabulate(n, [&] (long i) -> T {return parlay::char_range_to_l(W[i+1]);});
     return A;
   }
 };
