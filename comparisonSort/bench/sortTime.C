@@ -31,41 +31,25 @@
 using namespace std;
 using namespace benchIO;
 
-template <class T, class CMP>
-void timeSort(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
+template <typename T, typename Less>
+int timeSort(sequence<sequence<char>> In, Less less, int rounds, bool permute, char* outFile) {
   timer t;
-  sequence<T> A = parlay::tabulate(n, [&] (size_t i) -> T {return Ap[i];});
-  if (permute) A = parlay::random_shuffle(A);
-  sequence<T> B(n);
-  parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
-  compSort(B.begin(), n, f); // run one sort to "warm things up"
-  for (int i=0; i < rounds; i++) {
-    parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
-    t.start();
-    compSort(B.begin(), n, f);
-    t.next("");
-  }
-  cout << endl;
-  if (outFile != NULL) writeSequenceToFile(B, outFile);
-}
+  sequence<T> A = parseElements<T>(In.cut(1, In.size()));
+  size_t n = A.size();
 
-template <class T, class CMP>
-void timeSortPair(T* Ap, size_t n, CMP f, int rounds, bool permute, char* outFile) {
-  timer t;
-  sequence<T> A = parlay::tabulate(n, [&] (size_t i) -> T {return Ap[i];});
   if (permute) A = parlay::random_shuffle(A);
+
   sequence<T> B(n);
-  parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
-  compSort(B.begin(), n, f); // run one sort to "warm things up"
+  parlay::parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
+  compSort(B.begin(), n, less); // run one sort to "warm things up"
   for (int i=0; i < rounds; i++) {
-    parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
+    parlay::parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
     t.start();
-    compSort(B.begin(), n, f);
+    compSort(B.begin(), n, less);
     t.next("");
   }
-  cout << endl;
-  cout << B[0].first << endl;
   if (outFile != NULL) writeSequenceToFile(B, outFile);
+  return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -74,33 +58,35 @@ int main(int argc, char* argv[]) {
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
   bool permute = P.getOption("-p");
-  seqData D = readSequenceFromFile(iFile);
-  size_t dt = D.dt;
 
-  using intpair = pair<long,long>;
-  using doublepair = pair<double,double>;
-  auto lesspair = [&] (doublePair a, doublePair b) {return a.first < b.first;};
+  auto In = get_tokens(iFile);
+  elementType in_type = elementTypeFromHeader(In[0]);
+  size_t n = In.size() - 1;
 
-  auto strless = [&] (char* a, char* b) {return strcmp(a,b) < 0;};
-  switch (dt) {
-  case intType:
-    timeSort((int*) D.A, D.n, std::less<int>(), rounds, permute, oFile);
-    break;
-  case doubleT:
-    timeSort((double*) D.A, D.n, std::less<double>(), rounds, permute, oFile);
-    break;
-  case intPairT:
-    cout << "here" << endl;
-    timeSort((intpair*) D.A, D.n, std::less<intpair>(), rounds, permute, oFile);
-    break;
-  case doublePairT:
-    timeSort((doublepair*) D.A, D.n, lesspair, rounds, permute, oFile);
-    break;    
-  case stringT:
-    timeSort((char**) D.A, D.n, strless, rounds, permute, oFile); 
-    break;
-  default:
-    cout << "comparisonSort: input file not of right type" << endl;
+  if (in_type == intType) {
+    return timeSort<int>(In, std::less<int>(), rounds, permute, oFile);
+  } else if (in_type == doubleT) {
+    return timeSort<double>(In, std::less<double>(), rounds, permute, oFile);
+  } else if (in_type == intPairT) {
+    using ipair = pair<int,int>;
+    auto less = [] (ipair a, ipair b) {return a.first < b.first;};
+    return timeSort<ipair>(In, less, rounds, permute, oFile);
+  } else if (in_type == doublePairT) {
+    using dpair = pair<double,double>;
+    auto less = [] (dpair a, dpair b) {return a.first < b.first;};
+    return timeSort<dpair>(In, less, rounds, permute, oFile);
+  } else if (in_type == stringT) {
+    using str = sequence<char>;
+    auto strless = [&] (str const &a, str const &b) {
+      auto sa = a.begin();
+      auto sb = b.begin();
+      auto ea = sa + min(a.size(),b.size());
+      while (sa < ea && *sa == *sb) {sa++; sb++;}
+      return sa == ea ? (a.size() < b.size()) : *sa < *sb;
+    };
+    return timeSort<str>(In, strless, rounds, permute, oFile); 
+  } else {
+    cout << "sortTime: input file not of right type" << endl;
     return(1);
   }
 }

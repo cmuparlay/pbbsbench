@@ -37,12 +37,14 @@ namespace benchIO {
   using parlay::make_slice;
 
   typedef unsigned int uint;
+  typedef sequence<char> charSeq;
   typedef pair<int,int> intPair;
   typedef pair<unsigned int, unsigned int> uintPair;
   typedef pair<unsigned int, int> uintIntPair;
   typedef pair<long,long> longPair;
-  typedef pair<char*,long> stringIntPair;
+  typedef pair<charSeq,long> stringIntPair;
   typedef pair<double,double> doublePair;
+
 
   enum elementType { none, intType, intPairT, doublePairT,
 		     stringIntPairT, doubleT, stringT};
@@ -52,7 +54,7 @@ namespace benchIO {
   elementType dataType(int a) { return intType;}
   elementType dataType(uint a) { return intType;}
   elementType dataType(double a) { return doubleT;}
-  elementType dataType(char* a) { return stringT;}
+  elementType dataType(charSeq a) { return stringT;}
   elementType dataType(intPair a) { return intPairT;}
   elementType dataType(uintPair a) { return intPairT;}
   elementType dataType(uintIntPair a) { return intPairT;}
@@ -141,14 +143,13 @@ namespace benchIO {
   }
 
   template<>
-  sequence<char*> parseElements<char*>(charseq_slice S) {
-    return sequence<char*>(0);
+  sequence<charSeq> parseElements<charSeq>(charseq_slice S) {
+    return parlay::to_sequence(S);
   }
 
-  template<>
-  sequence<stringIntPair> parseElements<stringIntPair>(charseq_slice S) {
-    return sequence<stringIntPair>(0);
-  }  
+  // sequence<stringIntPair> parseElements<stringIntPair>(charseq_slice S) {
+  //   return sequence<stringIntPair>(0);
+  // }  
 
   sequence<sequence<char>> get_tokens(char const *fileName) {
     sequence<char> S = parlay::char_seq_from_file(fileName);

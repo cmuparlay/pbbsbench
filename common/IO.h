@@ -68,6 +68,10 @@ namespace benchIO {
     return SA;
   }
 
+  inline int xToStringLen(parlay::sequence<char> const &a) { return a.size();}
+  inline void xToString(char* s, parlay::sequence<char> const &a) {
+    for (int i=0; i < a.size(); i++) s[i] = a[i];}
+
   inline int xToStringLen(long a) { return 21;}
   inline void xToString(char* s, long a) { sprintf(s,"%ld",a);}
 

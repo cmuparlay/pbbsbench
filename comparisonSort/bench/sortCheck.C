@@ -30,69 +30,74 @@
 using namespace std;
 using namespace benchIO;
 
+template <typename T, typename LESS, typename Key>
+void check_sort(sequence<sequence<char>> In,
+		sequence<sequence<char>> Out,
+		LESS less, Key f) {
+  sequence<T> in_vals = parseElements<T>(In.cut(1, In.size()));
+  sequence<T> out_vals = parseElements<T>(Out.cut(1, In.size()));
+  size_t n = in_vals.size();
+  auto sorted_in = parlay::stable_sort(in_vals, less);
+  parlay::internal::quicksort(make_slice(in_vals), less);
+
+  size_t error = n;
+  parlay::parallel_for (0, n, [&] (size_t i) {
+    if (f(in_vals[i]) != f(out_vals[i])) 
+	parlay::write_min(&error,i,std::less<size_t>());
+  });
+  
+  if (error < n) {
+    auto expected = parlay::to_char_seq(f(in_vals[error]));
+    auto got = parlay::to_char_seq(f(out_vals[error]));
+    cout << "comparison sort: check failed at location i=" << error
+	 << " expected " << expected << " got " << got << endl;
+    abort();
+  }
+}
+
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<infile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
-  seqData In = readSequenceFromFile(fnames.first);
-  seqData Out = readSequenceFromFile(fnames.second);
-  size_t n = In.n;
-  elementType dt = In.dt;
-  if (dt != Out.dt) {
-    cout << "compSortCheck: types don't match" << endl;
+  char* infile = fnames.first;
+  char* outfile = fnames.second;
+
+  auto In = get_tokens(infile);
+  elementType in_type = elementTypeFromHeader(In[0]);
+  size_t in_n = In.size() - 1;
+
+  auto Out = get_tokens(outfile);
+  elementType out_type = elementTypeFromHeader(Out[0]);
+  size_t out_n = In.size() - 1;
+
+  if (in_type != out_type) {
+    cout << "sortCheck: types don't match" << endl;
     return(1);
   }
-  if (n != Out.n) {
-    cout << "compSortCheck: lengths dont' match" << endl;
+  if (in_n != out_n) {
+    cout << "sortCheck: lengths dont' match" << endl;
     return(1);
   }
 
-  if (dt == doubleT) {
-    double* A = (double*) In.A;
-    double* B = (double*) Out.A;
-    auto less = [&] (double a, double b) {return a < b;};
-    parlay::internal::quicksort(A, n, less);
-    for(size_t i=0; i < n; i++) {
-      if (A[i] != B[i]) {
-	cout << "compSortCheck: check failed at i=" << i << endl;
-	abort();
-      }
-    }
-  } else if (dt == doublePairT) {
-    using dp = pair<double,double>;
-    dp* A = (dp*) In.A;
-    dp* B = (dp*) Out.A;
-    auto less = [&] (dp a, dp b) {return a < b;};
-    parlay::internal::quicksort(A, n, less);
-    for(size_t i=0; i < n; i++) {
-      if (A[i].first != B[i].first) {
-	cout << "compSortCheck: check failed at i=" << i << endl;
-	abort();
-      }
-    }
-  } else if (dt == stringT) {
-    char** A = (char**) In.A;
-    char** B = (char**) Out.A;
-    auto strless = [&] (char* a, char* b) {return strcmp(a,b) < 0;};
-    parlay::internal::quicksort(A, n, strless);
-    for(size_t i=0; i < n; i++) {
-      if (strcmp(A[i],B[i])) {
-	cout << "compSortCheck: check failed at i=" << i << endl;
-	abort();
-      }
-    }
-  } else if (dt == intType) {
-    int* A = (int*) In.A;
-    int* B = (int*) Out.A;
-    auto less = [&] (int a, int b) {return a < b;};
-    parlay::internal::quicksort(A, n, less);
-    for(size_t i=0; i < n; i++) {
-      if (A[i] != B[i]) {
-	cout << "compSortCheck: check failed at i=" << i << endl;
-	abort();
-      }
-    }
+  if (in_type == doubleT) {
+    check_sort<double>(In, Out, std::less<double>(), [&] (double x) {return x;});
+  } else if (in_type == doublePairT) {
+    using dpair = pair<double,double>;
+    auto less = [] (dpair a, dpair b) {return a.first < b.first;};
+    check_sort<dpair>(In, Out, less, [&] (dpair x) {return x.first;});
+  } else if (in_type == stringT) {
+    using str = sequence<char>;
+    auto strless = [&] (str const &a, str const &b) {
+      auto sa = a.begin();
+      auto sb = b.begin();
+      auto ea = sa + min(a.size(),b.size());
+      while (sa < ea && *sa == *sb) {sa++; sb++;}
+      return sa == ea ? (a.size() < b.size()) : *sa < *sb;
+    };
+    check_sort<str>(In, Out, strless, [&] (str x) {return x;});
+  } else if (in_type == intType) {
+    check_sort<int>(In, Out, std::less<int>(), [&] (int x) {return x;});
   } else {
-    cout << "CompSortCheck: input files not of right type" << endl;
+    cout << "sortCheck: input files not of accepted type" << endl;
     return(1);
   }
 }
