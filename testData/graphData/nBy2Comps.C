@@ -21,7 +21,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <math.h>
-#include "pbbslib/parallel.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
 #include "common/parse_command_line.h"
 #include "common/graph.h"
 #include "common/graphIO.h"

@@ -133,8 +133,8 @@ edgeArray<intV> edgesFromGraph(graph<intV,intE> const &G) {
 }
 
 // offset for start of each vertex if flattening the edge listd
-template <class intV, class intE>
-parlay::sequence<intE> getOffsets(parlay::sequence<vertex<intV>> const &V) {
+template <class intV, class intE, class Vtx>
+parlay::sequence<intE> getOffsets(parlay::sequence<Vtx> const &V) {
   size_t n = V.size();
   auto degrees = parlay::delayed_seq<intE>(n+1, [&] (size_t i) -> intE {
       return (i == n) ? 0 : V[i].degree;});

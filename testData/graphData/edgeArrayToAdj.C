@@ -1,9 +1,8 @@
 
-#include "pbbslib/parse_command_line.h"
+#include "common/parse_command_line.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
 #include "common/graphUtils.h"
-#include "pbbslib/parallel.h"
 using namespace benchIO;
 using namespace std;
 

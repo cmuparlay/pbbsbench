@@ -86,19 +86,19 @@ struct wghEdgeArray {
 // **************************************************************
 
 template <class intV = DefaultIntV>
+struct vertex {
+  const intV* Neighbors;
+  intV degree;
+  vertex(const intV* N, const intV d) : Neighbors(N), degree(d) {}
+  vertex() : Neighbors(NULL), degree(0) {}
+};
+
+template <class intV = DefaultIntV>
 struct mod_vertex {
   intV* Neighbors;
   intV degree;
   mod_vertex(intV* N, intV d) : Neighbors(N), degree(d) {}
   mod_vertex() : Neighbors(NULL), degree(0) {}
-};
-
-template <class intV = DefaultIntV>
-struct vertex {
-  const intV* Neighbors;
-  const intV degree;
-  vertex(const intV* N, const intV d) : Neighbors(N), degree(d) {}
-  vertex() : Neighbors(NULL), degree(0) {}
 };
 
 template <class intV = DefaultIntV, class intE = intV>
@@ -173,10 +173,13 @@ struct wghGraph {
   size_t m;
   size_t numVertices() const {return n;}
   size_t numEdges() const {return m;}
-  const parlay::sequence<intV>& get_offsets() const {
+  //const parlay::sequence<intV>& get_offsets() const {
+  //  return offsets;
+  //}
+  parlay::sequence<intV> get_offsets() {
     return offsets;
   }
-  VT operator[] (const size_t i) const {
+  VT operator[] (const size_t i) {
     return VT(edges.begin() + offsets[i],
 	      weights.begin() + offsets[i],
 	      offsets[i+1] - offsets[i]);}
