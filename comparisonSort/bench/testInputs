@@ -10,16 +10,8 @@ tests = [
     [1, "exptSeq_100M_double", "", ""],
     [1, "almostSortedSeq_100M_double", "", ""],
     [1, "randomSeq_100M_double_pair_double", "", ""],
-    [1, "trigramSeq_100M", "", ""],
-    [1, "trigramSeq_100M", "-p", ""]]
-
-small_tests = [
-    [1, "randomSeq_10M_double", "", ""],
-    [1, "exptSeq_10M_double", "", ""],
-    [1, "almostSortedSeq_10M_double", "", ""],
-    [1, "trigramSeq_10M", "", ""],
-    [1, "trigramSeq_10M", "-p", ""]]
-
+    [1, "trigramSeq_100M", "", ""]
+]
 
 import sys
 sys.path.insert(0, 'common')

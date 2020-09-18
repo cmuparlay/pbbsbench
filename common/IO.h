@@ -190,7 +190,7 @@ namespace benchIO {
     return bytes;
   }
 
-  string intHeaderIO = "parlay::sequenceInt";
+  string intHeaderIO = "sequenceInt";
 
   template <class T>
   int writeIntSeqToFile(parlay::sequence<T> const &A, char const *fileName) {

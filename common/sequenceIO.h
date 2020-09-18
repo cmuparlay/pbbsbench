@@ -144,6 +144,9 @@ namespace benchIO {
 
   template<>
   sequence<charSeq> parseElements<charSeq>(charseq_slice S) {
+    // return tabulate(S.size(), [&] (size_t i) -> charSeq {
+    //  				return tabulate(S[i].size() + 1, [&] (size_t j) -> char {
+    // 							    return (j==S[i].size() ? 0 : S[i][j]);});});
     return parlay::to_sequence(S);
   }
 

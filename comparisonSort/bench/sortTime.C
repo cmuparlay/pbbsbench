@@ -77,9 +77,9 @@ int main(int argc, char* argv[]) {
     return timeSort<dpair>(In, less, rounds, permute, oFile);
   } else if (in_type == stringT) {
     using str = sequence<char>;
-    auto strless = [&] (str const &a, str const &b) {
-      auto sa = a.begin();
-      auto sb = b.begin();
+    auto strless = [&] (str const &a, str const &b) -> bool {
+      auto sa = a.data();
+      auto sb = b.data();
       auto ea = sa + min(a.size(),b.size());
       while (sa < ea && *sa == *sb) {sa++; sb++;}
       return sa == ea ? (a.size() < b.size()) : *sa < *sb;
