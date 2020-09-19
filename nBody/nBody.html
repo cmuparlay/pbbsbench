@@ -1,0 +1,70 @@
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : nBody Force Calculation</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Nbody Force Calculation (NBODY):</h2> 
+
+Given n points in 3 dimensions calculate the gravitational force
+vector on each point due to all other points.  This force vector can
+be an approximation.  For this benchmakr we use a gravitational
+constant of 1 giving the force between two particles located
+at <strong>r</strong><sub>1</sub></strong> and 
+<strong>r</strong><sub>2</sub></strong> as
+: <strong>F</strong><sub>12</sub> =
+m<sub>1</sub> m<sub>2</sub> (<strong>r</strong><sub>2</sub> -
+<strong>r</strong><sub>1</sub>)/ |(<strong>r</strong><sub>2</sub> -
+<strong>r</strong><sub>1</sub>)|<sup>3</sup>.
+
+<h3>Input and Output File Formats</h3>
+
+<p>
+The input and output files need to be in the
+<a href="benchmarks/geometryIO.html">3d points</a> file format.
+The input file is a set of points specified by their location.  In the
+current version all weights are assumed to be unit.
+The output file specifies the force vector on each point and therefore
+should have the same number of entries as the input.
+</p>
+
+<h3>Default Input Distributions</h3>
+
+Each distribution should be run for <tt>n=1,000,000</tt>.  The weights
+used for average time are given in parentheses.  In all cases the
+accuracy of the forces need to be within an error bound of
+10<sup>-6</sup>, i.e., |(F - F')/|F|| &lt;
+10<sup>-6</sup>, where F is the actual force and F' the reported
+force.
+
+<ul>
+<li>
+(1) Points selected at random uniformly within a unit sphere.
+<blockquote>
+<tt>uniform -s -d 3 &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) Points selected at random from the Plummer distribution.
+<blockquote>
+<tt>plummer -d 3 &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+
+<li>
+(1) Points selected at random uniformly on the surface of a unit sphere.
+<blockquote>
+<tt>uniform -S -d 3 &lt;n&gt; &lt;filename&gt;</tt>
+</blockquote>
+</li>
+</ul>
+
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

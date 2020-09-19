@@ -54,7 +54,9 @@ parlay::sequence<indexT> quickHull(parlay::sequence<point> const & Points,
 
     // calculate furthest (positive) points from the lines l--mid and mid--r
     // at the same time set flags for those which are above each line
-    parlay::sequence<bool> leftFlag(n);
+    auto leftFlag = parlay::sequence<bool>::uninitialized(n) ;
+    auto rightFlag = parlay::sequence<bool>::uninitialized(n) ;
+
     parlay::sequence<bool> rightFlag(n);
     point lP = Points[l], midP = Points[mid], rP = Points[r];
     auto P = parlay::delayed_seq<cipairs>(n, [&] (size_t i) {
@@ -108,8 +110,8 @@ parlay::sequence<indexT> hull(parlay::sequence<point> const &Points) {
 
   // identify those above and below the line minp--maxp
   // and calculate furtherst in each direction
-  parlay::sequence<bool> upperFlag(n);
-  parlay::sequence<bool> lowerFlag(n);
+  auto upperFlag = parlay::sequence<bool>::uninitialized(n) ;
+  auto lowerFlag = parlay::sequence<bool>::uninitialized(n) ;
   auto P = parlay::delayed_seq<coord>(n, [&] (size_t i) {
     coord a = triArea(Points[min_x_idx], Points[max_x_idx], Points[i]);
     upperFlag[i] = a > 0;

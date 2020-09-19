@@ -6,7 +6,6 @@ checkProgram="../bench/SACheck"
 dataDir = "../sequenceData/data"
 
 tests = [
-    [1, "trigramString_10000000", "", ""],
     [1, "trigramString_100000000", "", ""],
     [3, "chr22.dna", "", ""],
     [1, "etext99", "", ""],
