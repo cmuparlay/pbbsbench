@@ -65,7 +65,7 @@ using namespace std;
 using parlay::sequence;
 using vect3d = vect;
 
-#define CHECK 1
+#define CHECK 0
 
 // Following for 1e-1 accuracy (1.05 seconds for 1million 8 cores)
 //#define ALPHA 1.9
@@ -361,10 +361,10 @@ void downSweep(node* tr) {
       P->force = P->force + tr->OutExp->force(P->pt, P->mass);
     }
   } else {
-    tr->left->OutExp->addTo(tr->OutExp);
-    tr->right->OutExp->addTo(tr->OutExp);
-    parlay::par_do([&] () {downSweep(tr->left);},
-		   [&] () {downSweep(tr->right);});
+    parlay::par_do([&] () {tr->left->OutExp->addTo(tr->OutExp);
+	                   downSweep(tr->left);},
+		   [&] () {tr->right->OutExp->addTo(tr->OutExp);
+		           downSweep(tr->right);});
   }
 }
 
@@ -389,8 +389,9 @@ void direct(node* Left, node* ngh, vect3d* hold) {
   particle** RP = (ngh->particles).data();
   size_t nl = Left->n;
   size_t nr = ngh->n;
+  vect3d holdLeft[nr];
   for (size_t j=0; j < nr; j++) 
-    hold[j] = vect3d(0.,0.,0.);
+    holdLeft[j] = vect3d(0.,0.,0.);
   for (size_t i=0; i < nl; i++) {
     vect3d frc(0.,0.,0.);
     particle* pa = LP[i];
@@ -399,11 +400,13 @@ void direct(node* Left, node* ngh, vect3d* hold) {
       vect3d v = (pb->pt) - (pa->pt);
       double r2 = v.dot(v);
       vect3d force = (v * (pa->mass * pb->mass / (r2*sqrt(r2))));;
+      holdLeft[j] = holdLeft[j] - force;
       frc = frc + force;
-      hold[j] = hold[j] - force;
     }
     pa->force = pa->force + frc;
   }
+  for (size_t j=0; j < nr; j++) 
+    hold[j] = holdLeft[j];
 }
 
 void self(node* Tr) {
@@ -434,7 +437,7 @@ void doDirect(node* a) {
   getLeaves(a, Leaves.data());
 
   sequence<size_t> counts(nleaves);
-
+  
   // For node i in Leaves, counts[i] will contain the total number 
   // of its direct interactions.
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
@@ -446,7 +449,7 @@ void doDirect(node* a) {
   // The following allocates space for "hold" avoiding a malloc.
   size_t total = parlay::scan_inplace(counts);
   sequence<vect3d> hold(total);
-
+  
   // calculates interactions and neighbors results in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
     vect3d* lhold = hold.begin() + counts[i];
@@ -456,8 +459,8 @@ void doDirect(node* a) {
       direct(Leaves[i], ngh, lhold);
       lhold += ngh->n;
     }
-    });
-
+  }, 1); // 1 indicates granularity of 1
+  
   // picks up results from neighbors that were left in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
     for (size_t j = 0; j < Leaves[i]->leftNeighbors.size(); j++) {
