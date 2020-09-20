@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# make clean -s -C removeDuplicates/bench
+# make clean -s -C removeDuplicates/deterministicHash
+# make clean -s -C removeDuplicates/serialHash
+
+# make clean -s -C dictionary/bench
+# make clean -s -C dictionary/deterministicHash
+# make clean -s -C dictionary/serialHash
+
+make clean -s -C integerSort/bench
+make clean -s -C integerSort/parallelRadixSort
+make clean -s -C integerSort/serialRadixSort
+
+make clean -s -C nearestNeighbors/bench
+make clean -s -C nearestNeighbors/octTree
+
+# make clean -s -C rayCast/bench
+# make clean -s -C rayCast/kdTree
+
+make clean -s -C nBody/bench
+make clean -s -C nBody/parallelBarnesHut
+make clean -s -C nBody/parallelCK
+
+make clean -s -C suffixArray/bench
+make clean -s -C suffixArray/parallelKS
+make clean -s -C suffixArray/parallelRange
+make clean -s -C suffixArray/serialDivsufsort
+
+make clean -s -C delaunayTriangulation/bench
+make clean -s -C delaunayTriangulation/incrementalDelaunay
+# make clean -s -C delaunayTriangulation/serialDelaunay
+
+make clean -s -C delaunayRefine/bench
+make clean -s -C delaunayRefine/incrementalRefine
+
+make clean -s -C convexHull/bench
+make clean -s -C convexHull/quickHull
+make clean -s -C convexHull/serialHull
+
+make clean -s -C comparisonSort/bench
+make clean -s -C comparisonSort/serialSort
+make clean -s -C comparisonSort/stlParallelSort
+make clean -s -C comparisonSort/sampleSort
+make clean -s -C comparisonSort/quickSort
+make clean -s -C comparisonSort/mergeSort
+
+make clean -s -C breadthFirstSearch/bench
+make clean -s -C breadthFirstSearch/ndBFS
+make clean -s -C breadthFirstSearch/serialBFS
+make clean -s -C breadthFirstSearch/deterministicBFS
+
+make clean -s -C maximalMatching/bench
+# make clean -s -C maximalMatching/ndMatching
+# make clean -s -C maximalMatching/serialMatching
+make clean -s -C maximalMatching/incrementalMatching
+
+make clean -s -C maximalIndependentSet/bench
+make clean -s -C maximalIndependentSet/incrementalMIS
+make clean -s -C maximalIndependentSet/ndMIS
+make clean -s -C maximalIndependentSet/serialMIS
+# make clean -s -C maximalIndependentSet/luby
+
+make clean -s -C minSpanningForest/bench
+make clean -s -C minSpanningForest/parallelKruskal
+make clean -s -C minSpanningForest/parallelFilterKruskal
+make clean -s -C minSpanningForest/serialMST
+
+make clean -s -C spanningForest/bench
+make clean -s -C spanningForest/incrementalST
+make clean -s -C spanningForest/serialST
+make clean -s -C spanningForest/ndST
+
+# make clean -s -C lassoRegression/bench
+# make clean -s -C lassoRegression/parallelShootingLasso
+# make clean -s -C lassoRegression/parallelShootingLasso2
+
+# make clean -s -C setCover/bench
+# make clean -s -C setCover/manis
+# make clean -s -C setCover/serialDFG
+# make clean -s -C setCover/serialGreedy
+
+# make clean -s -C spmv/bench
+# make clean -s -C spmv/pSPMV
+# make clean -s -C spmv/sSPMV
+
+make clean -s -C testData/sequenceData
+make clean -s -C testData/sequenceData/data
+
+make clean -s -C testData/graphData
+make clean -s -C testData/graphData/data
+
+make clean -s -C testData/geometryData
+make clean -s -C testData/geometryData/data
+
+
