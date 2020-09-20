@@ -1,7 +1,7 @@
 # pbbsbench
-New version of pbbs benchmarks (work in progress)
+New version (2020) of pbbs benchmarks
 
-This repository uses a submodule (pbbslib).    To pull the submodule, in pbbsbench:
+This repository uses a submodule (parlaylib).    To pull the submodule, in pbbsbench:
 
 \> git submodule init
 
@@ -13,6 +13,10 @@ To run a test, for example, try:
 
 \> make
 
-\> ./testInputs -x -r 3
+\> ./testInputs -r 3
 
-The -x means don't check correctness, the -r 3 means do three trials.
+Where -r 3 means run three times
+
+The other options
+   [-p n] : run on n processors
+   [-x] : do not check the result
