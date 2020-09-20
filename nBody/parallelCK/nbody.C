@@ -80,7 +80,7 @@ using vect3d = vect;
 // Following for 1e-6 accuracy (12.5 seconds for 1million insphere 8 cores)
 #define ALPHA 2.65
 #define terms 12
-#define BOXSIZE 130
+#define BOXSIZE 130 //130
 
 // Following for 1e-9 accuracy (40 seconds for 1million 8 cores)
 //#define ALPHA 3.0
@@ -187,8 +187,10 @@ struct node {
     return max(d.x,max(d.y,d.z));
   }
   void allocateExpansions() {
-    InExp = new innerExpansion(TRglobal, center());
-    OutExp = new outerExpansion(TRglobal, center());
+    InExp = (innerExpansion*) parlay::p_malloc(sizeof(innerExpansion));
+    OutExp = (outerExpansion*) parlay::p_malloc(sizeof(outerExpansion));
+    new (InExp) innerExpansion(TRglobal, center());
+    new (OutExp) outerExpansion(TRglobal, center());
   }
   node(node* L, node* R, size_t n, box b)
     : left(L), right(R), n(n), b(b) {
@@ -200,6 +202,7 @@ struct node {
     allocateExpansions();
   }
 };
+
 
 using edge = pair<node*, size_t>;
 
@@ -215,8 +218,11 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t depth) {
       return box(p->pt, p->pt);});
   box b = parlay::reduce(pairs, parlay::make_monoid(minmax,pairs[0]));
 										      
-  if (n < BOXSIZE)
-    return new node(parlay::to_sequence(particles), b);
+  if (n < BOXSIZE) {
+    node* r = (node*) parlay::p_malloc(sizeof(node));
+    new (r) node(parlay::to_sequence(particles), b);
+    return r;
+  }
 
   size_t d = 0;
   double Delta = 0.0;
@@ -486,7 +492,6 @@ void stepBH(sequence<particle*> &particles, double alpha) {
   // build the CK tree
   node* a = buildTree(parlay::make_slice(part_copy), parlay::make_slice(Tmp), 0);
   t.next("build tree");
-  //allocateExpansions(a);
 
   // Sweep up the tree calculating multipole expansions for each node
   upSweep(a);

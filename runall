@@ -44,7 +44,7 @@ tests = [
 
  ["maximalIndependentSet/serialMIS",False],
  ["maximalIndependentSet/ndMIS",True],
- ["maximalIndependentSet/incrementalMIS",True],
+#  ["maximalIndependentSet/incrementalMIS",True],
 
  ["integerSort/serialRadixSort",False],
  ["integerSort/parallelRadixSort",True],
