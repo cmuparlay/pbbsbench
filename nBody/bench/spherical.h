@@ -24,7 +24,7 @@
 #ifndef included_Transform_SphericalHarmonic_hh
 #define included_Transform_SphericalHarmonic_hh
 
-#include "geometry.h"
+#include "common/geometry.h"
 #include <complex>
 
 using coord=double;
