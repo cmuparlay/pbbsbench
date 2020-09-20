@@ -1,4 +1,4 @@
-include common/parallelDefs
+include common/seqDefs
 
 BENCH = ST
 OBJS = ST.o

@@ -1,4 +1,4 @@
-#include "geometry.h"
+#include "common/geometry.h"
 #include "parlay/primitives.h"
 
 using indexT = unsigned int;

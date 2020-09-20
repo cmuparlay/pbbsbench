@@ -9,7 +9,7 @@ import sys
 os.system("echo HOSTNAME: `hostname`")
 
 tests = [
-#["nBody/parallelCK",True],
+ ["nBody/parallelCK",True],
 
 #["rayCast/kdTree",True],
 
@@ -38,8 +38,8 @@ tests = [
  ["breadthFirstSearch/ndBFS",True],
  ["breadthFirstSearch/deterministicBFS",True],
 
- ["maximalMatching/serialMatching",False],
- ["maximalMatching/ndMatching",True],
+#["maximalMatching/serialMatching",False],
+#["maximalMatching/ndMatching",True],
  ["maximalMatching/incrementalMatching",True],
 
  ["maximalIndependentSet/serialMIS",False],
@@ -57,10 +57,10 @@ tests = [
 
  ["comparisonSort/serialSort",False],
  ["comparisonSort/stlParallelSort",False],
- ["comparisonSort/ips4o",True],
+# ["comparisonSort/ips4o",True],
  ["comparisonSort/sampleSort",True],
  ["comparisonSort/quickSort",True],
-# ["comparisonSort/mergeSort",True],
+ ["comparisonSort/mergeSort",True],
  ["comparisonSort/stableSampleSort",True],
 
  ["nearestNeighbors/octTree",True],

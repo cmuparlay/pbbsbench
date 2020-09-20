@@ -22,9 +22,9 @@
 
 #include <iostream>
 #include <algorithm>
-#include "get_time.h"
 #include "parlay/random.h"
 #include "parlay/parallel.h"
+#include "common/get_time.h"
 #include "common/sequenceIO.h"
 #include "common/parseCommandLine.h"
 

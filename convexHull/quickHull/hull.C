@@ -57,7 +57,6 @@ parlay::sequence<indexT> quickHull(parlay::sequence<point> const & Points,
     auto leftFlag = parlay::sequence<bool>::uninitialized(n) ;
     auto rightFlag = parlay::sequence<bool>::uninitialized(n) ;
 
-    parlay::sequence<bool> rightFlag(n);
     point lP = Points[l], midP = Points[mid], rP = Points[r];
     auto P = parlay::delayed_seq<cipairs>(n, [&] (size_t i) {
 	indexT j = Idxs[i];

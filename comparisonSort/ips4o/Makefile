@@ -1,5 +1,5 @@
 include common/seqDefs
-CFLAGS = -O3 -DOPENMP -std=c++14 -march=native -mcx16 -fopenmp
+CFLAGS = -O3 -mcx16 -DPARLAY_OPENMP -std=c++17  -march=native  -fopenmp
 LFLAGS = -ldl
 CC = g++
 

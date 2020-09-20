@@ -12,7 +12,7 @@
 
 TIME = $(BENCH)Time
 CHECK = ../bench/$(BENCH)Check
-INCLUDE = -Icommon -Ipbbslib
+INCLUDE =
 
 # Make benchmark
 $(BENCH) : $(TIME).o $(OBJS) $(CHECK) testInputs

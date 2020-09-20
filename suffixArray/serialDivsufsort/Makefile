@@ -1,4 +1,4 @@
-include common/parallelDefs
+include common/seqDefs
 
 BENCH = SA
 OBJS = SA.o divsufsort.o sssort.o trsort.o  

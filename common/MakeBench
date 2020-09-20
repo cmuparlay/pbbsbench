@@ -10,7 +10,7 @@
 
 TIME = ../bench/$(BENCH)Time.C
 CHECK = $(BENCH)Check
-INCLUDE = -Icommon -Ipbbslib
+INCLUDE = 
 
 all : $(BENCH) testInputs
 	cd ../bench; make -s $(CHECK)
