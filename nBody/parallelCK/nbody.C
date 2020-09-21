@@ -80,7 +80,7 @@ using vect3d = vect;
 // Following for 1e-6 accuracy (12.5 seconds for 1million insphere 8 cores)
 #define ALPHA 2.65
 #define terms 12
-#define BOXSIZE 130 //130
+#define BOXSIZE 250 // 130
 
 // Following for 1e-9 accuracy (40 seconds for 1million 8 cores)
 //#define ALPHA 3.0
@@ -177,7 +177,7 @@ struct node {
   vector<node*> indirectNeighbors;
   vector<edge> leftNeighbors;
   vector<edge> rightNeighbors;
-  vector<vect3d*> hold;
+  sequence<vect3d*> hold;
   bool leaf() {return left == NULL;}
   node() {}
   point center() { return b.first + (b.second-b.first)/2.0;}
@@ -207,9 +207,11 @@ struct node {
 using edge = pair<node*, size_t>;
 
 template <typename ParticleSlice>
-node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t depth) {
-  if (depth > 100) abort();
+node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_size) {
+  
+  //if (depth > 100) abort();
   size_t n = particles.size();
+  size_t en = std::max(effective_size, n);
 
   auto minmax = [] (box a, box b) {
     return box((a.first).minCoords(b.first),
@@ -218,7 +220,7 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t depth) {
       return box(p->pt, p->pt);});
   box b = parlay::reduce(pairs, parlay::make_monoid(minmax,pairs[0]));
 										      
-  if (n < BOXSIZE) {
+  if (en < BOXSIZE || n < 10) { 
     node* r = (node*) parlay::p_malloc(sizeof(node));
     new (r) node(parlay::to_sequence(particles), b);
     return r;
@@ -243,32 +245,21 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t depth) {
   size_t nl = parlay::pack_into(particles, flagsLeft, Tmp);
   parlay::pack_into(particles, flagsRight, Tmp.cut(nl, n));
   parlay::copy(Tmp, particles);
+  size_t en_child = .44 * en;
 
   node* L;
   node* R;
   parlay::par_do(
-    [&] () {L = buildTree(particles.cut(0,nl), Tmp.cut(0,nl), depth+1);},
-    [&] () {R = buildTree(particles.cut(nl,n), Tmp.cut(nl,n), depth+1);});
+    [&] () {L = buildTree(particles.cut(0,nl), Tmp.cut(0,nl), en_child);},
+    [&] () {R = buildTree(particles.cut(nl,n), Tmp.cut(nl,n), en_child);});
 
   return new node(L, R, n, b);
 }
 
 bool far(node* a, node* b) {
-  // vect3d sep;
-  // point a_bot = a->b.first;
-  // point a_top = a->b.second;
-  // point b_bot = b->b.first;
-  // point b_top = b->b.second;
-  // for (int dim =0; dim < 3; dim++) {
-  //   if (a_bot[dim] > b_top[dim]) sep[dim] = a_bot[dim] - b_top[dim];
-  //   else if (a_top[dim] < b_bot[dim]) sep[dim] = b_bot[dim] - a_top[dim];
-  //   else sep[dim] = 0.0;
-  // }
-  //double sepDistance = sep.Length();
   double rmax = max(a->radius(), b->radius());
   double r = (a->center() - b->center()).Length();
   return r >= (ALPHA * rmax);
-  //return sepDistance/rmax > 1.2;
 }
 
 // used to count the number of interactions
@@ -436,7 +427,7 @@ void doDirect(node* a) {
   sequence <node*> Leaves(nleaves);
   getLeaves(a, Leaves.data());
 
-  sequence<size_t> counts(nleaves);
+  sequence<size_t> counts(nleaves+1);
   
   // For node i in Leaves, counts[i] will contain the total number 
   // of its direct interactions.
@@ -447,14 +438,17 @@ void doDirect(node* a) {
     });
 
   // The following allocates space for "hold" avoiding a malloc.
+  counts[nleaves] = 0;
   size_t total = parlay::scan_inplace(counts);
   sequence<vect3d> hold(total);
   
   // calculates interactions and neighbors results in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
     vect3d* lhold = hold.begin() + counts[i];
-    for (size_t j =0; j < Leaves[i]->rightNeighbors.size(); j++) {
-      Leaves[i]->hold.push_back(lhold);
+    size_t num_ngh = Leaves[i]->rightNeighbors.size();
+    Leaves[i]->hold = sequence<vect3d*>(num_ngh);
+    for (size_t j =0; j < num_ngh; j++) {
+      Leaves[i]->hold[j] = lhold;
       node* ngh = Leaves[i]->rightNeighbors[j].first;
       direct(Leaves[i], ngh, lhold);
       lhold += ngh->n;
