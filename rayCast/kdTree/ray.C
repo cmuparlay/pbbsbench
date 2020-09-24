@@ -38,6 +38,7 @@ using parlay::par_do;
 using parlay::pack;
 using parlay::sort_inplace;
 using parlay::to_sequence;
+using parlay::delayed_seq;
 
 int CHECK = 0;  // if set checks 10 rays against brute force method
 int STATS = 0;  // if set prints out some tree statistics
@@ -49,7 +50,7 @@ float maxExpand = 1.6;
 int maxRecursionDepth = 25;
 
 // Constant for switching to sequential versions
-int minParallelSize = 500000;
+int minParallelSize = 100000;
 
 using vect = typename point::vector;
 using triangs = triangles<point>;
@@ -110,7 +111,6 @@ cutInfo bestCutSerial(sequence<event> const &E, range r, range r1, range r2) {
 
 // parallel version of best cut
 cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
-  //cout << "bestcut : " << E[0].v << ", " << IS_START(E[0]) << ", " << GET_INDEX(E[0]) << endl;
   index_t n = E.size();
   if (n < minParallelSize)
     return bestCutSerial(E, r, r1, r2);
@@ -128,21 +128,24 @@ cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
   scan_inplace(upperC);
 
   // calculate cost of each possible split location
-  auto cost = tabulate(n, [&] (index_t i) -> float {
+  using fipair = pair<float,index_t>;
+  auto cost = delayed_seq<fipair>(n, [&] (index_t i) -> fipair {
     index_t inLeft = i - upperC[i];
     index_t inRight = n/2 - (upperC[i] + IS_END(E[i]));
     float leftLength = E[i].v - r.min;
     float leftArea = orthogArea + diameter * leftLength;
     float rightLength = r.max - E[i].v;
     float rightArea = orthogArea + diameter * rightLength;
-    return (leftArea * inLeft + rightArea * inRight);
+    return pair((leftArea * inLeft + rightArea * inRight),i);
 			  });
 
   // find minimum across all (maxIndex with less is minimum)
-  index_t k = parlay::min_element(cost) - cost.begin();
-
-  //cout << "c : " << cost[k] << ", " << orthogArea << ", " << diameter <<  endl;
-  float c = cost[k];
+  // index_t k = parlay::min_element(cost) - cost.begin();
+  auto minp = [&] (fipair a, fipair b) {return (a.first < b.first) ? a : b;};
+  fipair ck = reduce(cost, parlay::make_monoid(minp, cost[0]));
+ 
+  float c = ck.first;
+  index_t k = ck.second;
   index_t ln = k - upperC[k];
   index_t rn = n/2 - (upperC[k] + IS_END(E[k]));
   return cutInfo(c, E[k].v, ln, rn);
@@ -150,32 +153,10 @@ cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
 
 using eventsPair = pair<sequence<event>, sequence<event>>;
 
-eventsPair splitEventsSerial(sequence<range> const &boxes,
-			     sequence<event> const & events, 
-			     float cutOff) {
-  index_t l = 0;
-  index_t r = 0;
-  index_t n = events.size();
-  sequence<event> eventsLeft(n);
-  sequence<event> eventsRight(n);
-  for (index_t i=0; i < n; i++) {
-    index_t b = GET_INDEX(events[i]);
-    if (boxes[b].min < cutOff) {
-      eventsLeft[l++] = events[i];
-      if (boxes[b].max > cutOff) 
-	eventsRight[r++] = events[i]; 
-    } else eventsRight[r++] = events[i]; 
-  }
-  return eventsPair(to_sequence(eventsLeft.cut(0,l)),
-		    to_sequence(eventsRight.cut(0,r)));
-}
-
 eventsPair splitEvents(sequence<range> const &boxes,
 		       sequence<event> const &events, 
 		       float cutOff) {
   index_t n = events.size();
-  if (n < minParallelSize)
-    return splitEventsSerial(boxes, events, cutOff);
   auto lower = sequence<bool>::uninitialized(n);
   auto upper = sequence<bool>::uninitialized(n);
 
@@ -183,7 +164,7 @@ eventsPair splitEvents(sequence<range> const &boxes,
     index_t b = GET_INDEX(events[i]);
     lower[i] = boxes[b].min < cutOff;
     upper[i] = boxes[b].max > cutOff;
-		      });
+  });
 
   return eventsPair(pack(events, lower),
 		    pack(events, upper));
@@ -196,9 +177,6 @@ treeNode* generateNode(Boxes &boxes,
 		       size_t maxDepth) {
   timer t;
   index_t n = events[0].size();
-  //cout << "event : " << events[0][0].v << ", " << IS_START(events[0][0]) << ", " << GET_INDEX(events[0][0]) << endl;
-  //cout << "event : " << events[1][0].v << ", " << IS_START(events[1][0]) << ", " << GET_INDEX(events[1][0]) << endl;
-  //cout << "n=" << n << " maxDepth=" << maxDepth << endl;
   if (n <= 2 || maxDepth == 0) 
     return treeNode::newNode(std::move(events), n, B);
   
@@ -206,10 +184,8 @@ treeNode* generateNode(Boxes &boxes,
   cutInfo cuts[3];
   parallel_for(0, 3, [&] (size_t d) {
     cuts[d] = bestCut(events[d], B[d], B[(d+1)%3], B[(d+2)%3]);
-    //cout << "cost = " << cuts[d].cost << endl;
-		     }, 1);
+		     }, 10000/n + 1);
 
-  //t.next("best cut");
   int cutDim = 0;
   for (int d = 1; d < 3; d++) 
     if (cuts[d].cost < cuts[cutDim].cost) cutDim = d;
@@ -220,9 +196,6 @@ treeNode* generateNode(Boxes &boxes,
   float bestCost = CT + CL * cuts[cutDim].cost/area;
   float origCost = (float) (n/2);
 
-  //cout << B << endl;
-  //cout << bestCost << ", " << origCost << ", " << cutDim << ", " << area << ", " << CT << ", " << CL << ", " << cuts[cutDim].cost << endl;
-  //abort();
   // quit recursion early if best cut is not very good
   if (bestCost >= origCost || 
       cuts[cutDim].numLeft + cuts[cutDim].numRight > maxExpand * n/2)
@@ -244,10 +217,9 @@ treeNode* generateNode(Boxes &boxes,
   // now split each event array to the two sides
   eventsPair X[3];
   parallel_for (0, 3, [&] (size_t d) {
-			//for (int d = 0; d < 3; d++) {
     X[d] = splitEvents(cutDimRanges, events[d], cutOff);
-    },1);
-  //t.next("split");
+    },10000/n + 1);
+
   
   for (int d = 0; d < 3; d++) {
     leftEvents[d] = std::move(X[d].first);
@@ -260,21 +232,18 @@ treeNode* generateNode(Boxes &boxes,
       abort();
     }
   }
-  //t.next("left right");
 
   // free old events and make recursive calls
   for (int i=0; i < 3; i++) events[i] = sequence<event>();
-  //t.next("clear");
   treeNode *L;
   treeNode *R;
-  //abort();
   par_do([&] () {L = generateNode(boxes, std::move(leftEvents),
 				  BBL, maxDepth-1);},
          [&] () {R = generateNode(boxes, std::move(rightEvents),
 				  BBR, maxDepth-1);});
 
-  return new treeNode(L, R, cutDim, cutOff, B);
-  }
+  return treeNode::newNode(L, R, cutDim, cutOff, B);
+}
 
 size_t tcount = 0;
 size_t ccount = 0;
@@ -288,7 +257,6 @@ index_t findRay(ray_t r,
 	       triangles<point> const &Tri,
 	       BoundingBox B) {
   index_t n = I.size();
-  //cout << "Isize: " << I.size() << endl;
   if (STATS) { tcount += n; ccount += 1;}
   coord tMin = std::numeric_limits<double>::max();
   index_t k = -1;
@@ -330,7 +298,6 @@ index_t findRay(ray_t r, treeNode* TN, triangs const &Tri) {
   range rx = TN->box[k1];
   range ry = TN->box[k2];
   coord d_0 = dd[k0];
-  //cout << k0 << ", " << k1 << ", " << k2 << ", " << o_p << ", " << d_p << ", " << scale << ", " << rx.min << ", " << rx.max << ", " << ry.min << ", " << ry.max << ", " << d_0 << endl;
 
   // decide which of the two child boxes the ray intersects
   enum {LEFT, RIGHT, BOTH};
@@ -340,7 +307,6 @@ index_t findRay(ray_t r, treeNode* TN, triangs const &Tri) {
   else if (p_i.y < ry.min) { if (d_p.y*d_0 > 0) recurseTo = RIGHT;}
   else if (p_i.y > ry.max) { if (d_p.y*d_0 < 0) recurseTo = RIGHT;}
   else recurseTo = BOTH;
-  //cout << "recurse to: " << recurseTo << ", " << TN->left->n << ", " << TN->right->n << endl;
 
   if (recurseTo == RIGHT) return findRay(r, TN->right, Tri);
   else if (recurseTo == LEFT) return findRay(r, TN->left, Tri);
@@ -357,7 +323,7 @@ index_t findRay(ray_t r, treeNode* TN, triangs const &Tri) {
 
 sequence<index_t> rayCast(triangles<point> const &Tri,
 		       sequence<ray<point>> const &rays) {
-  timer t;
+  timer t("ray cast");
   index_t numRays = rays.size();
 
   // Extract triangles into a separate array for each dimension with
@@ -366,7 +332,7 @@ sequence<index_t> rayCast(triangles<point> const &Tri,
   index_t n = Tri.T.size();
   for (int d = 0; d < 3; d++)
     boxes[d] = sequence<range>::uninitialized(n);
-  //sequence<point> P = Tri.P;
+
   parallel_for (0, n, [&] (size_t i) {
     point p0 = Tri.P[Tri.T[i][0]];
     point p1 = Tri.P[Tri.T[i][1]];
@@ -387,10 +353,8 @@ sequence<index_t> rayCast(triangles<point> const &Tri,
 	      event(boxes[d][i/2].min, i/2, START) :
 	      event(boxes[d][i/2].max, i/2, END));});
     sort_inplace(events[d], [] (event a, event b) {return a.v < b.v;}); 
-    //std::sort(events[d].begin(), events[d].end(), [] (event a, event b) {return a.v < b.v;}); 
     boundingBox[d] = range(events[d][0].v, events[d][2*n-1].v);
   }
-  // cout << boundingBox << endl;
   t.next("generate and sort events");
 
   // build the tree
@@ -421,7 +385,6 @@ sequence<index_t> rayCast(triangles<point> const &Tri,
     int nr = 10;
     auto indx = tabulate(n, [&] (size_t i) -> index_t {return i;});
     for (int i= 0; i < nr; i++) {
-      //cout << results[i] << endl;
       if (findRay(rays[i], indx, Tri, boundingBox) != results[i]) {
 	cout << "bad intersect in checking ray intersection" << endl;
 	abort();

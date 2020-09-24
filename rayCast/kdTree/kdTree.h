@@ -107,19 +107,20 @@ struct treeNode {
     }
   }
 
+  static parlay::type_allocator<treeNode> node_allocator;
+
   template <typename... Arguments>
   static treeNode* newNode(Arguments ... args) {
-    //treeNode* r = (treeNode*) parlay::p_malloc(sizeof(treeNode));
-    treeNode* r = (treeNode*) malloc(sizeof(treeNode));
+    treeNode* r = (treeNode*) node_allocator.alloc();
+    //treeNode* r = (treeNode*) malloc(sizeof(treeNode));
     new (r) treeNode(args...);
     return r;
   }
 
   static void delete_tree(treeNode* T) {
     if (T != nullptr) {
-      T->~treeNode();
-      //parlay::p_free(T);
-      free(T);
+      //T->~treeNode();
+      node_allocator.free(T);
     }
   }
 

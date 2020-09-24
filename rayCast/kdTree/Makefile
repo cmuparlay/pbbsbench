@@ -2,6 +2,6 @@ include common/parallelDefs
 
 BENCH = ray
 OBJS = ray.o
-REQUIRE = 
+REQUIRE = kdTree.h
 
 include common/MakeBenchLink
