@@ -1,0 +1,2 @@
+#!/bin/sh
+cd geometryData/data; make angelTriangles.bz2 ; make happyTriangles.bz2; make dragonTriangles.bz2

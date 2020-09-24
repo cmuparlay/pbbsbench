@@ -143,7 +143,7 @@ namespace benchIO {
   // }
 
   template <class pointT>
-  triangles<pointT> readTrianglesFromFile(char const *fname, size_t offset) {
+  triangles<pointT> readTrianglesFromFile(char const *fname, int offset) {
     int d = pointT::dim;
     parlay::sequence<char> S = readStringFromFile(fname);
     parlay::sequence<char*> W = stringToWords(S);
@@ -164,9 +164,9 @@ namespace benchIO {
     auto tri_slice = W.cut(headerSize + d * n, W.size());
     parlay::sequence<pointT> Pts = parsePoints<pointT>(pts_slice);
     auto Tri = parlay::tabulate(m, [&] (size_t i ) -> tri {
-				     return {(int) atol(tri_slice[3*i]),
-					     (int) atol(tri_slice[3*i+1]),
-					     (int) atol(tri_slice[3*i+2])};});
+				     return {(int) atol(tri_slice[3*i])-offset,
+					     (int) atol(tri_slice[3*i+1])-offset,
+					     (int) atol(tri_slice[3*i+2])-offset};});
     return triangles<pointT>(Pts,Tri);
   }
 

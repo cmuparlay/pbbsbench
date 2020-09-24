@@ -1,0 +1,66 @@
+
+<html>
+<head>
+  <!--#include virtual="header.html" -->
+  <title>Problem Based Benchmark Suite : Sparse-Triangle Intersection</title>
+</head>
+
+<body>
+<!--#include virtual="navbar.html" -->
+<div class=center>
+
+<h2>Sparse-Triangle Intersection (RAY):</h2> 
+
+Given a set of triangles contained inside a 3d bounding box and a set
+of rays that penetrate the box, calculate for each ray the first
+triangle it intersects.
+
+<h3>Input and Output File Formats</h3>
+
+<p>
+The input consists of two files.  The first file is a sequence of
+triangles in the <a href="benchmarks/geometryIO.html">triangle</a>
+file format.  The triangles need have 3 dimensional coordinates.  The
+second file is a sequence of 3 dimensional rays in the <a
+href="benchmarks/geometryIO.html">ray</a> file format.  The source of
+each ray needs to be outside the axis align bounding box for the
+triangles.
+The output needs to be in the <a
+href="benchmarks/sequenceIO.html">sequence</a> file format and must
+contain for each input ray the integer index of the first triangle
+it intersects (0 based).
+</p>
+
+<h3>Default Input Distributions</h3>
+
+This benchmark is run on three meshes, which are distributed as part
+of the benchmark.  In all cases a set of random rays coming from one
+side of the bounding box are generated using
+<blockquote>
+<tt>addRays &lt;triangelFile&gt; &lt;raylFile&gt;</tt>
+</blockquote>
+This generates a number of rays equal to the number of triangles.
+All three inputs are weighted equally.  The input
+files are:
+
+<ul>
+<li>
+(1) Happy.  This input is the famous "happy Buddha" mesh from the <a
+href="http://graphics.stanford.edu/data/3Dscanrep/">Stanford 3D
+Scanning Repository</a> .  It consists of 1087716 triangles.
+
+<li>
+(1) Angel. This input is from Georgia Teach and consists of 474048 triangles.
+
+<li>
+(1) Dragon.   
+This input is also from the
+the <a
+href="http://graphics.stanford.edu/data/3Dscanrep/">Stanford 3D
+Scanning Repository</a>.  It consists of 871414 triangles.
+</ul>
+
+</div>
+<!--#include virtual="footer.html" -->
+</body>
+<html>

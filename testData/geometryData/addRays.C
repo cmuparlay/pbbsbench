@@ -21,56 +21,52 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <math.h>
-#include "parallel.h"
-#include "IO.h"
-#include "geometry.h"
-#include "geometryIO.h"
+#include "parlay/primitives.h"
+#include "common/IO.h"
+#include "common/geometry.h"
+#include "common/geometryIO.h"
+#include "common/dataGen.h"
+#include "common/parse_command_line.h"
 #include "geometryData.h"
-#include "dataGen.h"
-#include "parseCommandLine.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
-struct minpt {point3d operator() (point3d a, point3d b) {return a.minCoords(b);}};
-struct maxpt {point3d operator() (point3d a, point3d b) {return a.maxCoords(b);}};
+using point = point3d<float>;
+using ray_t = ray<point>;
 
 // p0 is lower corner
 // p1 is upper corner
-ray<point3d>* generateRays(point3d p0, point3d p1, intT n) {
-  vect3d d = p1 - p0;
-  ray<point3d>* rays = newA(ray<point3d>,n);
-  // parallel for seems to break
-  for (intT i=0; i < n; i++) {
-    point3d pl = point3d(p0.x + d.x * dataGen::hash<double>(4*i+0), 
-			 p0.y + d.y * dataGen::hash<double>(4*i+1), 
-			 p0.z);
-    point3d pr = point3d(p0.x + d.x * dataGen::hash<double>(4*i+2), 
-			 p0.y + d.y * dataGen::hash<double>(4*i+3), 
-			 p1.z);
-    rays[i] = ray<point3d>(pl, pr-pl);
-  }
+parlay::sequence<ray_t> generateRays(point p0, point p1, size_t n) {
+  auto d = p1 - p0;
+  auto rays = parlay::tabulate(n, [&] (size_t i) -> ray_t {
+    point pl = point(p0.x + d.x * dataGen::hash<double>(4*i+0), 
+		     p0.y + d.y * dataGen::hash<double>(4*i+1), 
+		     p0.z);
+    point pr = point(p0.x + d.x * dataGen::hash<double>(4*i+2), 
+		     p0.y + d.y * dataGen::hash<double>(4*i+3), 
+		     p1.z);
+    return ray_t(pl, pr-pl);
+  });
   return rays;
 }
 
-int parallel_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-n <num>] <triangleInFile> <rayOutFile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* ifile = fnames.first;
   char* ofile = fnames.second;
 
-  triangles<point3d> T = readTrianglesFromFile<point3d>(ifile,1);
-  //intT n = P.getOptionIntValue("-n", T.numTriangles);
-  intT n = P.getOptionLongValue("-n",T.numTriangles);
-  point3d minPt = sequence::reduce(T.P, T.numPoints, minpt());
-  point3d maxPt = sequence::reduce(T.P, T.numPoints, maxpt());
+  triangles<point> T = readTrianglesFromFile<point>(ifile,1);
+  size_t n = P.getOptionLongValue("-n", T.numTriangles());
+  auto minf = [] (point a, point b) {return a.minCoords(b);};
+  auto maxf = [] (point a, point b) {return a.maxCoords(b);};
+  point minPt = parlay::reduce(T.P, parlay::make_monoid(minf,T.P[0]));
+  point maxPt = parlay::reduce(T.P, parlay::make_monoid(maxf,T.P[0]));
 
   // generate as many rays as triangles
-  ray<point3d>* rays = generateRays(minPt, maxPt, T.numTriangles);
-  point3d* pts = newA(point3d, 2*n);
-  parallel_for(intT i=0; i < n; i++) {
-    pts[2*i] = rays[i].o;
-    pts[2*i+1] = point3d(0,0,0) + rays[i].d;
-  }
-  return writePointsToFile(pts, 2*n, ofile);
+  parlay::sequence<ray_t> rays = generateRays(minPt, maxPt, T.numTriangles());
+  auto pts = parlay::tabulate(2*n, [&] (size_t i) -> point {
+    return (i % 2 == 0) ? rays[i/2].o : point(0,0,0) + rays[i/2].d;});
+  return writePointsToFile(pts, ofile);
 }
