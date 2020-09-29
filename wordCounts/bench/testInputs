@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+bnchmrk="wc"
+benchmark="Word Counts"
+checkProgram="../bench/wcCheck"
+dataDir = "../sequenceData/data"
+
+tests = [
+    [1, "trigramString_100000000", "", ""],
+    [1, "etext99", "", ""],
+    [1, "wikisamp.xml", "", ""]
+]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+
