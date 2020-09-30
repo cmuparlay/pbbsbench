@@ -30,11 +30,10 @@
 
 using namespace std;
 
-
 parlay::sequence<result_type> wordCounts(charseq const &s) {
   timer t("word counts");
 
-    auto is_space = [] (char c) {
+  auto is_space = [] (char c) {
     switch (c)  {
     case '\r': 
     case '\t': 
@@ -45,26 +44,43 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
     }
   };
 
-  auto words = parlay::tokens(s, is_space);
+  size_t n = s.size();
+  charseq str = parlay::sequence<char>::from_function(n + 1, [&] (size_t i) -> char {
+      return (i == n || is_space(s[i])) ? 0 : s[i];});
+  t.next("copy");
+  
+  auto get_word = [&] (parlay::slice<char*,char*> x) -> char* {
+    return x.begin();
+  };
+
+  auto words = parlay::tokens(str, [] (char c) {return c == 0;}, get_word);
+  
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
 
   struct hasheq {
     // a simple hash function on char sequences
-    static inline size_t hash(charseq const &a) {
+    static inline size_t hash(char* a) {
       size_t hash = 5381;
-      for (size_t i = 0; i < a.size(); i++) 
-	hash = ((hash << 5) + hash) + a[i];
+      for (size_t i = 0; a[i] != 0; i++) 
+  	hash = ((hash << 5) + hash) + a[i];
       return hash;
     }
-    static inline bool eql(charseq const &a, charseq const &b) {
-      return a == b; }
+    static inline bool eql(char* a, char* b) {
+      return strcmp(a,b) == 0; }
   };
   
-  auto result = parlay::internal::histogram_sparse(make_slice(words), hasheq());
+  auto hist = parlay::internal::histogram_sparse(make_slice(words), hasheq());
   t.next("collect reduce");
 
-  cout << "result.size(): " << result.size() << endl;
-  cout << "result[0]: " << result[0].first << ", " << result[0].second << endl;
+  cout << "result.size(): " << hist.size() << endl;
+  cout << "result[0]: " << hist[0].first << ", " << hist[0].second << endl;
+  parlay::sequence<result_type> result =
+    parlay::tabulate(hist.size(), [&] (size_t i) {
+	size_t len = strlen(hist[i].first);
+	return result_type(parlay::sequence<char>(std::move(hist[i].first), hist[i].first+len),
+			   hist[i].second);
+      });
+  hist.clear_uninitialized();
   return result;
 }
