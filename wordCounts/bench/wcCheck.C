@@ -27,14 +27,50 @@
 #include "parlay/primitives.h"
 #include "common/IO.h"
 #include "common/parse_command_line.h"
+#include "wc.h"
 using namespace std;
 using namespace benchIO;
 
-typedef unsigned char uchar;
+using str_t = parlay::sequence<char>;
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"<infile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
-  parlay::sequence<char> InX = readStringFromFile(fnames.first);
+  str_t In = readStringFromFile(fnames.first);
+  str_t Out = readStringFromFile(fnames.second);
+
+  auto rin = wordCounts(In);
+
+  auto tokens = parlay::tokens(Out, is_space);
+  auto rout = parlay::tabulate(tokens.size()/2, [&] (size_t i) {
+      return result_type(tokens[2*i], parlay::char_range_to_l(tokens[2*i+1])); });
+
+  if (rin.size() != rout.size()) {
+    cout << "wcCheck: number of unique words do not match, " << rin.size() << " found in the input, but " << rout.size() << " found in the supplied result. " << endl;
+    return(1);
+  }
+
+  auto strless = [] (str_t const &a, str_t const &b) -> bool {
+    auto sa = a.data();
+    auto sb = b.data();
+    auto ea = sa + min(a.size(),b.size());
+    while (sa < ea && *sa == *sb) {sa++; sb++;}
+    return sa == ea ? (a.size() < b.size()) : *sa < *sb;
+  };
+
+  auto cmp = [&] (result_type a, result_type b) {
+    return (a.second < b.second ||
+	    ((a.second == b.second) && strless(a.first,b.first)));};
+
+  auto sout = parlay::sort(rout,cmp);
+  // auto sout2 = parlay::sort(rout,cmp); // sorting twice fails ??
+  // rin = parlay::sort(rin,cmp);
+  parlay::sort_inplace(rin,cmp);
+  
+  if (!(rin == sout)) {
+    cout << "wcCheck: counts do not match" << endl;
+    return(1);
+  }
+
   return 0;
 }

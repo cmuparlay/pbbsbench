@@ -28,11 +28,13 @@
 #include "common/get_time.h"
 #include "wc.h"
 
+bool verbose = false;
 using namespace std;
 
 parlay::sequence<result_type> wordCounts(charseq const &s) {
-  timer t("word counts");
-  cout << "number of characters = " << s.size() << endl;
+  timer t("word counts", verbose);
+  if (verbose)
+    cout << "number of characters = " << s.size() << endl;
   
   // copy to mutable vector
   vector<char> str(s.size()+1);
@@ -42,14 +44,15 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   
   // tokenize
   vector<char*> tokens;
-  char* next_token = strtok(str.data(), "\n\t ");
+  char* next_token = strtok(str.data(), "\r\n\t ");
   size_t count = 0;
   while (next_token != NULL) {
     tokens.push_back(next_token);
-    next_token = strtok (NULL, "\n\t ");
+    next_token = strtok (NULL, "\r\n\t ");
     count++;
   }
-  cout << "number of words = " << count << endl;
+  if (verbose)
+    cout << "number of words = " << count << endl;
   t.next("tokenize");
   
   // define a hash table
@@ -70,7 +73,8 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   for (size_t i=0; i < count; i++)
     ++word_map[tokens[i]];
   t.next("insert into hash table");
-  cout << "result size = " << word_map.size() << endl;
+  if (verbose)
+    cout << "result size = " << word_map.size() << endl;
 
   
   // pull out elements into a sequence
@@ -80,6 +84,5 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
     result.push_back(result_type(parlay::to_char_seq(pair.first),pair.second));
   t.next("extract results");
   
-  cout << "result[0]: " << result[0].first << ", " << result[0].second << endl;
   return result;
 }

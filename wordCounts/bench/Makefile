@@ -1,12 +1,18 @@
 include common/parallelDefs
 
-INCLUDE = -Icommon -Ipbbslib
+BNCHMRK = wc
 
-wcCheck: wcCheck.C 
-	$(CC) $(CFLAGS) $(LFLAGS) $(INCLUDE) -o wcCheck wcCheck.C
+CHECKFILES = serialwc.o $(BNCHMRK)Check.o
 
-wcTime.o: wcTime.C
-	$(CC) $(CFLAGS) $(INCLUDE) -o wcTime.o -c wcTime.C
+COMMON = 
+
+INCLUDE = 
+
+%.o : %.C $(COMMON)
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+$(BNCHMRK)Check : $(CHECKFILES)
+	$(CC) $(LFLAGS) -o $@ $(CHECKFILES)
 
 clean :
 	rm -f wcCheck *.o

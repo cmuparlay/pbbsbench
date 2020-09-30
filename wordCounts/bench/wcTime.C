@@ -24,6 +24,7 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/parallel_io.h"
 #include "common/get_time.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
@@ -35,6 +36,16 @@
 using namespace std;
 using namespace benchIO;
 
+void writeHistogramsToFile(parlay::sequence<result_type> const results, char* outFile) {
+  auto space = parlay::to_char_seq(' ');
+  auto newline = parlay::to_char_seq('\n');
+  auto str = parlay::flatten(parlay::map(results, [&] (result_type x) {
+	sequence<sequence<char>> s = {
+	  x.first, space, parlay::to_char_seq(x.second), newline};
+	return flatten(s);}));
+  parlay::char_seq_to_file(str, outFile);
+}
+  
 template<class F, class G, class H>
 void loop(int rounds, F initf, G runf, H endf) {
   timer t;
@@ -59,7 +70,7 @@ void timeWordCounts(parlay::sequence<char> const &s, int rounds, char* outFile) 
        [&] () {}
        );
   cout << endl;
-  //if (outFile != NULL) writeSequenceToFile(R, outFile);
+  if (outFile != NULL) writeHistogramsToFile(R, outFile);
 }
 
 int main(int argc, char* argv[]) {
