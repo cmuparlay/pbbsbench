@@ -85,6 +85,12 @@ trigramSeq_100M : ../trigramSeq
 trigramSeq_% : ../trigramSeq
 	../trigramSeq $(subst trigramSeq_,,$@) $@
 
+trigramString_100M : ../trigramString
+	../trigramString 100000000 $@
+
+trigramString_1G : ../trigramString
+	../trigramString 1000000000 $@
+
 trigramString_% : ../trigramString
 	../trigramString $(subst trigramString_,,$@) $@
 

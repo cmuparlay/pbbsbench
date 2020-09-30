@@ -73,7 +73,12 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput) :
 def averageTime(times) :
     return sum(times)/len(times)
     
-
+def geomean(a) :
+  r = 1.0
+  for x in a :
+    r = r * x
+  return r**(1.0/len(a))
+  
 def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOutput,
             addToDatabase, problem) :
   totalTime = 0
@@ -82,26 +87,11 @@ def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOut
     results = [runTest(runProgram, checkProgram, dataDir, test, rounds, procs,
                        noOutput)
                for test in tests]
-    totalTimeMean = 0
-    totalTimeMin = 0
-    totalTimeMedian = 0
-    totalWeight = 0
-    j = 0
-    for (weight,times) in results:
-      l = len(times)
-      if (l == 0):
-        print("Warning, no timed results for", tests[j])
-        continue
-      times = sorted(times)
-      totalTimeMean = totalTimeMean + weight*sum(times)/l
-      totalTimeMin = totalTimeMin + weight*times[0]
-      totalTimeMedian = totalTimeMedian + weight*times[(l-1)/2]
-      totalWeight = totalWeight + weight
-      j += 1
+    meanOfMeans = geomean([geomean(times) for (w,times) in results])
+    meanOfMins = geomean([times[0] for (w,times) in results])
     print(name + " : " + `procs` +" : " +
-          "weighted time, min=" + stripFloat(totalTimeMin/totalWeight) +
-          " median=" + stripFloat(totalTimeMedian/totalWeight) +
-          " mean=" + stripFloat(totalTimeMean/totalWeight))
+          "geomean of mins = " + stripFloat(meanOfMins) +
+          ", geomean of geomeans = " + stripFloat(meanOfMeans))
     if (addToDatabase) :
       try:
         dbAddResult(problem=problem, program=runProgram, results=results, numProcs=procs, mean=totalTimeMean/totalWeight,

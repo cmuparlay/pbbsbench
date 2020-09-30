@@ -1,3 +1,4 @@
+
 // This code is part of the Problem Based Benchmark Suite (PBBS)
 // Copyright (c) 2011 Guy Blelloch and the PBBS team
 //
@@ -21,51 +22,64 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <iostream>
-#include "parlay/parallel.h"
+#include <unordered_map>
 #include "parlay/primitives.h"
 #include "parlay/parallel_io.h"
-#include "parlay/internal/collect_reduce.h"
 #include "common/get_time.h"
 #include "wc.h"
 
 using namespace std;
 
-
 parlay::sequence<result_type> wordCounts(charseq const &s) {
   timer t("word counts");
   cout << "number of characters = " << s.size() << endl;
-
-  auto is_space = [] (char c) {
-    switch (c)  {
-    case '\r': 
-    case '\t': 
-    case '\n': 
-    case 0:
-    case ' ' : return true;
-    default : return false;
-    }
-  };
-
-  auto words = parlay::tokens(s, is_space);
-  t.next("tokens");
-  cout << "number of words = " << words.size() << endl;
-
-  struct hasheq {
-    // a simple hash function on char sequences
-    static inline size_t hash(charseq const &a) {
-      size_t hash = 5381;
-      for (size_t i = 0; i < a.size(); i++) 
-	hash = ((hash << 5) + hash) + a[i];
-      return hash;
-    }
-    static inline bool eql(charseq const &a, charseq const &b) {
-      return a == b; }
-  };
   
-  auto result = parlay::internal::histogram_sparse(make_slice(words), hasheq());
-  t.next("collect reduce");
+  // copy to mutable vector
+  vector<char> str(s.size()+1);
+  for (size_t i=0; i < s.size(); i++) str[i] = s[i];
+  str[s.size()] = 0;
+  t.next("copy");
+  
+  // tokenize
+  vector<char*> tokens;
+  char* next_token = strtok(str.data(), "\n\t ");
+  size_t count = 0;
+  while (next_token != NULL) {
+    tokens.push_back(next_token);
+    next_token = strtok (NULL, "\n\t ");
+    count++;
+  }
+  cout << "number of words = " << count << endl;
+  t.next("tokenize");
+  
+  // define a hash table
+  auto strhash = [] (char* s) -> size_t {
+    size_t hash = 5381;
+    char* l = s;
+    while (*l != 0) {
+      hash = ((hash << 5) + hash) + *l; l++;}
+    return hash;
+  };
 
-  cout << "result.size(): " << result.size() << endl;
+  auto streql = [] (char* a, char* b) {
+    return strcmp(a,b) == 0;};
+
+  unordered_map<char*, size_t, decltype(strhash), decltype(streql)> word_map(count, strhash, streql);
+
+  // add each token to the word_map
+  for (size_t i=0; i < count; i++)
+    ++word_map[tokens[i]];
+  t.next("insert into hash table");
+  cout << "result size = " << word_map.size() << endl;
+
+  
+  // pull out elements into a sequence
+  parlay::sequence<result_type> result;
+  result.reserve(word_map.size());
+  for (const auto &pair : word_map) 
+    result.push_back(result_type(parlay::to_char_seq(pair.first),pair.second));
+  t.next("extract results");
+  
   cout << "result[0]: " << result[0].first << ", " << result[0].second << endl;
   return result;
 }

@@ -32,7 +32,8 @@ using namespace std;
 
 parlay::sequence<result_type> wordCounts(charseq const &s) {
   timer t("word counts");
-
+  cout << "number of characters = " << s.size() << endl;
+  
   auto is_space = [] (char c) {
     switch (c)  {
     case '\r': 
