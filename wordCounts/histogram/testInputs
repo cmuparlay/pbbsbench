@@ -6,10 +6,10 @@ checkProgram="../bench/wcCheck"
 dataDir = "../sequenceData/data"
 
 tests = [
-    [1, "trigramString_500000000", "", ""],
-    [1, "randomSeq_100M_int", "", ""],
+    [1, "trigramString_250000000", "", ""],
+    [1, "randomSeq_30000000_int", "", ""],
     [1, "etext99", "", ""],
-    [1, "wikisamp.xml", "", ""]
+    [1, "wikipedia250M.txt", "", ""]
 ]
 
 import sys
