@@ -50,19 +50,17 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
 
-  struct hasheq {
-    // a simple hash function on char sequences
-    static inline size_t hash(charseq const &a) {
+  auto hash = []  (charseq const &a) {
       size_t hash = 5381;
       for (size_t i = 0; i < a.size(); i++) 
 	hash = ((hash << 5) + hash) + a[i];
       return hash;
-    }
-    static inline bool eql(charseq const &a, charseq const &b) {
-      return a == b; }
   };
+
+  auto eql = [] (charseq const &a, charseq const &b) {
+    return a == b; };
   
-  auto result = parlay::internal::histogram_sparse(make_slice(words), hasheq());
+  auto result = parlay::internal::histogram_sparse(make_slice(words), hash);
   t.next("collect reduce");
 
   cout << "result.size(): " << result.size() << endl;

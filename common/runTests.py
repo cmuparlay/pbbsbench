@@ -37,6 +37,12 @@ def runSingle(runProgram, options, ifile, procs) :
   except (ValueError,IndexError):
     raise NameError(comString+"\n"+out)
 
+def geomean(a) :
+  r = 1.0
+  for x in a :
+    r = r * x
+  return r**(1.0/len(a))
+  
 def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput) :
     random.seed()
     outFile="/tmp/ofile%d_%d" %(random.randint(0, 1000000), random.randint(0, 1000000)) 
@@ -66,19 +72,13 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput) :
     outputStr = ""
     if (len(runOptions) > 0) :
       outputStr = " : " + runOptions
-    print(`weight` + " : " + shortInputNames + outputStr + " : "
-          + ptimes)
+    print(shortInputNames + outputStr + " : "
+          + ptimes + ", geomean = " + stripFloat(geomean(times)))
     return [weight,times]
     
 def averageTime(times) :
     return sum(times)/len(times)
     
-def geomean(a) :
-  r = 1.0
-  for x in a :
-    r = r * x
-  return r**(1.0/len(a))
-  
 def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOutput,
             addToDatabase, problem) :
   totalTime = 0
