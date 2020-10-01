@@ -85,7 +85,7 @@ namespace benchIO {
   inline void xToString(char* s, int a) { sprintf(s,"%d",a);}
 
   inline int xToStringLen(double a) { return 18;}
-  inline void xToString(char* s, double a) { sprintf(s,"%.11le", a);}
+  inline void xToString(char* s, double a) { sprintf(s,"%.9le", a);}
 
   inline int xToStringLen(char* a) { return strlen(a)+1;}
   inline void xToString(char* s, char* a) { sprintf(s,"%s",a);}

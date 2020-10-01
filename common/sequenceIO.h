@@ -27,6 +27,7 @@
 #include <string>
 #include <cstring>
 #include "IO.h"
+#include "get_time.h"
 #include "../parlay/primitives.h"
 #include "../parlay/parallel_io.h"
 
@@ -55,6 +56,7 @@ namespace benchIO {
   elementType dataType(uint a) { return intType;}
   elementType dataType(double a) { return doubleT;}
   elementType dataType(charSeq a) { return stringT;}
+  elementType dataType(char* a) { return stringT;}
   elementType dataType(intPair a) { return intPairT;}
   elementType dataType(uintPair a) { return intPairT;}
   elementType dataType(uintIntPair a) { return intPairT;}
@@ -97,53 +99,53 @@ namespace benchIO {
     else return none;
   }
 
-  long read_long(sequence<char> S) {
+  long read_long(sequence<char> const &S) {
     return parlay::char_range_to_l(S);}
 
-  double read_double(sequence<char> S) {
+  double read_double(sequence<char> const &S) {
     return parlay::char_range_to_d(S);}
 
-  using charseq_slice = decltype(make_slice(sequence<sequence<char>>()));
+  using charseq_slice = parlay::slice<const sequence<char>*, const sequence<char>*>;
   
   template <typename T>
-  sequence<T> parseElements(charseq_slice S);
+  sequence<T> parseElements(charseq_slice const &S);
 
   // specialized parsing functions
   template<>
-  sequence<double> parseElements<double>(charseq_slice S) {
+  sequence<double> parseElements<double>(charseq_slice const &S) {
     return tabulate(S.size(), [&] (long i) -> double {return read_double(S[i]);});
   }
 
   template<>
-  sequence<int> parseElements<int>(charseq_slice S) {
+  sequence<int> parseElements<int>(charseq_slice const &S) {
     return tabulate(S.size(), [&] (long i) -> int {return (int) read_long(S[i]);});
   }
 
   template<>
-  sequence<uint> parseElements<uint>(charseq_slice S) {
+  sequence<uint> parseElements<uint>(charseq_slice const &S) {
     return tabulate(S.size(), [&] (long i) -> uint {return (uint) read_long(S[i]);});
   }
 
   template<>
-  sequence<intPair> parseElements<intPair>(charseq_slice S) {
+  sequence<intPair> parseElements<intPair>(charseq_slice const &S) {
     return tabulate((S.size())/2, [&] (long i) -> intPair {
       return std::make_pair((int) read_long(S[2*i]), (int) read_long(S[2*i+1]));});
   }
 
   template<>
-  sequence<uintPair> parseElements<uintPair>(charseq_slice S) {
+  sequence<uintPair> parseElements<uintPair>(charseq_slice const &S) {
     return tabulate((S.size())/2, [&] (long i) -> uintPair {
       return std::make_pair((uint) read_long(S[2*i]), (uint) read_long(S[2*i+1]));});
   }
 
   template<>
-  sequence<doublePair> parseElements<doublePair>(charseq_slice S) {
+  sequence<doublePair> parseElements<doublePair>(charseq_slice const &S) {
     return tabulate((S.size())/2, [&] (long i) -> doublePair {
       return std::make_pair(read_double(S[2*i]), read_double(S[2*i+1]));});
   }
 
   template<>
-  sequence<charSeq> parseElements<charSeq>(charseq_slice S) {
+  sequence<charSeq> parseElements<charSeq>(charseq_slice const &S) {
     // return tabulate(S.size(), [&] (size_t i) -> charSeq {
     //  				return tabulate(S[i].size() + 1, [&] (size_t j) -> char {
     // 							    return (j==S[i].size() ? 0 : S[i][j]);});});
@@ -155,8 +157,13 @@ namespace benchIO {
   // }  
 
   sequence<sequence<char>> get_tokens(char const *fileName) {
-    sequence<char> S = parlay::char_seq_from_file(fileName);
-    return parlay::tokens(S, benchIO::is_space);
+    timer t("get_tokens");
+    auto S = parlay::char_seq_from_file(fileName);
+    //parlay::char_range_from_file S(fileName);
+    t.next("read file");
+    auto x =  parlay::tokens(S, benchIO::is_space);
+    t.next("tokens");
+    return x;
   }
 
   template <typename T, typename CharRange>

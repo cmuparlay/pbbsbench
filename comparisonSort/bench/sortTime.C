@@ -32,18 +32,17 @@ using namespace std;
 using namespace benchIO;
 
 template <typename T, typename Less>
-int timeSort(sequence<sequence<char>> In, Less less, int rounds, bool permute, char* outFile) {
+int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool permute, char* outFile) {
   timer t;
   sequence<T> A = parseElements<T>(In.cut(1, In.size()));
   size_t n = A.size();
 
   if (permute) A = parlay::random_shuffle(A);
 
-  sequence<T> B(n);
-  parlay::parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
+  sequence<T> B = A;
   compSort(B.begin(), n, less); // run one sort to "warm things up"
   for (int i=0; i < rounds; i++) {
-    parlay::parallel_for (0, n, [&] (size_t i) {B[i] = A[i];});
+    B = A;
     t.start();
     compSort(B.begin(), n, less);
     t.next("");
@@ -53,6 +52,7 @@ int timeSort(sequence<sequence<char>> In, Less less, int rounds, bool permute, c
 }
 
 int main(int argc, char* argv[]) {
+  timer t("check");
   commandLine P(argc,argv,"[-p] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
@@ -60,8 +60,10 @@ int main(int argc, char* argv[]) {
   bool permute = P.getOption("-p");
 
   auto In = get_tokens(iFile);
+  t.next("tokens");
   elementType in_type = elementTypeFromHeader(In[0]);
   size_t n = In.size() - 1;
+
 
   if (in_type == intType) {
     return timeSort<int>(In, std::less<int>(), rounds, permute, oFile);
