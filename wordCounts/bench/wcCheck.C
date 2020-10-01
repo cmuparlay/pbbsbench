@@ -62,12 +62,10 @@ int main(int argc, char* argv[]) {
     return (a.second < b.second ||
 	    ((a.second == b.second) && strless(a.first,b.first)));};
 
-  auto sout = parlay::sort(rout,cmp);
-  // auto sout2 = parlay::sort(rout,cmp); // sorting twice fails ??
-  // rin = parlay::sort(rin,cmp);
-  parlay::sort_inplace(rin,cmp);
+  rout = parlay::sort(rout,cmp);
+  rin = parlay::sort(rin,cmp);
   
-  if (!(rin == sout)) {
+  if (!(rin == rout)) {
     cout << "wcCheck: counts do not match" << endl;
     return(1);
   }
