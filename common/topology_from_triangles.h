@@ -25,6 +25,7 @@
 #include "../parlay/hash_table.h"
 #include "../parlay/primitives.h"
 #include "get_time.h"
+#include "atomics.h"
 #include "geometry.h"
 #include "topology.h"
 
@@ -33,7 +34,6 @@ using parlay::hash64;
 using parlay::sequence;
 using parlay::tabulate;
 using parlay::hashtable;
-using parlay::write_min;
 
 using std::pair;
 using std::cout;
@@ -61,7 +61,7 @@ struct hashEdges {
 	    (s1.second < s2.second) ? -1 : 0);
   }
   bool cas(eType* p, eType o, eType n) {
-    return parlay::atomic_compare_and_swap(p, o, n);
+    return pbbs::atomic_compare_and_swap(p, o, n);
   }
   bool replaceQ(eType s, eType s2) {return 0;}
 };
@@ -128,7 +128,7 @@ bool check_delaunay(sequence<triang_t> &Triangles, size_t boundary_size) {
 	    double vz = triAreaNormalized(t.t->vtx[(t.o+2)%3]->pt, 
 					  v->pt, t.t->vtx[t.o]->pt);
 	    // allow for small error
-	    if (vz < -1e-10) write_min(&insideOutError, i, less<size_t>());
+	    if (vz < -1e-10) pbbs::write_min(&insideOutError, i, less<size_t>());
 	  }
 
           // Check that the neighbor is not in circumcircle of the triangle
@@ -136,7 +136,7 @@ bool check_delaunay(sequence<triang_t> &Triangles, size_t boundary_size) {
 	    double vz = inCircleNormalized(t.t->vtx[0]->pt, t.t->vtx[1]->pt, 
 					   t.t->vtx[2]->pt, v->pt);
 	    // allow for small error
-	    if (vz > 1e-10) write_min(&inCircleError, i, less<size_t>());
+	    if (vz > 1e-10) pbbs::write_min(&inCircleError, i, less<size_t>());
 	  }
 	} else boundary_count[i]++;
 	t = t.rotClockwise();

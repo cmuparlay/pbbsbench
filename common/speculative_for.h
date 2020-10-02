@@ -26,6 +26,14 @@
 
 namespace pbbs {
 
+  template <typename F>
+  inline bool write_min(idxT *a, idxT b, F less) {
+    idxT c; bool r=0;
+    do c = *a;
+    while (less(b,c) && !(r=__sync_bool_compare_and_swap(a,c,b)));
+    return r;
+  }
+
   // idxT should be able to represent the range of iterations
   // int OK for up to 2^31 iterations
   // unsigned OK if freeze not used
@@ -35,7 +43,7 @@ namespace pbbs {
     static constexpr idxT max_idx = std::numeric_limits<idxT>::max();
     reservation() : r(max_idx) {}
     idxT get() { return r;}
-    bool reserve(idxT i) { return parlay::write_min(&r, i, std::less<idxT>());}
+    bool reserve(idxT i) { return write_min(&r, i, std::less<idxT>());}
     bool reserved() { return (r < max_idx);}
     void reset() {r = max_idx;}
     void freeze() {r = -1;}

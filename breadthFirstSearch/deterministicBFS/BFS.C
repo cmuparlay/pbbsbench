@@ -36,6 +36,14 @@ using namespace std;
 //      in the new graph are the children in the bfs tree)
 // **************************************************************
 
+template <typename T, typename F>
+inline bool write_min(T *a, T b, F less) {
+  T c; bool r=0;
+  do c = *a;
+  while (less(b,c) && !(r=__sync_bool_compare_and_swap(a,c,b)));
+  return r;
+}
+
 std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
   vertexId numVertices = G.numVertices();
   edgeId numEdges = G.m;
@@ -60,7 +68,7 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
 	for (size_t j=0; j < G[v].degree; j++) {
 	  size_t ngh = G[v].Neighbors[j];
 	  if (Parents[ngh] > v) {
-	    if (parlay::write_min(&Parents[ngh], v, std::less<vertexId>())) {
+	    if (write_min(&Parents[ngh], v, std::less<vertexId>())) {
 	      G[v].Neighbors[k++] = ngh;
 	    }
 	  }

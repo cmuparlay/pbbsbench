@@ -26,6 +26,7 @@
 #include "common/geometry.h"
 #include "common/get_time.h"
 #include "common/topology.h"
+#include "common/atomics.h"
 #include "neighbors.h"
 #include "delaunay.h"
 
@@ -118,7 +119,7 @@ void reserve_for_insert(vertex_t *v, simplex_t t, Qs_t *q) {
   // will have its id written.  reserve starts out as -1
   for (size_t i = 0; i < q->vertexQ.size(); i++) {
     //cout << "trying to reserve: " << (q->vertexQ)[i]->reserve << ", " << v->id << endl;
-    parlay::write_max(&((q->vertexQ)[i]->reserve), v->id, std::less<int>());
+    pbbs::write_max(&((q->vertexQ)[i]->reserve), v->id, std::less<int>());
   }
 }
 

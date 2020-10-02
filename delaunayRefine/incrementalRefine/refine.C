@@ -25,6 +25,7 @@
 #include "parlay/hash_table.h"
 #include "common/get_time.h"
 #include "common/topology.h"
+#include "common/atomics.h"
 #include "refine.h"
 #include "common/topology_from_triangles.h"
 
@@ -32,7 +33,6 @@ using std::cout;
 using std::endl;
 using std::min;
 using parlay::hash64;
-using parlay::atomic_compare_and_swap;
 using parlay::parallel_for;
 using parlay::sequence;
 using parlay::pack;
@@ -69,7 +69,7 @@ struct hashTriangles {
     return (s->id > s2->id) ? 1 : ((s->id == s2->id) ? 0 : -1);
   }
   bool cas(eType* p, eType o, eType n) {
-    return atomic_compare_and_swap(p, o, n);
+    return pbbs::atomic_compare_and_swap(p, o, n);
   }
   bool replaceQ(eType s, eType s2) {return 0;}
 };
@@ -122,7 +122,7 @@ void reserve_for_insert(vertex_t *v, simplex_t t, Qs *q) {
   // will have its id written.  reserve starts out as -1
   for (size_t i = 0; i < q->vertexQ.size(); i++) {
     //cout << "trying to reserve: " << (q->vertexQ)[i]->reserve << ", " << v->id << endl;
-    parlay::write_max(&((q->vertexQ)[i]->reserve), v->id, std::less<int>());
+    pbbs::write_max(&((q->vertexQ)[i]->reserve), v->id, std::less<int>());
   }
 }
 

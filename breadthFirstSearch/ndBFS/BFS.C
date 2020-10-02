@@ -69,7 +69,7 @@ std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
 	edgeId o = Offsets[i];
 	for (size_t j=0; j < G[v].degree; j++) {
 	  vertexId ngh = G[v].Neighbors[j];
-	  if (!Visited[ngh] && parlay::atomic_compare_and_swap(&Visited[ngh], false, true)) {
+	  if (!Visited[ngh] &&  __sync_bool_compare_and_swap(&Visited[ngh], false, true)) {
 	    FrontierNext[o+j] = G[v].Neighbors[k++] = ngh;
 	  }
 	  else FrontierNext[o+j] = -1;
