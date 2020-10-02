@@ -30,7 +30,6 @@
 
 using namespace std;
 
-
 parlay::sequence<result_type> wordCounts(charseq const &s) {
   timer t("word counts");
   cout << "number of characters = " << s.size() << endl;
@@ -57,9 +56,6 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
       return hash;
   };
 
-  auto eql = [] (charseq const &a, charseq const &b) {
-    return a == b; };
-  
   auto result = parlay::internal::histogram_sparse(make_slice(words), hash);
   t.next("collect reduce");
 
