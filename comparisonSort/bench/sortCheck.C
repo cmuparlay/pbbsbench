@@ -40,7 +40,7 @@ void check_sort(sequence<sequence<char>> In,
   auto sorted_in = parlay::stable_sort(in_vals, less);
   parlay::internal::quicksort(make_slice(in_vals), less);
 
-  size_t error = n;
+  atomic<size_t> error = n;
   parlay::parallel_for (0, n, [&] (size_t i) {
     if (f(in_vals[i]) != f(out_vals[i])) 
 	parlay::write_min(&error,i,std::less<size_t>());

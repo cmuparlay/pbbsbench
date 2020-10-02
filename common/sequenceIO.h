@@ -107,52 +107,54 @@ namespace benchIO {
 
   using charseq_slice = parlay::slice<const sequence<char>*, const sequence<char>*>;
   
-  template <typename T>
-  sequence<T> parseElements(charseq_slice const &S);
 
   // specialized parsing functions
-  template<>
-  sequence<double> parseElements<double>(charseq_slice const &S) {
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, double>::value, sequence<double>>::type
+  parseElements(Range const &S) {
     return tabulate(S.size(), [&] (long i) -> double {return read_double(S[i]);});
   }
 
-  template<>
-  sequence<int> parseElements<int>(charseq_slice const &S) {
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, int>::value, sequence<int>>::type
+  parseElements(Range const &S) {
     return tabulate(S.size(), [&] (long i) -> int {return (int) read_long(S[i]);});
   }
 
-  template<>
-  sequence<uint> parseElements<uint>(charseq_slice const &S) {
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, uint>::value, sequence<uint>>::type
+  parseElements(Range const &S) {
     return tabulate(S.size(), [&] (long i) -> uint {return (uint) read_long(S[i]);});
   }
 
-  template<>
-  sequence<intPair> parseElements<intPair>(charseq_slice const &S) {
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, intPair>::value, sequence<intPair>>::type
+  parseElements(Range const &S) {
     return tabulate((S.size())/2, [&] (long i) -> intPair {
       return std::make_pair((int) read_long(S[2*i]), (int) read_long(S[2*i+1]));});
   }
 
-  template<>
-  sequence<uintPair> parseElements<uintPair>(charseq_slice const &S) {
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, uintPair>::value, sequence<uintPair>>::type
+  parseElements(Range const &S) {
     return tabulate((S.size())/2, [&] (long i) -> uintPair {
       return std::make_pair((uint) read_long(S[2*i]), (uint) read_long(S[2*i+1]));});
   }
 
-  template<>
-  sequence<doublePair> parseElements<doublePair>(charseq_slice const &S) {
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, doublePair>::value, sequence<doublePair>>::type
+  parseElements(Range const &S) {
     return tabulate((S.size())/2, [&] (long i) -> doublePair {
       return std::make_pair(read_double(S[2*i]), read_double(S[2*i+1]));});
   }
 
-  template<>
-  sequence<charSeq> parseElements<charSeq>(charseq_slice const &S) {
-    // return tabulate(S.size(), [&] (size_t i) -> charSeq {
-    //  				return tabulate(S[i].size() + 1, [&] (size_t j) -> char {
-    // 							    return (j==S[i].size() ? 0 : S[i][j]);});});
+  template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, charSeq>::value, sequence<charSeq>>::type
+  parseElements(Range const &S) {
     return parlay::to_sequence(S);
   }
 
-  // sequence<stringIntPair> parseElements<stringIntPair>(charseq_slice S) {
+  // sequence<stringIntPair> parseElements<stringIntPair>(Range S) {
   //   return sequence<stringIntPair>(0);
   // }  
 
