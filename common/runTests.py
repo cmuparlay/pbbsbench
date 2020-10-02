@@ -88,7 +88,7 @@ def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOut
                        noOutput)
                for test in tests]
     meanOfMeans = geomean([geomean(times) for (w,times) in results])
-    meanOfMins = geomean([times[0] for (w,times) in results])
+    meanOfMins = geomean([sorted(times)[0] for (w,times) in results])
     print(name + " : " + `procs` +" : " +
           "geomean of mins = " + stripFloat(meanOfMins) +
           ", geomean of geomeans = " + stripFloat(meanOfMeans))

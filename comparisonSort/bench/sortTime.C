@@ -52,7 +52,7 @@ int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool per
 }
 
 int main(int argc, char* argv[]) {
-  timer t("check");
+  timer t("sortTime: main");
   commandLine P(argc,argv,"[-p] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   bool permute = P.getOption("-p");
 
   auto In = get_tokens(iFile);
-  t.next("tokens");
+  //t.next("tokens");
   elementType in_type = elementTypeFromHeader(In[0]);
   size_t n = In.size() - 1;
 

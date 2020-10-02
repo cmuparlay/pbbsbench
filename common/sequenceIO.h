@@ -162,9 +162,9 @@ namespace benchIO {
     timer t("get_tokens");
     auto S = parlay::char_seq_from_file(fileName);
     //parlay::char_range_from_file S(fileName);
-    t.next("read file");
+    //t.next("read file");
     auto x =  parlay::tokens(S, benchIO::is_space);
-    t.next("tokens");
+    //t.next("tokens");
     return x;
   }
 
