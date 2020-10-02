@@ -27,6 +27,7 @@
 #include "parlay/parallel_io.h"
 #include "parlay/primitives.h"
 #include "common/sequenceIO.h"
+#include "common/atomics.h"
 #include "common/parse_command_line.h"
 using namespace std;
 using namespace benchIO;
@@ -42,7 +43,7 @@ void checkSort(sequence<sequence<char>> In,
   size_t error = n;
   parlay::parallel_for (0, n, [&] (size_t i) {
       if (out_vals[i] != sorted_in[i]) 
-	parlay::write_min(&error,i,std::less<size_t>());
+	pbbs::write_min(&error,i,std::less<size_t>());
   });
   if (error < n) {
     auto expected = parlay::to_char_seq(sorted_in[error]);

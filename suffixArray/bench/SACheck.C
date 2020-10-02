@@ -27,6 +27,8 @@
 #include "parlay/primitives.h"
 #include "common/IO.h"
 #include "common/parse_command_line.h"
+#include "common/atomics.h"
+
 using namespace std;
 using namespace benchIO;
 
@@ -56,7 +58,7 @@ bool isSorted(parlay::sequence<uchar> const &s, parlay::sequence<long> const &SA
   size_t error = n;
   parlay::parallel_for (0, n-1, [&] (size_t i) {
       if (!strLessBounded(p+SA[i], p+SA[i+1], checkLen, p + n)) {
-	parlay::write_min(&error,i,std::less<size_t>());
+	pbbs::write_min(&error,i,std::less<size_t>());
       }
     });
   if (error != n) {
