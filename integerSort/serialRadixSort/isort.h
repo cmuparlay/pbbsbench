@@ -13,7 +13,8 @@ auto int_sort(parlay::slice<T*,T*> In, size_t bits) {
   auto Out = parlay::sequence<T>::uninitialized(In.size());
   auto f = [&] (T x) {return x;};
   if (bits == 0) bits = num_bits(In,f);
-  parlay::internal::seq_radix_sort(In, make_slice(Out), In, f, bits);
+  parlay::internal::seq_radix_sort<std::true_type,std::false_type,std::true_type,std::true_type>
+       (In, make_slice(Out), In, f, bits);
   return Out;
 }
 
@@ -23,6 +24,7 @@ auto int_sort(parlay::slice<std::pair<E,F>*, std::pair<E,F>*> In, size_t bits) {
   auto Out = parlay::sequence<P>::uninitialized(In.size());
   auto f = [&] (P x) {return x.first;};
   if (bits == 0) bits = num_bits(In,f);
-  parlay::internal::seq_radix_sort(In, make_slice(Out), In, f, bits);
+  parlay::internal::seq_radix_sort<std::true_type,std::false_type,std::true_type,std::true_type>
+       (In, make_slice(Out), In, f, bits);
   return Out;
 }

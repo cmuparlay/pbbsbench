@@ -11,12 +11,7 @@ os.system("echo HOSTNAME: `hostname`")
 tests = [
  ["nBody/parallelCK",True],
 
-#["rayCast/kdTree",True],
-
-#["suffixArray/serialKS",False],  
- ["suffixArray/serialDivsufsort",False],  
- ["suffixArray/parallelKS",True],
- ["suffixArray/parallelRange",True],
+ ["rayCast/kdTree",True],
 
  ["convexHull/quickHull",True],
  ["convexHull/serialHull",False],
@@ -25,6 +20,8 @@ tests = [
  ["delaunayTriangulation/incrementalDelaunay",True],
 
  ["delaunayRefine/incrementalRefine",True],
+
+ ["nearestNeighbors/octTree",True],
 
  ["minSpanningForest/serialMST",False],
  ["minSpanningForest/parallelKruskal",True],
@@ -63,9 +60,15 @@ tests = [
  ["comparisonSort/mergeSort",True],
  ["comparisonSort/stableSampleSort",True],
 
- ["nearestNeighbors/octTree",True],
-#["nearestNeighbors/octTree2Neighbors",True],
+#["suffixArray/serialKS",False],  
+ ["suffixArray/serialDivsufsort",False],  
+ ["suffixArray/parallelKS",True],
+ ["suffixArray/parallelRange",True],
 
+ ["wordCount/serial",False],
+ ["wordCount/histogram",True],
+ ["wordCount/histogramStar",True],
+    
 #["setCover/manis",True],
 #["setCover/serialDFG",False],
 

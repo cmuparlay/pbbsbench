@@ -24,6 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/graph.h"
+#include "common/atomics.h"
 #include "MIS.h"
 using namespace std;
 
@@ -46,13 +47,13 @@ parlay::sequence<char> maximalIndependentSet(Graph G) {
 	//drop out if already in or out of MIS
 	if (Flags[v]) break;
 	//try to lock self and neighbors
-	if (parlay::atomic_compare_and_swap<bool>(&V[v], false, true)) {
+	if (pbbs::atomic_compare_and_swap<bool>(&V[v], false, true)) {
 	  size_t k = 0;
 	  for (size_t j = 0; j < G[v].degree; j++){
 	    vertexId ngh = G[v].Neighbors[j];
 	    // if ngh is not in MIS or we successfully 
 	    // acquire lock, increment k
-	    if (Flags[ngh] == 2 || parlay::atomic_compare_and_swap(&V[ngh], false, true))
+	    if (Flags[ngh] == 2 || pbbs::atomic_compare_and_swap(&V[ngh], false, true))
 	      k++;
 	    else break;
 	  }

@@ -22,6 +22,7 @@
 
 #include "../parlay/primitives.h"
 #include "../parlay/parallel.h"
+#include "atomics.h"
 
 // The following supports both "union" that is only safe sequentially
 // and "link" that is safe in parallel.  Find is always safe in parallel.
@@ -77,6 +78,6 @@ struct unionFind {
   // returns true if successful
   bool tryLink(vertexId u, vertexId v) {
     return (parents[u] == -1 &&
-	    parlay::atomic_compare_and_swap(&parents[u], -1, v));
+	    pbbs::atomic_compare_and_swap(&parents[u], -1, v));
   }
 };

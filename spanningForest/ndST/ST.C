@@ -5,6 +5,7 @@
 #include "common/get_time.h"
 #include "common/graph.h"
 #include "common/union_find.h"
+#include "common/atomics.h"
 #include "ST.h"
 
 parlay::sequence<edgeId> st(edgeArray<vertexId> const &E){
@@ -23,7 +24,7 @@ parlay::sequence<edgeId> st(edgeArray<vertexId> const &E){
 	if (u == v) break;
 	if (u > v) std::swap(u,v);
 	if (hooks[u] == m &&
-	    parlay::atomic_compare_and_swap(&hooks[u], m, i)){
+	    pbbs::atomic_compare_and_swap(&hooks[u], m, i)){
 	  UF.link(u, v);
 	  break;
 	}

@@ -22,17 +22,10 @@
 
 #include "../parlay/parallel.h"
 #include "../parlay/primitives.h"
+#include "atomics.h"
 #include <limits>
 
 namespace pbbs {
-
-  template <typename F>
-  inline bool write_min(idxT *a, idxT b, F less) {
-    idxT c; bool r=0;
-    do c = *a;
-    while (less(b,c) && !(r=__sync_bool_compare_and_swap(a,c,b)));
-    return r;
-  }
 
   // idxT should be able to represent the range of iterations
   // int OK for up to 2^31 iterations
