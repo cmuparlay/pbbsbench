@@ -49,7 +49,7 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
       return (i == n || is_space(s[i])) ? 0 : s[i];});
   t.next("copy");
   
-  auto get_word = [&] (parlay::slice<char*,char*> x) -> char* {
+  auto get_word = [&] (parlay::slice<char*, char*> x) -> char* {
     return x.begin();
   };
 
@@ -67,8 +67,8 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   };
     
   auto eql = [] (char* a, char* b) {return strcmp(a,b) == 0;};
-  
-  auto hist = parlay::internal::histogram_sparse(make_slice(words), strhash, eql);
+
+  auto hist = parlay::internal::group_by_and_count(make_slice(words), strhash);
   t.next("collect reduce");
 
   cout << "result.size(): " << hist.size() << endl;
