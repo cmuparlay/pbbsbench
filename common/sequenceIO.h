@@ -29,7 +29,7 @@
 #include "IO.h"
 #include "get_time.h"
 #include "../parlay/primitives.h"
-#include "../parlay/parallel_io.h"
+#include "../parlay/io.h"
 
 namespace benchIO {
   using namespace std;
@@ -100,10 +100,10 @@ namespace benchIO {
   }
 
   long read_long(sequence<char> const &S) {
-    return parlay::char_range_to_l(S);}
+    return parlay::chars_to_long(S);}
 
   double read_double(sequence<char> const &S) {
-    return parlay::char_range_to_d(S);}
+    return parlay::chars_to_double(S);}
 
   using charseq_slice = parlay::slice<const sequence<char>*, const sequence<char>*>;
   
@@ -160,7 +160,7 @@ namespace benchIO {
 
   sequence<sequence<char>> get_tokens(char const *fileName) {
     timer t("get_tokens");
-    auto S = parlay::char_seq_from_file(fileName);
+    auto S = parlay::chars_from_file(fileName);
     //parlay::char_range_from_file S(fileName);
     //t.next("read file");
     auto x =  parlay::tokens(S, benchIO::is_space);

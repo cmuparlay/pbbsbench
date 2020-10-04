@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
   auto tokens = parlay::tokens(Out, is_space);
   auto rout = parlay::tabulate(tokens.size()/2, [&] (size_t i) {
-      return result_type(tokens[2*i], parlay::char_range_to_l(tokens[2*i+1])); });
+      return result_type(tokens[2*i], parlay::chars_to_long(tokens[2*i+1])); });
 
   if (rin.size() != rout.size()) {
     cout << "wcCheck: number of unique words do not match, " << rin.size() << " found in the input, but " << rout.size() << " found in the supplied result. " << endl;

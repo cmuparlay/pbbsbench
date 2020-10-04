@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <cstring>
 #include "parlay/parallel.h"
-#include "parlay/parallel_io.h"
 #include "parlay/primitives.h"
 #include "common/sequenceIO.h"
 #include "common/atomics.h"
@@ -46,8 +45,8 @@ void checkSort(sequence<sequence<char>> In,
 	pbbs::write_min(&error,i,std::less<size_t>());
   });
   if (error < n) {
-    auto expected = parlay::to_char_seq(sorted_in[error]);
-    auto got = parlay::to_char_seq(out_vals[error]);
+    auto expected = parlay::to_chars(sorted_in[error]);
+    auto got = parlay::to_chars(out_vals[error]);
     cout << "integer sort: check failed at location i=" << error
 	 << " expected " << expected << " got " << got << endl;
     abort();

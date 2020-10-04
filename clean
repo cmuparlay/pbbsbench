@@ -15,11 +15,11 @@ make clean -s -C integerSort/serialRadixSort
 make clean -s -C nearestNeighbors/bench
 make clean -s -C nearestNeighbors/octTree
 
-# make clean -s -C rayCast/bench
-# make clean -s -C rayCast/kdTree
+make clean -s -C rayCast/bench
+make clean -s -C rayCast/kdTree
 
 make clean -s -C nBody/bench
-make clean -s -C nBody/parallelBarnesHut
+# make clean -s -C nBody/parallelBarnesHut
 make clean -s -C nBody/parallelCK
 
 make clean -s -C suffixArray/bench
@@ -70,6 +70,10 @@ make clean -s -C spanningForest/bench
 make clean -s -C spanningForest/incrementalST
 make clean -s -C spanningForest/serialST
 make clean -s -C spanningForest/ndST
+
+make clean -s -C wordCounts/serial
+make clean -s -C wordCounts/histogram
+make clean -s -C wordCounts/histogramStar
 
 # make clean -s -C lassoRegression/bench
 # make clean -s -C lassoRegression/parallelShootingLasso

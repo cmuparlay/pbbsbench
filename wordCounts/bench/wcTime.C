@@ -24,7 +24,7 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/parallel_io.h"
+#include "parlay/io.h"
 #include "common/get_time.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
@@ -37,13 +37,13 @@ using namespace std;
 using namespace benchIO;
 
 void writeHistogramsToFile(parlay::sequence<result_type> const results, char* outFile) {
-  auto space = parlay::to_char_seq(' ');
-  auto newline = parlay::to_char_seq('\n');
+  auto space = parlay::to_chars(' ');
+  auto newline = parlay::to_chars('\n');
   auto str = parlay::flatten(parlay::map(results, [&] (result_type x) {
 	sequence<sequence<char>> s = {
-	  x.first, space, parlay::to_char_seq(x.second), newline};
+	  x.first, space, parlay::to_chars(x.second), newline};
 	return flatten(s);}));
-  parlay::char_seq_to_file(str, outFile);
+  parlay::chars_to_file(str, outFile);
 }
   
 template<class F, class G, class H>
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  parlay::sequence<char> S = readStringFromFile(iFile);
+  parlay::sequence<char> S = parlay::chars_from_file(iFile);
   
   timeWordCounts(S, rounds, oFile);
 }

@@ -47,8 +47,8 @@ void check_sort(sequence<sequence<char>> In,
   });
   
   if (error < n) {
-    auto expected = parlay::to_char_seq(f(in_vals[error]));
-    auto got = parlay::to_char_seq(f(out_vals[error]));
+    auto expected = parlay::to_chars(f(in_vals[error]));
+    auto got = parlay::to_chars(f(out_vals[error]));
     cout << "comparison sort: check failed at location i=" << error
 	 << " expected " << expected << " got " << got << endl;
     abort();

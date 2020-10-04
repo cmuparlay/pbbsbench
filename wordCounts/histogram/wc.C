@@ -23,7 +23,7 @@
 #include <iostream>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/parallel_io.h"
+#include "parlay/io.h"
 #include "parlay/internal/collect_reduce.h"
 #include "common/get_time.h"
 #include "wc.h"

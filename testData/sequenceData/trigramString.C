@@ -1,6 +1,6 @@
 #include "parlay/parallel.h"
 #include "common/parse_command_line.h"
-#include "parlay/parallel_io.h"
+#include "parlay/io.h"
 #include "common/sequenceIO.h"
 using namespace benchIO;
 
@@ -11,5 +11,6 @@ int main(int argc, char* argv[]) {
   pair<size_t, char*> in = P.sizeAndFileName();
   size_t n = in.first;
   char* S = trigramString(0, n);
-  return parlay::char_seq_to_file(parlay::sequence<char>(S,S+n), in.second);
+  parlay::chars_to_file(parlay::sequence<char>(S,S+n), in.second);
+  return 0;
 }

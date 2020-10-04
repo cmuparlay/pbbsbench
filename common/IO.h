@@ -29,7 +29,7 @@
 #include <cstring>
 #include "../parlay/primitives.h"
 #include "../parlay/parallel.h"
-#include "../parlay/parallel_io.h"
+#include "../parlay/io.h"
 
 namespace benchIO {
   using namespace std;
@@ -199,7 +199,7 @@ namespace benchIO {
 
   template <class T>
   parlay::sequence<T> readIntSeqFromFile(char const *fileName) {
-    parlay::sequence<char> S = parlay::char_seq_from_file(fileName);
+    parlay::sequence<char> S = parlay::chars_from_file(fileName);
     //parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
     auto W = parlay::tokens(S, is_space);
     string header(W[0].begin(),W[0].end());
@@ -208,7 +208,7 @@ namespace benchIO {
       abort();
     }
     long n = W.size()-1;
-    auto A = parlay::tabulate(n, [&] (long i) -> T {return parlay::char_range_to_l(W[i+1]);});
+    auto A = parlay::tabulate(n, [&] (long i) -> T {return parlay::chars_to_long(W[i+1]);});
     return A;
   }
 };

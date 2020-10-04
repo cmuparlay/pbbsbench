@@ -24,7 +24,7 @@
 #include <iostream>
 #include <unordered_map>
 #include "parlay/primitives.h"
-#include "parlay/parallel_io.h"
+#include "parlay/io.h"
 #include "common/get_time.h"
 #include "wc.h"
 
@@ -81,7 +81,7 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   parlay::sequence<result_type> result;
   result.reserve(word_map.size());
   for (const auto &pair : word_map) 
-    result.push_back(result_type(parlay::to_char_seq(pair.first),pair.second));
+    result.push_back(result_type(parlay::to_chars(pair.first),pair.second));
   t.next("extract results");
   
   return result;

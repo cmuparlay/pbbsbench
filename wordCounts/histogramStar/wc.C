@@ -23,7 +23,6 @@
 #include <iostream>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/parallel_io.h"
 #include "parlay/internal/collect_reduce.h"
 #include "common/get_time.h"
 #include "wc.h"
@@ -54,7 +53,7 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
     return x.begin();
   };
 
-  auto words = parlay::tokens(str, [] (char c) {return c == 0;}, get_word);
+  auto words = parlay::map_tokens(str, get_word, [] (char c) {return c == 0;});
   
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
