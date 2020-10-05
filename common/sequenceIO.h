@@ -160,8 +160,8 @@ namespace benchIO {
 
   sequence<sequence<char>> get_tokens(char const *fileName) {
     timer t("get_tokens");
-    auto S = parlay::chars_from_file(fileName);
-    //parlay::char_range_from_file S(fileName);
+    //auto S = parlay::chars_from_file(fileName);
+    auto S = parlay::file_map(fileName);
     //t.next("read file");
     auto x =  parlay::tokens(S, benchIO::is_space);
     //t.next("tokens");

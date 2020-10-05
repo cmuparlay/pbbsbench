@@ -199,8 +199,8 @@ namespace benchIO {
 
   template <class T>
   parlay::sequence<T> readIntSeqFromFile(char const *fileName) {
-    parlay::sequence<char> S = parlay::chars_from_file(fileName);
-    //parlay::sequence<char*> W = parlay::tokenize(S, benchIO::is_space);
+    // parlay::sequence<char> S = parlay::chars_from_file(fileName);
+    auto S = parlay::file_map(fileName);
     auto W = parlay::tokens(S, is_space);
     string header(W[0].begin(),W[0].end());
     if (header != intHeaderIO) {

@@ -59,7 +59,6 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   auto result = parlay::internal::group_by_and_count(make_slice(words), hash);
   t.next("collect reduce");
 
-  cout << "result.size(): " << result.size() << endl;
-  cout << "result[0]: " << result[0].first << ", " << result[0].second << endl;
+  cout << "distinct words: " << result.size() << endl;
   return result;
 }

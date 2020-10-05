@@ -58,6 +58,8 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
 
+  auto lens = parlay::map(words, [] (char* w) {return strlen(w);});
+
   // a simple hash function on char sequences
   auto strhash = [] (char* a) {
     size_t hash = 5381;
@@ -68,11 +70,10 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
     
   auto eql = [] (char* a, char* b) {return strcmp(a,b) == 0;};
 
-  auto hist = parlay::internal::group_by_and_count(make_slice(words), strhash);
+  auto hist = parlay::internal::group_by_and_count(make_slice(words), strhash, eql);
   t.next("collect reduce");
 
-  cout << "result.size(): " << hist.size() << endl;
-  cout << "result[0]: " << hist[0].first << ", " << hist[0].second << endl;
+  cout << "distinct words: " << hist.size() << endl;
   parlay::sequence<result_type> result =
     parlay::tabulate(hist.size(), [&] (size_t i) {
 	size_t len = strlen(hist[i].first);

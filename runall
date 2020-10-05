@@ -83,6 +83,11 @@ if (sys.argv.count("-only") > 0):
     filteredTests = [l for l in tests if sys.argv.count(l[0]) > 0]
     tests = filteredTests
     print("Running only: ", tests)
+if (sys.argv.count("-from") > 0):
+    idx = [i for i in range(len(tests)) if sys.argv.count(tests[i][0]) > 0]
+    if len(idx) > 0 :
+        tests = tests[idx[0]:len(tests)]
+        print("Running from: ", tests[0])
 if (sys.argv.count("-c") > 0):
     print("Compiling only")
     compileOnly = True
