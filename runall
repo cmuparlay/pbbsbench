@@ -47,7 +47,7 @@ tests = [
 
  ["maximalIndependentSet/serialMIS",False],
  ["maximalIndependentSet/ndMIS",True],
-#  ["maximalIndependentSet/incrementalMIS",True],
+ ["maximalIndependentSet/incrementalMIS",True],
 
  ["nearestNeighbors/octTree",True],
 
