@@ -33,14 +33,18 @@ using namespace benchIO;
 
 template <typename T, typename Less>
 int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool permute, char* outFile) {
-  timer t;
   sequence<T> A = parseElements<T>(In.cut(1, In.size()));
   size_t n = A.size();
-
   if (permute) A = parlay::random_shuffle(A);
 
-  sequence<T> B = A;
-  compSort(B.begin(), n, less); // run one sort to "warm things up"
+  timer t;
+  sequence<T> B;
+  double start_time = t.get_time();
+  do { // run for a couple seconds to "warm things up"
+    B = A;
+    compSort(B.begin(), n, less); 
+  } while (t.get_time() < start_time + 2.0);
+
   for (int i=0; i < rounds; i++) {
     B = A;
     t.start();
