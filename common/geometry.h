@@ -43,6 +43,7 @@ using namespace std;
     coord maxDim() {return max(x,max(y,z));}
     void print() {cout << std::setprecision(10) << ":(" << x << "," << y << "," << z << "):";}
     coord Length(void) { return sqrt(x*x+y*y+z*z);}
+    coord sqLength(void) { return (x*x+y*y+z*z);}
     static const int dim = 3;
   };
 
@@ -129,6 +130,7 @@ using namespace std;
     coord maxDim() {return max(x,y);}
     void print() {cout << ":(" << x << "," << y << "):";}
     coord Length(void) { return sqrt(x*x+y*y);}
+    coord sqLength(void) { return x*x+y*y;}
     static const int dim = 2;
   };
 
