@@ -80,6 +80,6 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
 	return result_type(parlay::sequence<char>(std::move(hist[i].first), hist[i].first+len),
 			   hist[i].second);
       });
-  hist.clear_uninitialized();
+  //hist.clear_uninitialized();
   return result;
 }

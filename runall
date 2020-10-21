@@ -18,7 +18,7 @@ tests = [
  ["comparisonSort/sampleSort",True],
  ["comparisonSort/quickSort",True],
  ["comparisonSort/mergeSort",True],
- ["comparisonSort/stableSampleSort",True],
+# ["comparisonSort/stableSampleSort",True],
 
 #["suffixArray/serialKS",False],  
  ["suffixArray/serialDivsufsort",False],  
