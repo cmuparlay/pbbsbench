@@ -41,6 +41,25 @@ struct oct_tree {
   using slice_t = decltype(make_slice(parlay::sequence<indexed_point>()));
   using slice_v = decltype(make_slice(parlay::sequence<vtx*>()));
 
+    // takes a point, rounds each coordinate to an integer, and interleaves
+  // the bits into "key_bits" total bits.
+  // min_point is the minimmum x,y,z coordinate for all points
+  // delta is the largest range of any of the three dimensions
+  static size_t interleave_bits(point p, point min_point, double delta) {
+    int dim = p.dimension();
+    int bits = key_bits/dim;
+    uint maxval = (((size_t) 1) << bits) - 1; //maybe should just be size_t instead of uint
+    uint ip[dim];
+    for (int i = 0; i < dim; i++) 
+      ip[i] = floor(maxval * (p[i] - min_point[i])/delta); //could be something other than floor? nearest to?
+    size_t r = 0;
+    int loc = 0;
+    for (int i =0; i < bits; i++)
+      for (int d = 0; d < dim; d++) 
+  r = r | (((ip[d] >> i) & (size_t) 1) << (loc++));
+    return r;
+  }
+
   struct node { //should store what bit it has, then extract by shifting over while searching
 
   public:
@@ -209,39 +228,8 @@ private:
   constexpr static int key_bits = 64;
 
 
-//takes in an interleave integer and a bit position (must be less than 64)
-//returns a 0 or 1 based on whether the bit at that index in the integer is 0 or 1
-  int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
-    size_t val = ((size_t) 1) << (pos - 1);
-    std::cout << "val " << val << "\n";
-    size_t mask = (pos == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << pos);
-    std::cout << "mask " << mask << "\n";  
-    std::cout << "and" << (interleave_integer & mask) << "\n";
-    if ((interleave_integer & mask) <= val){
-      return 1;
-    } else{
-      return 0;
-    };
-  }
   
-  // takes a point, rounds each coordinate to an integer, and interleaves
-  // the bits into "key_bits" total bits.
-  // min_point is the minimmum x,y,z coordinate for all points
-  // delta is the largest range of any of the three dimensions
-  static size_t interleave_bits(point p, point min_point, double delta) {
-    int dim = p.dimension();
-    int bits = key_bits/dim;
-    uint maxval = (((size_t) 1) << bits) - 1; //maybe should just be size_t instead of uint
-    uint ip[dim];
-    for (int i = 0; i < dim; i++) 
-      ip[i] = floor(maxval * (p[i] - min_point[i])/delta); //could be something other than floor? nearest to?
-    size_t r = 0;
-    int loc = 0;
-    for (int i =0; i < bits; i++)
-      for (int d = 0; d < dim; d++) 
-	r = r | (((ip[d] >> i) & (size_t) 1) << (loc++));
-    return r;
-  }
+
 
   // generates a box consisting of a lower left corner,
   // and an upper right corner.
@@ -263,7 +251,7 @@ private:
   // consisting of the interleaved bits for the x,y,z coordinates.
   // Also sorts based the integer.
   static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V) {
-    timer t("tag",false);
+    timer t("tag",false); //tag is an arbitrary string, turn to true for printing out
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
 
@@ -276,7 +264,7 @@ private:
     
     auto points = parlay::delayed_seq<indexed_point>(n, [&] (size_t i) -> indexed_point {
 	return std::pair(interleave_bits(V[i]->pt, b.first, Delta), V[i]);
-      });
+      }); //make this not a delayed sequence, tabulate instead, so that we can use t.next()
     
     auto less = [] (indexed_point a, indexed_point b) {
       return a.first < b.first;};
