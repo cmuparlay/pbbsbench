@@ -9,45 +9,45 @@ import sys
 os.system("echo HOSTNAME: `hostname`")
 
 tests = [
- ["integerSort/serialRadixSort",False],
  ["integerSort/parallelRadixSort",True],
+# ["integerSort/serialRadixSort",False],
 
- ["comparisonSort/serialSort",False],
- ["comparisonSort/stlParallelSort",False],
 # ["comparisonSort/ips4o",True],
  ["comparisonSort/sampleSort",True],
  ["comparisonSort/quickSort",True],
  ["comparisonSort/mergeSort",True],
 # ["comparisonSort/stableSampleSort",True],
+ ["comparisonSort/serialSort",False],
+ ["comparisonSort/stlParallelSort",False],
 
 #["suffixArray/serialKS",False],  
- ["suffixArray/serialDivsufsort",False],  
  ["suffixArray/parallelKS",True],
  ["suffixArray/parallelRange",True],
+ ["suffixArray/serialDivsufsort",False],  
 
- ["wordCounts/serial",False],
  ["wordCounts/histogram",True],
  ["wordCounts/histogramStar",True],
+ ["wordCounts/serial",False],
 
- ["minSpanningForest/serialMST",False],
  ["minSpanningForest/parallelKruskal",True],
  ["minSpanningForest/parallelFilterKruskal",True],
+ ["minSpanningForest/serialMST",False],
 
- ["spanningForest/serialST",False],
  ["spanningForest/incrementalST",True],
  ["spanningForest/ndST",True], 
+ ["spanningForest/serialST",False],
 
- ["breadthFirstSearch/serialBFS",False],
  ["breadthFirstSearch/ndBFS",True],
  ["breadthFirstSearch/deterministicBFS",True],
+ ["breadthFirstSearch/serialBFS",False],
 
 #["maximalMatching/serialMatching",False],
 #["maximalMatching/ndMatching",True],
  ["maximalMatching/incrementalMatching",True],
 
- ["maximalIndependentSet/serialMIS",False],
  ["maximalIndependentSet/ndMIS",True],
  ["maximalIndependentSet/incrementalMIS",True],
+ ["maximalIndependentSet/serialMIS",False],
 
  ["nearestNeighbors/octTree",True],
 
@@ -124,18 +124,22 @@ elif maxcpus <= 16:
     processors = [1]+range(2,maxcpus+1,2)
 elif maxcpus <= 32:
     processors = [1,2]+range(4,maxcpus+1,4)
+elif maxcpus <= 40:
+    processors = [1,4,16,20,40]
 elif maxcpus <= 64:
     processors = [1,2,4]+range(8,maxcpus+1,8)
 elif maxcpus == 144:
-    processors = [1,4,16,32,72,108,144]
+    processors = [1,4,16,32,72,144]
 elif maxcpus == 256:
     processors = [1,4,16,32,64,128,256]
 else:
     processors = [1,2,4,8]+range(16,maxcpus+1,16)
 print(processors)
 
-def runtest(dir,options,numactl) :
+def cleantest(dir) :
   ss = "cd " + dir + " ; make -s cleanall ; make -s"
+    
+def runtest(dir,options,numactl) :
   if numactl:
       sc = "cd " + dir + " ; numactl -i all ./testInputs " + options
   else:
@@ -153,6 +157,7 @@ usenumactl = True
 try :
   for test in tests :
     if (test[1]) :
+      cleantest(test[0])
       for p in processors :
         if (p == 1) :
           runtest(test[0], "-x -r 1 -p " + `p`, False)
