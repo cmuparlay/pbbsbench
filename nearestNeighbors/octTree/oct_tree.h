@@ -280,7 +280,7 @@ private:
   static node* build_recursive(slice_t Pts, int bit) {
     size_t n = Pts.size();
     if (n == 0) abort();
-    int cutoff = 20;
+    int cutoff = 32;
 
     // if run out of bit, or small then generate a leaf
     if (bit == 0 || n < cutoff) {
