@@ -15,7 +15,7 @@ INCLUDE =
 all : $(BENCH) testInputs
 	cd ../bench; make -s $(CHECK)
 
-$(BENCH) : $(TIME) $(BENCH).h
+$(BENCH) : $(TIME) $(BENCH).h $(REQUIRE)
 	$(CC) $(CFLAGS) $(INCLUDE) -include $(BENCH).h -o $(BENCH) $(TIME) $(LFLAGS)
 
 testInputs : ../bench/testInputs
