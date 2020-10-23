@@ -217,7 +217,7 @@ struct oct_tree {
   // build a tree given a sequence of pointers to points
   template <typename Seq>
   static tree_ptr build(Seq &P) {
-    timer t("oct_tree",false);
+    timer t("oct_tree", false);
     int dims = (P[0]->pt).dimension();
     auto pts = tag_points(P);
     t.next("tag");
@@ -253,7 +253,7 @@ private:
   // consisting of the interleaved bits for the x,y,z coordinates.
   // Also sorts based the integer.
   static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V) {
-    timer t("tag",false); //tag is an arbitrary string, turn to true for printing out
+    timer t("tag", false); //tag is an arbitrary string, turn to true for printing out
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
 

@@ -38,8 +38,6 @@ using coord = double;
 using point2 = point2d<coord>;
 using point3 = point3d<coord>;
 
-#define K 10
-
 template <class PT, int KK>
 struct vertex {
   using pointT = PT;

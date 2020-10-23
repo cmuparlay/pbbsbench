@@ -110,24 +110,24 @@ struct k_nearest_neighbors {
       return (T->center() - vertex->pt).sqLength();
     }
 
-
+    // sorted backwards
     void merge(kNN &L, kNN &R) {
-      int i = 0;
-      int j = 0;
-      int r = 0;
-      while (r < k) {
+      int i = k-1;
+      int j = k-1;
+      int r = k-1;
+      while (r >= 0) {
 	if (L.distances[i] < R.distances[j]) {
 	  distances[r] = L.distances[i];
 	  neighbors[r] = L.neighbors[i];
-	  i++; 
+	  i--; 
 	} else {
 	  distances[r] = R.distances[j];
 	  neighbors[r] = R.neighbors[j];
 	  // same neighbor could appear in both lists
-	  if (L.neighbors[i] == R.neighbors[j]) i++;
-	  j++;
+	  if (L.neighbors[i] == R.neighbors[j]) i--;
+	  j--;
 	}
-	r++;
+	r--;
       }
     }
     
