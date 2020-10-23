@@ -20,7 +20,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define report_stats true
+#define report_stats false
 #include <algorithm>
 #include <math.h> // so we can have the square root
 #include "parlay/parallel.h"
@@ -150,7 +150,6 @@ struct k_nearest_neighbors {
       }
       current = parent;  
     }
-    return current
   }
 
   }; // this ends the knn structure
@@ -235,35 +234,37 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     if (report_stats) 
       std::cout << "depth = " << T.tree->depth() << std::endl;
 
-    // this is for starting from root 
-    // __________________________________________________
+    int type = 2;
 
-    // // // this reorders the vertices for locality
-    // parlay::sequence<vtx*> vr = T.vertices();
-    // t.next("flatten tree");
+    // *******************
+    if (type == 0) { // this is for starting from root 
+      // this reorders the vertices for locality
+      parlay::sequence<vtx*> vr = T.vertices();
+      t.next("flatten tree");
 
-    // // find nearest k neighbors for each point
-    // parlay::parallel_for (0, v.size(), [&] (size_t i) {
-    //        T.k_nearest(vr[i], k);}, 1);
+      // find nearest k neighbors for each point
+      parlay::parallel_for (0, v.size(), [&] (size_t i) {
+	  T.k_nearest(vr[i], k);}, 1);
 
-    // // This is for starting from leaf, finding leaf using find_leaf()
-    // // ________________________________________________________
+    // *******************
+    } else if (type == 1) { // using find_leaf
+      // this reorders the vertices for locality
+      parlay::sequence<vtx*> vr = T.vertices();
+      t.next("flatten tree");
+      
+      int dims = (v[0]->pt).dimension();          
+      parlay::parallel_for(0, v.size(), [&] (size_t i) {   
+	  T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, dims, T.tree.get()), k);});
 
-    int dims = (v[0]->pt).dimension();          
-    parlay::parallel_for(0, v.size(), [&] (size_t i) {   
-      T.k_nearest_leaf(v[i], T.find_leaf(v[i]->pt, dims, T.tree.get()), k);});  
+    // *******************      
+    } else { //(type == 2) this is for starting from leaf, finding leaf using map()
+      auto f = [&] (vtx* p, node* n){ 
+	return T.k_nearest_leaf(p, n, k); 
+      };
 
-    // // this is for starting from leaf, finding leaf using map()
-    // // ______________________________________________________________
-
-    // auto f = [&] (vtx* p, node* n){ 
-    //   return T.k_nearest_leaf(p, n, k); 
-    // };
-
-  
-    // // find nearest k neighbors for each point
-    // T.tree -> map(f); 
-
+      // find nearest k neighbors for each point
+      T.tree -> map(f);
+    }
 
     t.next("try all");
     if (report_stats) {
