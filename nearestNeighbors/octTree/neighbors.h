@@ -111,8 +111,25 @@ struct k_nearest_neighbors {
     }
 
 
-
-
+    void merge(kNN &L, kNN &R) {
+      int i = 0;
+      int j = 0;
+      int r = 0;
+      while (r < k) {
+	if (L.distances[i] < R.distances[j]) {
+	  distances[r] = L.distances[i];
+	  neighbors[r] = L.neighbors[i];
+	  i++; 
+	} else {
+	  distances[r] = R.distances[j];
+	  neighbors[r] = R.neighbors[j];
+	  // same neighbor could appear in both lists
+	  if (L.neighbors[i] == R.neighbors[j]) i++;
+	  j++;
+	}
+	r++;
+      }
+    }
     
     // looks for nearest neighbors for pt in Tree node T
     void k_nearest_rec(node* T) {
@@ -123,6 +140,12 @@ struct k_nearest_neighbors {
 	  auto &Vtx = T->Vertices();
 	  for (int i = 0; i < T->size(); i++)
 	    if (Vtx[i] != vertex) update_nearest(Vtx[i]);
+	} else if (T->size() > 10000) { 
+	  auto L = *this; // make copies of the distances
+	  auto R = *this; // so safe to call in parallel
+	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
+			 [&] () {R.k_nearest_rec(T->Right());});
+	  merge(L,R); // merge the results
 	} else if (distance(T->Left()) < distance(T->Right())) {
 	  k_nearest_rec(T->Left());
 	  k_nearest_rec(T->Right());
