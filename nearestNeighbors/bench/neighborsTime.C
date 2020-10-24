@@ -90,6 +90,7 @@ int main(int argc, char* argv[]) {
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   int d = P.getOptionIntValue("-d",2);
+  algorithm_version = P.getOptionIntValue("-t",algorithm_version);
   if (k > 10 || k < 1) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 
