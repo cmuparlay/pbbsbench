@@ -27,8 +27,6 @@
 #include "common/geometry.h"
 #include "common/get_time.h"
 
-constexpr int LEAF_SIZE_CUTOFF = 32;
-
 // vtx must support v->pt
 // and v->pt must support pt.dimension(), pt[i],
 //    (pt1 - pt2).Length(), pt1 + (pt2 - pt3)
@@ -121,7 +119,7 @@ struct oct_tree {
     
     ~node() {
       // need to collect in parallel
-      parlay::par_do_if(n > 100,
+      parlay::par_do_if(n > 1000,
 			[&] () { delete_tree(L);},
 			[&] () { delete_tree(R);});
     }
@@ -142,7 +140,7 @@ struct oct_tree {
       if (is_leaf())
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {
-	parlay::par_do_if(n > 100,
+	parlay::par_do_if(n > 1000,
 			  [&] () {L->map(f);},
 			  [&] () {R->map(f);});
       }
@@ -285,7 +283,7 @@ private:
     int cutoff = 32;
 
     // if run out of bit, or small then generate a leaf
-    if (bit == 0 || n < LEAF_SIZE_CUTOFF) {
+    if (bit == 0 || n < cutoff) {
       return node::new_leaf(Pts, bit); 
     } else {
 

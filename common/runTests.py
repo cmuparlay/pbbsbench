@@ -10,7 +10,7 @@ def onPprocessors(command,p) :
   elif os.environ.has_key("CILK"):
     return "CILK_NWORKERS="+`p`+" " + command
   else:
-    return "PARLAY_NUM_THREADS="+`p`+" " + command
+    return "NUM_THREADS="+`p`+" " + command
   
 def shellGetOutput(str) :
   process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
