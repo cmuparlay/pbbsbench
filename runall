@@ -136,8 +136,10 @@ else:
     processors = [1,2,4,8]+range(16,maxcpus+1,16)
 print(processors)
 
-def cleantest(dir) :
+def compiletest(dir) :
   ss = "cd " + dir + " ; make -s cleanall ; make -s"
+  os.system("echo " + "compiling: " + dir)
+  os.system(ss)
     
 def runtest(dir,options,numactl) :
   if numactl:
@@ -146,30 +148,29 @@ def runtest(dir,options,numactl) :
       sc = "cd " + dir + " ; ./testInputs " + options
   os.system("echo")
   os.system("echo " + dir)
-  os.system(ss)
-  if (not(compileOnly)) :
-      x = os.system(sc)
-      if (x) :  
-          raise NameError("  " + sc)
+  x = os.system(sc)
+  if (x) :  
+      raise NameError("  " + sc)
 
 usenumactl = True
 
 try :
   for test in tests :
-    if (test[1]) :
-      cleantest(test[0])
-      for p in processors :
-        if (p == 1) :
-          runtest(test[0], "-x -r 1 -p " + `p`, False)
-        elif (p < 16) :
-          runtest(test[0], "-x -r 3 -p " + `p`, usenumactl)
-        elif (p < 64) :
-          runtest(test[0], "-x -r 5 -p " + `p`, usenumactl)
-        else :
-          runtest(test[0], "-x -r 7 -p " + `p`, usenumactl)
-      runtest(test[0],"-r 1", usenumactl)
-    else :
-      runtest(test[0], "-r 1 -p 1", False)
+      compiletest(test[0])
+      if (not(compileOnly)) :
+          if (test[1]) :
+              for p in processors :
+                  if (p == 1) :
+                      runtest(test[0], "-x -r 1 -p " + `p`, False)
+                  elif (p < 16) :
+                      runtest(test[0], "-x -r 3 -p " + `p`, usenumactl)
+                  elif (p < 64) :
+                      runtest(test[0], "-x -r 5 -p " + `p`, usenumactl)
+                  else :
+                      runtest(test[0], "-x -r 7 -p " + `p`, usenumactl)
+              runtest(test[0],"-r 1", usenumactl)
+          else :
+              runtest(test[0], "-r 1 -p 1", False)
 except NameError,v :
   x, = v
   print "TEST TERMINATED ABNORMALLY:\n"+x
