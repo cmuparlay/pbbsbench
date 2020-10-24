@@ -22,10 +22,12 @@
 
 #define report_stats false
 #include <algorithm>
+#include <math.h> // so we can have the square root
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "oct_tree.h"
+
 
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
@@ -41,7 +43,7 @@ struct k_nearest_neighbors {
 
   // generates the search structure
   k_nearest_neighbors(parlay::sequence<vtx*> &V) {
-    tree = o_tree::build(V);
+    tree = o_tree::build(V); //double colon because o_tree is a static method, not specific to the tree
   }
 
   // returns the vertices in the search structure, in an
@@ -81,7 +83,7 @@ struct k_nearest_neighbors {
 
     // if p is closer than neighbors[0] then swap it in
     void update_nearest(vtx *other) { 
-      auto dist = (vertex->pt - other->pt).Length();
+      auto dist = (vertex->pt - other->pt).sqLength();
       if (dist < distances[0]) {
 	neighbors[0] = other;
 	distances[0] = dist;
@@ -105,18 +107,45 @@ struct k_nearest_neighbors {
     }
 
     double distance(node* T) {
-      return (T->center() - vertex->pt).Length();
+      return (T->center() - vertex->pt).sqLength();
+    }
+
+    // sorted backwards
+    void merge(kNN &L, kNN &R) {
+      int i = k-1;
+      int j = k-1;
+      int r = k-1;
+      while (r >= 0) {
+	if (L.distances[i] < R.distances[j]) {
+	  distances[r] = L.distances[i];
+	  neighbors[r] = L.neighbors[i];
+	  i--; 
+	} else {
+	  distances[r] = R.distances[j];
+	  neighbors[r] = R.neighbors[j];
+	  // same neighbor could appear in both lists
+	  if (L.neighbors[i] == R.neighbors[j]) i--;
+	  j--;
+	}
+	r--;
+      }
     }
     
-    // looks for nearest neighbors for this->vertex in Tree node T
+    // looks for nearest neighbors for pt in Tree node T
     void k_nearest_rec(node* T) {
       if (report_stats) internal_cnt++;
-      if (within_epsilon_box(T, distances[0])) {
+      if (within_epsilon_box(T, sqrt(distances[0]))) {
 	if (T->is_leaf()) {
 	  if (report_stats) leaf_cnt++;
 	  auto &Vtx = T->Vertices();
 	  for (int i = 0; i < T->size(); i++)
 	    if (Vtx[i] != vertex) update_nearest(Vtx[i]);
+	} else if (T->size() > 10000) { 
+	  auto L = *this; // make copies of the distances
+	  auto R = *this; // so safe to call in parallel
+	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
+			 [&] () {R.k_nearest_rec(T->Right());});
+	  merge(L,R); // merge the results
 	} else if (distance(T->Left()) < distance(T->Right())) {
 	  k_nearest_rec(T->Left());
 	  k_nearest_rec(T->Right());
@@ -126,17 +155,92 @@ struct k_nearest_neighbors {
 	}
       }
     }
-  };
 
-  void k_nearest(vtx *p, int k) {
+  void k_nearest_fromLeaf(node* T) {
+    node* current = T; //this will be the node that node*T points to
+    if (current -> is_leaf()){
+        if (report_stats) leaf_cnt++;
+        auto &Vtx = T->Vertices();
+        for (int i = 0; i < T->size(); i++)
+          if (Vtx[i] != vertex) update_nearest(Vtx[i]);
+      } 
+    while((not within_epsilon_box(current, -sqrt(distances[0]))) and (current -> Parent() != nullptr)){ //check that current parent is not null
+      node* parent = (current -> Parent());
+      if (current == parent -> Right()){
+        k_nearest_rec(parent -> Left());
+      } else{
+        k_nearest_rec(parent -> Right());
+      }
+      current = parent;  
+    }
+  }
+
+  }; // this ends the knn structure
+
+
+  // takes in an integer and a position in said integer and returns whether the bit at that position is 0 or 1
+  int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
+    size_t val = ((size_t) 1) << (pos - 1);
+    size_t mask = (pos == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << pos);
+    if ((interleave_integer & mask) <= val){
+      return 1;
+    } else{
+      return 0;
+    }
+  }
+
+//This finds the leaf in the search structure that p is located in
+node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave_bits() takes in a point
+  //first, we use code copied over from oct_tree to go from a point to an interleave integer
+  using box = typename o_tree::box;
+  node* current = T;
+  box b = current -> Box(); 
+  double Delta = 0;
+  for (int i = 0; i < dims; i++) 
+    Delta = std::max(Delta, b.second[i] - b.first[i]);
+  size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //calling interleave_bits from oct_tree
+  //then, we use this interleave integer to find the correct leaf
+  while (not (current->is_leaf())){
+    if(lookup_bit(searchInt, current -> bit) == 0){ 
+      current = current->Right(); 
+    } else{
+      current = current->Left();
+    }
+  };
+  //this is a test case, only works for a two-dimensional sample size
+  // bool check = false; 
+  // auto &Vtx = current -> Vertices();
+  // for (int i = 0; i < current -> size(); i++)
+  //   if ( ((Vtx[i] -> pt).x == p.x) and ((Vtx[i] -> pt).y == p.y)) { //this is a hack since it doesn't work properly for 3d
+  //   //need a notion of equality here---check that components are equal?
+  //     check = true;
+  //   }
+  // std::cout << "check " << check << "\n"; 
+  return current;
+}; 
+
+
+//this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
+void k_nearest_leaf(vtx* p, node* T, int k) { 
+  kNN nn(p, k); 
+  nn.k_nearest_fromLeaf(T);
+  if (report_stats) p->counter = nn.internal_cnt;
+  for (int i=0; i < k; i++)
+    p->ngh[i] = nn[i];
+}
+
+  void k_nearest(vtx* p, int k) {
     kNN nn(p,k);
-    nn.k_nearest_rec(tree.get());
+    nn.k_nearest_rec(tree.get()); //this is passing in a pointer to the o_tree root
     if (report_stats) p->counter = nn.internal_cnt;
     for (int i=0; i < k; i++)
       p->ngh[i] = nn[i];
   }
 
-};
+}; //this ends the k_nearest_neighbors structure
+
+
+
 
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
@@ -146,19 +250,44 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
   {
     using knn_tree = k_nearest_neighbors<vtx, max_k>;
+    using node = typename knn_tree::node;
     knn_tree T(v);
     t.next("build tree");
 
     if (report_stats) 
       std::cout << "depth = " << T.tree->depth() << std::endl;
 
-    // this reorders the vertices for locality
-    parlay::sequence<vtx*> vr = T.vertices();
-    t.next("flatten tree");
-  
-    // find nearest k neighbors for each point
-    parlay::parallel_for (0, v.size(), [&] (size_t i) {
-					 T.k_nearest(vr[i], k);}, 1);
+    int type = 2;
+
+    // *******************
+    if (type == 0) { // this is for starting from root 
+      // this reorders the vertices for locality
+      parlay::sequence<vtx*> vr = T.vertices();
+      t.next("flatten tree");
+
+      // find nearest k neighbors for each point
+      parlay::parallel_for (0, v.size(), [&] (size_t i) {
+	  T.k_nearest(vr[i], k);}, 1);
+
+    // *******************
+    } else if (type == 1) { // using find_leaf
+      // this reorders the vertices for locality
+      parlay::sequence<vtx*> vr = T.vertices();
+      t.next("flatten tree");
+      
+      int dims = (v[0]->pt).dimension();          
+      parlay::parallel_for(0, v.size(), [&] (size_t i) {   
+	  T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, dims, T.tree.get()), k);});
+
+    // *******************      
+    } else { //(type == 2) this is for starting from leaf, finding leaf using map()
+      auto f = [&] (vtx* p, node* n){ 
+	return T.k_nearest_leaf(p, n, k); 
+      };
+
+      // find nearest k neighbors for each point
+      T.tree -> map(f);
+    }
 
     t.next("try all");
     if (report_stats) {
@@ -169,6 +298,9 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 		<< ", average internal = " << sum/((double) v.size()) << std::endl;
       t.next("stats");
     }
-  }
   t.next("delete tree");
+
+
+};
 }
+

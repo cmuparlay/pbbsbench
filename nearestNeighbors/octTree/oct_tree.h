@@ -20,14 +20,17 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "common/get_time.h"
 
-// vtx must support v.pt and v::point_t
-// and v.pt must support pt.dimension(), pt[i],
+constexpr int LEAF_SIZE_CUTOFF = 32;
+
+// vtx must support v->pt
+// and v->pt must support pt.dimension(), pt[i],
 //    (pt1 - pt2).Length(), pt1 + (pt2 - pt3)
 //    pt1.minCoords(pt2), pt1.maxCoords(pt2),
 template <typename vtx>
@@ -40,9 +43,29 @@ struct oct_tree {
   using slice_t = decltype(make_slice(parlay::sequence<indexed_point>()));
   using slice_v = decltype(make_slice(parlay::sequence<vtx*>()));
 
-  struct node {
+    // takes a point, rounds each coordinate to an integer, and interleaves
+  // the bits into "key_bits" total bits.
+  // min_point is the minimmum x,y,z coordinate for all points
+  // delta is the largest range of any of the three dimensions
+  static size_t interleave_bits(point p, point min_point, double delta) {
+    int dim = p.dimension();
+    int bits = key_bits/dim;
+    uint maxval = (((size_t) 1) << bits) - 1; //maybe should just be size_t instead of uint
+    uint ip[dim];
+    for (int i = 0; i < dim; i++) 
+      ip[i] = floor(maxval * (p[i] - min_point[i])/delta); //could be something other than floor? nearest to?
+    size_t r = 0;
+    int loc = 0;
+    for (int i =0; i < bits; i++)
+      for (int d = 0; d < dim; d++) 
+  r = r | (((ip[d] >> i) & (size_t) 1) << (loc++));
+    return r;
+  }
+
+  struct node { //should store what bit it has, then extract by shifting over while searching
 
   public:
+    int bit;
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
@@ -53,8 +76,12 @@ struct oct_tree {
     node* Parent() {return parent;}
     leaf_seq& Vertices() {return P;};
 
+    void set_bit(int currentBit){
+      bit = currentBit;
+    }
+
     // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts) {
+    node(slice_t Pts, int currentBit) { //this needs to be handed a bit as well
       n = Pts.size();
       parent = nullptr;
 
@@ -65,26 +92,28 @@ struct oct_tree {
       L = R = nullptr;
       b = get_box(P);
       set_center();
+      set_bit(currentBit);
     }
 
     // construct an internal binary node
-    node(node* L, node* R) : L(L), R(R) {
+    node(node* L, node* R, int currentBit) : L(L), R(R) { 
       parent = nullptr;
       b = box(L->b.first.minCoords(R->b.first),
 	      L->b.second.maxCoords(R->b.second));
       n = L->size() + R->size();
       set_center();
+      set_bit(currentBit);
     }
     
-    static node* new_leaf(slice_t Pts) {
+    static node* new_leaf(slice_t Pts, int currentBit) {
       node* r = alloc_node();
-      new (r) node(Pts);
+      new (r) node(Pts, currentBit);
       return r;
     }
 
-    static node* new_node(node* L, node* R) {
+    static node* new_node(node* L, node* R, int currentBit) {
       node* nd = alloc_node();
-      new (nd) node(L, R);
+      new (nd) node(L, R, currentBit);
       // both children point to this node as their parent
       L->parent = R->parent = nd;
       return nd;
@@ -92,7 +121,7 @@ struct oct_tree {
     
     ~node() {
       // need to collect in parallel
-      parlay::par_do_if(n > 1000,
+      parlay::par_do_if(n > 100,
 			[&] () { delete_tree(L);},
 			[&] () { delete_tree(R);});
     }
@@ -104,14 +133,16 @@ struct oct_tree {
     }
 
     // map a function f(p,node_ptr) over the points, passing
-    // in the point, and a pointer to the leaf node it is in.
+    // in a pointer to a vertex, and a pointer to the leaf node it is in.
     // f should return void
+
+    //pass in a function to compute nearest neighbors
     template <typename F>
-    void map(F f) {
+    void map(F f) { // wait a sec, how come map() is a method in node() rather than o_tree()?
       if (is_leaf())
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {
-	parlay::par_do_if(n > 1000,
+	parlay::par_do_if(n > 100,
 			  [&] () {L->map(f);},
 			  [&] () {R->map(f);});
       }
@@ -176,17 +207,17 @@ struct oct_tree {
 	  [&] () {flatten_rec(T->R, R.cut(n_left, n));});
       }
     }
-  };
+  }; // this ends the node structure
   
   // A unique pointer to a tree node to ensure the tree is
   // destructed when the pointer is, and that  no copies are made.
   struct delete_tree {void operator() (node *T) const {node::delete_tree(T);}};
   using tree_ptr = std::unique_ptr<node,delete_tree>;
 
-  // build a tre given a sequence of pointers to points
+  // build a tree given a sequence of pointers to points
   template <typename Seq>
   static tree_ptr build(Seq &P) {
-    timer t("oct_tree",false);
+    timer t("oct_tree", false);
     int dims = (P[0]->pt).dimension();
     auto pts = tag_points(P);
     t.next("tag");
@@ -197,26 +228,10 @@ struct oct_tree {
 
 private:
   constexpr static int key_bits = 64;
-  
-  // takes a point, rounds each coordinate to an integer, and interleaves
-  // the bits into "key_bits" total bits.
-  // min_point is the minimmum x,y,z coordinate for all points
-  // delta is the largest range of any of the three dimensions
-  static size_t interleave_bits(point p, point min_point, double delta) {
-    int dim = p.dimension();
-    int bits = key_bits/dim;
-    uint maxval = (((size_t) 1) << bits) - 1;
-    uint ip[dim];
-    for (int i = 0; i < dim; i++) 
-      ip[i] = floor(maxval * (p[i] - min_point[i])/delta);
 
-    size_t r = 0;
-    int loc = 0;
-    for (int i =0; i < bits; i++)
-      for (int d = 0; d < dim; d++) 
-	r = r | (((ip[d] >> i) & (size_t) 1) << (loc++));
-    return r;
-  }
+
+  
+
 
   // generates a box consisting of a lower left corner,
   // and an upper right corner.
@@ -238,7 +253,7 @@ private:
   // consisting of the interleaved bits for the x,y,z coordinates.
   // Also sorts based the integer.
   static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V) {
-    timer t("tag",false);
+    timer t("tag", false); //tag is an arbitrary string, turn to true for printing out
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
 
@@ -246,12 +261,12 @@ private:
     box b = get_box(V);
     double Delta = 0;
     for (int i = 0; i < dims; i++) 
-      Delta = std::max(Delta, b.second[i] - b.first[i]);
+      Delta = std::max(Delta, b.second[i] - b.first[i]); 
     t.next("get box");
     
     auto points = parlay::delayed_seq<indexed_point>(n, [&] (size_t i) -> indexed_point {
 	return std::pair(interleave_bits(V[i]->pt, b.first, Delta), V[i]);
-      });
+      }); //make this not a delayed sequence, tabulate instead, so that we can use t.next()
     
     auto less = [] (indexed_point a, indexed_point b) {
       return a.first < b.first;};
@@ -267,14 +282,14 @@ private:
   static node* build_recursive(slice_t Pts, int bit) {
     size_t n = Pts.size();
     if (n == 0) abort();
-    int cutoff = 20;
+    int cutoff = 32;
 
     // if run out of bit, or small then generate a leaf
-    if (bit == 0 || n < cutoff) {
-      return node::new_leaf(Pts);
+    if (bit == 0 || n < LEAF_SIZE_CUTOFF) {
+      return node::new_leaf(Pts, bit); 
     } else {
 
-      // the following defines a less based on the bit
+      // this was extracted to lookup_bit but left as is here since the less function requires mask and val
       size_t val = ((size_t) 1) << (bit - 1);
       size_t mask = (bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << bit);
       auto less = [&] (indexed_point x) {
@@ -289,13 +304,13 @@ private:
 
       // otherwise recurse on the two parts, also moving to next bit
       else {
-	node *L, *R;
+	node *L, *R; 
 	parlay::par_do_if(n > 1000,
            [&] () {L = build_recursive(Pts.cut(0, pos), bit - 1);},
 	   [&] () {R = build_recursive(Pts.cut(pos, n), bit - 1);});
-	return node::new_node(L,R);
+	return node::new_node(L,R, bit); //TODO add bit here
       }
     }
   }
   
-};
+}; //end octTree structure 
