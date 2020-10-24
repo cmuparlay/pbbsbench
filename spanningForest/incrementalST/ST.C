@@ -66,6 +66,6 @@ parlay::sequence<edgeId> st(edgeArray<vertexId> const &G){
   unionFindStep UFStep(G, UF, R);
   pbbs::speculative_for<edgeId>(UFStep, 0, m, 100);
   return parlay::internal::filter_map(R,
-		  [&] (reservation a) -> bool {return a.reserved();},
-		  [&] (reservation a) -> edgeId {return a.get();});
-}
+		  [&] (const reservation& a) -> bool {return a.reserved();},
+		  [&] (const reservation& a) -> edgeId {return a.get();});
+} 

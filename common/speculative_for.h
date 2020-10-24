@@ -22,7 +22,7 @@
 
 #include "../parlay/parallel.h"
 #include "../parlay/primitives.h"
-#include "atomics.h"
+//#include "atomics.h"
 #include <limits>
 
 namespace pbbs {
@@ -32,15 +32,15 @@ namespace pbbs {
   // unsigned OK if freeze not used
   template <class idxT>
   struct reservation {
-    idxT r;
+    std::atomic<idxT> r;
     static constexpr idxT max_idx = std::numeric_limits<idxT>::max();
     reservation() : r(max_idx) {}
-    idxT get() { return r;}
-    bool reserve(idxT i) { return write_min(&r, i, std::less<idxT>());}
-    bool reserved() { return (r < max_idx);}
+    idxT get() const { return r.load();}
+    bool reserve(idxT i) { return parlay::write_min(&r, i, std::less<idxT>());}
+    bool reserved() const { return (r.load() < max_idx);}
     void reset() {r = max_idx;}
     void freeze() {r = -1;}
-    bool check(idxT i) { return (r == i);}
+    bool check(idxT i) const { return (r.load() == i);}
     bool checkReset(idxT i) {
       if (r==i) { r = max_idx; return 1;}
       else return 0;

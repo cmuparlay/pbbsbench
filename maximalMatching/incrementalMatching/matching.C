@@ -77,7 +77,7 @@ parlay::sequence<edgeId> maximalMatching(edges const &E) {
   pbbs::speculative_for<edgeId>(mStep, 0, m, 10, 0);
   t.next("speculative for");
   parlay::sequence<edgeId> matchingIdx =
-    parlay::pack(parlay::delayed_seq<edgeId>(n, [&] (size_t i) {return R[i].r;}),
+    parlay::pack(parlay::delayed_seq<edgeId>(n, [&] (size_t i) {return R[i].get();}),
 		 parlay::tabulate(n, [&] (size_t i) -> bool {return R[i].reserved();}));
   t.next("speculative for");
   cout << "number of matches = " << matchingIdx.size() << endl;
