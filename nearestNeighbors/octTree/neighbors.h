@@ -20,7 +20,9 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define report_stats false
+bool report_stats = false;
+int use_algorithm_version = 0;
+
 #include <algorithm>
 #include <math.h> // so we can have the square root
 #include "parlay/parallel.h"
@@ -140,7 +142,7 @@ struct k_nearest_neighbors {
 	  auto &Vtx = T->Vertices();
 	  for (int i = 0; i < T->size(); i++)
 	    if (Vtx[i] != vertex) update_nearest(Vtx[i]);
-	} else if (T->size() > 10000) { 
+	} else if (T->size() > 10000 && use_algorithm_version != 0) { 
 	  auto L = *this; // make copies of the distances
 	  auto R = *this; // so safe to call in parallel
 	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
@@ -257,10 +259,8 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     if (report_stats) 
       std::cout << "depth = " << T.tree->depth() << std::endl;
 
-    int type = 2;
-
     // *******************
-    if (type == 0) { // this is for starting from root 
+    if (use_algorithm_version == 0) { // this is for starting from root 
       // this reorders the vertices for locality
       parlay::sequence<vtx*> vr = T.vertices();
       t.next("flatten tree");
@@ -270,7 +270,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 	  T.k_nearest(vr[i], k);}, 1);
 
     // *******************
-    } else if (type == 1) { // using find_leaf
+    } else if (use_algorithm_version == 1) { // using find_leaf
       // this reorders the vertices for locality
       parlay::sequence<vtx*> vr = T.vertices();
       t.next("flatten tree");
@@ -280,7 +280,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 	  T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, dims, T.tree.get()), k);});
 
     // *******************      
-    } else { //(type == 2) this is for starting from leaf, finding leaf using map()
+    } else { //(use_algorithm_version == 2) this is for starting from leaf, finding leaf using map()
       auto f = [&] (vtx* p, node* n){ 
 	return T.k_nearest_leaf(p, n, k); 
       };
