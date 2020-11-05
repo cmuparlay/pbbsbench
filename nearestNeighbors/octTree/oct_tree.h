@@ -41,6 +41,10 @@ struct oct_tree {
   using slice_t = decltype(make_slice(parlay::sequence<indexed_point>()));
   using slice_v = decltype(make_slice(parlay::sequence<vtx*>()));
 
+
+
+
+
     // takes a point, rounds each coordinate to an integer, and interleaves
   // the bits into "key_bits" total bits.
   // min_point is the minimmum x,y,z coordinate for all points
@@ -146,6 +150,20 @@ struct oct_tree {
       }
     }
 
+    //like map(), but the function f only has to be over a node, not a point
+    //will be used to make sequence for sorting in Method 2
+    template <typename F>
+    void map_node(F f){
+      if(is_leaf()){
+        f(this);
+      }
+      else{
+        parlay::par_do_if(n>1000,
+        [&] () {L -> map_node(f);},
+        [&] () {R -> map_node(f);});
+      }
+    }
+
     size_t depth() {
       if (is_leaf()) return 0;
       else {
@@ -206,6 +224,7 @@ struct oct_tree {
       }
     }
   }; // this ends the node structure
+
   
   // A unique pointer to a tree node to ensure the tree is
   // destructed when the pointer is, and that  no copies are made.
