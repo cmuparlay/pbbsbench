@@ -270,7 +270,6 @@ node* find_leaf(point p, int dims, node* R){
   }
 
   void get_leaf_sequence(node* R, int dims, size_t size){
-    std::cout << "get leaf sequence" << "\n";
     box_delta bd = get_box_delta(R, dims);
     get_leaf_sequence0(R, bd.first, bd.second, size);
     sort_leaf_sequence();
@@ -293,8 +292,7 @@ node* find_leaf_using_seq(point p, node* R, int dims){ //pointer to the root so 
   return T;
 }
 
-void delete_leaf_seq(){
-  std::cout<< "deleting leaf seq" << "\n";
+void delete_leaf_seq(){ //TODO this is messed up
   leaf_sequence.clear();
 }
 
