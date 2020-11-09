@@ -24,7 +24,7 @@ bool report_stats = false;
 int algorithm_version = 1;
 
 #include <algorithm>
-#include <math.h> // so we can have the square root
+#include <math.h> 
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
@@ -207,14 +207,9 @@ struct k_nearest_neighbors {
   }
 
 //This finds the leaf in the search structure that p is located in
-node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave_bits() takes in a point
+node* find_leaf0(point p, node* T, box b, double Delta){ //takes in a point since interleave_bits() takes in a point
   //first, we use code copied over from oct_tree to go from a point to an interleave integer
-  using box = typename o_tree::box;
   node* current = T;
-  box b = current -> Box(); 
-  double Delta = 0;
-  for (int i = 0; i < dims; i++) 
-    Delta = std::max(Delta, b.second[i] - b.first[i]);
   size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //calling interleave_bits from oct_tree
   //then, we use this interleave integer to find the correct leaf
   while (not (current->is_leaf())){
@@ -234,13 +229,29 @@ node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave
   //   }
   // std::cout << "check " << check << "\n"; 
   return current;
-}; 
+}
 
+node* find_leaf(point p, int dims, node* R){
+  box_delta bd = get_box_delta(R, dims);
+  node* T = find_leaf0(p, R, bd.first, bd.second);
+  return T; 
+}
+
+  //instantiates the leaf_sequence as a member of k_nearest_neighbors
   using node_index = std::pair<size_t, node*>;
   parlay::sequence<node_index> leaf_sequence = parlay::sequence<node_index>(); 
 
 
-  // for a node, add a pair of an interleaved center point and a node pointer
+  // sort the sequence based on the interlaved integers so we can binary search it later
+  void sort_leaf_sequence(){
+    auto less = [] (node_index a, node_index b) { 
+      return a.first < b.first;
+    };                                            
+    parlay::sort(leaf_sequence, less); //TODO does using the center point always work?         
+  }
+
+
+  // for a node, add a pair of an interleaved center point and a node pointer to the leaf sequence
   void g_internal(node* T, box b, double Delta){
     size_t interleaved_center = o_tree::interleave_bits(T -> center(), b.first, Delta); 
     node_index current = std::make_pair(interleaved_center, T);
@@ -248,41 +259,44 @@ node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave
   }
 
 
-
   // populate the sequence with pairs of interleaved center points and node pointers
-  void get_leaf_sequence(node* R, int dims, size_t size){
+  void get_leaf_sequence0(node* R, box b, double Delta, size_t size){
     leaf_sequence.resize(size); //TODO check this is right
-    box b = R -> Box(); 
-    double Delta = 0;
-    for (int i = 0; i < dims; i++) 
-      Delta = std::max(Delta, b.second[i] - b.first[i]);
     // wrapper function so that map_node() can be called on g_internal
     auto g = [&] (node* T){ 
       return g_internal(T, b, Delta); 
     };
-    // R -> map_node(g);
+    R -> map_node(g);
   }
 
-  // sort the sequence based on the interlaved integers so we can binary search it later
-  void sort_leaf_sequence(){
-    auto less = [] (node_index a, node_index b) { 
-      return a.first < b.first;};                 //but is it even true that we can binary search on the interleave
-    parlay::sort(leaf_sequence, less);            //integers... need to check tomorrow
+  void get_leaf_sequence(node* R, int dims, size_t size){
+    std::cout << "get leaf sequence" << "\n";
+    box_delta bd = get_box_delta(R, dims);
+    get_leaf_sequence0(R, bd.first, bd.second, size);
+    sort_leaf_sequence();
   }
 
 //given a point, finds a leaf by binary searching through the leaf_sequence
-node* find_leaf_using_seq(point p, int dims, node* T){ //needs pointer to the root so it can interleave the bits
+node* find_leaf_using_seq0(point p, box b, double Delta){ 
   //find the interleaved version of the point
-  // using box = typename o_tree::box;
-  box b = T -> Box(); 
-  double Delta = 0;
-  for (int i = 0; i < dims; i++) 
-    Delta = std::max(Delta, b.second[i] - b.first[i]);
-  size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); 
-  //define a less and binary search--does parlay have a built-in binary sort?
-  return T; //placeholder to make everything compile 
+  size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //TODO does center have only integer coords?
+  auto less = [] (node_index a, size_t b){
+    return a.first < b;
+  };
+  node_index closest = parlay::internal::binary_search(leaf_sequence, searchInt, less);
+  return closest.second;
 }
 
+node* find_leaf_using_seq(point p, node* R, int dims){ //pointer to the root so it can interleave the bits
+  box_delta bd = get_box_delta(R, dims); //TODO move this to ANN()
+  node* T = find_leaf_using_seq0(p, bd.first, bd.second);
+  return T;
+}
+
+void delete_leaf_seq(){
+  std::cout<< "deleting leaf seq" << "\n";
+  leaf_sequence.clear();
+}
 
 //this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
 void k_nearest_leaf(vtx* p, node* T, int k) { 
@@ -339,10 +353,9 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
       int dims = (v[0]->pt).dimension();   
       size_t size = v.size();
-      //construct the sequence which indexes leaves with their center points
+      //construct the sequence which indexes leaves with their center points, and sorts it
       T.get_leaf_sequence(T.tree.get(), dims, size);
-      // //sort leaf sequence
-      // T.sort_leaf_sequence();
+      T.delete_leaf_seq();
 
       
              
