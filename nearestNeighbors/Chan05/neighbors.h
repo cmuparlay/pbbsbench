@@ -10,12 +10,14 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
-#include "nearestNeighbors/octTree/oct_tree.h"
+#include "../octTree/oct_tree.h"
 #define sq(x) (((float) (x))* ((float) (x)))
 #define MAX (1<<29)
 
+// Guy: vtx is not defined, you need to templatize on it
 using o_tree = oct_tree<vtx>;
 
+// Guy: This does not match our definition of point
 typedef int* Point; 
 int d, shift; 
 float eps, r, r_sq; 
