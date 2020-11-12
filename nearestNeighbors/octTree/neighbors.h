@@ -261,7 +261,7 @@ node* find_leaf(point p, int dims, node* R){
 
   // populate the sequence with pairs of interleaved center points and node pointers
   void get_leaf_sequence0(node* R, box b, double Delta, size_t size){
-    leaf_sequence.resize(size); //TODO check this is right
+    leaf_sequence.resize(size); //re-assign to just a sequence of the correct size
     // wrapper function so that map_node() can be called on g_internal
     auto g = [&] (node* T){ 
       return g_internal(T, b, Delta); 

@@ -25,6 +25,8 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 
+int algorithm_version = 0; //necessary to make everything compile since octTree/neighbors.h requires it
+
 // naive n^2 solution, currently just for k = 1
 template <int maxK, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k) {

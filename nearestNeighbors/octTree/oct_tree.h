@@ -64,6 +64,22 @@ struct oct_tree {
     return r;
   }
 
+    // generates a box consisting of a lower left corner,
+  // and an upper right corner.
+  template <typename Seq>
+  static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
+    size_t n = V.size();
+    auto minmax = [&] (box x, box y) {
+      return box(x.first.minCoords(y.first),
+     x.second.maxCoords(y.second));};
+
+    // uses a delayed sequence to avoid making a copy
+    auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
+  return box(V[i]->pt, V[i]->pt);});
+    box identity = pts[0];
+    return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
+  }
+
   struct node { //should store what bit it has, then extract by shifting over while searching
 
   public:
@@ -250,21 +266,7 @@ private:
   
 
 
-  // generates a box consisting of a lower left corner,
-  // and an upper right corner.
-  template <typename Seq>
-  static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
-    size_t n = V.size();
-    auto minmax = [&] (box x, box y) {
-      return box(x.first.minCoords(y.first),
-		 x.second.maxCoords(y.second));};
 
-    // uses a delayed sequence to avoid making a copy
-    auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
-	return box(V[i]->pt, V[i]->pt);});
-    box identity = pts[0];
-    return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
-  }
 
   // tags each point (actually a pointer to it), with an interger
   // consisting of the interleaved bits for the x,y,z coordinates.
