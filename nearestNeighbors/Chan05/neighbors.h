@@ -12,7 +12,7 @@
 #include "common/geometry.h"
 #include "../octTree/oct_tree.h"
 #define sq(x) (((double) (x))* ((double) (x)))
-#define MAX1 (1<<29) //TODO we might need to make this bigger
+#define MAX1 (1<<29) //TODO this was originally 29, I think 32 is the right thing to change to?
 
 
 
@@ -104,7 +104,11 @@ float dist_sq_to_box(Point q, Point p1, Point p2){
 void SSS_query0(Point P[], size_t n, Point q){
 	if (n==0) return;
 	check_dist(P[n/2], q);
-	if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) return;
+	//std::cout << "checked distance" << "\n";
+	if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) {
+		//std::cout << "reached end of recursion" << "\n";
+		return;
+	}
 	if (cmp_shuffle(&q, &P[n/2]) > 0) {
 		SSS_query0(P, n/2, q);
 		if (cmp_shuffle(&q2, &P[n/2]) < 0) SSS_query0(P + n/2+1, n-n/2-1, q);
@@ -117,6 +121,7 @@ void SSS_query0(Point P[], size_t n, Point q){
 Point SSS_query(Point P[], size_t n, Point q){
 	r_sq = DBL_MAX;
 	SSS_query0(P, n, q);
+	std::cout << ans << "\n";
 	return ans;
 }
 
@@ -128,22 +133,23 @@ void ANN(parlay::sequence<vtx*> &v, int k){
     }
 	timer t("ANN", report_stats);{
 		t.next("convert to Chan's types");
+		v.resize(10000);
 		size_t n = v.size(); 
-		int dims = (v[0]->pt.dimension());
+		int d = (v[0]->pt.dimension());
 		Point *P;
 		P = new Point[n]; 
-		convert(v, n, dims, P);
+		convert(v, n, d, P);
 		t.next("preprocess");
-		srand48(12121+n+n+dims); //TODO check this works with n as size_t
-		SSS_preprocess(P, n, dims); //TODO check that this worked the way it was supposed to, maybe rounding was an issue
+		srand48(12121+n+n+d); //TODO check this works with n as size_t
+		SSS_preprocess(P, n, d); //TODO check that this worked the way it was supposed to, maybe rounding was an issue
 		t.next("find all");
-		for(size_t i=0; i< n; i++){
+		parlay::parallel_for(0, 1, [&] (size_t i){
 			SSS_query(P, n, P[i]);
 		}
-		// parlay::parallel_for(0, n, [&] (size_t i){
-		// 	SSS_query(P, n, P[i]);
-		// }
-		// );
+		);
+		t.next("delete data");
+		for (size_t i = 0; i<n; i++) delete P[i];
+		delete P; 
 	};
 }
 

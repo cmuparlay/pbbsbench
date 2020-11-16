@@ -25,7 +25,7 @@
 #include <cstdio>						// C I/O (for sscanf)
 #include <cstring>						// string manipulation
 #include <fstream>						// file I/O
-#include <ANN/ANN.h>					// ANN declarations
+#include <../ANN/ANN.h>					// ANN declarations
 
 using namespace std;					// make std:: accessible
 
