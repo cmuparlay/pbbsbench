@@ -18,17 +18,17 @@
 
 // Guy: This does not match our definition of point
 typedef size_t* Point; 
-int d;
 size_t shift;
 double r, r_sq; 
-Point ans, q1, q2; 
+Point ans, q1, q2; //TODO what are q1 and q2 for again? 
 int key_bits = 64;
+int d; 
 bool report_stats = true;
 int algorithm_version = 0; //just because octTree/neighbors requires this parameter
-float eps = 0; 
+double eps = 0; 
 
 template<class vtx>
-void convert(parlay::sequence<vtx*> &v, size_t n, int d, Point P[]){
+void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 	//prelims for rounding each point to an integer: 
 	// 1) find the smallest point in each dimension
 	// 2) find the largest gap between min and max over all dimensions
@@ -51,28 +51,30 @@ void convert(parlay::sequence<vtx*> &v, size_t n, int d, Point P[]){
     }
 }
 
-inline int less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
+inline size_t less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
 
 //compares the interleaved bits of shifted points p, q without explicitly interleaving them
 int cmp_shuffle(Point *p, Point *q){
 	int j, k; size_t x, y;
 	for (j = k = x = 0; k<d; k++){
-		if (less_msb(x, y = ((*p)[k]+shift)^(*q[k]+shift))){
+		if (less_msb(x, y = ((*p)[k]+shift)^((*q)[k]+shift))){
 			j=k; 
 			x=y;
 		}
 	}
-	return (*p)[j] - (*q)[k];
+	return (*p)[j] - (*q)[j];
 }
 
 
 //sort the points based on their interleave ordering
-void SSS_preprocess(Point P[], size_t n, int d){ 
+void SSS_preprocess(Point P[], size_t n){ 
 	shift = (size_t) (drand48()*MAX1);	
+	// std::cout << shift << " shift" << "\n";
 	q1 = new size_t[d];
 	q2 = new size_t[d];
 	qsort((void *) P, n, sizeof(Point),
-		(int (*)(const void *, const void *)) cmp_shuffle); //TODO can the int here remain or should it be converted to size_t?
+		(int (*)(const void *, const void *)) cmp_shuffle); 
+	// std::cout << "done preprocessing" << "\n";
 }
 
 
@@ -82,7 +84,8 @@ void check_dist(Point p, Point q){
 	if (z < r_sq) {
 		r_sq = z; r = sqrt(z); ans = p;
 		for (j=0; j<d; j++) {
-			q1[j] = (q[j]<r) ? (q[j] - (size_t)ceil(r)): MAX1;
+			q1[j] = (q[j]>r) ? (q[j] - (size_t)ceil(r)) : 0;
+			q2[j] = (q[j]+r<MAX1) ? (q[j]+(size_t)ceil(r)) : MAX1;
 		}
 	}
 }
@@ -104,7 +107,7 @@ float dist_sq_to_box(Point q, Point p1, Point p2){
 void SSS_query0(Point P[], size_t n, Point q){
 	if (n==0) return;
 	check_dist(P[n/2], q);
-	//std::cout << "checked distance" << "\n";
+	// std::cout << "checked distance" << "\n";
 	if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) {
 		//std::cout << "reached end of recursion" << "\n";
 		return;
@@ -113,15 +116,16 @@ void SSS_query0(Point P[], size_t n, Point q){
 		SSS_query0(P, n/2, q);
 		if (cmp_shuffle(&q2, &P[n/2]) < 0) SSS_query0(P + n/2+1, n-n/2-1, q);
 	} else{
-		SSS_query0(P + n/2+1, n-n/2+1, q);
+		SSS_query0(P + n/2+1, n-n/2-1, q);
 		if (cmp_shuffle(&q1, &P[n/2]) < 0) SSS_query0(P, n/2, q);
 	}
 }
 
 Point SSS_query(Point P[], size_t n, Point q){
 	r_sq = DBL_MAX;
+	// std::cout << "reached SSS_query" << "\n";
 	SSS_query0(P, n, q);
-	std::cout << ans << "\n";
+	// std::cout << *ans << "\n";
 	return ans;
 }
 
@@ -132,24 +136,30 @@ void ANN(parlay::sequence<vtx*> &v, int k){
     	abort();
     }
 	timer t("ANN", report_stats);{
-		t.next("convert to Chan's types");
-		v.resize(10000);
+		// v.resize(10000);
 		size_t n = v.size(); 
-		int d = (v[0]->pt.dimension());
+		d = (v[0]->pt.dimension());
 		Point *P;
 		P = new Point[n]; 
-		convert(v, n, d, P);
-		t.next("preprocess");
+		convert(v, n, P);
+		// std::cout << P[0][1] << P[0][2] << "\n";
+		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); //TODO check this works with n as size_t
-		SSS_preprocess(P, n, d); //TODO check that this worked the way it was supposed to, maybe rounding was an issue
-		t.next("find all");
-		parlay::parallel_for(0, 1, [&] (size_t i){
+		SSS_preprocess(P, n); //TODO check that this worked the way it was supposed to, maybe rounding was an issue
+		// std::cout << P[0][1] << P[0][2] << "\n";
+		t.next("preprocess");
+		parlay::parallel_for(0, n, [&] (size_t i){
 			SSS_query(P, n, P[i]);
 		}
 		);
-		t.next("delete data");
+		// for (size_t i = 0; i < n; i++){
+		// 	SSS_query(P, n, P[i]);
+		// 	// std::cout << *P[i] << "\n";
+		// }
+		t.next("find all");
 		for (size_t i = 0; i<n; i++) delete P[i];
 		delete P; 
+		t.next("delete data");
 	};
 }
 
