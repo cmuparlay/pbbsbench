@@ -44,26 +44,26 @@ void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 	// add each integer point to Chan's array
 	int bits = key_bits/d;
 	size_t maxval = (((size_t) 1) << bits) - 1; 
-    for (size_t i=0; i<n; i++){
-    	P[i] = new size_t[d];
-    	for (int j = 0; j < d; j++) 
-      		P[i][j] = floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta); 
-    }
+	parlay::parallel_for(0, n, [&] (size_t i) {
+	    P[i] = new size_t[d];
+	    for (int j = 0; j < d; j++) 
+	      P[i][j] = floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta); 
+	  });
 }
 
 inline size_t less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
 
 //compares the interleaved bits of shifted points p, q without explicitly interleaving them
-int cmp_shuffle(Point *p, Point *q){
+auto cmp_shuffle = [&] (Point p, Point q){
 	int j, k; size_t x, y;
 	for (j = k = x = 0; k<d; k++){
-		if (less_msb(x, y = ((*p)[k]+shift)^((*q)[k]+shift))){
+		if (less_msb(x, y = ((p)[k]+shift)^((q)[k]+shift))){
 			j=k; 
 			x=y;
 		}
 	}
-	return (*p)[j] - (*q)[j];
-}
+	return ((p)[j] - (q)[j]) < 0;
+};
 
 
 //sort the points based on their interleave ordering
@@ -72,8 +72,7 @@ void SSS_preprocess(Point P[], size_t n){
 	// std::cout << shift << " shift" << "\n";
 	q1 = new size_t[d];
 	q2 = new size_t[d];
-	qsort((void *) P, n, sizeof(Point),
-		(int (*)(const void *, const void *)) cmp_shuffle); 
+	parlay::sort_inplace(parlay::make_slice(P, P+n), cmp_shuffle); 
 	// std::cout << "done preprocessing" << "\n";
 }
 
@@ -112,12 +111,12 @@ void SSS_query0(Point P[], size_t n, Point q){
 		//std::cout << "reached end of recursion" << "\n";
 		return;
 	}
-	if (cmp_shuffle(&q, &P[n/2]) > 0) {
+	if (cmp_shuffle(q, P[n/2]) > 0) {
 		SSS_query0(P, n/2, q);
-		if (cmp_shuffle(&q2, &P[n/2]) < 0) SSS_query0(P + n/2+1, n-n/2-1, q);
+		if (cmp_shuffle(q2, P[n/2]) < 0) SSS_query0(P + n/2+1, n-n/2-1, q);
 	} else{
 		SSS_query0(P + n/2+1, n-n/2-1, q);
-		if (cmp_shuffle(&q1, &P[n/2]) < 0) SSS_query0(P, n/2, q);
+		if (cmp_shuffle(q1, P[n/2]) < 0) SSS_query0(P, n/2, q);
 	}
 }
 
