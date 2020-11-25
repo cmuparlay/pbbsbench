@@ -33,112 +33,45 @@ namespace delayed = parlay::block_delayed;
 using namespace std;
 
 // **************************************************************
-//    Ligra style backward/forward
+//    SIMPLE PARALLEL NON DETERMINISTIC BREADTH FIRST SEARCH
 // **************************************************************
 
-using vertex_subset_sparse = parlay::sequence<vertexId>;
-using vertex_subset_dense = parlay::sequence<bool>;
-
-struct vertex_subset {
-  bool is_sparse;
-  size_t n;
-  size_t size() const {return n;}
-  vertex_subset_sparse sparse;
-  vertex_subset_dense dense;
-  vertex_subset(vertex_subset_sparse x) :
-    sparse(std::move(x)), is_sparse(true), n(x.size()) {}
-  vertex_subset(vertex_subset_dense x) :
-    dense(std::move(x)), is_sparse(false),
-    n(parlay::count(x,true)) {}
-};
-
-template<typename F, typename Cond> 
-struct edge_map {
-  F f;
-  Cond cond;
-  const Graph& G;
-  bool dedup;
-  parlay::sequence<vertexId> dup_seq;
-  edge_map(Graph const &G, F f, Cond cond, bool dedup=false) :
-    G(G), f(f), cond(cond), dedup(dedup) {
-    dup_seq = parlay::sequence<vertexId>::uninitialized(G.numVertices());
-  }
-
-  auto edge_map_sparse(vertex_subset_sparse const &vtx_subset) {
-    auto nested_edges = parlay::map(vtx_subset, [&] (vertexId v) {
-	return parlay::delayed_tabulate(G[v].degree, [&, v] (size_t i) {
-	    return std::pair(v, G[v].Neighbors[i]);});});
-    auto edges = delayed::flatten(nested_edges);
-    auto r = delayed::filter_map(edges,
-				 [&] (auto x) {return cond(x.second) && f(x.first, x.second);},
-				 [] (auto x) {return x.second;});
-    if (dedup) {
-      parlay::parallel_for(0,r.size(), [&] (size_t i) { dup_seq[r[i]] = i;});
-      auto flags = parlay::tabulate(r.size(), [&] (size_t i) {return i==dup_seq[r[i]];});
-      return vertex_subset(parlay::pack(r, flags));
-    }
-    return vertex_subset(std::move(r));
-  }
-
-  auto edge_map_dense(vertex_subset_dense const &vtx_subset) {
-    auto r = parlay::tabulate(G.numVertices(), [&] (vertexId v) -> bool {
-	for (size_t j = 0; j < G[v].degree; j++) {
-	  if (!cond(v)) return false;
-	  vertexId u = G[v].Neighbors[j];
-	  if (vtx_subset[u]) return f(u,v);
-	}
-	return false;});
-    return vertex_subset(std::move(r));
-  }
-
-  auto operator() (vertex_subset const &vtx_subset) {
-    parlay::internal::timer t("edge_map");
-    auto l = vtx_subset.size();
-    auto n = G.numVertices();
-    size_t factor = vtx_subset.is_sparse ? 5 : 1;
-    if (l > factor*n*n / (2*G.m)) {
-      if (vtx_subset.is_sparse) {
-	parlay::sequence<bool> d_vtx_subset(n, false);
-	parlay::parallel_for(0, l, [&] (size_t i) {
-	    d_vtx_subset[vtx_subset.sparse[i]] = true;});
-	return edge_map_dense(d_vtx_subset);
-      }
-      return edge_map_dense(vtx_subset.dense);
-    } else {
-      if (vtx_subset.is_sparse) 
-	return edge_map_sparse(vtx_subset.sparse);
-      auto s_vtx_subset = parlay::pack_index<vertexId>(vtx_subset.dense);
-      return edge_map_sparse(s_vtx_subset);
-    }
-  }
-};
-  
 parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
-  parlay::internal::timer t("BFS",true);
   size_t n = G.numVertices();
-  auto parent = parlay::sequence<std::atomic<vertexId>>::uninitialized(n);
-  parlay::parallel_for(0, n, [&] (size_t i) {parent[i] = -1;});
+  auto parent = parlay::sequence<std::atomic<vertexId>>::from_function(n, [&] (size_t i) {
+      return -1;});
+  auto visited = parlay::sequence<std::atomic<bool>>::from_function(n, [&] (size_t i) {
+      return false;});
+
+  //parlay::sequence<std::atomic<bool>> visited(n);
   parent[start] = start;
+  visited[start] = true;
 
-  auto cond_f = [&] (vertexId v) { return parent[v] == -1;};
-
-  auto edge_f = [&] (vertexId u, vertexId v) -> bool {
-    vertexId expected = -1;
-    return parent[v].compare_exchange_strong(expected, u);
-  };
-  auto map_frontier = edge_map(G, edge_f, cond_f, true);
-
-  vertex_subset frontier(vertex_subset_sparse(1,start));
+  parlay::sequence<vertexId> frontier(1,start);
   size_t total_visited = 0;
   size_t round = 0;
-  t.next("start");
 
   while (frontier.size() > 0) {
-    //cout << frontier.size() << endl;
     total_visited += frontier.size();
     round++;
-    frontier = map_frontier(frontier);
-    t.next("iter");
+
+    // get out edges of the frontier and flatten
+    auto nested_edges = parlay::map(frontier, [&] (vertexId u) {
+	return parlay::delayed_tabulate(G[u].degree, [&, u] (size_t i) {
+	    return std::pair(u, G[u].Neighbors[i]);});});
+    auto edges = delayed::flatten(nested_edges);
+
+    // if not already visited, use write_max to compete on parent location
+    auto filtered_edges = delayed::filter(edges, [&] (auto u_v) {
+	auto [u, v] = u_v;
+	return (!visited[v]) && parlay::write_max(&parent[v],u, std::less<vertexId>());
+      });
+
+    // keep everyone who won
+    frontier = delayed::filter_map(filtered_edges,
+				   [&] (auto u_v) {return parent[u_v.second] == u_v.first;},
+				   [&] (auto u_v) {visited[u_v.second] = true;
+						   return u_v.second;});
   }
   return parlay::map(parent, [] (auto const &x) -> vertexId {
       return x.load();});
