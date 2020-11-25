@@ -36,7 +36,11 @@ using namespace benchIO;
 void timeBFS(Graph const &G, int rounds, char* outFile) {
   parlay::internal::timer t;
   sequence<vertexId> parents;
-  BFS(0, G);
+  double start_time = t.get_time();
+  do { // run for a couple seconds to "warm things up"
+    BFS(0, G);
+  } while (t.get_time() < start_time + .2);
+
   for (int i=0; i < rounds; i++) {
     t.start();
     parents = BFS(0, G);

@@ -23,7 +23,7 @@
 #include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "common/graph.h"
 #include "common/IO.h"
 #include "common/graphIO.h"
@@ -33,7 +33,7 @@ using namespace std;
 using namespace benchIO;
 
 void timeMatching(edges E, int rounds, char* outFile) {
-  timer t;
+  parlay::internal::timer t;
   size_t m = E.nonZeros;
   size_t n = max(E.numCols,E.numRows);
   parlay::sequence<edgeId> edgeIds;
