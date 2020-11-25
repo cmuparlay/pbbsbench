@@ -49,9 +49,10 @@ void writeHistogramsToFile(parlay::sequence<result_type> const results, char* ou
 template<class F, class G, class H>
 void loop(int rounds, F initf, G runf, H endf) {
   parlay::internal::timer t;
-  initf();
-  runf();
-  endf();
+  double start_time = t.get_time();
+  do { // run for a couple seconds to "warm things up"
+    initf(); runf(); endf();
+  } while (t.get_time() < start_time + 1.0);
   for (int i=0; i < rounds; i++) {
     initf();
     t.start();

@@ -27,7 +27,7 @@
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 using namespace benchIO;
 
 // *************************************************************
@@ -57,7 +57,7 @@ struct vertex {
 template <int maxK, class point>
 void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile) {
   size_t n = pts.size();
-  timer t;
+  parlay::internal::timer t;
   using vtx = vertex<point,maxK>;
   int dimensions = pts[0].dimension();
   auto vv = parlay::tabulate(n, [&] (size_t i) -> vtx {

@@ -51,6 +51,7 @@ parlay::sequence<indexT> quickHull(parlay::sequence<point> const & Points,
     auto pairMax = [&] (cipairs a, cipairs b) {
       return cipairs((a.first.first > b.first.first) ? a.first : b.first,
 		     (a.second.first > b.second.first) ? a.second : b.second);};
+    auto ci_monoid = parlay::make_monoid(pairMax,cipairs());
 
     // calculate furthest (positive) points from the lines l--mid and mid--r
     // at the same time set flags for those which are above each line
@@ -58,7 +59,7 @@ parlay::sequence<indexT> quickHull(parlay::sequence<point> const & Points,
     auto rightFlag = parlay::sequence<bool>::uninitialized(n) ;
 
     point lP = Points[l], midP = Points[mid], rP = Points[r];
-    auto P = parlay::delayed_seq<cipairs>(n, [&] (size_t i) {
+    auto P = parlay::delayed_tabulate(n, [&] (size_t i) {
 	indexT j = Idxs[i];
 	coord lefta = triArea(lP, midP, Points[j]);
 	coord righta = triArea(midP, rP, Points[j]);
@@ -66,7 +67,7 @@ parlay::sequence<indexT> quickHull(parlay::sequence<point> const & Points,
 	rightFlag[i] = righta > 0.0;
 	return cipairs(cipair(lefta,j),cipair(righta,j));
       });
-    cipairs prs = parlay::reduce(P, parlay::make_monoid(pairMax,cipairs()));
+    cipairs prs = parlay::reduce(P, ci_monoid);
     indexT maxleft = prs.first.second;
     indexT maxright = prs.second.second;
 
@@ -107,20 +108,27 @@ parlay::sequence<indexT> hull(parlay::sequence<point> const &Points) {
   auto max_x_idx = minmax.second - std::begin(Points);
   t.next("minmax");
 
+  using cipair = std::pair<coord,indexT>;
+  using cipairs = std::pair<cipair,cipair>;
+  auto pairMinMax = [&] (cipairs a, cipairs b) {
+      return cipairs((a.first.first < b.first.first) ? a.first : b.first,
+		     (a.second.first > b.second.first) ? a.second : b.second);};
+  auto ci_monoid = parlay::make_monoid(pairMinMax,cipairs());
+
   // identify those above and below the line minp--maxp
   // and calculate furtherst in each direction
   auto upperFlag = parlay::sequence<bool>::uninitialized(n) ;
   auto lowerFlag = parlay::sequence<bool>::uninitialized(n) ;
-  auto P = parlay::delayed_seq<coord>(n, [&] (size_t i) {
+  auto P = parlay::delayed_tabulate(n, [&] (size_t i) {
     coord a = triArea(Points[min_x_idx], Points[max_x_idx], Points[i]);
     upperFlag[i] = a > 0;
     lowerFlag[i] = a < 0;
-    return a;
+    return cipairs(cipair(a,i),cipair(a,i));
     });
 
-  auto max_lower_upper = parlay::minmax_element(P, std::less<coord>());
-  size_t max_lower_idx = max_lower_upper.first - std::begin(P);
-  size_t max_upper_idx = max_lower_upper.second - std::begin(P);
+  auto max_lower_upper = parlay::reduce(P, ci_monoid);
+  size_t max_lower_idx = max_lower_upper.first.second;
+  size_t max_upper_idx = max_lower_upper.second.second;
   
   t.next("flags");
 

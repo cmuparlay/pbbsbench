@@ -24,7 +24,7 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
@@ -38,7 +38,7 @@ using uchar = unsigned char;
 
 template<class F, class G, class H>
 void loop(int rounds, F initf, G runf, H endf) {
-  timer t;
+  parlay::internal::timer t;
   initf();
   runf();
   endf();

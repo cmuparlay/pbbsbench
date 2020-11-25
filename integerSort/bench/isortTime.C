@@ -22,7 +22,7 @@
 
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "common/parse_command_line.h"
 #include "common/sequenceIO.h"
 #include <iostream>
@@ -32,9 +32,11 @@ using namespace benchIO;
 
 template<class F, class G>
 void loop(int rounds, F initf, G runf) {
-  timer t;
-  initf();
-  runf();
+  parlay::internal::timer t;
+  double start_time = t.get_time();
+  do { // run for a couple seconds to "warm things up"
+    initf(); runf(); 
+  } while (t.get_time() < start_time + 1.0);
   for (int i=0; i < rounds; i++) {
     initf();
     t.start();
@@ -42,7 +44,6 @@ void loop(int rounds, F initf, G runf) {
     t.next("");
   }
 }
-  
 template <class T>
 void timeIntegerSort(sequence<sequence<char>> In, int rounds, int bits, char* outFile) {
   auto in_vals = parseElements<T>(In.cut(1, In.size()));

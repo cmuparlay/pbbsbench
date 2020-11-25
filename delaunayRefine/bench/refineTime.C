@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <algorithm>
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
@@ -33,7 +33,7 @@ using namespace std;
 using namespace benchIO;
 
 void timeRefine(triangles<point> &Tri, int rounds, char* outFile) {
-  timer t;
+  parlay::internal::timer t;
   triangles<point> R;
   for (int i=0; i < rounds; i++) {
     R.P.clear(); R.T.clear();

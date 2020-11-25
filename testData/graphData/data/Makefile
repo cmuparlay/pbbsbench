@@ -53,8 +53,8 @@ randLocalGraph_WE_5_% : ../addWeights
 rMatGraph_J_5_% : ../rMatGraph
 	../rMatGraph -j -a .5 -b .1 -m `expr 5 \* $(subst rMatGraph_J_5_,,$@)` $(subst rMatGraph_J_5_,,$@) $@
 
-rMatGraph_J_10_% : ../rMatGraph
-	../rMatGraph -j -a .55 -b .1 -o -m `expr 10 \* $(subst rMatGraph_J_10_,,$@)` $(subst rMatGraph_J_10_,,$@) $@
+rMatGraph_J_12_% : ../rMatGraph
+	../rMatGraph -j -a .55 -b .125 -o -m `expr 12 \* $(subst rMatGraph_J_12_,,$@)` $(subst rMatGraph_J_12_,,$@) $@
 
 rMatGraph_J_16_% : ../rMatGraph
 	../rMatGraph -j -a .57 -b .19 -m `expr 16 \* $(subst rMatGraph_J_16_,,$@)` $(subst rMatGraph_J_16_,,$@) $@
