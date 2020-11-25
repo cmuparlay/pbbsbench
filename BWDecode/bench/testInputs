@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-bnchmrk="wc"
-benchmark="Word Counts"
-checkProgram="../bench/wcCheck"
+bnchmrk="bw"
+benchmark="Burrows Wheeler"
+checkProgram="../bench/bwCheck"
 dataDir = "../sequenceData/data"
 
 tests = [

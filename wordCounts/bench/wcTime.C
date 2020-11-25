@@ -78,8 +78,8 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
-  //parlay::sequence<char> S = parlay::to_sequence(parlay::file_map(iFile));
+  //parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
+  parlay::sequence<char> S = parlay::to_sequence(parlay::file_map(iFile));
   
   timeWordCounts(S, rounds, oFile);
 }
