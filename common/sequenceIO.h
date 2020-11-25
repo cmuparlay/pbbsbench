@@ -27,7 +27,6 @@
 #include <string>
 #include <cstring>
 #include "IO.h"
-#include "get_time.h"
 #include "../parlay/primitives.h"
 #include "../parlay/io.h"
 
@@ -157,16 +156,6 @@ namespace benchIO {
   // sequence<stringIntPair> parseElements<stringIntPair>(Range S) {
   //   return sequence<stringIntPair>(0);
   // }  
-
-  sequence<sequence<char>> get_tokens(char const *fileName) {
-    timer t("get_tokens");
-    //auto S = parlay::chars_from_file(fileName);
-    auto S = parlay::file_map(fileName);
-    //t.next("read file");
-    auto x =  parlay::tokens(S, benchIO::is_space);
-    //t.next("tokens");
-    return x;
-  }
 
   template <typename T, typename CharRange>
   void check_header(CharRange& S) {

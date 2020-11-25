@@ -48,16 +48,22 @@ randLocalGraph_WE_5_% : ../addWeights
 	../gridGraph -j -d 2 -o $(subst 2Dgrid_J_,,$@) $@
 
 3Dgrid_J_% : ../gridGraph
-	../gridGraph -j -d 3  $(subst 3Dgrid_J_,,$@) $@
+	../gridGraph -j -d 3 -o $(subst 3Dgrid_J_,,$@) $@
 
 rMatGraph_J_5_% : ../rMatGraph
 	../rMatGraph -j -a .5 -b .1 -m `expr 5 \* $(subst rMatGraph_J_5_,,$@)` $(subst rMatGraph_J_5_,,$@) $@
+
+rMatGraph_J_10_% : ../rMatGraph
+	../rMatGraph -j -a .55 -b .1 -o -m `expr 10 \* $(subst rMatGraph_J_10_,,$@)` $(subst rMatGraph_J_10_,,$@) $@
 
 rMatGraph_J_16_% : ../rMatGraph
 	../rMatGraph -j -a .57 -b .19 -m `expr 16 \* $(subst rMatGraph_J_16_,,$@)` $(subst rMatGraph_J_16_,,$@) $@
 
 randLocalGraph_J_5_% : ../randLocalGraph
 	../randLocalGraph -j -d 3 -m `expr 5 \* $(subst randLocalGraph_J_5_,,$@)` $(subst randLocalGraph_J_5_,,$@) $@
+
+randLocalGraph_J_10_% : ../randLocalGraph
+	../randLocalGraph -j -o -d 3 -m `expr 10 \* $(subst randLocalGraph_J_10_,,$@)` $(subst randLocalGraph_J_10_,,$@) $@
 
 rMatGraph_J_500_% : ../rMatGraph
 	../rMatGraph -j -a .5 -b .1 -m `expr 500 \* $(subst rMatGraph_J_500_,,$@)` $(subst rMatGraph_J_500_,,$@) $@

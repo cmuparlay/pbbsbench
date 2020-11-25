@@ -26,34 +26,35 @@
 #include "parlay/internal/get_time.h"
 #include "parlay/internal/block_delayed.h"
 #include "common/graph.h"
-#include "BFS.h"
 
 namespace delayed = parlay::block_delayed;
 
-using namespace std;
-
-// **************************************************************
-//    Ligra style backward/forward
-// **************************************************************
-
-using vertex_subset_sparse = parlay::sequence<vertexId>;
-using vertex_subset_dense = parlay::sequence<bool>;
-
+namespace ligra {
+  
+template<typename vertexId>
 struct vertex_subset {
+  using sparse_t = parlay::sequence<vertexId>;
+  using dense_t = parlay::sequence<bool>;
   bool is_sparse;
   size_t n;
   size_t size() const {return n;}
-  vertex_subset_sparse sparse;
-  vertex_subset_dense dense;
-  vertex_subset(vertex_subset_sparse x) :
+  sparse_t sparse;
+  dense_t dense;
+  vertex_subset(sparse_t x) :
     sparse(std::move(x)), is_sparse(true), n(x.size()) {}
-  vertex_subset(vertex_subset_dense x) :
+  vertex_subset(vertexId v) :
+    sparse(sparse_t(1,v)), is_sparse(true), n(1) {}
+  vertex_subset(dense_t x) :
     dense(std::move(x)), is_sparse(false),
     n(parlay::count(x,true)) {}
 };
 
-template<typename F, typename Cond> 
+template<typename Graph, typename F, typename Cond> 
 struct edge_map {
+  using vertexId = typename Graph::vertexId;
+  using vertex_subset_ = vertex_subset<vertexId>;
+  using vertex_subset_sparse = parlay::sequence<vertexId>;
+  using vertex_subset_dense = parlay::sequence<bool>;
   F f;
   Cond cond;
   const Graph& G;
@@ -75,9 +76,9 @@ struct edge_map {
     if (dedup) {
       parlay::parallel_for(0,r.size(), [&] (size_t i) { dup_seq[r[i]] = i;});
       auto flags = parlay::tabulate(r.size(), [&] (size_t i) {return i==dup_seq[r[i]];});
-      return vertex_subset(parlay::pack(r, flags));
+      return vertex_subset_(parlay::pack(r, flags));
     }
-    return vertex_subset(std::move(r));
+    return vertex_subset_(std::move(r));
   }
 
   auto edge_map_dense(vertex_subset_dense const &vtx_subset) {
@@ -88,10 +89,10 @@ struct edge_map {
 	  if (vtx_subset[u]) return f(u,v);
 	}
 	return false;});
-    return vertex_subset(std::move(r));
+    return vertex_subset_(std::move(r));
   }
 
-  auto operator() (vertex_subset const &vtx_subset) {
+  auto operator() (vertex_subset_ const &vtx_subset) {
     parlay::internal::timer t("edge_map");
     auto l = vtx_subset.size();
     auto n = G.numVertices();
@@ -112,34 +113,4 @@ struct edge_map {
     }
   }
 };
-  
-parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
-  parlay::internal::timer t("BFS",true);
-  size_t n = G.numVertices();
-  auto parent = parlay::sequence<std::atomic<vertexId>>::uninitialized(n);
-  parlay::parallel_for(0, n, [&] (size_t i) {parent[i] = -1;});
-  parent[start] = start;
-
-  auto cond_f = [&] (vertexId v) { return parent[v] == -1;};
-
-  auto edge_f = [&] (vertexId u, vertexId v) -> bool {
-    vertexId expected = -1;
-    return parent[v].compare_exchange_strong(expected, u);
-  };
-  auto map_frontier = edge_map(G, edge_f, cond_f, true);
-
-  vertex_subset frontier(vertex_subset_sparse(1,start));
-  size_t total_visited = 0;
-  size_t round = 0;
-  t.next("start");
-
-  while (frontier.size() > 0) {
-    //cout << frontier.size() << endl;
-    total_visited += frontier.size();
-    round++;
-    frontier = map_frontier(frontier);
-    t.next("iter");
-  }
-  return parlay::map(parent, [] (auto const &x) -> vertexId {
-      return x.load();});
 }

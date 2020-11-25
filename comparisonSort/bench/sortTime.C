@@ -24,7 +24,7 @@
 #include <algorithm>
 #include "parlay/random.h"
 #include "parlay/parallel.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "common/sequenceIO.h"
 #include "common/parseCommandLine.h"
 
@@ -37,7 +37,7 @@ int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool per
   size_t n = A.size();
   if (permute) A = parlay::random_shuffle(A);
 
-  timer t;
+  parlay::internal::timer t;
   sequence<T> B;
   double start_time = t.get_time();
   do { // run for a couple seconds to "warm things up"
@@ -56,7 +56,7 @@ int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool per
 }
 
 int main(int argc, char* argv[]) {
-  timer t("sortTime: main");
+  parlay::internal::timer t("sortTime: main");
   commandLine P(argc,argv,"[-p] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");

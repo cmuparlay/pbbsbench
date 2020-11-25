@@ -25,14 +25,14 @@
 #include <unordered_map>
 #include "parlay/primitives.h"
 #include "parlay/io.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "wc.h"
 
 bool verbose = false;
 using namespace std;
 
 parlay::sequence<result_type> wordCounts(charseq const &s) {
-  timer t("word counts", verbose);
+  parlay::internal::timer t("word counts", verbose);
   if (verbose)
     cout << "number of characters = " << s.size() << endl;
   

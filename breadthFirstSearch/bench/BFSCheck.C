@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <cstring>
 #include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "parlay/monoid.h"
 #include "common/IO.h"
 #include "common/graph.h"
 #include "common/graphIO.h"
@@ -32,60 +34,59 @@
 using namespace std;
 using namespace benchIO;
 
-using longseq = parlay::sequence<long>;
+using vtx_seq = parlay::sequence<vertexId>;
 
-size_t levelNumber(size_t start, size_t level, longseq &P, longseq &L, Graph &T) {
-  if (L[start] != -1) {
-    cout << "BFSCheck: not a tree" << endl;
-    return 1;
+vtx_seq level_number(vtx_seq const &parent) {
+  using cp = std::pair<vertexId,vertexId>;
+  vertexId n = parent.size();
+  auto count_ptr_next = parlay::tabulate(n, [&] (size_t i) -> cp {
+      if (parent[i] == -1 || parent[i] == i) return cp(0,i);
+      else return cp(1,parent[i]);});
+  parlay::sequence<cp> count_ptr;
+  // repeated doubling
+  while (count_ptr_next != count_ptr) {
+    count_ptr = std::move(count_ptr_next);
+    count_ptr_next = parlay::map(count_ptr, [&] (cp c_p) {
+	auto next = count_ptr[c_p.second];
+ 	return cp(next.first + c_p.first, next.second);
+      });
   }
-  L[start] = level;
-  for (size_t i=0; i < T[start].degree; i++) {
-    size_t j = T[start].Neighbors[i];
-    P[j] = start;
-    if (levelNumber(j, level+1, P, L, T)) return 1;
-  }
-  return 0;
+  return parlay::map(count_ptr_next, [&] (cp c_p) {
+      return (parent[c_p.second] == -1) ? n : c_p.first;});
 }
 
-// Checks if T is valid BFS tree relative to G starting at i
-int checkBFS(size_t start, Graph &G, Graph &T) {
-  size_t n = G.n;
-  if (n != T.n) {
-    cout << "BFSCheck: vertex counts don't match: " << G.n << ", " << T.n << endl;
+// Checks if parents is valid BFS tree relative to G starting at start
+int checkBFS(size_t start, vtx_seq const &parents, Graph const &G) {
+  size_t n = G.numVertices();
+  if (n != parents.size()) {
+    cout << "BFSCheck: vertex counts don't match: " << n << ", " << parents.size() << endl;
     return 1;
   }
-  if (T.m > G.n - 1) { 
-     cout << "BFSCheck: too many edges in tree " << endl;
-     return 1;
-  }
-  parlay::sequence<long> P(n, (long) -1);
-  parlay::sequence<long> L(n, (long) -1);
 
-  if (levelNumber(start, 0, P, L, T)) return 1;
-  int error = 0;
-  parlay::parallel_for (0, G.n, [&] (size_t i) {
-      bool Check=0;
-      if (L[i] == -1) {
-	for (size_t j=0; j < G[i].degree; j++) {
-	  size_t ngh = G[i].Neighbors[j];
-	  if (L[ngh] != -1) error = 1;
-	}
-      } else {
-	for (size_t j=0; j < G[i].degree; j++) {
-	  size_t ngh = G[i].Neighbors[j];
-	  if (P[i] == ngh) Check = 1;
-	  else if (L[ngh] > L[i] + 1 || L[ngh] < L[i] - 1) error = 2;
-	}
-	if (i != start && Check == 0) error = 3;
-      }
+  parlay::sequence level = level_number(parents);
+  auto min_ngh_level = [&] (vertexId v) {
+    if (G[v].degree == 0) return (vertexId) level.size();
+    auto nghs = parlay::make_slice(G[v].Neighbors, G[v].Neighbors+G[v].degree);
+    auto ngh_level = parlay::delayed_map(nghs, [&] (vertexId u) {
+	return level[u];});
+    return parlay::reduce(ngh_level, parlay::minm<vertexId>());
+  };
+
+  auto flags = parlay::tabulate(n, [&] (vertexId v) {
+      if (v == start) return (parents[v] == v);
+      if (v == start) return (parents[v] == v);
+      auto ngh_level = min_ngh_level(v);
+      return (level[v] == n && ngh_level == n ||
+	      level[v] == ngh_level + 1);
     });
-  if (error == 1) cout << "BFSCheck: connected vertex not in tree " << endl;
-  else if (error == 2) cout << "BFSCheck: edge spans two levels " << endl;
-  else if (error == 3) cout << "BFSCheck: parent not an edge " << endl;
-  else return 0;
-
-  return 1;
+  auto err = parlay::find(flags, false) - flags.begin();
+  if (err < n) {
+    cout << "BFSCheck: failed at vertex " << err
+	 << ": level is " << level[err]
+	 << ", min neighbor level is " << min_ngh_level(err) << endl;
+    return 1;
+  }
+  return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -95,7 +96,7 @@ int main(int argc, char* argv[]) {
   char* oFile = fnames.second;
 
   Graph G = readGraphFromFile<vertexId,edgeId>(iFile);
-  Graph T = readGraphFromFile<vertexId,edgeId>(oFile);
+  vtx_seq parents = readIntSeqFromFile<vertexId>(oFile);
 
-  return checkBFS(0, G, T);
+  return checkBFS(0, parents, G);
 }

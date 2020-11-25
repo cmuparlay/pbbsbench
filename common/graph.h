@@ -103,6 +103,8 @@ struct mod_vertex {
 
 template <class intV = DefaultIntV, class intE = intV>
 struct graph {
+  using vertexId = intV;
+  using edgeId = intE;
   using MVT = mod_vertex<intV>;
   using VT = vertex<intV>;
   parlay::sequence<intE> offsets;

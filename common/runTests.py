@@ -32,7 +32,7 @@ def runSingle(runProgram, options, ifile, procs) :
   out = shellGetOutput(comString)
   #print(out)
   try:
-    times = [float(str[str.index(':')+2:]) for str in out.split('\n') if str.startswith("PBBS time: ")]
+    times = [float(str[str.index(':')+2:]) for str in out.split('\n') if str.startswith("Parlay time: ")]
     return times
   except (ValueError,IndexError):
     raise NameError(comString+"\n"+out)

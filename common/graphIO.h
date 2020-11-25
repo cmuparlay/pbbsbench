@@ -189,26 +189,26 @@ namespace benchIO {
 
   template <class intV, class intE=intV>
   graph<intV, intE> readGraphFromFile(char* fname) {
-    parlay::sequence<char> S = readStringFromFile(fname);
-    parlay::sequence<char*> W = stringToWords(S);
-    if (W[0] != AdjGraphHeader) {
+    auto W = get_tokens(fname);
+    string header(W[0].begin(), W[0].end());
+    if (header != AdjGraphHeader) {
       cout << "Bad input file: missing header: " << AdjGraphHeader << endl;
       abort();
     }
 
     // file consists of [type, num_vertices, num_edges, <vertex offsets>, <edges>]
     // in compressed sparse row format
-    long n = atol(W[1]);
-    long m = atol(W[2]);
+    long n = parlay::chars_to_long(W[1]);
+    long m = parlay::chars_to_long(W[2]);
     if (W.size() != n + m + 3) {
       cout << "Bad input file: length = "<< W.size() << " n+m+3 = " << n+m+3 << endl;
       abort(); }
     
     // tags on m at the end (so n+1 total offsets)
     auto offsets = parlay::tabulate(n+1, [&] (size_t i) -> intE {
-	return (i == n) ? m : atol(W[i+3]);});
+	return (i == n) ? m : parlay::chars_to_long(W[i+3]);});
     auto edges = parlay::tabulate(m, [&] (size_t i) -> intV {
-	return atol(W[n+i+3]);});
+	return parlay::chars_to_long(W[n+i+3]);});
 
     return graph<intV, intE>(std::move(offsets), std::move(edges), n);
   }

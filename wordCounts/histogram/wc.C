@@ -25,13 +25,13 @@
 #include "parlay/primitives.h"
 #include "parlay/io.h"
 #include "parlay/internal/collect_reduce.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "wc.h"
 
 using namespace std;
 
 parlay::sequence<result_type> wordCounts(charseq const &s) {
-  timer t("word counts");
+  parlay::internal::timer t("word counts");
   cout << "number of characters = " << s.size() << endl;
 
   auto is_space = [] (char c) {

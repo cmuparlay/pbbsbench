@@ -30,11 +30,15 @@
 #include "../parlay/primitives.h"
 #include "../parlay/parallel.h"
 #include "../parlay/io.h"
+#include "../parlay/internal/get_time.h"
 
 namespace benchIO {
   using namespace std;
+  using parlay::sequence;
+  using parlay::tabulate;
+  using parlay::make_slice;
 
-  inline bool is_space(char c) {
+  auto is_space = [] (char c) {
     switch (c)  {
     case '\r': 
     case '\t': 
@@ -43,7 +47,7 @@ namespace benchIO {
     case ' ' : return true;
     default : return false;
     }
-  }
+  };
 
   // parallel code for converting a string to word pointers
   // side effects string by setting to null after each word
@@ -197,18 +201,27 @@ namespace benchIO {
     return writeSeqToFile(intHeaderIO, A, fileName);
   }
 
+  sequence<sequence<char>> get_tokens(char const *fileName) {
+    // parlay::internal::timer t("get_tokens");
+    // auto S = parlay::chars_from_file(fileName);
+    auto S = parlay::file_map(fileName);
+    // t.next("file map");
+    auto r =  parlay::tokens(S, benchIO::is_space);
+    // t.next("tokens");
+    return r;
+  }
+
   template <class T>
   parlay::sequence<T> readIntSeqFromFile(char const *fileName) {
-    // parlay::sequence<char> S = parlay::chars_from_file(fileName);
-    auto S = parlay::file_map(fileName);
-    auto W = parlay::tokens(S, is_space);
+    auto W = get_tokens(fileName);
     string header(W[0].begin(),W[0].end());
     if (header != intHeaderIO) {
       cout << "readIntSeqFromFile: bad input" << endl;
       abort();
     }
     long n = W.size()-1;
-    auto A = parlay::tabulate(n, [&] (long i) -> T {return parlay::chars_to_long(W[i+1]);});
+    auto A = parlay::tabulate(n, [&] (long i) -> T {
+	return parlay::chars_to_long(W[i+1]);});
     return A;
   }
 };
