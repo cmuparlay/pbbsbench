@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "common/graph.h"
-#include "parlay/primitives.h"
+#include "parlay/sequence.h"
 #include "BFS.h"
 using namespace std;
 
@@ -29,34 +29,28 @@ using namespace std;
 //    SERIAL BREADTH FIRST SEARCH
 // **************************************************************
 
-// **************************************************************
-//    THE SERIAL BSF
-//    Updates the graph so that it is the BFS tree (i.e. the neighbors
-//      in the new graph are the children in the bfs tree)
-// **************************************************************
-
-std::pair<vertexId,size_t> BFS(vertexId start, Graph &G) {
-  parlay::sequence<vertexId> Frontier(G.numVertices());
-  parlay::sequence<bool> Visited(G.numVertices(), false);
+parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
+  size_t n = G.numVertices();
+  parlay::sequence<vertexId> Frontier(n);
+  parlay::sequence<vertexId> Parent(n, -1);
 
   size_t bot = 0;
   size_t top = 1;
   Frontier[0] = start;
-  Visited[start] = true;
+  Parent[start] = start;
 
   while (top > bot) {
     vertexId v = Frontier[bot++];
     size_t k = 0;
     for (size_t j = 0; j < G[v].degree; j++) {
       vertexId ngh = G[v].Neighbors[j];
-      if (Visited[ngh] == 0) {
-	Frontier[top++] = G[v].Neighbors[k++] = ngh;
-	Visited[ngh] = 1;
+      if (Parent[ngh] == -1) {
+	Frontier[top++] = ngh;
+	Parent[ngh] = v;
       }
     }
-    G.degrees[v] = k;
   }
-  return pair<vertexId,size_t>(0,0);
+  return Parent;
 }
 
 

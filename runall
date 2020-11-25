@@ -37,7 +37,8 @@ tests = [
  ["spanningForest/ndST",True], 
  ["spanningForest/serialST",False],
 
- ["breadthFirstSearch/ndBFS",True],
+ ["breadthFirstSearch/simpleBFS",True],
+ ["breadthFirstSearch/backForwardBFS",True],
  ["breadthFirstSearch/deterministicBFS",True],
  ["breadthFirstSearch/serialBFS",False],
 

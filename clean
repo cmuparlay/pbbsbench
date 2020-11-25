@@ -46,7 +46,8 @@ make clean -s -C comparisonSort/quickSort
 make clean -s -C comparisonSort/mergeSort
 
 make clean -s -C breadthFirstSearch/bench
-make clean -s -C breadthFirstSearch/ndBFS
+make clean -s -C breadthFirstSearch/simpleBFS
+make clean -s -C breadthFirstSearch/backForwardBFS
 make clean -s -C breadthFirstSearch/serialBFS
 make clean -s -C breadthFirstSearch/deterministicBFS
 
