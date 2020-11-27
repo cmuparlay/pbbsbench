@@ -9,6 +9,7 @@ $(GENERATORS) :
 
 $(STRINGFILES) : $(STRINGBZIP)
 	bunzip2 -k -f $@.bz2
+	touch $@
 
 $(STRINGBZIP) :
 	cp ../../data/$@ .

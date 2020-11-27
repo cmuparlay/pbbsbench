@@ -221,8 +221,7 @@ parlay::sequence<indexT> suffix_array(UCharRange const &ss) {
 	// sort within each segment based on ranks
 	auto less = [&] (ipair<indexT> A, ipair<indexT> B) {
 	  return A.first < B.first;};
-	if (l >= n/10) parlay::internal::sample_sort_inplace(Ci, less);
-	else parlay::internal::quicksort(Ci, less);
+	parlay::sort_inplace(Ci, less);
       });
     sa_timer.next("sort");
 

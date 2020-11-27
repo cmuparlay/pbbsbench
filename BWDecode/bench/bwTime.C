@@ -75,6 +75,8 @@ int main(int argc, char* argv[]) {
   auto bwseq = bw_encode<unsigned int>(ss);
   
   auto R = timeBW(bwseq, rounds, oFile);
-  if (R != ss)
-    cout << "bad output" << endl;
+  if (R != ss) {
+    cout << "bad output for bw decode" << endl;
+    abort();
+  }
 }

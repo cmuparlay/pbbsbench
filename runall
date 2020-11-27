@@ -29,6 +29,8 @@ tests = [
  ["wordCounts/histogramStar",True],
  ["wordCounts/serial",False],
 
+ ["bwDecode/listRank",True],
+
  ["minSpanningForest/parallelKruskal",True],
  ["minSpanningForest/parallelFilterKruskal",True],
  ["minSpanningForest/serialMST",False],
