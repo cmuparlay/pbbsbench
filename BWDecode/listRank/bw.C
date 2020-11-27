@@ -27,55 +27,56 @@
 #include "parlay/random.h"
 #include "parlay/io.h"
 #include "parlay/internal/collect_reduce.h"
-#include "common/get_time.h"
+#include "parlay/internal/get_time.h"
 #include "bw.h"
 
 using std::cout;
 using std::endl;
 
+// Int needs to be large enough to store s.size().
 template <class Int>
-ucharseq bw_decode_(ucharseq const &s, size_t head) {
-  timer t("trans", true);
+ucharseq bw_decode_(ucharseq const &s) {
+  parlay::internal::timer t("trans", true);
+  cout << "len = " << s.size() << endl;
 
   Int n = s.size();
-  ucharseq ss = s;
-  t.next("copy");
-
-  // Set head location to 0 temporarily so when sorted it ends up
-  // first this is the right position since the last character in the
-  // original string is the first when sorted by suffix, and head is
-  // its "suffix" with wraparound
-  uchar a = ss[head];
-  ss[head] = 0;
 
   // sort character, returning original locations in sorted order
-  auto [links, counts] = parlay::internal::count_sort(parlay::make_slice(parlay::iota<Int>(n)), ss, 256);
-  ss[head] = a;
+  auto indices = parlay::make_slice(parlay::iota<Int>(n));
+  auto [links, counts] = parlay::internal::count_sort(indices, s, 256);
   t.next("count sort");
 
-  Int block_bits = 10;
+  // break lists into blocks
+  Int block_bits = 12;
   Int block_size = 1 << block_bits;
+
+  // pick a set of about n/block_size locations as heads
+  // head_flags are set to true for heads
+  // links that point to a head are set to their original position + n
+  // the overall first character is made to be a head
   parlay::random r(0);
   parlay::sequence<bool> head_flags(n, false);
-  t.next("head flags");
-  
-  head_flags[head] = true;  // the overall head is made to be a head
-  links[0] += n;   // this points to the original head
-
-  // pick a set of n/block_size locations as heads
-  // links that point to a head are set to their original position + n
+  head_flags[links[0]] = true; // first char is a head
+  links[0] += n;
   parlay::parallel_for(0, n/block_size + 2, [&] (Int i) {
       size_t j = r.ith_rand(i)%n;
-      if (!head_flags[links[j]]) {
-	head_flags[links[j]] = true;
-	links[j] += n;
-      }});
+      auto link = links[j];
+      // if not already incremented, add n (race is Ok, only inc. once)
+      if (link < n) {
+	head_flags[link] = true;
+	links[j] = link + n;
+      }
+    }, 1000);
 
   t.next("set next");
 
   // indices of heads;
   auto heads = parlay::pack_index<Int>(head_flags);
+  // cout << parlay::to_chars(heads) << endl;
+  // cout << parlay::to_chars(links) << endl;
+  // cout << parlay::map(s, [] (uchar x) {return (char) x;}) << endl;
   t.next("pack index");
+  
 
   // map over each head and follow the list until reaching the next head
   // as following the list, add characters to a buffer
@@ -88,14 +89,15 @@ ucharseq bw_decode_(ucharseq const &s, size_t head) {
       Int i = 0;
       Int pos = my_head;
       do {
-	buffer[i++] = ss[pos];
+	//cout << i << " : " << s[pos] << " : " << pos << " : " << links[pos] << endl;
+	buffer[i++] = s[pos];
 	if (i == buffer_len)
 	  throw std::runtime_error("ran out of buffer space in bw decode");
 	pos = links[pos];
       } while (pos < n);
       auto trimmed = parlay::tabulate(i, [&] (size_t j) {return buffer[j];});
-      return std::make_pair(std::move(trimmed), pos - n);
-    });
+      return std::make_pair(std::move(trimmed), pos % n);
+    }, 1);
   t.next("follow pointers");
 
   // location in heads for each head in s
@@ -107,11 +109,13 @@ ucharseq bw_decode_(ucharseq const &s, size_t head) {
 
   // start at first block and follow next pointers
   // putting each into ordered_blocks
-  Int pos = head;
+  Int pos = links[0]-n;
   parlay::sequence<parlay::sequence<uchar>> ordered_blocks(m);
+  size_t total = 0;
   for (Int i=0; i < m; i++) {
     Int j = location_in_heads[pos];
     ordered_blocks[i] = std::move(blocks[j].first);
+    total += ordered_blocks[i].size();
     pos = blocks[j].second;
   }
   t.next("order heads");
@@ -119,12 +123,18 @@ ucharseq bw_decode_(ucharseq const &s, size_t head) {
   // flatten ordered blocks into final string
   auto res = parlay::flatten(ordered_blocks);
   t.next("flatten");
-  return res;
+
+  cout << "m: " << m << ", " << res.size() << endl;
+
+  // drop the first character, which is a null character
+  auto rd = parlay::to_sequence(res.cut(1,res.size()));
+  t.next("remove first");
+  return rd;
 }
 
-ucharseq bw_decode(ucharseq const &s, size_t head) {
+ucharseq bw_decode(ucharseq const &s) {
   if (s.size() >= (((long) 1) << 31))
-    return bw_decode_<unsigned long>(s, head);
+    return bw_decode_<unsigned long>(s);
   else
-    return bw_decode_<unsigned int>(s, head);
+    return bw_decode_<unsigned int>(s);
 }

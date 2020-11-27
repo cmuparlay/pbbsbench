@@ -29,6 +29,7 @@
 #include "common/IO.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
+#include "bw_encode.h"
 
 #include "bw.h"
 using namespace std;
@@ -49,16 +50,18 @@ void loop(int rounds, F initf, G runf, H endf) {
   }
 }
 
-void timeBW(ucharseq const &s, size_t loc, int rounds, char* outFile) {
+auto timeBW(ucharseq const &s, int rounds, char* outFile) {
   size_t n = s.size();
   ucharseq R;
   loop(rounds,
        [&] () {R.clear();},
-       [&] () {R = bw_decode(s,loc);},
+       [&] () {R = bw_decode(s);},
        [&] () {}
        );
   cout << endl;
-  //if (outFile != NULL) parlay::chars_to_file(R, outFile);
+  if (outFile != NULL) 
+    parlay::chars_to_file(parlay::map(R, [] (uchar x) {return (char) x;}), outFile);
+  return R;
 }
 
 int main(int argc, char* argv[]) {
@@ -66,8 +69,12 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
+  auto S = parlay::file_map(iFile);
+  //parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
   auto ss = parlay::map(S, [] (char x) {return (uchar) x;});
+  auto bwseq = bw_encode<unsigned int>(ss);
   
-  timeBW(ss, 0, rounds, oFile);
+  auto R = timeBW(bwseq, rounds, oFile);
+  if (R != ss)
+    cout << "bad output" << endl;
 }

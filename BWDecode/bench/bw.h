@@ -2,6 +2,6 @@
 
 using uchar = unsigned char;
 using ucharseq = parlay::sequence<uchar>;
-ucharseq bw_decode(ucharseq const &s, size_t loc);
+ucharseq bw_decode(ucharseq const &s);
 
 
