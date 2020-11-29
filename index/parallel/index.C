@@ -53,15 +53,16 @@ charseq build_index(charseq const &s, charseq const &doc_start,
 
     // blank out all non characters, and convert to lowercase
     auto str = parlay::map(s.cut(start, end), [] (char c) -> char {
-	if (c >= 65 && c < 91) return c + 32;
-	else if (c >= 97 && c < 123) return c;
-	else return 0;});
+	if (c >= 65 && c < 91) return c + 32;   // upper to lower
+	else if (c >= 97 && c < 123) return c;  // already lower
+	else return 0;});                       // all other
 
     // generate tokens (i.e., contiguous regions of non-zero characters)
     auto tokens = parlay::tokens(str, [] (char c) {return c == 0;});
 
     // remove duplicates
     auto t = parlay::unique(parlay::sort(tokens));
+    //auto t = parlay::remove_duplicates(tokens);
 
     // tag each token with document id
     return parlay::map(t, [&] (auto str) {return std::pair(str, doc_id);});

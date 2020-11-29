@@ -36,28 +36,16 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
 
   auto is_space = [] (char c) {
     switch (c)  {
-    case '\r': 
-    case '\t': 
-    case '\n': 
-    case 0:
-    case ' ' : return true;
-    default : return false;
-    }
+    case '\r': case '\t': case '\n': case 0: case ' ' : return true;
+    default : return false; }
   };
 
   auto words = parlay::tokens(s, is_space);
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
 
-  auto hash = []  (charseq const &a) {
-      size_t hash = 5381;
-      for (size_t i = 0; i < a.size(); i++) 
-	hash = ((hash << 5) + hash) + a[i];
-      return hash;
-  };
-
-  auto result = parlay::internal::group_by_and_count(make_slice(words), hash);
-  t.next("collect reduce");
+  auto result = parlay::count_by_key(words); 
+  t.next("count by key");
 
   cout << "distinct words: " << result.size() << endl;
   return result;

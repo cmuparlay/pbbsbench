@@ -70,7 +70,7 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
     
   auto eql = [] (char* a, char* b) {return strcmp(a,b) == 0;};
 
-  auto hist = parlay::internal::group_by_and_count(make_slice(words), strhash, eql);
+  auto hist = parlay::count_by_key(words, strhash, eql);
   t.next("collect reduce");
 
   cout << "distinct words: " << hist.size() << endl;
