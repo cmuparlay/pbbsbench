@@ -61,8 +61,8 @@ charseq build_index(charseq const &s, charseq const &doc_start,
     auto tokens = parlay::tokens(str, [] (char c) {return c == 0;});
 
     // remove duplicates
-    auto t = parlay::unique(parlay::sort(tokens));
-    //auto t = parlay::remove_duplicates(tokens);
+    //auto t = parlay::unique(parlay::sort(tokens));
+    auto t = parlay::remove_duplicates(tokens);
 
     // tag each token with document id
     return parlay::map(t, [&] (auto str) {return std::pair(str, doc_id);});
