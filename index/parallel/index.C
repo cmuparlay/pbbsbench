@@ -31,64 +31,72 @@
 namespace delayed = parlay::block_delayed;
 using namespace std;
 
-charseq build_index(charseq const &s, charseq const &doc_start) {
-  parlay::internal::timer t("build Index", true);
+charseq build_index(charseq const &s, charseq const &doc_start,
+		    bool verbose = false) {
+  parlay::internal::timer t("build Index", verbose);
   size_t n = s.size();
   size_t m = doc_start.size();
-  //cout << "number of characters = " << n << endl;
 
+  // sequence of indices to the start of each document
   auto starts = delayed::filter(parlay::iota(n-m+1), [&] (size_t i) {
     for (int j=0; j < m; j++)
       if (doc_start[j] != s[i+j]) return false;
     return true;});
   auto num_docs = starts.size();
-  t.next("filter index");
-  cout << "num docs = " << num_docs << endl;
+  t.next("get starts");
+  if (verbose) cout << "num docs = " << num_docs << endl;
 
-  auto strless = [&] (charseq const &a, charseq const &b) -> bool {
-      auto sa = a.data();
-      auto sb = b.data();
-      auto ea = sa + min(a.size(),b.size());
-      while (sa < ea && *sa == *sb) {sa++; sb++;}
-      return sa == ea ? (a.size() < b.size()) : *sa < *sb;
-    };
+  // generate sequence of token-doc_id pairs for each document
+  auto x = parlay::tabulate(num_docs, [&] (size_t doc_id) {
+    size_t start = starts[doc_id] + m;					
+    size_t end = (doc_id==num_docs-1) ? n : starts[doc_id+1];
 
-  auto x = parlay::tabulate(num_docs, [&] (size_t i) {
-    size_t end = (i==num_docs-1) ? n : starts[i+1];
-    auto str = parlay::map(s.cut(starts[i]+m, end), [] (char c) -> char {
+    // blank out all non characters, and convert to lowercase
+    auto str = parlay::map(s.cut(start, end), [] (char c) -> char {
 	if (c >= 65 && c < 91) return c + 32;
 	else if (c >= 97 && c < 123) return c;
 	else return 0;});
-    auto is_space = [] (char c) {return c == 0;};
-    auto t = parlay::unique(parlay::sort(parlay::tokens(str, is_space), strless));
-    return parlay::map(t, [&] (auto str) {
-      return std::pair(str, i);});
+
+    // generate tokens (i.e., contiguous regions of non-zero characters)
+    auto tokens = parlay::tokens(str, [] (char c) {return c == 0;});
+
+    // remove duplicates
+    auto t = parlay::unique(parlay::sort(tokens));
+
+    // tag each token with document id
+    return parlay::map(t, [&] (auto str) {return std::pair(str, doc_id);});
   });
-  t.next("tabulate");
+  t.next("generate document tokens");
 
   auto y = parlay::flatten(x);
-  t.next("flatten");
-  cout << "num words in docs = " << y.size() << endl;
+  t.next("flatten document tokens");
+  if (verbose) cout << "num words in docs = " << y.size() << endl;
 
-  auto z = parlay::group_by_key(y, strless);
-  t.next("group by");
-
-  cout << "num unique words = " << z.size() << endl;
+  // group by word, each with a sequence of docs it appears in.
+  auto z = parlay::group_by_key(y);
+  t.next("group by word");
+  if (verbose) cout << "num unique words = " << z.size() << endl;
 
   charseq space(1, ' ');
   charseq newline(1, '\n');
 
-  auto b = parlay::map(z, [&] (auto x) -> charseq {
-     auto docs = x.second;
-     size_t len = docs.size()*2 + 2;
+  // format output for each word
+  auto b = parlay::map(z, [&] (auto wd_pair) -> charseq {
+     auto [word, doc_ids] = wd_pair;
+     size_t len = doc_ids.size()*2 + 2;
+     // each line consists of the word followed by
+     // the list of documents ids separared by spaces 
+     // and terminated by a newline.
      auto ss = parlay::tabulate(len, [&] (size_t i) {
-       if (i == 0) return x.first;							   if (i == len-1) return newline;
+       if (i == 0) return word;
+       if (i == len-1) return newline;
        if (i%2 == 1) return space;
-       return parlay::to_chars(docs[i/2-1].second);});
+       return parlay::to_chars(doc_ids[i/2-1].second);});
      return parlay::flatten(ss);});
-  t.next("to strings");
+  t.next("format words");
 
+  // flatten across words
   auto c = parlay::flatten(b);
-  t.next("flatten");
+  t.next("flatten formatted words");
   return c;
 }

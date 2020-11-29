@@ -52,12 +52,12 @@ void loop(int rounds, bool cold, F initf, G runf, H endf) {
 }
 
 void timeWordCounts(charseq const &s, charseq const &start, 
-		    int rounds, bool cold, char* outFile) {
+		    int rounds, bool cold, bool verbose, char* outFile) {
   size_t n = s.size();
   charseq R;
   loop(rounds, cold,
        [&] () {R.clear();},
-       [&] () {R = build_index(s, start);},
+       [&] () {R = build_index(s, start, verbose);},
        [&] () {}
        );
   cout << endl;
@@ -67,12 +67,13 @@ void timeWordCounts(charseq const &s, charseq const &start,
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-c] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
-  bool cold = P.getOption("-c");
+  bool cold = P.getOption("-c"); // don't run warmup
+  bool verbose = P.getOption("-v");  
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
   //parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
   parlay::sequence<char> S = parlay::to_sequence(parlay::file_map(iFile));
   
   string header = "<doc";
-  timeWordCounts(S, parlay::to_sequence(header), rounds, cold, oFile);
+  timeWordCounts(S, parlay::to_sequence(header), rounds, cold, verbose, oFile);
 }
