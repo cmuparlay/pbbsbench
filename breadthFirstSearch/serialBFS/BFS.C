@@ -29,7 +29,8 @@ using namespace std;
 //    SERIAL BREADTH FIRST SEARCH
 // **************************************************************
 
-parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
+parlay::sequence<vertexId> BFS(vertexId start, const Graph &G,
+			       bool verbose = false) {
   size_t n = G.numVertices();
   parlay::sequence<vertexId> Frontier(n);
   parlay::sequence<vertexId> Parent(n, -1);

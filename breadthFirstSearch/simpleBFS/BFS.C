@@ -36,19 +36,15 @@ using namespace std;
 //    SIMPLE PARALLEL NON DETERMINISTIC BREADTH FIRST SEARCH
 // **************************************************************
 
-parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
+parlay::sequence<vertexId> BFS(vertexId start, const Graph &G, 
+			       bool verbose = false) {
   size_t n = G.numVertices();
   auto parent = parlay::sequence<std::atomic<vertexId>>::from_function(n, [&] (size_t i) {
       return -1;});
   parent[start] = start;
-
   parlay::sequence<vertexId> frontier(1,start);
-  size_t total_visited = 0;
-  size_t round = 0;
 
   while (frontier.size() > 0) {
-    total_visited += frontier.size();
-    round++;
 
     // get out edges of the frontier and flatten
     auto nested_edges = parlay::map(frontier, [&] (vertexId u) {
@@ -64,6 +60,8 @@ parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
     };
     frontier = delayed::filter_map(edges, edge_f, [] (auto x) {return x.second;});
   }
+
+  // convert from atomic to regular sequence
   return parlay::map(parent, [] (auto const &x) -> vertexId {
       return x.load();});
 }

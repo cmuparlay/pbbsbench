@@ -33,29 +33,36 @@
 using namespace std;
 using namespace benchIO;
 
-void timeBFS(Graph const &G, int rounds, char* outFile) {
+void timeBFS(Graph const &G, long source, int rounds, bool verbose, char* outFile) {
   parlay::internal::timer t;
   sequence<vertexId> parents;
   double start_time = t.get_time();
   do { // run for a couple seconds to "warm things up"
-    BFS(0, G);
+    BFS(0, G, false);
   } while (t.get_time() < start_time + .2);
 
   for (int i=0; i < rounds; i++) {
     t.start();
-    parents = BFS(0, G);
+    parents = BFS(source, G, verbose);
     t.next("");
   }
   cout << endl;
+  if (verbose) {
+    size_t visited = parlay::reduce(parlay::delayed_map(parents, [&] (auto p) -> size_t {
+       return (p == -1) ? 0 : 1;}));
+    cout << "total visited = " << visited << endl;
+  }
   if (outFile != NULL) writeSequenceToFile(parents, outFile);
 }
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-o <outFile>] [-src source] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
+  long source = P.getOptionIntValue("-src",0);
+  bool verbose = P.getOption("-v");
   Graph G = readGraphFromFile<vertexId,edgeId>(iFile);
   G.addDegrees();
-  timeBFS(G, rounds, oFile);
+  timeBFS(G, source, rounds, verbose, oFile);
 }

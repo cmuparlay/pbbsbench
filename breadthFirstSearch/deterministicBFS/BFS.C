@@ -36,7 +36,7 @@ using namespace std;
 //    SIMPLE PARALLEL NON DETERMINISTIC BREADTH FIRST SEARCH
 // **************************************************************
 
-parlay::sequence<vertexId> BFS(vertexId start, const Graph &G) {
+parlay::sequence<vertexId> BFS(vertexId start, const Graph &G, bool verbose=true) {
   size_t n = G.numVertices();
   auto parent = parlay::sequence<std::atomic<vertexId>>::from_function(n, [&] (size_t i) {
       return -1;});
