@@ -36,15 +36,20 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   if (verbose)
     cout << "number of characters = " << s.size() << endl;
   
-  // copy to mutable vector
+  // copy to mutable vector and convert non alpha chars to spaces
   vector<char> str(s.size()+1);
-  for (size_t i=0; i < s.size(); i++) str[i] = s[i];
+  for (size_t i=0; i < s.size(); i++) {
+    char c = s[i];
+    if (c >= 65 && c < 91) str[i] = c + 32;   // upper to lower
+    else if (c >= 97 && c < 123) str[i] = c;  // already lower
+    else str[i] = ' ';                     // all other
+  }
   str[s.size()] = 0;
   t.next("copy");
   
   // tokenize
   vector<char*> tokens;
-  char* next_token = strtok(str.data(), "\r\n\t ");
+  char* next_token = strtok(str.data(), " ");
   size_t count = 0;
   while (next_token != NULL) {
     tokens.push_back(next_token);
@@ -75,7 +80,6 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   t.next("insert into hash table");
   if (verbose)
     cout << "result size = " << word_map.size() << endl;
-
   
   // pull out elements into a sequence
   parlay::sequence<result_type> result;

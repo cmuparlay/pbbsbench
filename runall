@@ -29,7 +29,7 @@ tests = [
  ["wordCounts/histogramStar",True],
  ["wordCounts/serial",False],
 
- ["bwDecode/listRank",True],
+ ["BWDecode/listRank",True],
 
  ["minSpanningForest/parallelKruskal",True],
  ["minSpanningForest/parallelFilterKruskal",True],

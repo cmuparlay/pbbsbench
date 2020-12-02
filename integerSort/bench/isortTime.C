@@ -33,10 +33,9 @@ using namespace benchIO;
 template<class F, class G>
 void loop(int rounds, F initf, G runf) {
   parlay::internal::timer t;
-  double start_time = t.get_time();
   do { // run for a couple seconds to "warm things up"
     initf(); runf(); 
-  } while (t.get_time() < start_time + 1.0);
+  } while (t.total_time() < 1.0);
   for (int i=0; i < rounds; i++) {
     initf();
     t.start();

@@ -91,7 +91,7 @@ charseq build_index(charseq const &s, charseq const &doc_start,
        if (i == 0) return word;
        if (i == len-1) return newline;
        if (i%2 == 1) return space;
-       return parlay::to_chars(doc_ids[i/2-1].second);});
+       return parlay::to_chars(doc_ids[i/2-1]);});
      return parlay::flatten(ss);});
   t.next("format words");
 

@@ -34,13 +34,14 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
   parlay::internal::timer t("word counts");
   cout << "number of characters = " << s.size() << endl;
 
-  auto is_space = [] (char c) {
-    switch (c)  {
-    case '\r': case '\t': case '\n': case 0: case ' ' : return true;
-    default : return false; }
-  };
+  // blank out all non alpha characters, and convert upper to lowercase
+  auto str = parlay::map(s, [] (char c) -> char {
+    if (c >= 65 && c < 91) return c + 32;   // upper to lower
+    else if (c >= 97 && c < 123) return c;  // already lower
+    else return 0;});                       // all other
 
-  auto words = parlay::tokens(s, is_space);
+  // generate tokens (i.e., contiguous regions of non-zero characters)
+  auto words = parlay::tokens(str, [] (char c) {return c == 0;});
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
 

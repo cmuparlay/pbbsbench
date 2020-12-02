@@ -39,11 +39,10 @@ int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool per
 
   parlay::internal::timer t;
   sequence<T> B;
-  double start_time = t.get_time();
   do { // run for a couple seconds to "warm things up"
     B = A;
     compSort(B.begin(), n, less); 
-  } while (t.get_time() < start_time + 2.0);
+  } while (t.total_time() < 2.0);
 
   for (int i=0; i < rounds; i++) {
     B = A;

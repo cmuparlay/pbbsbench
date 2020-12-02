@@ -7,7 +7,6 @@ dataDir = "../sequenceData/data"
 
 tests = [
     [1, "trigramString_250000000", "", ""],
-    [1, "randomSeq_30000000_int", "", ""],
     [1, "etext99", "", ""],
     [1, "wikipedia250M.txt", "", ""]
 ]
