@@ -23,6 +23,7 @@
 #include <iostream>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/internal/collect_reduce.h"
 #include "parlay/io.h"
 #include "parlay/internal/group_by.h"
 #include "parlay/internal/get_time.h"
@@ -68,7 +69,8 @@ charseq build_index(charseq const &s, charseq const &doc_start,
   });
   t.next("generate document tokens");
 
-  auto y = parlay::flatten(x);
+  auto y = parlay::flatten(std::move(x));
+  cout << x.size() << ", " << x[0][0].first.size() << endl;
   t.next("flatten document tokens");
   if (verbose) cout << "num words in docs = " << y.size() << endl;
 
@@ -96,7 +98,7 @@ charseq build_index(charseq const &s, charseq const &doc_start,
   t.next("format words");
 
   // flatten across words
-  auto c = parlay::flatten(b);
+  auto c = parlay::flatten(std::move(b));
   t.next("flatten formatted words");
   return c;
 }

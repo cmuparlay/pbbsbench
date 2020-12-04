@@ -10,18 +10,19 @@ int main(int argc, char* argv[]) {
   elementType tp = elementTypeFromString(P.getOptionValue("-t","int"));
   size_t n = in.first;
   char* fname = in.second;
-  size_t defaultVal = 1723451871;
-  size_t r = P.getOptionLongValue("-v", defaultVal);
+  size_t val = 1723451871;
+  size_t r = P.getOptionLongValue("-r", 0);
+  if (r > 0) val = val % r;
   sequence<long> A;
   sequence<double> B;
   
   switch(tp) {
   case intType: {
-    auto A = parlay::tabulate(n, [&] (size_t i) -> long {return r;});
+    auto A = parlay::tabulate(n, [&] (size_t i) -> long {return val;});
     return writeSequenceToFile(A, fname);
   }
   case doubleT: {
-    auto B = parlay::tabulate(n, [&] (size_t i) -> double {return (double) r;});
+    auto B = parlay::tabulate(n, [&] (size_t i) -> double {return (double) val;});
     return writeSequenceToFile(B, fname);
   }
   default: cout << "genSeqRand: not a valid type" << endl;

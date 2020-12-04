@@ -20,67 +20,49 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <iostream>
-#include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/io.h"
 #include "parlay/internal/get_time.h"
-#include "common/IO.h"
-#include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
+#include "common/sequenceIO.h"
+#include <iostream>
+#include <algorithm>
+#include "histogram.h"
 
-// SA.h defines indexT, which is the type of integer used for the elements of the
-// suffix array
-#include "wc.h"
 using namespace std;
 using namespace benchIO;
 
-void writeHistogramsToFile(parlay::sequence<result_type> const results, char* outFile) {
-  auto space = parlay::to_chars(' ');
-  auto newline = parlay::to_chars('\n');
-  auto str = parlay::flatten(parlay::map(results, [&] (result_type x) {
-	sequence<sequence<char>> s = {
-	  x.first, space, parlay::to_chars(x.second), newline};
-	return flatten(s);}));
-  parlay::chars_to_file(str, outFile);
-}
-  
-template<class F, class G, class H>
-void loop(int rounds, F initf, G runf, H endf) {
+template<class F, class G>
+void loop(int rounds, F initf, G runf) {
   parlay::internal::timer t;
   do { // run for a couple seconds to "warm things up"
-    initf(); runf(); endf();
-  } while (t.total_time() < 1.0);
+    initf(); runf(); 
+  } while (t.total_time() < 2.0);
   for (int i=0; i < rounds; i++) {
     initf();
     t.start();
     runf();
     t.next("");
-    endf();
   }
 }
-
-void timeWordCounts(parlay::sequence<char> const &s, int rounds, bool verbose, char* outFile) {
-  size_t n = s.size();
-  parlay::sequence<result_type> R;
+void timeHistogram(sequence<uint> In, int rounds, uint buckets, bool verbose, 
+		   char* outFile) {
+  size_t n = In.size();
+  sequence<uint> R;
   loop(rounds,
        [&] () {R.clear();},
-       [&] () {R = wordCounts(s, verbose);},
-       [&] () {}
-       );
-  cout << endl;
-  if (outFile != NULL) writeHistogramsToFile(R, outFile);
+       [&] () {R = histogram(In, buckets);});
+  if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
-  bool verbose = P.getOption("-v");
   int rounds = P.getOptionIntValue("-r",1);
-  //parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
-  parlay::sequence<char> S = parlay::to_sequence(parlay::file_map(iFile));
-  
-  timeWordCounts(S, rounds, verbose, oFile);
+  int verbose = P.getOption("-v");
+  int buckets = P.getOptionIntValue("-b",0);
+
+  auto In = readIntSeqFromFile<uint>(iFile);
+  timeHistogram(In, rounds, buckets, verbose, oFile);
 }

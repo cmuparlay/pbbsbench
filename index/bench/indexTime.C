@@ -40,7 +40,7 @@ void loop(int rounds, bool cold, F initf, G runf, H endf) {
   if (!cold)
     do { // run for a couple seconds to "warm things up"
       initf(); runf(); endf();
-    } while (t.total_time() < 1.0);
+    } while (t.total_time() < 2.0);
   for (int i=0; i < rounds; i++) {
     initf();
     t.start();

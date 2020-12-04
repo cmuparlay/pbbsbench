@@ -21,37 +21,19 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <iostream>
+#include <algorithm>
+#include <cstring>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/io.h"
-#include "parlay/internal/collect_reduce.h"
-#include "parlay/internal/get_time.h"
-#include "wc.h"
-
+#include "common/sequenceIO.h"
+#include "common/atomics.h"
+#include "common/parse_command_line.h"
 using namespace std;
+using namespace benchIO;
 
-parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
-  parlay::internal::timer t("word counts", verbose);
-  if (verbose) cout << "number of characters = " << s.size() << endl;
-
-  // blank out all non alpha characters, and convert upper to lowercase
-  auto str = parlay::map(s, [] (char c) -> char {
-    if (c >= 65 && c < 91) return c + 32;   // upper to lower
-    else if (c >= 97 && c < 123) return c;  // already lower
-    else return 0;});                       // all other
-
-  // generate tokens (i.e., contiguous regions of non-zero characters)
-  auto words = parlay::tokens(str, [] (char c) {return c == 0;});
-  t.next("tokens");
-  if (verbose) cout << "number of words = " << words.size() << endl;
-
-  auto result = parlay::count_by_key(std::move(words)); 
-  t.next("count by key");
-  cout << words.size() << endl;
-
-  words.clear();
-  t.next("clear");
-
-  if (verbose) cout << "distinct words: " << result.size() << endl;
-  return result;
+int main(int argc, char* argv[]) {
+  commandLine P(argc,argv,"<inFile> <outFile>");
+  pair<char*,char*> fnames = P.IOFileNames();
+  char* infile = fnames.first;
+  char* outfile = fnames.second;
 }

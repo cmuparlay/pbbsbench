@@ -7,6 +7,7 @@ dataDir = "../sequenceData/data"
 
 tests = [
     [1, "wikisamp.xml", "", ""],
+    [1, "wikipedia250M.txt", "", ""],
 ]
 
 import sys

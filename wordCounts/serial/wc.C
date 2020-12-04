@@ -28,10 +28,9 @@
 #include "parlay/internal/get_time.h"
 #include "wc.h"
 
-bool verbose = false;
 using namespace std;
 
-parlay::sequence<result_type> wordCounts(charseq const &s) {
+parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
   parlay::internal::timer t("word counts", verbose);
   if (verbose)
     cout << "number of characters = " << s.size() << endl;

@@ -18,6 +18,9 @@ randomSeq : randomSeq.C sequenceData.h $(SEQUENCEGEN)
 equalSeq : equalSeq.C sequenceData.h $(SEQUENCEGEN)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 
+almostEqualSeq : almostEqualSeq.C sequenceData.h $(SEQUENCEGEN)
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
+
 almostSortedSeq : almostSortedSeq.C sequenceData.h $(SEQUENCEGEN)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
 

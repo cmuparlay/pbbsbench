@@ -50,7 +50,10 @@ randomSeq_% : ../randomSeq
 	../randomSeq -t int $(subst randomSeq_,,$@) $@
 
 equalSeq_% : ../equalSeq
-	../equalSeq -t int $(subst equalSeq_,,$@) $@
+	../equalSeq -t int -r $(subst equalSeq_,,$@) $(subst equalSeq_,,$@) $@
+
+almostEqualSeq_% : ../almostEqualSeq
+	../almostEqualSeq -t int -r $(subst almostEqualSeq_,,$@) $(subst almostEqualSeq_,,$@) $@
 
 # In this one the integers are limited to a range of 100K
 randomSeq_10M_100K_int : ../randomSeq
