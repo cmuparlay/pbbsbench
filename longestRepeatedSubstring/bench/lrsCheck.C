@@ -1,5 +1,5 @@
 // This code is part of the Problem Based Benchmark Suite (PBBS)
-// Copyright (c) 2011-2019 Guy Blelloch, Julian Shun and the PBBS team
+// Copyright (c) 2010 Guy Blelloch and the PBBS team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
@@ -20,10 +20,23 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "SA.h"
-#include "algorithm/suffix_array.h"
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/IO.h"
+#include "common/parse_command_line.h"
+#include "lrs.h"
+using namespace std;
+using namespace benchIO;
 
-parlay::sequence<indexT> suffixArray(parlay::sequence<unsigned char> const &s) {
-  return suffix_array<indexT>(s);
+
+int main(int argc, char* argv[]) {
+  commandLine P(argc,argv,"<infile> <outfile>");
+  pair<char*,char*> fnames = P.IOFileNames();
+  //str_t In = readStringFromFile(fnames.first);
+  //str_t Out = readStringFromFile(fnames.second);
+
+  return 0;
 }
-

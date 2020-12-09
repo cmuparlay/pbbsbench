@@ -29,8 +29,8 @@
 
 using namespace std;
 
-parlay::sequence<result_type> wordCounts(charseq const &s) {
-  timer t("word counts");
+parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
+  timer t("word counts", verbose);
   cout << "number of characters = " << s.size() << endl;
   
   auto is_space = [] (char c) {
@@ -80,6 +80,5 @@ parlay::sequence<result_type> wordCounts(charseq const &s) {
 	return result_type(parlay::sequence<char>(std::move(hist[i].first), hist[i].first+len),
 			   hist[i].second);
       });
-  //hist.clear_uninitialized();
   return result;
 }

@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   str_t In = readStringFromFile(fnames.first);
   str_t Out = readStringFromFile(fnames.second);
 
-  auto rin = wordCounts(In);
+  auto rin = wordCounts(In, false);
 
   auto tokens = parlay::tokens(Out, is_space);
   auto rout = parlay::tabulate(tokens.size()/2, [&] (size_t i) {

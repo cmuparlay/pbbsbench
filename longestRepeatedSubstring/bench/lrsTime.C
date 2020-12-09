@@ -25,58 +25,36 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/io.h"
-#include "parlay/internal/get_time.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
-#include "algorithm/bw_encode.h"
+#include "common/time_loop.h"
 
-#include "bw.h"
+#include "lrs.h"
 using namespace std;
 using namespace benchIO;
 
-template<class F, class G, class H>
-void loop(int rounds, F initf, G runf, H endf) {
-  parlay::internal::timer t;
-  initf();
-  runf();
-  endf();
-  for (int i=0; i < rounds; i++) {
-    initf();
-    t.start();
-    runf();
-    t.next("");
-    endf();
-  }
-}
-
-auto timeBW(ucharseq const &s, int rounds, char* outFile) {
+void timeLongestRepeatedSubstring(parlay::sequence<char> const &s, int rounds, bool verbose, char* outFile) {
   size_t n = s.size();
-  ucharseq R;
-  loop(rounds,
-       [&] () {R.clear();},
-       [&] () {R = bw_decode(s);},
-       [&] () {}
-       );
+  auto ss = parlay::map(s, [] (char c) {return (unsigned char) c;});
+  result_type R;
+  time_loop(rounds, 2.0,
+	    [&] () {},
+	    [&] () {R = lrs(ss);},
+	    [&] () {}
+	    );
   cout << endl;
-  if (outFile != NULL) 
-    parlay::chars_to_file(parlay::map(R, [] (uchar x) {return (char) x;}), outFile);
-  return R;
+  if (outFile != NULL) {}
 }
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
+  bool verbose = P.getOption("-v");
   int rounds = P.getOptionIntValue("-r",1);
-  auto S = parlay::file_map(iFile);
   //parlay::sequence<char> S = parlay::chars_from_file(iFile, true);
-  auto ss = parlay::map(S, [] (char x) {return (uchar) x;});
-  auto bwseq = bw_encode<unsigned int>(ss);
+  parlay::sequence<char> S = parlay::to_sequence(parlay::file_map(iFile));
   
-  auto R = timeBW(bwseq, rounds, oFile);
-  if (R != ss) {
-    cout << "bad output for bw decode" << endl;
-    abort();
-  }
+  timeLongestRepeatedSubstring(S, rounds, verbose, oFile);
 }

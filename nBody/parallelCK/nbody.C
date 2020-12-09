@@ -216,7 +216,7 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_siz
   auto minmax = [] (box a, box b) {
     return box((a.first).minCoords(b.first),
 	       (a.second).maxCoords(b.second));};
-  auto pairs = parlay::dmap(particles, [&] (particle* p) {
+  auto pairs = parlay::delayed_map(particles, [&] (particle* p) {
       return box(p->pt, p->pt);});
   box b = parlay::reduce(pairs, parlay::make_monoid(minmax,pairs[0]));
 										      
@@ -239,7 +239,7 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_siz
   
   auto flagsLeft = parlay::map(particles, [&] (particle* p) -> bool {
       return p->pt[d] < splitpoint;});
-  auto flagsRight = parlay::dmap(flagsLeft, [] (bool x) {
+  auto flagsRight = parlay::delayed_map(flagsLeft, [] (bool x) {
       return !x;});
 
   size_t nl = parlay::pack_into(particles, flagsLeft, Tmp);

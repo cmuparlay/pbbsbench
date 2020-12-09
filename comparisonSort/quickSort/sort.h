@@ -1,7 +1,8 @@
 #include "parlay/internal/quicksort.h"
 
-template <class E, class BinPred>
-void compSort(E* A, unsigned int n, const BinPred& f) {
-  parlay::slice<E*,E*> B(A,A+n);
-  parlay::internal::p_quicksort_inplace(B, f);
+constexpr bool INPLACE = true;
+
+template <class T, class BinPred>
+void compSort(parlay::sequence<T>  &A, const BinPred& f) {
+  parlay::internal::p_quicksort_inplace(make_slice(A), f);
 }

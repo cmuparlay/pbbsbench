@@ -1,6 +1,8 @@
-#pragma once
 #include <parallel/algorithm>
+#include "parlay/sequence.h"
 
-template <class E, class BinPred>
-void compSort(E* A, int n, BinPred f) {
-  __gnu_parallel::sort(A,A+n,f);}
+constexpr bool INPLACE = true;
+
+template <class T, class BinPred>
+void compSort(parlay::sequence<T> &A, const BinPred& f) {
+  __gnu_parallel::sort(A.begin(), A.end(), f);}

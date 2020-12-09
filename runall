@@ -16,9 +16,9 @@ tests = [
  ["comparisonSort/sampleSort",True],
  ["comparisonSort/quickSort",True],
  ["comparisonSort/mergeSort",True],
-# ["comparisonSort/stableSampleSort",True],
+ ["comparisonSort/stableSampleSort",True],
  ["comparisonSort/serialSort",False],
- ["comparisonSort/stlParallelSort",False],
+ ["comparisonSort/stlParallelSort",True],
 
 #["suffixArray/serialKS",False],  
  ["suffixArray/parallelKS",True],
@@ -82,6 +82,7 @@ tests = [
 
 compileOnly = False
 testOnly = False
+parOnly = False
 if (sys.argv.count("-only") > 0):
     filteredTests = [l for l in tests if sys.argv.count(l[0]) > 0]
     tests = filteredTests
@@ -97,6 +98,10 @@ if (sys.argv.count("-c") > 0):
 if (sys.argv.count("-t") > 0):
     print("Testing only")
     testOnly = True
+if (sys.argv.count("-par") > 0):
+    print("Parallel only")
+    parOnly = True
+    
     
 def detectCPUs():
     """                                                                                                                                                  
@@ -171,8 +176,8 @@ try :
                       runtest(test[0], "-x -r 5 -p " + `p`, usenumactl)
                   else :
                       runtest(test[0], "-x -r 7 -p " + `p`, usenumactl)
-              runtest(test[0],"-r 1", usenumactl)
-          else :
+              runtest(test[0],"-r 3", usenumactl)
+          elif (not(parOnly)) :
               runtest(test[0], "-r 1 -p 1", False)
 except NameError,v :
   x, = v

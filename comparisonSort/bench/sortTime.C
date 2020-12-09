@@ -24,9 +24,9 @@
 #include <algorithm>
 #include "parlay/random.h"
 #include "parlay/parallel.h"
-#include "parlay/internal/get_time.h"
 #include "common/sequenceIO.h"
 #include "common/parseCommandLine.h"
+#include "common/time_loop.h"
 
 using namespace std;
 using namespace benchIO;
@@ -34,28 +34,22 @@ using namespace benchIO;
 template <typename T, typename Less>
 int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool permute, char* outFile) {
   sequence<T> A = parseElements<T>(In.cut(1, In.size()));
+  
   size_t n = A.size();
   if (permute) A = parlay::random_shuffle(A);
-
-  parlay::internal::timer t;
   sequence<T> B;
-  do { // run for a couple seconds to "warm things up"
-    B = A;
-    compSort(B.begin(), n, less); 
-  } while (t.total_time() < 2.0);
-
-  for (int i=0; i < rounds; i++) {
-    B = A;
-    t.start();
-    compSort(B.begin(), n, less);
-    t.next("");
-  }
+  time_loop(rounds, 2.0,
+	    [&] () {if constexpr(INPLACE) B = A;},
+	    [&] () {
+	      if constexpr(INPLACE) compSort(B, less);
+	      else B = compSort(A, less);},
+	    [&] () {});
+  cout << endl;
   if (outFile != NULL) writeSequenceToFile(B, outFile);
   return 0;
 }
 
 int main(int argc, char* argv[]) {
-  parlay::internal::timer t("sortTime: main");
   commandLine P(argc,argv,"[-p] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
@@ -63,7 +57,6 @@ int main(int argc, char* argv[]) {
   bool permute = P.getOption("-p");
 
   auto In = get_tokens(iFile);
-  //t.next("tokens");
   elementType in_type = elementTypeFromHeader(In[0]);
   size_t n = In.size() - 1;
 

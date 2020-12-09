@@ -22,7 +22,7 @@
 
 #include "../parlay/primitives.h"
 #include "../parlay/parallel.h"
-#include "atomics.h"
+#include "../common/atomics.h"
 
 // The following supports both "union" that is only safe sequentially
 // and "link" that is safe in parallel.  Find is always safe in parallel.

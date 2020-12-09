@@ -25,11 +25,11 @@
 #include <limits.h>
 #include "parlay/primitives.h"
 #include "parlay/parallel.h"
+#include "parlay/internal/get_time.h"
 #include "common/graph.h"
-#include "common/union_find.h"
 #include "common/speculative_for.h"
-#include "common/kth_smallest.h"
-#include "common/get_time.h"
+#include "algorithm/kth_smallest.h"
+#include "algorithm/union_find.h"
 #include "MST.h"
 
 using namespace std;
@@ -87,7 +87,7 @@ struct UnionFindStep {
 };
 
 parlay::sequence<edgeId> mst(wghEdgeArray<vertexId,edgeWeight> &E) { 
-  timer t("mst", true);
+  parlay::internal::timer t("mst", true);
   size_t m = E.m;
   size_t n = E.n;
   size_t k = min<size_t>(5 * n / 4, m);

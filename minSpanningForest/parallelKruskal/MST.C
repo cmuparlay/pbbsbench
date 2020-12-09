@@ -26,9 +26,9 @@
 #include "parlay/sequence.h"
 #include "parlay/parallel.h"
 #include "common/graph.h"
-#include "common/union_find.h"
 #include "common/speculative_for.h"
 #include "common/get_time.h"
+#include "algorithm/union_find.h"
 #include "MST.h"
 
 using namespace std;

@@ -39,9 +39,9 @@
 //  parlay::sequence<indexT> suffix_array(parlay::sequence<unsigned char> const &s);
 
 #include <math.h>
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
-#include "parlay/internal/get_time.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
+#include "../parlay/internal/get_time.h"
 
 constexpr bool verbose = false;
 

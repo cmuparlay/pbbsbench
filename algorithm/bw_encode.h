@@ -21,10 +21,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This code generates the burrows wheeler transform for a string s.
-// It first padds the string with a null character at the front.
-// It is backwards from standard: i.e. it sorts all suffixes, and then
-// outputs the character before the suffix in the sorted order, along with
-// the location of the first character
+// It first pads the string with a null character at the front.
+// It is backwards from how normally described: i.e. it sorts all suffixes, 
+// and then outputs the character before the suffix in the sorted order, 
+// along with the location of the first character
 
 // example 
 //  abcabcab
@@ -39,11 +39,11 @@
 //   a bcabcab
 //   b cab
 //   b cabcab
-// hence out string is: "bcc$aaabb"
+// hence the output string is: "bcc$aaabb"
 #include <iostream>
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
-#include "parlay/io.h"
+#include "../parlay/parallel.h"
+#include "../parlay/primitives.h"
+#include "../parlay/io.h"
 #include "suffix_array.h"
 
 using uchar = unsigned char;

@@ -25,7 +25,7 @@
 #include "parlay/parallel.h"
 #include "common/graph.h"
 #include "common/get_time.h"
-#include "common/union_find.h"
+#include "algorithm/union_find.h"
 #include "MST.h"
 
 using namespace std;

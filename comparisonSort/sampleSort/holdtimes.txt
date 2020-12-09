@@ -1,0 +1,44 @@
+640612f (Oct 21, updates)
+
+randomSeq_100M_double :  -r 5 : '0.13', '0.129', '0.129', '0.129', '0.129', geomean = 0.129
+exptSeq_100M_double :  -r 5 : '0.105', '0.105', '0.105', '0.106', '0.106', geomean = 0.105
+almostSortedSeq_100M_double :  -r 5 : '0.101', '0.094', '0.095', '0.094', '0.095', geomean = 0.096
+randomSeq_100M_double_pair_double :  -r 5 : '0.176', '0.174', '0.175', '0.175', '0.175', geomean = 0.175
+trigramSeq_100M :  -r 5 : '0.261', '0.264', '0.262', '0.29', '0.262', geomean = 0.268
+sampleSort : 0 : geomean of mins = 0.142, geomean of geomeans = 0.144
+
+e07a48b (Dec 4, block_delayed)
+
+randomSeq_100M_double :  -r 5 : '0.144', '0.143', '0.144', '0.144', '0.143', geomean = 0.143
+exptSeq_100M_double :  -r 5 : '0.128', '0.128', '0.127', '0.127', '0.127', geomean = 0.127
+almostSortedSeq_100M_double :  -r 5 : '0.12', '0.12', '0.118', '0.118', '0.118', geomean = 0.119
+randomSeq_100M_double_pair_double :  -r 5 : '0.192', '0.188', '0.192', '0.194', '0.193', geomean = 0.192
+trigramSeq_100M :  -r 5 : '0.336', '0.333', '0.34', '0.34', '0.33', geomean = 0.336
+sampleSort : 0 : geomean of mins = 0.168, geomean of geomeans = 0.17
+
+e07a48b (Dec 4, block_delayed, changing from inplace to not-inplace)
+
+randomSeq_100M_double :  -r 5 : '0.134', '0.135', '0.134', '0.134', '0.136', geomean = 0.135
+exptSeq_100M_double :  -r 5 : '0.117', '0.108', '0.108', '0.108', '0.108', geomean = 0.11
+almostSortedSeq_100M_double :  -r 5 : '0.097', '0.096', '0.096', '0.097', '0.097', geomean = 0.097
+randomSeq_100M_double_pair_double :  -r 5 : '0.179', '0.177', '0.178', '0.177', '0.18', geomean = 0.178
+trigramSeq_100M :  -r 5 : '0.306', '0.305', '0.305', '0.311', '0.306', geomean = 0.306
+sampleSort : 0 : geomean of mins = 0.15, geomean of geomeans = 0.151
+
+e07a48b (Dec 4, block_delayed, changing from inplace to not-inplace, using old parallel.h)
+
+randomSeq_100M_double :  -r 5 : '0.133', '0.135', '0.133', '0.134', '0.137', geomean = 0.134
+exptSeq_100M_double :  -r 5 : '0.107', '0.107', '0.107', '0.107', '0.108', geomean = 0.107
+almostSortedSeq_100M_double :  -r 5 : '0.097', '0.097', '0.097', '0.097', '0.097', geomean = 0.097
+randomSeq_100M_double_pair_double :  -r 5 : '0.177', '0.179', '0.178', '0.177', '0.177', geomean = 0.177
+trigramSeq_100M :  -r 5 : '0.291', '0.292', '0.299', '0.292', '0.293', geomean = 0.293
+sampleSort : 0 : geomean of mins = 0.148, geomean of geomeans = 0.149
+
+e07a48b (Dec 4, block_delayed, changing from inplace to not-inplace, using old parallel.h, using old quicksort.h)
+
+randomSeq_100M_double :  -r 5 : '0.129', '0.131', '0.13', '0.13', '0.13', geomean = 0.13
+exptSeq_100M_double :  -r 5 : '0.106', '0.105', '0.107', '0.105', '0.106', geomean = 0.106
+almostSortedSeq_100M_double :  -r 5 : '0.096', '0.097', '0.096', '0.096', '0.095', geomean = 0.096
+randomSeq_100M_double_pair_double :  -r 5 : '0.192', '0.176', '0.176', '0.176', '0.177', geomean = 0.179
+trigramSeq_100M :  -r 5 : '0.297', '0.293', '0.29', '0.289', '0.291', geomean = 0.292
+sampleSort : 0 : geomean of mins = 0.146, geomean of geomeans = 0.147

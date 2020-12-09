@@ -48,7 +48,7 @@ charseq build_index(charseq const &s, charseq const &doc_start,
   if (verbose) cout << "num docs = " << num_docs << endl;
 
   // generate sequence of token-doc_id pairs for each document
-  auto x = parlay::tabulate(num_docs, [&] (size_t doc_id) {
+  auto x = parlay::tabulate(num_docs, [&] (unsigned int doc_id) {
     size_t start = starts[doc_id] + m;					
     size_t end = (doc_id==num_docs-1) ? n : starts[doc_id+1];
 
@@ -61,11 +61,12 @@ charseq build_index(charseq const &s, charseq const &doc_start,
     // generate tokens (i.e., contiguous regions of non-zero characters)
     auto tokens = parlay::tokens(str, [] (char c) {return c == 0;});
 
-    // remove duplicates
+    // remove duplicate tokens
     tokens = parlay::remove_duplicates(tokens);
 
-    // tag each token with document id
-    return parlay::map(tokens, [&] (auto str) {return std::pair(str, doc_id);});
+    // tag each remaining token with document id
+    return parlay::map(tokens, [&] (auto str) {
+        return std::pair(str, doc_id);});
   });
   t.next("generate document tokens");
 
@@ -75,14 +76,24 @@ charseq build_index(charseq const &s, charseq const &doc_start,
   if (verbose) cout << "num words in docs = " << y.size() << endl;
 
   // group by word, each with a sequence of docs it appears in.
-  auto z = parlay::group_by_key(y);
-  t.next("group by word");
-  if (verbose) cout << "num unique words = " << z.size() << endl;
+  //auto z = parlay::group_by_key(y);
+  //t.next("group by word");
 
+  auto z = parlay::group_by_key(y);
+  t.next("collect by word");
+  if (verbose) cout << "num unique words = " << z.size() << endl;
+  
+  parlay::sort_inplace(z, [] (auto const &l, auto const &r) {
+			    return l.first < r.first;});
+  t.next("sort words");
+
+  // generate string for each document number
+  auto docstr = parlay::tabulate(num_docs, [] (size_t i) {
+		     return parlay::to_chars(i);});
+  
+  // format output for each word
   charseq space(1, ' ');
   charseq newline(1, '\n');
-
-  // format output for each word
   auto b = parlay::map(z, [&] (auto wd_pair) -> charseq {
      auto [word, doc_ids] = wd_pair;
      size_t len = doc_ids.size()*2 + 2;
@@ -93,7 +104,7 @@ charseq build_index(charseq const &s, charseq const &doc_start,
        if (i == 0) return word;
        if (i == len-1) return newline;
        if (i%2 == 1) return space;
-       return parlay::to_chars(doc_ids[i/2-1]);});
+       return docstr[doc_ids[i/2-1]];});
      return parlay::flatten(ss);});
   t.next("format words");
 
