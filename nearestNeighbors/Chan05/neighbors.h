@@ -12,24 +12,30 @@
 #include "common/geometry.h"
 #include "../octTree/oct_tree.h"
 #define sq(x) (((double) (x))* ((double) (x)))
-#define MAX1 (1L<<32) 
 
 
 
-// Guy: This does not match our definition of point
 typedef size_t* Point; 
-size_t shift;
-int key_bits = 32;
+size_t shift, MAX1;
+int key_bits = 62;
 int d; 
 bool report_stats = true;
 bool check_correctness = true;
 int algorithm_version = 0; //just because octTree/neighbors requires this parameter
 double eps = 0; 
 
-double squared_distance(Point p, Point q){
+size_t abs(size_t x, size_t y){
+	if (x > y){
+		return (x-y);
+	} else{
+		return (y-x);
+	}
+}
+
+double squared_distance(Point p, Point q){ 
 	double dist = 0; 
 	for(int j = 0; j<d; j++){
-		dist += sq(q[j]-p[j]);
+		dist += sq(abs(q[j], p[j]));
 	}
 	return dist; 
 }
@@ -68,7 +74,8 @@ void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 	// round each point to an integer with key_bits bit
 	// add each integer point to Chan's array
 	int bits = key_bits/d;
-	size_t maxval = (((size_t) 1) << bits) - 1; 
+	size_t maxval = (((size_t) 1) << bits) - 1;
+	MAX1 = maxval; 
     parlay::parallel_for(0, n, [&] (size_t i){
     	P[i] = new size_t[d];
     	for (int j = 0; j < d; j++) 
@@ -76,7 +83,7 @@ void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
     });
 }
 
-inline size_t less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
+inline bool less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
 
 //compares the interleaved bits of shifted points p, q without explicitly interleaving them
 auto cmp_shuffle = [&] (Point p, Point q){
@@ -87,34 +94,14 @@ auto cmp_shuffle = [&] (Point p, Point q){
 			x=y;
 		}
 	}
-	return (((p)[j] - (q)[j]) < 0);
+	return (((p)[j] < (q)[j]));     
 };
-
-size_t cmp_shuffle1(Point *p, Point *q){
-	int j, k; size_t x, y;
-	for (j = k = x = 0; k < d; k++){
-		if (less_msb(x, y = ((*p)[k]+shift)^((*q)[k]+shift))){
-			j = k; x = y;
-		}
-	}
-	return (*p)[j] - (*q)[j];
-}
 
 
 //sort the points based on their interleave ordering
 void SSS_preprocess(Point P[], size_t n){ 
-	shift = 0; //TODO change back to rand
-	parlay::sort_inplace(parlay::make_slice(P, P+n), cmp_shuffle);
-	// std::cout << "done preprocessing" << "\n";
-}
-
-void SSS_preprocess1(Point P[], size_t n){
-	shift = 0; //TODO change back to rand
-	qsort((void *) P, n, sizeof(Point), 
-		(int (*)(const void *, const void *)) cmp_shuffle1);
-}
-
-
+	shift = 0; //TODO change back to (size_t)(drand48()*MAX1) once you fix the bugs
+	parlay::sort_inplace(parlay::make_slice(P, P+n), cmp_shuffle);}
 
 struct Chan_nn{
 
@@ -122,19 +109,24 @@ struct Chan_nn{
 	Point ans, q1, q2;  
 
 	Chan_nn(){
-		q1 = new size_t[d];
-		q2 = new size_t[d];
 	}
 
 	void check_dist(Point p, Point q){
 		if (are_equal(p, q)) return;
 		int j; double z; 
-		for (j=0, z=0; j<d; j++) z+= sq(p[j]-q[j]);
+		for (j=0, z=0; j<d; j++) z+= sq(abs(p[j], q[j])); 
 		if (z < r_sq) {
 			r_sq = z; r = sqrt(z); ans = p;
 			for (j=0; j<d; j++) {
-				q1[j] = (q[j]>r) ? (q[j] - (size_t)ceil(r)) : 0;
-				q2[j] = (q[j]+r<MAX1) ? (q[j]+(size_t)ceil(r)) : MAX1;
+				if(q[j]>r){
+					if(q[j] < (size_t)ceil(r)){ 
+						q1[j] = 0;
+						// std::cout << "here" << "\n";
+					} else q1[j] = (q[j]-(size_t)ceil(r));
+				} else q1[j] = 0;
+				q2[j] = (q[j]+r<MAX1) ? (q[j]+(size_t)ceil(r)) : MAX1; //MAX is dependent on key_bits now
+				// std::cout << q[j] << " " << r << " " << q2[j] << "\n";
+				// std::cout << "\n";
 			}
 		}
 	}
@@ -147,8 +139,8 @@ struct Chan_nn{
 		frexp(x, &i);
 		for (j=0, z=0; j<d; j++){
 			x = ((p1[j]+shift)>>i)<<i; y = x+(1<<i);
-			if (q[j]+shift < x) z += sq(q[j]+shift-x);
-			else if (q[j] + shift > y) z += sq(q[j]+shift - y);
+			if (q[j]+shift < x) z += sq(abs(q[j]+shift, x)); 
+			else if (q[j] + shift > y) z += sq(q[j]+shift - y); //this is safe because we know the result will be positive
 		}
 		return z;
 	}
@@ -156,25 +148,19 @@ struct Chan_nn{
 	void SSS_query0(Point P[], size_t n, Point q){
 		if (n==0) return;
 		check_dist(P[n/2], q);
-		// std::cout << "checked distance" << "\n";
 		if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) { //getting rid of this condition did not fix the error
 			return;
-		}
-		if (cmp_shuffle1(&q, &P[n/2]) < 0) {
-			// std::cout << "cmp_shuffle result " << cmp_shuffle(q, P[n/2]) << "\n";
+		}   
+		if (cmp_shuffle(q, P[n/2])) { 
 			SSS_query0(P, n/2, q);
-			std::cout << "left "; 
-			print_point(q2);
-			if (cmp_shuffle1(&q2, &P[n/2]) > 0) SSS_query0(P + n/2+1, n-n/2-1, q);
+			if (not cmp_shuffle(q2, P[n/2])) SSS_query0(P + n/2+1, n-n/2-1, q);
 		} else{
-			std::cout << "right ";  
-			print_point(q1);
 			SSS_query0(P + n/2+1, n-n/2-1, q);
-			if (cmp_shuffle1(&q1, &P[n/2]) < 0) SSS_query0(P, n/2, q);    
+			if (cmp_shuffle(q1, P[n/2])) SSS_query0(P, n/2, q);    
 		}
 	}
 
-	//brute-force check correctness for approximately 100 points
+	//brute-force check correctness for approximately 100 points out of every 10 million
 	bool do_check_correct(){
 		if (check_correctness){
 			float check = (float) rand()/RAND_MAX;
@@ -212,9 +198,10 @@ struct Chan_nn{
 
 	Point SSS_query(Point P[], size_t n, Point q){
 		r_sq = DBL_MAX;
-		// std::cout << "reached SSS_query" << "\n";
+		q1 = new size_t[d];
+		q2 = new size_t[d];
 		SSS_query0(P, n, q);
-		if (not do_check_correct()) check_correct(P, n, q);		
+		if (do_check_correct()) check_correct(P, n, q); 	
 		return ans;
 	}
 
@@ -234,25 +221,15 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		Point *P;
 		P = new Point[n]; 
 		convert(v, n, P);
-		// for (int i = 0; i<n; i++){
-		// 	print_point(P[i]);
-		// }
 		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); 
-		SSS_preprocess1(P, n); //parallel preprocess is buggy still
-		// for (int i = 0; i<n; i++){
-		// 	print_point(P[i]);
-		// }
+		SSS_preprocess(P, n); 
 		t.next("preprocess");
-		parlay::parallel_for(41, 42, [&] (size_t i){
+		parlay::parallel_for(0, n, [&] (size_t i){
 			Chan_nn C; 
 			C.SSS_query(P, n, P[i]);
 		}
 		);
-		// for (size_t i = 0; i < n; i++){
-		// 	Chan_nn C;
-		// 	C.SSS_query(P, n, P[i]);
-		// }
 		t.next("find all");
 		parlay::parallel_for(0, n, [&] (size_t i){
 			delete P[i];

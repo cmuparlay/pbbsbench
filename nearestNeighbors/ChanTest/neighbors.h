@@ -79,16 +79,30 @@ void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 
 
 
-inline int less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
+inline bool less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
 
 int cmp_shuffle(Point *p, Point *q){
 	int j, k, x, y;
 	for (j = k = x = 0; k < d; k++){
+		// std::cout << "less_msb value " << less_msb(x, y = (((*p)[k]+shift))^((*q)[k]+shift)) << "\n";
 		if (less_msb(x, y = (((*p)[k]+shift))^((*q)[k]+shift))){
 			j = k; x = y;
 		}
 	}
+	// std::cout << "cmp_shuffle result: " << ((*p)[j] - (*q)[j]) << "\n";
 	return (*p)[j]-(*q)[j];
+}
+
+bool cmp_shuffle1(Point *p, Point *q){
+	int j, k, x, y;
+	for (j = k = x = 0; k < d; k++){
+		// std::cout << "less_msb value " << less_msb(x, y = (((*p)[k]+shift))^((*q)[k]+shift)) << "\n";
+		if (less_msb(x, y = (((*p)[k]+shift))^((*q)[k]+shift))){
+			j = k; x = y;
+		}
+	}
+	// std::cout << "cmp_shuffle result: " << ((*p)[j] - (*q)[j]) << "\n";
+	return ((*p)[j]<(*q)[j]);
 }
 
 void SSS_preprocess(Point P[], int n){
@@ -128,19 +142,23 @@ void SSS_query0(Point P[], int n, Point q){
 	if (n==0) return;
 	check_dist(P[n/2], q);
 	// std::cout << "here" << "\n";
-	if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) { 
+	if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) {      
 		return;
 	}
-	if (cmp_shuffle(&q, &P[n/2]) < 0) {
+	// std::cout << "Points being checked: " << "\n";
+	// print_point(q);
+	// print_point(P[n/2]);
+	// std::cout << cmp_shuffle(&q, &P[n/2]) << " value of cmp_shuffle" << "\n";
+	if (cmp_shuffle1(&q, &P[n/2])) {
 		SSS_query0(P, n/2, q);
-		std::cout << "left "; 
-		print_point(q2);
-		if (cmp_shuffle(&q2, &P[n/2]) > 0) SSS_query0(P + n/2+1, n-n/2-1, q);
+		// std::cout << "left "; 
+		// print_point(q2);
+		if (not cmp_shuffle1(&q2, &P[n/2])) SSS_query0(P + n/2+1, n-n/2-1, q);
 	} else{
 		SSS_query0(P + n/2+1, n-n/2-1, q);
-		std::cout << "right "; 
-		print_point(q1);
-		if (cmp_shuffle(&q1, &P[n/2]) < 0) SSS_query0(P, n/2, q);
+		// std::cout << "right "; 
+		// print_point(q1);
+		if (cmp_shuffle(&q1, &P[n/2])) SSS_query0(P, n/2, q);
 	}
 }
 
@@ -210,12 +228,12 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		srand48(12121+m+m+d); 
 		SSS_preprocess(P, m); 
 		t.next("preprocess");
-		// for (int i=0; i< m; i++){
-		// 	print_point(P[i]);
-		// }
+		for (int i=0; i< m; i++){
+			print_point(P[i]);
+		}
 		q1 = new int[d];
 		q2 = new int[d];
-		for (int i =0; i<1; i++){
+		for (int i =0; i<m; i++){
 			SSS_query(P, m, P[i]);
 			check_correct(P, m, P[i]);	
 		}
