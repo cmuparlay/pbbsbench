@@ -39,7 +39,8 @@ parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
     if (c >= 65 && c < 91) return c + 32;   // upper to lower
     else if (c >= 97 && c < 123) return c;  // already lower
     else return 0;});                       // all other
-
+  t.next("copy");
+  
   // generate tokens (i.e., contiguous regions of non-zero characters)
   auto words = parlay::tokens(str, [] (char c) {return c == 0;});
   t.next("tokens");

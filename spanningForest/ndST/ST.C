@@ -4,8 +4,8 @@
 #include "parlay/parallel.h"
 #include "common/get_time.h"
 #include "common/graph.h"
-#include "common/union_find.h"
 #include "common/atomics.h"
+#include "algorithm/union_find.h"
 #include "ST.h"
 
 parlay::sequence<edgeId> st(edgeArray<vertexId> const &E){

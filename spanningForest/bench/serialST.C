@@ -1,8 +1,7 @@
-#define NOTMAIN 1
 #include <iostream>
 #include <limits.h>
 #include "common/graph.h"
-#include "common/union_find.h"
+#include "algorithm/union_find.h"
 #include "parlay/primitives.h"
 #include "ST.h"
 using namespace std;

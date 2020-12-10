@@ -29,24 +29,20 @@
 
 using namespace std;
 
+// this is an "optimized" version that uses pointers to the tokens rather than
+// the strings themselves.   It does not seem to be any faster (or perhaps by just
+// a couple percent).
 parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
   timer t("word counts", verbose);
-  cout << "number of characters = " << s.size() << endl;
-  
-  auto is_space = [] (char c) {
-    switch (c)  {
-    case '\r': 
-    case '\t': 
-    case '\n': 
-    case 0:
-    case ' ' : return true;
-    default : return false;
-    }
-  };
-
   size_t n = s.size();
-  charseq str = parlay::sequence<char>::from_function(n + 1, [&] (size_t i) -> char {
-      return (i == n || is_space(s[i])) ? 0 : s[i];});
+  cout << "number of characters = " << n << endl;
+
+  // pad with extra null so last string is null terminated
+  auto str = parlay::tabulate(n+1, [&] (size_t i) -> char {
+      char c = (i==n) ? 0 : s[i];
+      if (c >= 65 && c < 91) return c + 32;   // upper to lower
+      else if (c >= 97 && c < 123) return c;  // already lower
+      else return 0;});                       // all other
   t.next("copy");
   
   auto get_word = [&] (parlay::slice<char*, char*> x) -> char* {
@@ -57,8 +53,6 @@ parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
   
   t.next("tokens");
   cout << "number of words = " << words.size() << endl;
-
-  auto lens = parlay::map(words, [] (char* w) {return strlen(w);});
 
   // a simple hash function on char sequences
   auto strhash = [] (char* a) {
@@ -71,14 +65,16 @@ parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
   auto eql = [] (char* a, char* b) {return strcmp(a,b) == 0;};
 
   auto hist = parlay::count_by_key(words, strhash, eql);
-  t.next("collect reduce");
+  t.next("count by key");
 
   cout << "distinct words: " << hist.size() << endl;
-  parlay::sequence<result_type> result =
-    parlay::tabulate(hist.size(), [&] (size_t i) {
-	size_t len = strlen(hist[i].first);
-	return result_type(parlay::sequence<char>(std::move(hist[i].first), hist[i].first+len),
-			   hist[i].second);
-      });
+  auto result = parlay::tabulate(hist.size(), [&] (size_t i) {
+      size_t len = strlen(hist[i].first);
+      auto [start, count] = hist[i];
+      return result_type(parlay::sequence<char>(start, start + len),
+			 count);
+    });
+
+  t.next("format out");
   return result;
 }

@@ -33,8 +33,10 @@
 #include "lrs.h"
 using namespace std;
 using namespace benchIO;
+using pstring = parlay::sequence<char>;
+using parlay::to_chars;
 
-void timeLongestRepeatedSubstring(parlay::sequence<char> const &s, int rounds, bool verbose, char* outFile) {
+void timeLongestRepeatedSubstring(pstring const &s, int rounds, bool verbose, char* outFile) {
   size_t n = s.size();
   auto ss = parlay::map(s, [] (char c) {return (unsigned char) c;});
   result_type R;
@@ -44,7 +46,12 @@ void timeLongestRepeatedSubstring(parlay::sequence<char> const &s, int rounds, b
 	    [&] () {}
 	    );
   cout << endl;
-  if (outFile != NULL) {}
+  if (outFile != NULL) {
+    auto [len, loc1, loc2] = R;
+    pstring nl = parlay::to_sequence("\n");
+    parlay::sequence<pstring> x{to_chars(len), nl, to_chars(loc1), nl, to_chars(loc2), nl};
+    parlay::chars_to_file(flatten(x), outFile);
+  }
 }
 
 int main(int argc, char* argv[]) {

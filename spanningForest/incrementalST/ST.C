@@ -27,7 +27,7 @@
 #include "parlay/parallel.h"
 #include "common/graph.h"
 #include "common/speculative_for.h"
-#include "common/union_find.h"
+#include "algorithm/union_find.h"
 #include "ST.h"
 
 using reservation = pbbs::reservation<edgeId>;

@@ -30,6 +30,9 @@ tests = [
  ["wordCounts/serial",False],
 
  ["BWDecode/listRank",True],
+ ["histogram/parallel",True],
+ ["index/parallel",True],
+ ["longestRepeatedSubstring/doubling",True],
 
  ["minSpanningForest/parallelKruskal",True],
  ["minSpanningForest/parallelFilterKruskal",True],

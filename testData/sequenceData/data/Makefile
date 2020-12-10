@@ -1,4 +1,4 @@
-GENERATORS = ../randomSeq ../almostSortedSeq ../exptSeq ../trigramSeq ../addDataSeq ../trigramString
+GENERATORS = ../randomSeq ../equalSeq ../almostEqualSeq ../almostSortedSeq ../exptSeq ../trigramSeq ../addDataSeq ../trigramString
 
 STRINGFILES = wikipedia250M.txt wikisamp.xml chr22.dna etext99
 STRINGFILES_LONG = wikisamp.xml chr22.dna etext99 HG18 howto jdk13c proteins rctail96 rfc sprot34 w3c2
