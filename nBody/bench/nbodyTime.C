@@ -22,11 +22,11 @@
 
 #include <iostream>
 #include <algorithm>
-#include "common/get_time.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "parlay/primitives.h"
+#include "parlay/internal/get_time.h"
 #include "nbody.h"
 using namespace std;
 using namespace benchIO;
@@ -36,7 +36,7 @@ using namespace benchIO;
 // *************************************************************
 
 void timeNBody(parlay::sequence<point> const &pts, int rounds, char* outFile) {
-  timer t;
+  parlay::internal::timer t;
   auto pp = parlay::map(pts, [] (point p) -> particle {return particle(p, 1.0);});
   parlay::sequence<particle*> p = parlay::tabulate(pts.size(), [&] (size_t i) -> particle* {
       return &pp[i];});

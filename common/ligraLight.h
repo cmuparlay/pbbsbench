@@ -75,7 +75,7 @@ struct edge_map {
     auto edges = delayed::flatten(nested_edges);
     auto r = delayed::filter_map(edges,
 				 [&] (auto x) {return cond(x.second) && fa(x.first, x.second);},
-				 [] (auto x) {return x.second;});
+				 [] (auto x)  {return x.second;});
     if (dedup) {
       parlay::parallel_for(0,r.size(), [&] (size_t i) { dup_seq[r[i]] = i;});
       auto flags = parlay::tabulate(r.size(), [&] (size_t i) {return i==dup_seq[r[i]];});
