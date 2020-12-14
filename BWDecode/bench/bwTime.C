@@ -25,7 +25,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/io.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
@@ -35,29 +35,13 @@
 using namespace std;
 using namespace benchIO;
 
-template<class F, class G, class H>
-void loop(int rounds, F initf, G runf, H endf) {
-  parlay::internal::timer t;
-  initf();
-  runf();
-  endf();
-  for (int i=0; i < rounds; i++) {
-    initf();
-    t.start();
-    runf();
-    t.next("");
-    endf();
-  }
-}
-
 auto timeBW(ucharseq const &s, int rounds, char* outFile) {
   size_t n = s.size();
   ucharseq R;
-  loop(rounds,
+  time_loop(rounds, 1.0,
        [&] () {R.clear();},
        [&] () {R = bw_decode(s);},
-       [&] () {}
-       );
+       [&] () {});
   cout << endl;
   if (outFile != NULL) 
     parlay::chars_to_file(parlay::map(R, [] (uchar x) {return (char) x;}), outFile);

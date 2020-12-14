@@ -22,7 +22,7 @@
 
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/parse_command_line.h"
 #include "common/sequenceIO.h"
 #include <iostream>
@@ -30,27 +30,15 @@
 using namespace std;
 using namespace benchIO;
 
-template<class F, class G>
-void loop(int rounds, F initf, G runf) {
-  parlay::internal::timer t;
-  do { // run for a couple seconds to "warm things up"
-    initf(); runf(); 
-  } while (t.total_time() < 1.0);
-  for (int i=0; i < rounds; i++) {
-    initf();
-    t.start();
-    runf();
-    t.next("");
-  }
-}
 template <class T>
 void timeIntegerSort(sequence<sequence<char>> In, int rounds, int bits, char* outFile) {
   auto in_vals = parseElements<T>(In.cut(1, In.size()));
   size_t n = in_vals.size();
   sequence<T> R;
-  loop(rounds,
+  time_loop(rounds, 1.0,
        [&] () {R.clear();},
-       [&] () {R = int_sort(make_slice(in_vals.data(),in_vals.data()+n), bits);});
+       [&] () {R = int_sort(make_slice(in_vals.data(),in_vals.data()+n), bits);},
+       [] () {});
   if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 
@@ -63,7 +51,7 @@ int main(int argc, char* argv[]) {
 
   auto In = get_tokens(iFile);
   elementType in_type = elementTypeFromHeader(In[0]);
-  cout << In[0] << ", " << seqHeader(in_type) << endl;
+  cout << "bits = " << bits << endl;
 
   switch (in_type) {
   case intType: 

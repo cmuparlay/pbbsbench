@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <algorithm>
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parseCommandLine.h"
@@ -36,14 +36,12 @@ using namespace benchIO;
 // *************************************************************
 
 void timeDelaunay(parlay::sequence<point> &pts, int rounds, char* outFile) {
-  parlay::internal::timer t;
   triangles<point> R;
-  for (int i=0; i < rounds; i++) {
-    R.P.clear(); R.T.clear();
-    t.start();
-    R = delaunay(pts);
-    t.next("");
-  }
+  time_loop(rounds, 1.0,
+	    [&] () {R.P.clear(); R.T.clear();},
+	    [&] () {R = delaunay(pts);},
+	    [&] () {});
+  cout << endl;
   if (outFile != NULL) writeTrianglesToFile(R, outFile);
 }
 

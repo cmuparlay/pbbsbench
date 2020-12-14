@@ -173,8 +173,8 @@ def compiletest(dir) :
         ss = "cd " + dir + " ; make -s cleanall ; make -s"
     else :
         ss = "cd " + dir + " ; make -s"
-    print ""
-    print ss
+    os.system("echo")
+    os.system("echo \"" + ss + "\"")
     os.system(ss)
     
 def runtest(test,procs,check) :
@@ -193,28 +193,29 @@ def runtest(test,procs,check) :
         sc = "cd " + dir + " ; numactl -i all ./testInputs " + options
     else:
         sc = "cd " + dir + " ; ./testInputs " + options
-    print sc
+    os.system("echo \"" + sc + "\"")
     x = os.system(sc)
     if (x) :  
         raise NameError("  " + sc)
 
 try :
     if scale : processors = getProcessors()
-    else : print ("running on " + `maxcpus` + " threads")
+    else : os.system("echo " + "\"running on " + `maxcpus` + " threads\"")
     for test in tests :
         isParallel = test[1]
         if (isParallel or not(parOnly)) :
             compiletest(test[0])
             if not(noTime) : 
-                if (not(scale)) :
+                if (not(isParallel)) :
+                    runtest(test, 1, not(noCheck))
+                elif (not(scale)) :
                     runtest(test, maxcpus, not(noCheck)) 
-                elif (isParallel) :
+                else :
                     n = len(processors)
                     for p in processors[0:n-1] :
                         runtest(test, p, False)
                     runtest(test, processors[n-1], not(noCheck))
-                else :
-                    runtest(test, 1, not(noCheck))
+
 except NameError,v :
   x, = v
   print "TEST TERMINATED ABNORMALLY:\n"+x

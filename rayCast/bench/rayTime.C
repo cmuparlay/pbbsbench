@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <algorithm>
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
@@ -34,17 +34,12 @@ using namespace benchIO;
 
 void timeRayCast(triangles<point> T, parlay::sequence<ray<point>> rays, 
 		 int rounds, char* outFile) {
-  parlay::internal::timer t;
-  size_t nRays = rays.size();
-  
-  // run one as warmup
-  auto R = rayCast(T, rays);
-  for (int i=0; i < rounds; i++) {
-    R.clear();
-    t.start();
-    R = rayCast(T, rays);
-    t.next("");
-  }
+  parlay::sequence<index_t> R;
+  time_loop(rounds, 2.0,
+	    [&] () {R.clear();},
+	    [&] () {R = rayCast(T, rays);},
+	    [&] () {});
+  cout << endl;
   if (outFile != NULL) writeIntSeqToFile(R, outFile);
 }
 

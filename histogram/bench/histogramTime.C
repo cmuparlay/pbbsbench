@@ -22,7 +22,7 @@
 
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/parse_command_line.h"
 #include "common/sequenceIO.h"
 #include <iostream>
@@ -32,26 +32,14 @@
 using namespace std;
 using namespace benchIO;
 
-template<class F, class G>
-void loop(int rounds, F initf, G runf) {
-  parlay::internal::timer t;
-  do { // run for a couple seconds to "warm things up"
-    initf(); runf(); 
-  } while (t.total_time() < 2.0);
-  for (int i=0; i < rounds; i++) {
-    initf();
-    t.start();
-    runf();
-    t.next("");
-  }
-}
 void timeHistogram(sequence<uint> In, int rounds, uint buckets, bool verbose, 
 		   char* outFile) {
   size_t n = In.size();
   sequence<uint> R;
-  loop(rounds,
+  time_loop(rounds, 1.0,
        [&] () {R.clear();},
-       [&] () {R = histogram(In, buckets);});
+       [&] () {R = histogram(In, buckets);},
+       [] () {});
   if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 

@@ -23,7 +23,7 @@
 #include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/graph.h"
 #include "common/IO.h"
 #include "common/graphIO.h"
@@ -33,14 +33,11 @@ using namespace std;
 using namespace benchIO;
 
 void timeMIS(Graph const &G, int rounds, char* outFile) {
-  parlay::internal::timer t;
   parlay::sequence<char> flags = maximalIndependentSet(G);
-  for (int i=0; i < rounds; i++) {
-    flags.clear();
-    t.start();
-    flags = maximalIndependentSet(G);
-    t.next("");
-  }
+  time_loop(rounds, 1.0,
+	    [&] () {flags.clear();},
+	    [&] () {flags = maximalIndependentSet(G);},
+	    [&] () {});
   cout << endl;
   
   auto F = parlay::tabulate(G.n, [&] (size_t i) -> int {return flags[i];});

@@ -20,11 +20,29 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+// Builds a kd-tree top-down using the surface area heuristic (SAH)
+// for selecting the "best" planar, axis-alligned cut at each node.
+// For any cut some objects will fall completely on one side some or
+// the other, and some will straddle the cut.  The straddlers will
+// have to go to both sides.  The (heuristic) cost of a cut of a
+// bounding box into A and B is given by:
+//      minimize:  S_A * n_A + S_B * n_B,
+// where S_x is the surface area of the box for A and B, and n_x is
+// the number of objects intersecting each box.
+
+// The minimum can be found by sweeping along each axis adding an
+// object as the line first hits it, and removing it when the line
+// passes it.  For each such event, calculate the cost of the cut at
+// that point---we know the number of objects on the left and
+// right and can easily calculate the surface areas.
+// Can be done in parallel using a scan.
+
 #include <limits>
 #include <algorithm>
-#include "common/geometry.h"
-#include "common/get_time.h"
 #include "parlay/primitives.h"
+#include "parlay/internal/block_delayed.h"
+#include "parlay/internal/get_time.h"
+#include "common/geometry.h"
 #include "ray.h"
 #include "kdTree.h"
 #include "rayTriangleIntersect.h"
@@ -38,7 +56,7 @@ using parlay::par_do;
 using parlay::pack;
 using parlay::sort_inplace;
 using parlay::to_sequence;
-using parlay::delayed_seq;
+using parlay::delayed_tabulate;
 
 int CHECK = 0;  // if set checks 10 rays against brute force method
 int STATS = 0;  // if set prints out some tree statistics
@@ -50,7 +68,7 @@ float maxExpand = 1.6;
 int maxRecursionDepth = 25;
 
 // Constant for switching to sequential versions
-int minParallelSize = 100000;
+int minParallelSize = 1000;
 
 using vect = typename point::vector;
 using triangs = triangles<point>;
@@ -81,7 +99,7 @@ cutInfo bestCutSerial(sequence<event> const &E, range r, range r1, range r2) {
   index_t n = E.size();
   if (r.max - r.min == 0.0) return cutInfo(flt_max, r.min, n, n);
   float area = 2 * (r1.max-r1.min) * (r2.max-r2.min);
-  float diameter = 2 * ((r1.max-r1.min) + (r2.max-r2.min));
+  float orthoPerimeter = 2 * ((r1.max-r1.min) + (r2.max-r2.min));
 
   // calculate cost of each possible split
   index_t inLeft = 0;
@@ -91,13 +109,12 @@ cutInfo bestCutSerial(sequence<event> const &E, range r, range r1, range r2) {
   index_t rn = inLeft;
   index_t ln = inRight;
   for (index_t i=0; i <n; i++) {
-    float cost;
     if (IS_END(E[i])) inRight--;
     float leftLength = E[i].v - r.min;
-    float leftArea = area + diameter * leftLength;
+    float leftSurfaceArea = area + orthoPerimeter * leftLength;
     float rightLength = r.max - E[i].v;
-    float rightArea = area + diameter * rightLength;
-    cost = (leftArea * inLeft + rightArea * inRight);
+    float rightSurfaceArea = area + orthoPerimeter * rightLength;
+    float cost = (leftSurfaceArea * inLeft + rightSurfaceArea * inRight);
     if (cost < minCost) {
       rn = inRight;
       ln = inLeft;
@@ -120,38 +137,59 @@ cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
   // area of two orthogonal faces
   float orthogArea = 2 * ((r1.max-r1.min) * (r2.max-r2.min));
 
-  // length of diameter of orthogonal face
-  float diameter = 2 * ((r1.max-r1.min) + (r2.max-r2.min));
+  // length of the perimeter of the orthogonal faces
+  float orthoPerimeter = 2 * ((r1.max-r1.min) + (r2.max-r2.min));
 
   // count number that end before i
-  auto upperC = tabulate(n, [&] (index_t i) -> index_t {return IS_END(E[i]);});
-  scan_inplace(upperC);
-
-  // calculate cost of each possible split location
-  using fipair = pair<float,index_t>;
-  auto cost = delayed_seq<fipair>(n, [&] (index_t i) -> fipair {
-    index_t inLeft = i - upperC[i];
-    index_t inRight = n/2 - (upperC[i] + IS_END(E[i]));
+  auto is_end = delayed_tabulate(n, [&] (index_t i) -> index_t {return IS_END(E[i]);});
+  auto end_counts = parlay::block_delayed::scan_inclusive(is_end, parlay::addm<index_t>());
+  
+  // calculate cost of each possible split location, 
+  // return tuple with cost, number of ends before the location, and the index
+  using rtype = std::tuple<float,index_t,index_t>;
+  auto costs = parlay::block_delayed::zip_with(end_counts, parlay::iota(n),
+        [&] (index_t num_ends, index_t i) -> rtype {
+    index_t num_ends_before = num_ends - IS_END(E[i]); 
+    index_t inLeft = i - num_ends_before; // number of points intersecting left
+    index_t inRight = n/2 - num_ends;   // number of points intersecting right
     float leftLength = E[i].v - r.min;
-    float leftArea = orthogArea + diameter * leftLength;
+    float leftSurfaceArea = orthogArea + orthoPerimeter * leftLength;
     float rightLength = r.max - E[i].v;
-    float rightArea = orthogArea + diameter * rightLength;
-    return pair((leftArea * inLeft + rightArea * inRight),i);
-			  });
+    float rightSurfaceArea = orthogArea + orthoPerimeter * rightLength;
+    float cost = leftSurfaceArea * inLeft + rightSurfaceArea * inRight;
+    return rtype(cost, num_ends_before, i);});
 
-  // find minimum across all (maxIndex with less is minimum)
-  // index_t k = parlay::min_element(cost) - cost.begin();
-  auto minp = [&] (fipair a, fipair b) {return (a.first < b.first) ? a : b;};
-  fipair ck = reduce(cost, parlay::make_monoid(minp, cost[0]));
+  // find minimum across all, returning the triple
+  auto min_f = [&] (rtype a, rtype b) {return (std::get<0>(a) < std::get<0>(b)) ? a : b;};
+  rtype identity(std::numeric_limits<float>::max(), 0, 0);
+  auto [cost, num_ends_before, i] =
+    parlay::block_delayed::reduce(costs, parlay::make_monoid(min_f, identity));
  
-  float c = ck.first;
-  index_t k = ck.second;
-  index_t ln = k - upperC[k];
-  index_t rn = n/2 - (upperC[k] + IS_END(E[k]));
-  return cutInfo(c, E[k].v, ln, rn);
+  index_t ln = i - num_ends_before;
+  index_t rn = n/2 - (num_ends_before + IS_END(E[i]));
+  return cutInfo(cost, E[i].v, ln, rn);
 }
 
 using eventsPair = pair<sequence<event>, sequence<event>>;
+
+namespace parlay {
+  template <typename Seq, typename BSeq1, typename BSeq2>
+auto two_pack(Seq const &S, BSeq1 const &Fl1, BSeq2 const &Fl2) {
+    using T = typename Seq::value_type;
+  size_t n = S.size();
+  auto twoAdd = pair_monoid(addm<size_t>(),addm<size_t>());
+  auto twoFlags = delayed_tabulate(n, [&] (size_t i) {
+       return pair<size_t,size_t>((bool) Fl1[i], (bool) Fl2[i]);});
+  auto [offsets, totals] = block_delayed::scan(twoFlags, twoAdd);
+  auto result1 = sequence<T>::uninitialized(totals.first);
+  auto result2 = sequence<T>::uninitialized(totals.second);
+  auto f = [&] (auto offset, auto i) {
+  	     if (Fl1[i]) result1[offset.first] = S[i];
+  	     if (Fl2[i]) result2[offset.second] = S[i];};
+  block_delayed::zip_apply(offsets, iota(n), f);
+  return std::pair(std::move(result1), std::move(result2));
+}
+}
 
 eventsPair splitEvents(sequence<range> const &boxes,
 		       sequence<event> const &events, 
@@ -166,8 +204,8 @@ eventsPair splitEvents(sequence<range> const &boxes,
     upper[i] = boxes[b].max > cutOff;
   });
 
-  return eventsPair(pack(events, lower),
-		    pack(events, upper));
+  return parlay::two_pack(events, lower, upper);
+  //return eventsPair(pack(events, lower), pack(events, upper));
 }
 
 // n is the number of events (i.e. twice the number of triangles)
@@ -175,7 +213,7 @@ treeNode* generateNode(Boxes &boxes,
 		       Events events,
 		       BoundingBox B, 
 		       size_t maxDepth) {
-  timer t;
+  parlay::internal::timer t;
   index_t n = events[0].size();
   if (n <= 2 || maxDepth == 0) 
     return treeNode::newNode(std::move(events), n, B);
@@ -185,12 +223,12 @@ treeNode* generateNode(Boxes &boxes,
   parallel_for(0, 3, [&] (size_t d) {
     cuts[d] = bestCut(events[d], B[d], B[(d+1)%3], B[(d+2)%3]);
 		     }, 10000/n + 1);
-
+  
   int cutDim = 0;
   for (int d = 1; d < 3; d++) 
     if (cuts[d].cost < cuts[cutDim].cost) cutDim = d;
 
-  sequence<range>& cutDimRanges = boxes[cutDim];
+  //sequence<range>& cutDimRanges = 
   float cutOff = cuts[cutDim].cutOff;
   float area = boxSurfaceArea(B);
   float bestCost = CT + CL * cuts[cutDim].cost/area;
@@ -206,34 +244,30 @@ treeNode* generateNode(Boxes &boxes,
   for (int i=0; i < 3; i++) BBL[i] = B[i];
   BBL[cutDim] = range(BBL[cutDim].min, cutOff);
   array<sequence<event>,3> leftEvents;
-  index_t nl;
 
   BoundingBox BBR;
   for (int i=0; i < 3; i++) BBR[i] = B[i];
   BBR[cutDim] = range(cutOff, BBR[cutDim].max);
   array<sequence<event>,3> rightEvents;
-  index_t nr;
 
   // now split each event array to the two sides
-  eventsPair X[3];
   parallel_for (0, 3, [&] (size_t d) {
-    X[d] = splitEvents(cutDimRanges, events[d], cutOff);
-    },10000/n + 1);
+    eventsPair X = splitEvents(boxes[cutDim], events[d], cutOff);
+    leftEvents[d] = std::move(X.first);
+    rightEvents[d] = std::move(X.second);
+  }, 10000/n + 1);
 
-  
-  for (int d = 0; d < 3; d++) {
-    leftEvents[d] = std::move(X[d].first);
-    rightEvents[d] = std::move(X[d].second);
-    if (d == 0) {
-      nl = X[d].first.size();
-      nr = X[d].second.size();
-    } else if (X[d].first.size() != nl || X[d].second.size() != nr) {
+  // check cuts are the same size
+  index_t nl = leftEvents[0].size();
+  index_t nr = rightEvents[0].size();
+  for (int d = 1; d < 3; d++) {
+    if (leftEvents[d].size() != nl || rightEvents[d].size() != nr) {
       cout << "kdTree: mismatched lengths, something wrong" << endl;
       abort();
     }
   }
 
-  // free old events and make recursive calls
+  // free (i.e. clear) old events and make recursive calls
   for (int i=0; i < 3; i++) events[i] = sequence<event>();
   treeNode *L;
   treeNode *R;
@@ -322,8 +356,8 @@ index_t findRay(ray_t r, treeNode* TN, triangs const &Tri) {
 }
 
 sequence<index_t> rayCast(triangles<point> const &Tri,
-		       sequence<ray<point>> const &rays) {
-  timer t("ray cast");
+			  sequence<ray<point>> const &rays) {
+  parlay::internal::timer t("ray cast", true);
   index_t numRays = rays.size();
 
   // Extract triangles into a separate array for each dimension with

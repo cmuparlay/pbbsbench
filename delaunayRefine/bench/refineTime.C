@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <algorithm>
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
@@ -35,13 +35,11 @@ using namespace benchIO;
 void timeRefine(triangles<point> &Tri, int rounds, char* outFile) {
   parlay::internal::timer t;
   triangles<point> R;
-  for (int i=0; i < rounds; i++) {
-    R.P.clear(); R.T.clear();
-    t.start();
-    R = refine(Tri);
-    t.next("");
-  }
-
+  time_loop(rounds, 1.0,
+	    [&] () {R.P.clear(); R.T.clear();},
+	    [&] () {R = refine(Tri);},
+	    [&] () {});
+  cout << endl;
   if (outFile != NULL) writeTrianglesToFile(R, outFile);
 }
 

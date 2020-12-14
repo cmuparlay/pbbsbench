@@ -23,7 +23,7 @@
 #include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/graph.h"
 #include "common/IO.h"
 #include "common/graphIO.h"
@@ -34,17 +34,11 @@ using namespace std;
 using namespace benchIO;
 
 void timeBFS(Graph const &G, long source, int rounds, bool verbose, char* outFile) {
-  parlay::internal::timer t;
   sequence<vertexId> parents;
-  do { // run for a couple seconds to "warm things up"
-    BFS(0, G, false);
-  } while (t.total_time() < .2);
-
-  for (int i=0; i < rounds; i++) {
-    t.start();
-    parents = BFS(source, G, verbose);
-    t.next("");
-  }
+  time_loop(rounds, 1.0,
+	    [&] () {parents.clear();},
+	    [&] () {parents = BFS(source, G, verbose);},
+	    [&] () {});
   cout << endl;
   if (verbose) {
     size_t visited = parlay::reduce(parlay::delayed_map(parents, [&] (auto p) -> size_t {

@@ -25,7 +25,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/io.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
@@ -34,31 +34,14 @@
 using namespace std;
 using namespace benchIO;
 
-template<class F, class G, class H>
-void loop(int rounds, bool cold, F initf, G runf, H endf) {
-  parlay::internal::timer t;
-  if (!cold)
-    do { // run for a couple seconds to "warm things up"
-      initf(); runf(); endf();
-    } while (t.total_time() < 2.0);
-  for (int i=0; i < rounds; i++) {
-    initf();
-    t.start();
-    runf();
-    t.next("");
-    endf();
-  }
-}
-
 void timeWordCounts(charseq const &s, charseq const &start, 
 		    int rounds, bool cold, bool verbose, char* outFile) {
   size_t n = s.size();
   charseq R;
-  loop(rounds, cold,
+  time_loop(rounds, cold ? 0.0 : 2.0,
        [&] () {R.clear();},
        [&] () {R = build_index(s, start, verbose);},
-       [&] () {}
-       );
+       [&] () {});
   cout << endl;
   if (outFile != NULL) parlay::chars_to_file(R, outFile);
 }

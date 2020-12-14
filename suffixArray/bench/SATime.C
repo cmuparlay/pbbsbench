@@ -24,7 +24,7 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/IO.h"
 #include "common/sequenceIO.h"
 #include "common/parse_command_line.h"
@@ -36,30 +36,14 @@ using namespace std;
 using namespace benchIO;
 using uchar = unsigned char;
 
-template<class F, class G, class H>
-void loop(int rounds, F initf, G runf, H endf) {
-  parlay::internal::timer t;
-  initf();
-  runf();
-  endf();
-  for (int i=0; i < rounds; i++) {
-    initf();
-    t.start();
-    runf();
-    t.next("");
-    endf();
-  }
-}
-
 void timeSuffixArray(parlay::sequence<char> const &s, int rounds, char* outFile) {
   size_t n = s.size();
   auto ss = parlay::tabulate(n, [&] (size_t i) -> uchar {return (uchar) s[i];});
   parlay::sequence<indexT> R;
-  loop(rounds,
+  time_loop(rounds, 1.0,
        [&] () {R.clear();},
        [&] () {R = suffixArray(ss);},
-       [&] () {}
-       );
+       [&] () {});
   cout << endl;
   if (outFile != NULL) writeSequenceToFile(R, outFile);
 }

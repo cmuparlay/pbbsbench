@@ -26,7 +26,7 @@
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "parlay/primitives.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "nbody.h"
 using namespace std;
 using namespace benchIO;
@@ -41,11 +41,11 @@ void timeNBody(parlay::sequence<point> const &pts, int rounds, char* outFile) {
   parlay::sequence<particle*> p = parlay::tabulate(pts.size(), [&] (size_t i) -> particle* {
       return &pp[i];});
 
-  for (int i=0; i < rounds; i++) {
-    t.start();
-    nbody(p);
-    t.next("");
-  }
+  time_loop(rounds, 1.0,
+	    [&] () {},
+	    [&] () {nbody(p);},
+	    [&] () {});
+  cout << endl;
 
   auto O = parlay::map(p, [] (particle* p) {
       return point(0.,0.,0.) + p->force;});

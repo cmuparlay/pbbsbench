@@ -23,24 +23,21 @@
 #include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
-#include "parlay/internal/get_time.h"
 #include "common/graph.h"
 #include "common/IO.h"
 #include "common/graphIO.h"
 #include "common/parse_command_line.h"
+#include "common/time_loop.h"
 #include "MST.h"
 using namespace std;
 using namespace benchIO;
 
 void timeMST(wghEdgeArray<vertexId,edgeWeight> &In, int rounds, char* outFile) {
-  parlay::internal::timer t;
   parlay::sequence<edgeId> Out;
-  for (size_t i=0; i < rounds; i++) {
-    Out.clear();
-    t.start();
-    Out = mst(In);
-    t.next("");
-  }
+  time_loop(rounds, 1.0,
+	    [&] () {Out.clear();},
+	    [&] () {Out = mst(In);},
+	    [&] () {});
   cout << endl;
   if (outFile != NULL) writeIntSeqToFile(Out, outFile);
 }

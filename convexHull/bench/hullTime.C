@@ -23,7 +23,7 @@
 #include <iostream>
 #include <algorithm>
 #include "parlay/parallel.h"
-#include "parlay/internal/get_time.h"
+#include "common/time_loop.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
@@ -36,14 +36,11 @@ using coord = double;
 using point = point2d<coord>;
 
 void timeHull(parlay::sequence<point> const &P, int rounds, char const *outFile) {
-  parlay::internal::timer t;
-  parlay::sequence<indexT> I = hull(P);
-  for (size_t i = 0; i < rounds; i++) {
-    I.clear();
-    t.start();
-    I = hull(P);
-    t.next("");
-  }
+  parlay::sequence<indexT> I;
+  time_loop(rounds, 1.0,
+	    [&] () {I.clear();},
+	    [&] () {I = hull(P);},
+	    [&] () {});
   cout << endl;
   if (outFile != NULL) writeIntSeqToFile(I, outFile);
 }
