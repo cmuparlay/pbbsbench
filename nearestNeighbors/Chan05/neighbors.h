@@ -9,20 +9,21 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/alloc.h"
 #include "common/geometry.h"
 #include "../octTree/oct_tree.h"
 #define sq(x) (((double) (x))* ((double) (x)))
 
-
-
 typedef size_t* Point; 
 size_t shift, MAX1;
-int key_bits = 62;
+int key_bits = 32;
 int d; 
 bool report_stats = true;
 bool check_correctness = true;
 int algorithm_version = 0; //just because octTree/neighbors requires this parameter
 double eps = 0; 
+
+
 
 size_t abs(size_t x, size_t y){
 	if (x > y){
@@ -77,9 +78,9 @@ void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 	size_t maxval = (((size_t) 1) << bits) - 1;
 	MAX1 = maxval; 
     parlay::parallel_for(0, n, [&] (size_t i){
-    	P[i] = new size_t[d];
+    	P[i] = (Point) parlay::p_malloc(65);
     	for (int j = 0; j < d; j++) 
-      		P[i][j] = floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta); 
+      		P[i][j] = (size_t) floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta); 
     });
 }
 
@@ -100,7 +101,7 @@ auto cmp_shuffle = [&] (Point p, Point q){
 
 //sort the points based on their interleave ordering
 void SSS_preprocess(Point P[], size_t n){ 
-	shift = 0; //TODO change back to (size_t)(drand48()*MAX1) once you fix the bugs
+	shift = (size_t)(drand48()*MAX1); //TODO change back to (size_t)(drand48()*MAX1) once you fix the bugs
 	parlay::sort_inplace(parlay::make_slice(P, P+n), cmp_shuffle);}
 
 struct Chan_nn{
@@ -121,12 +122,9 @@ struct Chan_nn{
 				if(q[j]>r){
 					if(q[j] < (size_t)ceil(r)){ 
 						q1[j] = 0;
-						// std::cout << "here" << "\n";
 					} else q1[j] = (q[j]-(size_t)ceil(r));
 				} else q1[j] = 0;
 				q2[j] = (q[j]+r<MAX1) ? (q[j]+(size_t)ceil(r)) : MAX1; //MAX is dependent on key_bits now
-				// std::cout << q[j] << " " << r << " " << q2[j] << "\n";
-				// std::cout << "\n";
 			}
 		}
 	}
@@ -162,7 +160,7 @@ struct Chan_nn{
 
 	//brute-force check correctness for approximately 100 points out of every 10 million
 	bool do_check_correct(){
-		if (check_correctness){
+		if (true){
 			float check = (float) rand()/RAND_MAX;
 			if (check < .00001) return true;
 		}
@@ -170,29 +168,31 @@ struct Chan_nn{
 	}
 
 	void check_correct(Point P[], size_t n, Point q){
-		Point nearest;
-		double nearest_dist = DBL_MAX;
-		for(size_t i = 0; i < n; i++){
-			if(not are_equal(P[i], q)){ //make sure we don't report the query point as its own nearest neighbor
-				double dist = squared_distance(q, P[i]);
-				if(dist < nearest_dist){
-					nearest = P[i];
-					nearest_dist = dist; 
+		if (do_check_correct()){
+			Point nearest;
+			double nearest_dist = DBL_MAX;
+			for(size_t i = 0; i < n; i++){
+				if(not are_equal(P[i], q)){ //make sure we don't report the query point as its own nearest neighbor
+					double dist = squared_distance(q, P[i]);
+					if(dist < nearest_dist){
+						nearest = P[i];
+						nearest_dist = dist; 
+					}
 				}
+			} 
+			if(not (r_sq <= (1+eps)*nearest_dist)){
+				std::cout << are_equal(ans, q) << "\n";
+				std::cout << "Query point: ";
+				print_point(q);
+				std::cout << "Reported neighbor: ";
+				print_point(ans);
+				std::cout << "Reported distance: " << squared_distance(q, ans) << "\n";
+				std::cout << "Actual neighbor: ";
+				print_point(nearest);
+				std::cout << "Actual distance: " << (1+eps)*nearest_dist << "\n";
+				std::cout<<"ERROR: nearest neighbor not correct"<< "\n";
+				abort();
 			}
-		} 
-		if(not are_equal(ans, nearest)){
-			std::cout << are_equal(ans, q) << "\n";
-			std::cout << "Query point: ";
-			print_point(q);
-			std::cout << "Reported neighbor: ";
-			print_point(ans);
-			std::cout << "Reported distance: " << squared_distance(q, ans) << "\n";
-			std::cout << "Actual neighbor: ";
-			print_point(nearest);
-			std::cout << "Actual distance: " << nearest_dist << "\n";
-			std::cout<<"ERROR: nearest neighbor not correct"<< "\n";
-			abort();
 		}		
 	}
 
@@ -201,7 +201,7 @@ struct Chan_nn{
 		q1 = new size_t[d];
 		q2 = new size_t[d];
 		SSS_query0(P, n, q);
-		if (do_check_correct()) check_correct(P, n, q); 	
+		check_correct(P, n, q); //TODO comment this out when we swap to checking outside main loop
 		return ans;
 	}
 
@@ -219,7 +219,7 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		size_t n = v.size(); 
 		d = (v[0]->pt.dimension());
 		Point *P;
-		P = new Point[n]; 
+		P = (Point*) parlay::p_malloc((n+1)*64); 
 		convert(v, n, P);
 		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); 
@@ -231,10 +231,19 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		}
 		);
 		t.next("find all");
+		// if (check_correct){
+		// 	parlay::parallel_for(0, n, [&] (size_t i){
+		// 		Chan_nn C; 
+		// 		C.SSS_query(P, n, P[i]);
+		// 		C.check_correct();
+		// 	}
+		// 	);
+		// 	t.next("check correctness")
+		// }
 		parlay::parallel_for(0, n, [&] (size_t i){
-			delete P[i];
+			parlay::p_free(P[i]);
 		});
-		delete P; 
+		parlay::p_free(P); 
 		t.next("delete data");
 	};
 }
