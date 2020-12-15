@@ -16,7 +16,7 @@
 
 typedef size_t* Point; 
 size_t shift, MAX1;
-int key_bits = 32;
+int key_bits = 60;
 int d; 
 bool report_stats = true;
 bool check_correctness = true;
@@ -160,10 +160,8 @@ struct Chan_nn{
 
 	//brute-force check correctness for approximately 100 points out of every 10 million
 	bool do_check_correct(){
-		if (true){
-			float check = (float) rand()/RAND_MAX;
-			if (check < .00001) return true;
-		}
+		float check = (float) rand()/RAND_MAX;
+		if (check < .00001) return true;
 		return false;
 	}
 
@@ -181,7 +179,6 @@ struct Chan_nn{
 				}
 			} 
 			if(not (r_sq <= (1+eps)*nearest_dist)){
-				std::cout << are_equal(ans, q) << "\n";
 				std::cout << "Query point: ";
 				print_point(q);
 				std::cout << "Reported neighbor: ";
@@ -201,7 +198,7 @@ struct Chan_nn{
 		q1 = new size_t[d];
 		q2 = new size_t[d];
 		SSS_query0(P, n, q);
-		check_correct(P, n, q); //TODO comment this out when we swap to checking outside main loop
+		// check_correct(P, n, q); //TODO comment this out when we swap to checking outside main loop
 		return ans;
 	}
 
@@ -224,6 +221,9 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); 
 		SSS_preprocess(P, n); 
+		// for(int i=0; i<n; i++){
+		// 	print_point(P[i]);
+		// }
 		t.next("preprocess");
 		parlay::parallel_for(0, n, [&] (size_t i){
 			Chan_nn C; 
@@ -231,15 +231,15 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		}
 		);
 		t.next("find all");
-		// if (check_correct){
-		// 	parlay::parallel_for(0, n, [&] (size_t i){
-		// 		Chan_nn C; 
-		// 		C.SSS_query(P, n, P[i]);
-		// 		C.check_correct();
-		// 	}
-		// 	);
-		// 	t.next("check correctness")
-		// }
+		if (check_correctness){
+			parlay::parallel_for(0, n, [&] (size_t i){
+				Chan_nn C; 
+				C.SSS_query(P, n, P[i]);
+				C.check_correct(P, n, P[i]);
+			}
+			);
+			t.next("check correctness");
+		}
 		parlay::parallel_for(0, n, [&] (size_t i){
 			parlay::p_free(P[i]);
 		});
