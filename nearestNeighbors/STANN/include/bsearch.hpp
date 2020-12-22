@@ -17,8 +17,8 @@
 
 #include <vector>
 #include <algorithm>
-#include <zorder_lt.hpp>
-#include <rand.hpp>
+#include "zorder_lt.hpp"
+#include "rand.hpp"
 #include <ctime>
 /*! \file
   \brief Binary search functions

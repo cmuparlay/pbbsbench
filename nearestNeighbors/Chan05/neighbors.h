@@ -19,7 +19,8 @@ size_t shift, MAX1;
 int key_bits = 60;
 int d; 
 bool report_stats = true;
-bool check_correctness = true;
+bool check_correctness = false;
+bool parallel_recurse = false;
 int algorithm_version = 0; //just because octTree/neighbors requires this parameter
 double eps = 0; 
 
@@ -110,6 +111,9 @@ struct Chan_nn{
 	Point ans, q1, q2;  
 
 	Chan_nn(){
+		r_sq = DBL_MAX;
+		q1 = new size_t[d];
+		q2 = new size_t[d];
 	}
 
 	void check_dist(Point p, Point q){
@@ -143,18 +147,72 @@ struct Chan_nn{
 		return z;
 	}
 
+
+	void compare(Point p1, Point p2, Point q){
+		double right_dist = squared_distance(p1, q);
+		double left_dist = squared_distance(p2, q);
+		if (right_dist < left_dist){
+			ans = p1;
+			r_sq = right_dist;
+			r = sqrt(right_dist);
+		} else{
+			ans = p2;
+			r_sq = left_dist; 
+			r = sqrt(left_dist);
+		}
+	}
+
+	void set_consts(Point answer, double radius, double r_squared, Point q_1, Point q_2){
+		ans = answer;
+		r = radius;
+		r_sq = r_squared;
+		q1 = q_1;
+		q2 = q_2;
+	}
+
 	void SSS_query0(Point P[], size_t n, Point q){
 		if (n==0) return;
 		check_dist(P[n/2], q);
-		if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) { //getting rid of this condition did not fix the error
+		if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) { 
 			return;
-		}   
-		if (cmp_shuffle(q, P[n/2])) { 
-			SSS_query0(P, n/2, q);
-			if (not cmp_shuffle(q2, P[n/2])) SSS_query0(P + n/2+1, n-n/2-1, q);
-		} else{
-			SSS_query0(P + n/2+1, n-n/2-1, q);
-			if (cmp_shuffle(q1, P[n/2])) SSS_query0(P, n/2, q);    
+		} 
+		int cutoff = 20000;
+		if(parallel_recurse && n > cutoff){
+			if (cmp_shuffle(q, P[n/2])) { 
+				if (not cmp_shuffle(q2, P[n/2])){
+					Chan_nn C; 
+					Chan_nn D; 
+					C.set_consts(ans, r, r_sq, q1, q2);
+					D.set_consts(ans, r, r_sq, q1, q2);
+					Point ansRight, ansLeft;
+					parlay::par_do(
+					[&]() {ansRight = C.SSS_query(P, n/2, q);},
+					[&]() {ansLeft = D.SSS_query(P + n/2+1, n-n/2-1, q);}
+					);
+					compare(ansRight, ansLeft, q);
+				} else SSS_query0(P, n/2, q);
+			} else{
+				if (cmp_shuffle(q1, P[n/2])){ 
+					Chan_nn C; 
+					Chan_nn D; 
+					C.set_consts(ans, r, r_sq, q1, q2);
+					D.set_consts(ans, r, r_sq, q1, q2);
+					Point ansRight, ansLeft;
+					parlay::par_do(
+					[&]() {ansRight = C.SSS_query(P, n/2, q);},
+					[&]() {ansLeft = D.SSS_query(P + n/2+1, n-n/2-1, q);}
+					);
+					compare(ansRight, ansLeft, q);
+				} else SSS_query0(P + n/2+1, n-n/2-1, q);
+			}
+		} else{ // recurse in sequence
+			if(cmp_shuffle(q, P[n/2])){
+				SSS_query0(P, n/2, q);
+				if(not cmp_shuffle (q2, P[n/2])) SSS_query0(P+n/2+1, n-n/2-1, q);
+			} else{
+				SSS_query0(P+n/2+1, n-n/2-1, q);
+				if(cmp_shuffle(q1, P[n/2])) SSS_query0(P, n/2, q);
+			}
 		}
 	}
 
@@ -194,9 +252,6 @@ struct Chan_nn{
 	}
 
 	Point SSS_query(Point P[], size_t n, Point q){
-		r_sq = DBL_MAX;
-		q1 = new size_t[d];
-		q2 = new size_t[d];
 		SSS_query0(P, n, q);
 		// check_correct(P, n, q); //TODO comment this out when we swap to checking outside main loop
 		return ans;
@@ -221,9 +276,6 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); 
 		SSS_preprocess(P, n); 
-		// for(int i=0; i<n; i++){
-		// 	print_point(P[i]);
-		// }
 		t.next("preprocess");
 		parlay::parallel_for(0, n, [&] (size_t i){
 			Chan_nn C; 
