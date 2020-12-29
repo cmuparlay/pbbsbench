@@ -18,7 +18,7 @@ int key_bits = 64;
 
 //this attempts to modify the sequence in-place, rounding each coordinate to a 32-bit integer
 template<class vtx>
-void convert(parlay::sequence<vtx*> &v, size_t n, int d){
+void convert(parlay::sequence<vtx*> &v, size_t n, int d, vector<uint> P[]){
 	//prelims for rounding each point to an integer: 
 	// 1) find the smallest point in each dimension
 	// 2) find the largest gap between min and max over all dimensions
@@ -32,19 +32,24 @@ void convert(parlay::sequence<vtx*> &v, size_t n, int d){
 		point min_point = b.first;
 	// round each point to an integer with key_bits bit
 	int bits = key_bits/d;
-	uint maxval = (((size_t) 1) << bits) - 1;
+	int maxval = (((size_t) 1) << bits) - 1;
     parlay::parallel_for(0, n, [&] (size_t i){
+    	vector<uint> vect;
+    	P[i] = vect;
     	for (int j = 0; j < d; j++){
-      		uint coord = (size_t) floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta); 
-      		(v[i] -> pt)[j] = coord;}
+      		uint coord = (uint) floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta); 
+      		vect.push_back(coord);
+      	}
     });
 }
 
 template<int maxK, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k){
-	using Point = typename vtx::pointT;
 	size_t n = v.size();
 	int d = (v[0]->pt.dimension());
-	convert(v, n, d);
-	sfcnn<Point, 2, uint > NN(&FirstDataPoint, n);
+	vector<uint> P[n];
+	convert(v, n, d, P);
+	// vector<uint> *first;
+	// first = P;
+	sfcnn<vector<uint>, 2, uint > NN(P, n);
 }

@@ -19,8 +19,8 @@ size_t shift, MAX1;
 int key_bits = 60;
 int d; 
 bool report_stats = true;
-bool check_correctness = false;
-bool parallel_recurse = false;
+bool check_correctness = true;
+bool parallel_recurse = true;
 int algorithm_version = 0; //just because octTree/neighbors requires this parameter
 double eps = 0; 
 
@@ -97,23 +97,30 @@ auto cmp_shuffle = [&] (Point p, Point q){
 		}
 	}
 	return (((p)[j] < (q)[j]));     
-};
-
+};          
 
 //sort the points based on their interleave ordering
 void SSS_preprocess(Point P[], size_t n){ 
 	shift = (size_t)(drand48()*MAX1); //TODO change back to (size_t)(drand48()*MAX1) once you fix the bugs
 	parlay::sort_inplace(parlay::make_slice(P, P+n), cmp_shuffle);}
 
+template<int d>
 struct Chan_nn{
 
 	double r, r_sq; 
-	Point ans, q1, q2;  
+	Point ans;
+
+	size_t q1_[d], q2_[d];
+	Point q1 = q1_;
+	Point q2 = q2_; 
+	// Point q1, q2; 
 
 	Chan_nn(){
 		r_sq = DBL_MAX;
-		q1 = new size_t[d];
-		q2 = new size_t[d];
+		// q1 = new size_t[d];
+		// q2 = new size_t[d];
+		// q1 = (Point) parlay::p_malloc(65);
+		// q2 = (Point) parlay::p_malloc(65);
 	}
 
 	void check_dist(Point p, Point q){
@@ -162,12 +169,21 @@ struct Chan_nn{
 		}
 	}
 
+	Point copy(Point p){
+		size_t copy_[d];
+		Point copy = copy_;
+		for(int j = 0; j<d; j++){
+			copy[j] = p[j];
+		}
+		return copy;
+	}
+
 	void set_consts(Point answer, double radius, double r_squared, Point q_1, Point q_2){
-		ans = answer;
 		r = radius;
 		r_sq = r_squared;
-		q1 = q_1;
-		q2 = q_2;
+		ans = copy(answer);
+		q1 = copy(q_1);
+		q2 = copy(q_2);
 	}
 
 	void SSS_query0(Point P[], size_t n, Point q){
@@ -254,6 +270,8 @@ struct Chan_nn{
 	Point SSS_query(Point P[], size_t n, Point q){
 		SSS_query0(P, n, q);
 		// check_correct(P, n, q); //TODO comment this out when we swap to checking outside main loop
+		// parlay::p_free(q1);
+		// parlay::p_free(q2);
 		return ans;
 	}
 
@@ -278,16 +296,25 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		SSS_preprocess(P, n); 
 		t.next("preprocess");
 		parlay::parallel_for(0, n, [&] (size_t i){
-			Chan_nn C; 
-			C.SSS_query(P, n, P[i]);
+			if(d==2){
+				Chan_nn<2> C;
+				C.SSS_query(P, n, P[i]);
+			} else{
+				Chan_nn<3> C; 
+				C.SSS_query(P, n, P[i]);
+			}
 		}
 		);
 		t.next("find all");
 		if (check_correctness){
 			parlay::parallel_for(0, n, [&] (size_t i){
-				Chan_nn C; 
-				C.SSS_query(P, n, P[i]);
-				C.check_correct(P, n, P[i]);
+				if(d==2){
+					Chan_nn<2> C;
+					C.SSS_query(P, n, P[i]);
+				} else{
+					Chan_nn<3> C; 
+					C.SSS_query(P, n, P[i]);
+				}
 			}
 			);
 			t.next("check correctness");
