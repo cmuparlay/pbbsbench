@@ -22,17 +22,17 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
-#include <timer.hpp>
+#include "timer.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-#include <compute_bounding_box.hpp>
-#include <pair_iter.hpp>
-#include <qknn.hpp>
-#include <zorder_lt.hpp>
-#include <bsearch.hpp>
+#include "compute_bounding_box.hpp"
+#include "pair_iter.hpp"
+#include "qknn.hpp"
+#include "zorder_lt.hpp"
+#include "bsearch.hpp"
 
 
 /*!
