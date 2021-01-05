@@ -19,8 +19,8 @@
 int algorithm_version = 0; 
 int key_bits = 64;
 double eps = 0;
-bool report_stats = true;
-bool check_correctness = true;
+bool report_stats = false;
+bool check_correctness = false;
 
 uint abs(uint x, uint y){
 	if (x > y){
@@ -127,18 +127,18 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		uint n = v.size();
 		int d = (v[0]->pt.dimension());
 		if(d==2){
-			typedef reviver::dpoint<uint, 2> Point;
+			typedef reviver::dpoint<uint, 2> Point;       
 			Point *P;
-			P = (Point*) parlay::p_malloc(n*65);
+			P = (Point*) parlay::p_malloc(n*65);                  
 			NN_helper<2> N;
 			N.convert(v, n, P);
 			t.next("convert to Kumar's types");
-			sfcnn_knng<Point, 2, uint> NN(P, n, 1);
+			sfcnn_knng<Point, 2, uint> NN(P, n, 1);              
 			t.next("create nearest neighbor graph");
 			if (check_correctness){
 				parlay::parallel_for(0, n, [&] (uint i){
-					if (do_check_correct()){
-						N.check_correct(NN[i][0], P[i], P, n);
+					if (do_check_correct()){ //TODO change back to checking only a fraction
+						N.check_correct(NN[i][0], P[i], P, n);  
 					}
 				}
 				);
@@ -155,7 +155,7 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 			t.next("convert to Kumar's types");
 			sfcnn_knng<Point, 3, uint> NN(P, n, 1);
 			t.next("create nearest neighbor graph");
-				if (check_correctness){
+			if (check_correctness){
 				parlay::parallel_for(0, n, [&] (uint i){
 					if (do_check_correct()){
 						N.check_correct(NN[i][0], P[i], P, n);

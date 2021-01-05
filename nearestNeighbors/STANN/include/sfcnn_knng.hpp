@@ -255,7 +255,7 @@ class sfcnn_knng
 {
 public:
   sfcnn_knng(){};
-  sfcnn_knng(Point *points, long int N, unsigned int k, int num_threads=1)
+  sfcnn_knng(Point *points, long int N, unsigned int k, int num_threads=1)  
   {
     sfcnn_knng_init(points,N,k,0.0,num_threads);
   };

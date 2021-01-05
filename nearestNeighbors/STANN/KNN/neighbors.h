@@ -20,7 +20,7 @@ int algorithm_version = 0;
 int key_bits = 64;
 double eps = 0;
 bool report_stats = true;
-bool check_correctness = true;
+bool check_correctness = false;
 
 uint abs(uint x, uint y){
 	if (x > y){
@@ -136,7 +136,7 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 			sfcnn<Point, 2, uint> NN(P, n);
 			t.next("initialize scfnn");
 			parlay::parallel_for(0, n, [&] (uint i){
-				vector<unsigned long> answer;
+				vector<unsigned long>answer;
 				NN.ksearch(P[i], k, answer, eps);
 			}
 			);
@@ -150,8 +150,10 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 					}
 				}
 				);
-			}
 			t.next("check correctness");
+			}
+			parlay::p_free(P);
+			t.next("delete data");
 		} else{ // d=3
 			typedef reviver::dpoint<uint, 3> Point;
 			Point *P;
@@ -162,15 +164,15 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 			sfcnn<Point, 3, uint> NN(P, n);
 			t.next("initialize scfnn");
 			parlay::parallel_for(0, n, [&] (uint i){
-				vector<unsigned long> answer;
+				std::vector<unsigned long> answer;
 				NN.ksearch(P[i], k, answer, eps);
 			}
 			);
 			t.next("find all");
-				if (check_correctness){
+			if (check_correctness){
 				parlay::parallel_for(0, n, [&] (uint i){
 					if (do_check_correct()){
-						vector<unsigned long> answer;
+						std::vector<unsigned long> answer;
 						NN.ksearch(P[i], k, answer, eps);
 						N.check_correct(answer[0], P[i], P, n);
 					}
@@ -178,6 +180,8 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 				);
 			t.next("check correctness");
 			}
+			parlay::p_free(P);
+			t.next("delete data");
 		}
 	}
 }

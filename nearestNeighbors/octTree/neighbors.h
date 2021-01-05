@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = false;
-int algorithm_version = 1;
+int algorithm_version = 0;
 
 #include <algorithm>
 #include <math.h> 
@@ -362,12 +362,12 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     // *******************      
     } else { //(algorithm_version == 2) this is for starting from leaf, finding leaf using map()
-      auto f = [&] (vtx* p, node* n){ 
-	return T.k_nearest_leaf(p, n, k); 
-      };
+        auto f = [&] (vtx* p, node* n){ 
+  	     return T.k_nearest_leaf(p, n, k); 
+        };
 
-      // find nearest k neighbors for each point
-      T.tree -> map(f);
+        // find nearest k neighbors for each point
+        T.tree -> map(f);
     }
 
     t.next("try all");
