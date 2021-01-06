@@ -86,7 +86,9 @@ private:
     \param eps Error tolerence, default of 0.0.
     \param sl Unused, for backwards compatibility
   */
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0);
+  template<typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0);
+  //void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0);
   void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, std::vector<double> &dist, float eps = 0);
 
   std::vector<Point> points;
@@ -125,22 +127,23 @@ void sfcnn_work<Point, Ptype>::sfcnn_work_init(int num_threads)
       std::cerr << "Error:  Input point list has size 0" << std::endl;
       exit(1);
     }
-  // pair_iter<typename std::vector<Point>::iterator, 
-  //   typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
-  //   b(points.end(), pointers.end());
-  // sort(a,b,lt);
-
-  size_t n = points.end() - points.begin();
-  auto x = parlay::delayed_tabulate(n , [&] (size_t i) {
-              return std::pair(points[i], pointers[i]);});
-  auto plt = [&] (auto x, auto y) {return lt(x.first, y.first);};
+  if (!parallel) {
+    pair_iter<typename std::vector<Point>::iterator, 
+	      typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
+      b(points.end(), pointers.end());
+    sort(a,b,lt);
+  } else {
+    size_t n = points.end() - points.begin();
+    auto x = parlay::delayed_tabulate(n , [&] (size_t i) {
+		    return std::pair(points[i], pointers[i]);});
+    auto plt = [&] (auto x, auto y) {return lt(x.first, y.first);};
   
-  auto s = parlay::sort(x,plt);
+    auto s = parlay::sort(x,plt);
 
-  parlay::parallel_for(0, n, [&] (size_t i) {
-      points[i] = s[i].first;
-      pointers[i] = s[i].second;});
-
+    parlay::parallel_for(0, n, [&] (size_t i) {
+        points[i] = s[i].first;
+        pointers[i] = s[i].second;});
+  }
 }
 
 template<typename Point, typename Ptype>
@@ -273,8 +276,9 @@ void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsi
 }
 
 template<typename Point, typename Ptype>
+template <typename Vect>
 void sfcnn_work<Point, Ptype>::ksearch(Point q, unsigned int k, 
-			      std::vector<long unsigned int> &nn_idx, float Eps)
+				       Vect &nn_idx, float Eps)
 {
   long unsigned int query_point_index;  
   qknn que;
@@ -339,7 +343,8 @@ public:
     \param nn_idx Answer vector
     \param eps Error tolerence, default of 0.0.
   */
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     NN.ksearch(q,k,nn_idx,eps);
   };
@@ -364,16 +369,20 @@ private:
   sfcnn_work<reviver::dpoint<NumType, Dim> > NN;
   void sfcnn_init(Point *points, long int N, int num_threads=1)
   {
-    //NN.points.resize(N);
-    //NN.pointers.resize(N);
+    NN.points.resize(N);
+    NN.pointers.resize(N);
 
-    // for(long int i=0;i < N;++i)
-    parlay::parallel_for(0, N, [&] (size_t i) 
-      {
+    if (!parallel)
+      for(long int i=0;i < N;++i) {
 	NN.pointers[i] = (i);
 	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      });
+	  NN.points[i][j] = points[i][j];}
+    else 
+      parlay::parallel_for(0, N, [&] (size_t i) {
+	NN.pointers[i] = (i);
+	for(unsigned int j=0;j < Dim;++j)
+	  NN.points[i][j] = points[i][j];});
+    
     NN.sfcnn_work_init(num_threads);
   };
 
@@ -389,7 +398,8 @@ public:
     sfcnn_init(points,N,num_threads);
   };
   ~sfcnn(){};
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     reviver::dpoint<sep_float<float>, Dim> Q;
     for(unsigned int i=0;i < Dim;++i)
@@ -434,7 +444,8 @@ public:
     sfcnn_init(points,N,num_threads);
   };
   ~sfcnn(){};
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     reviver::dpoint<sep_float<double>, Dim> Q;
     for(unsigned int i=0;i < Dim;++i)

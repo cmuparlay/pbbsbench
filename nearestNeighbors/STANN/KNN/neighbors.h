@@ -11,6 +11,7 @@
 #include "common/geometry.h"
 #include "common/get_time.h" 
 #include "../../octTree/oct_tree.h"
+bool parallel = true;
 #include "../include/sfcnn.hpp"
 #include "../include/dpoint.hpp"
 #define sq(x) (((double) (x))* ((double) (x)))
@@ -136,8 +137,9 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 			sfcnn<Point, 2, uint> NN(P, n);
 			t.next("initialize scfnn");
 			parlay::parallel_for(0, n, [&] (uint i){
-				vector<unsigned long>answer;
-				NN.ksearch(P[i], k, answer, eps);
+			     //parlay::sequence<unsigned long> answer(k);
+			     vector<unsigned long> answer(k);
+  			     NN.ksearch(P[i], k, answer, eps);
 			}
 			);
 			t.next("find all");
@@ -164,8 +166,9 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 			sfcnn<Point, 3, uint> NN(P, n);
 			t.next("initialize scfnn");
 			parlay::parallel_for(0, n, [&] (uint i){
-				std::vector<unsigned long> answer;
-				NN.ksearch(P[i], k, answer, eps);
+			     //parlay::sequence<unsigned long> answer(k);
+			     std::vector<unsigned long> answer;
+			     NN.ksearch(P[i], k, answer, eps);
 			}
 			);
 			t.next("find all");

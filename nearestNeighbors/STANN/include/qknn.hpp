@@ -57,6 +57,7 @@ class qknn
 private:
   long unsigned int K;
   typedef std::pair<double, long int> q_intelement;
+  //typedef std::priority_queue<q_intelement, parlay::sequence<q_intelement>, q_intelementCompare>
   typedef std::priority_queue<q_intelement, std::vector<q_intelement>, q_intelementCompare>  
   PQ;
   PQ pq;
@@ -141,9 +142,10 @@ public:
     Transforms the queue into a vector of indeces to points and returns it
     \param pl Vector which will hold the answer after function completes 
   */
-  void answer(std::vector<long unsigned int>& pl)
+  template <typename Vect>
+  void answer(Vect& pl)
   {
-    std::vector<long unsigned int>::size_type i;
+    size_t i;
     pl.resize(K);
     i=pl.size();
     do
