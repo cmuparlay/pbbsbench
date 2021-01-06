@@ -125,10 +125,22 @@ void sfcnn_work<Point, Ptype>::sfcnn_work_init(int num_threads)
       std::cerr << "Error:  Input point list has size 0" << std::endl;
       exit(1);
     }
-  pair_iter<typename std::vector<Point>::iterator, 
-    typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
-    b(points.end(), pointers.end());
-  sort(a,b,lt);
+  // pair_iter<typename std::vector<Point>::iterator, 
+  //   typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
+  //   b(points.end(), pointers.end());
+  // sort(a,b,lt);
+
+  size_t n = points.end() - points.begin();
+  auto x = parlay::delayed_tabulate(n , [&] (size_t i) {
+              return std::pair(points[i], pointers[i]);});
+  auto plt = [&] (auto x, auto y) {return lt(x.first, y.first);};
+  
+  auto s = parlay::sort(x,plt);
+
+  parlay::parallel_for(0, n, [&] (size_t i) {
+      points[i] = s[i].first;
+      pointers[i] = s[i].second;});
+
 }
 
 template<typename Point, typename Ptype>
@@ -352,15 +364,16 @@ private:
   sfcnn_work<reviver::dpoint<NumType, Dim> > NN;
   void sfcnn_init(Point *points, long int N, int num_threads=1)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-    
-    for(long int i=0;i < N;++i)
+    //NN.points.resize(N);
+    //NN.pointers.resize(N);
+
+    // for(long int i=0;i < N;++i)
+    parlay::parallel_for(0, N, [&] (size_t i) 
       {
 	NN.pointers[i] = (i);
 	for(unsigned int j=0;j < Dim;++j)
 	  NN.points[i][j] = points[i][j];
-      }
+      });
     NN.sfcnn_work_init(num_threads);
   };
 
