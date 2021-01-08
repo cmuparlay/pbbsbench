@@ -87,7 +87,7 @@ private:
     \param sl Unused, for backwards compatibility
   */
   template<typename Vect>
-  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0);
+  void ksearch(Point &q, unsigned int k, Vect &nn_idx, float eps = 0);
   //void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0);
   void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, std::vector<double> &dist, float eps = 0);
 
@@ -97,15 +97,15 @@ private:
 
 
 
-  float eps;
+  //float eps;
   typename Point::__NumType max, min;
 
-  void compute_bounding_box(Point q, Point &q1, Point &q2, double r);
+  void compute_bounding_box(Point& q, Point &q1, Point &q2, double r);
   void sfcnn_work_init(int num_threads);
 
-  void ksearch_common(Point q, unsigned int k, long unsigned int j, qknn &que, float Eps);	
+  void ksearch_common(Point& q, unsigned int k, long unsigned int j, qknn &que, float Eps);	
   
-  inline void recurse(long unsigned int s, long unsigned int n, Point q, 
+  inline void recurse(long unsigned int s, long unsigned int n, Point &q, 
 		      qknn &ans, Point &q1, Point &q2, long unsigned int bb, long unsigned int bt);
 	
 };
@@ -154,7 +154,7 @@ sfcnn_work<Point, Ptype>::~sfcnn_work()
 template<typename Point, typename Ptype>
 void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting index
 				long unsigned int n,     // Number of points
-				Point q,  // Query point
+				Point &q,  // Query point
 				qknn &ans, // Answer que
 				Point &bound_box_lower_corner,
 				Point &bound_box_upper_corner,
@@ -229,19 +229,19 @@ void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting inde
 }
 
 template<typename Point, typename Ptype>
-void sfcnn_work<Point, Ptype>::compute_bounding_box(Point q, Point &q1, Point &q2, double R)
+void sfcnn_work<Point, Ptype>::compute_bounding_box(Point& q, Point &q1, Point &q2, double R)
 {
   cbb_work<Point, Ptype>::eval(q, q1, q2, R, max, min);
 }
 
 template<typename Point, typename Ptype>
-void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsigned int query_point_index, qknn &que, float Eps)
+void sfcnn_work<Point, Ptype>::ksearch_common(Point& q, unsigned int k, long unsigned int query_point_index, qknn &que, float Eps)
 {
   Point bound_box_lower_corner, bound_box_upper_corner;
   Point low, high;
   
   que.set_size(k);
-  eps=(float) 1.0+Eps;
+  //  eps=(float) 1.0+Eps;  // guy, what is this about
   if(query_point_index >= (k)) query_point_index -= (k);
   else query_point_index=0;
   
@@ -251,9 +251,11 @@ void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsi
   
   low = points[query_point_index];
   high = points[initial_scan_upper_range-1];
+  
   for(long unsigned int i=query_point_index;i<initial_scan_upper_range;++i)
     {
-      que.update(points[i].sqr_dist(q), pointers[i]);
+      if (q != points[i])  // guy, added not to include self
+	que.update(points[i].sqr_dist(q), pointers[i]);
     }
   compute_bounding_box(q, bound_box_lower_corner, bound_box_upper_corner, sqrt(que.topdist()));
   
@@ -264,20 +266,20 @@ void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsi
       //cout << "Bb2: " << bound_box_upper_corner << endl;
       return;
     }
-  
+
   //Recurse through the entire set
   recurse(0, points.size(), q, que, 
-	  bound_box_lower_corner, 
-	  bound_box_upper_corner,
-	  query_point_index,
-	  initial_scan_upper_range);
+  	  bound_box_lower_corner, 
+  	  bound_box_upper_corner,
+  	  query_point_index,
+  	  initial_scan_upper_range);
   //cout << "Bb1: " << bound_box_lower_corner << endl;
   //cout << "Bb2: " << bound_box_upper_corner << endl;
 }
 
 template<typename Point, typename Ptype>
 template <typename Vect>
-void sfcnn_work<Point, Ptype>::ksearch(Point q, unsigned int k, 
+void sfcnn_work<Point, Ptype>::ksearch(Point &q, unsigned int k, 
 				       Vect &nn_idx, float Eps)
 {
   long unsigned int query_point_index;  
