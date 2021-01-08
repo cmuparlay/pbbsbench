@@ -134,7 +134,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   uint n = v.size();
     typedef reviver::dpoint<uint, Dim> Point;       
     Point *P;
-    P = (Point*) parlay::p_malloc(n*65);                  
+    P = (Point*) parlay::p_malloc(n*sizeof(Point)*1);                  
     NN_helper<Dim> N;
 
     N.convert(v, n, P);
