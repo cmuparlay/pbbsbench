@@ -22,14 +22,8 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
-#include "timer.hpp"
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #include "compute_bounding_box.hpp"
-#include "pair_iter.hpp"
 #include "qknn.hpp"
 #include "zorder_lt.hpp"
 #include "bsearch.hpp"
@@ -37,7 +31,8 @@
 
 /*!
   \file sfcnn_knng.hpp
-  \brief Implements K-Nearest Neighbor Graph construction using SFC nearest neighbor algorithm.  Construction is done in parallel using OpenMP.
+  \brief Implements K-Nearest Neighbor Graph construction using SFC nearest neighbor algorithm.  
+  \Construction is done in parallel using Parlay
 */
 
 template <typename Point, typename Ptype=typename Point::__NumType>
@@ -49,10 +44,10 @@ public:
   ~sfcnn_knng_work(){};
   
   void sfcnn_knng_work_init(long int N, unsigned int k, double eps, int num_threads);
-  
-  std::vector<std::vector<long unsigned int> > answer;
-  std::vector<Point> points;
-  std::vector<long unsigned int> pointers;
+
+  parlay::sequence<parlay::sequence<long unsigned int> > answer;
+  parlay::sequence<Point> points;
+  parlay::sequence<long unsigned int> pointers;
   
 private:
   void compute_bounding_box(Point q, Point &q1, Point &q2, double r);
@@ -65,8 +60,6 @@ private:
 	       long unsigned int initial_scan_lower_range,
 	       long unsigned int initial_scan_upper_range,
 	       zorder_lt<Point> &lt);
-  
-  double epsilon;
   typename Point::__NumType max, min;
 };
 
@@ -76,96 +69,58 @@ void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned in
 {
   timer t("knng init", report_stats);
   zorder_lt<Point> lt;
-  Point bound_box_lower_corner,
-	bound_box_upper_corner;
-  double distance;
-  long int range_b;
-  long int range_e;
  
-  if(N==0)
-    {
+  if(N==0) {
       std::cerr << "Error:  Input Point List has size 0"<< std::endl;
       exit(1);
     }
   max = (std::numeric_limits<Ptype>::max)();
   min = (std::numeric_limits<Ptype>::min)();
-  answer.resize(N);
-
+  answer = parlay::tabulate(N, [=] (size_t) {
+		 return parlay::sequence<long unsigned int>(k);});
   int SR = 2*k;
 
-  epsilon=eps;
-#ifdef _OPENMP
-  long int chunk = N/num_threads;
-  omp_set_num_threads(num_threads);
-#endif
+  auto x = parlay::delayed_tabulate(N , [&] (size_t i) {
+   	     return std::pair(points[i], pointers[i]);});
+  auto plt = [&] (auto x, auto y) {return lt(x.first, y.first);};
+  
+  auto s = parlay::sort(x,plt);
 
-  pair_iter<typename std::vector<Point>::iterator,
-    typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
-    b(points.end(), pointers.end());
-  sort(a,b,lt);
+  parlay::parallel_for(0, N, [&] (size_t i) {
+     points[i] = s[i].first;
+     pointers[i] = s[i].second;});
   t.next("initialize");
-  std::vector<qknn> que;
-  que.resize(N);
 
-#ifdef _OPENMP  
-#pragma omp parallel private(distance, range_b, range_e) 
-#endif
-  {
-#ifdef _OPENMP  
-#pragma omp for schedule(static, chunk)
-#endif
-    for(long int i=0;i < N;++i)
-      {
-	range_b = i-SR;
-	if(range_b < 0) range_b = 0;
-	range_e = i+SR+1;
-	if(range_e > N) range_e = N;
-	que[i].set_epsilon(epsilon);
-	que[i].set_size(k);
-	for(long int j=range_b;j < i;++j)
-	  {
-	    distance = points[i].sqr_dist(points[j]);
-	    que[i].update(distance, pointers[j]);
-	  }
-	for(long int j=i+1;j < range_e;++j)
-	  {
-	    distance = points[i].sqr_dist(points[j]);
-	    que[i].update(distance, pointers[j]);
-	  }
-      }
-  }
-
-#ifdef _OPENMP  
-#pragma omp parallel private(distance, range_b, range_e, bound_box_lower_corner, bound_box_upper_corner) 
-#endif
-  {
-#ifdef _OPENMP  
-#pragma omp for schedule(static, chunk)
-#endif
-      for(long int i=0;i < N;++i)
-	{
-	  range_b = i-SR;
-	  if(range_b < 0) range_b = 0;
-	  range_e = i+SR+1;
-	  if(range_e > N) range_e = N;
-	  compute_bounding_box(points[i], bound_box_lower_corner, bound_box_upper_corner, sqrt(que[i].topdist()));
-	  if(!lt(bound_box_upper_corner, points[range_e-1]) || !lt(points[range_b], bound_box_lower_corner))
-	    {
-	      recurse(0, N, i, que[i],  
-		      bound_box_lower_corner,
-		      bound_box_upper_corner,
-		      (long unsigned int) range_b,
-		      (long unsigned int) range_e,
-		      lt);
-	      
-	    }
-	  que[i].answer(answer[pointers[i]]);
-	  
-	}
-  }
-    t.next("find all");
-      points.clear();
-      pointers.clear();
+  parlay::parallel_for(0, N, [&] (size_t i) {
+    Point bound_box_lower_corner, bound_box_upper_corner;
+    qknn que;
+    long int range_b = i-SR;
+    if(range_b < 0) range_b = 0;
+    long int range_e = i+SR+1;
+    if(range_e > N) range_e = N;
+    que.set_epsilon(eps);
+    que.set_size(k);
+    for(long int j=range_b;j < i;++j) {
+      double distance = points[i].sqr_dist(points[j]);
+      que.update(distance, pointers[j]);
+    }
+    for(long int j=i+1;j < range_e;++j) {
+      double distance = points[i].sqr_dist(points[j]);
+      que.update(distance, pointers[j]);
+    }
+    if(range_e > N) range_e = N;
+    compute_bounding_box(points[i], bound_box_lower_corner, bound_box_upper_corner, sqrt(que.topdist()));
+    if(!lt(bound_box_upper_corner, points[range_e-1]) || !lt(points[range_b], bound_box_lower_corner)) {
+      recurse(0, N, i, que,  
+	      bound_box_lower_corner,
+	      bound_box_upper_corner,
+	      (long unsigned int) range_b,
+	      (long unsigned int) range_e,
+	      lt);
+    }
+    que.answer(answer[pointers[i]]);
+  });
+  t.next("find all");
 }
 
 
@@ -187,7 +142,7 @@ void sfcnn_knng_work<Point, Ptype>::recurse(long unsigned int s,   // Starting i
 					    zorder_lt<Point> &lt)
 {	
   double distance;
-  if(n < 4)
+  if(n < 10)
     {
       if(n == 0) return;
 		
@@ -266,26 +221,15 @@ public:
   {
   }
   ~sfcnn_knng(){};
-  std::vector<long unsigned int>& operator[](long unsigned int i)
+  parlay::sequence<long unsigned int>& operator[](long unsigned int i)
   {
     return NN.answer[i];
   };
 private:
   void sfcnn_knng_init(Point *points, long int N, unsigned int k, double eps, int num_threads)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-#ifdef _OPENMP
-    long int chunk = N/num_threads;
-    omp_set_num_threads(num_threads);
-#pragma omp parallel for schedule(static, chunk)
-#endif
-    for(int i=0;i < N;++i)
-      {
-	NN.pointers[i] = (i);
-	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      }
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
     NN.sfcnn_knng_work_init(N, k, eps, num_threads);
   };
   sfcnn_knng_work<reviver::dpoint<NumType, Dim> > NN;
@@ -301,30 +245,16 @@ public:
     sfcnn_knng_init(points,N,k,eps,num_threads);
   }
   ~sfcnn_knng(){};
-  std::vector<long unsigned int>& operator[](long unsigned int i)
+  parlay::sequence<long unsigned int>& operator[](long unsigned int i)
   {
     return NN.answer[i];
   };
 private:
   void sfcnn_knng_init(Point *points, long int N, unsigned int k, double eps, int num_threads)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-    
-#ifdef _OPENMP
-    long int chunk = N/num_threads;
-    omp_set_num_threads(num_threads);
-#pragma omp parallel for schedule(static, chunk)
-#endif
-    for(int i=0;i < N;++i)
-      {
-	NN.pointers[i] = i;
-	for(unsigned int j=0;j < Dim;++j)
-	  {
-	    NN.points[i][j] = points[i][j];
-	  }
-      }
-    NN.sfcnn_knng_work_init(N,k,eps,num_threads);
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_knng_work_init(N, k, eps, num_threads);
   };
   sfcnn_knng_work<reviver::dpoint<sep_float<float>, Dim> > NN;
 };
@@ -339,28 +269,16 @@ public:
     sfcnn_knng_init(points, N, k, eps, num_threads);
   };
   ~sfcnn_knng(){};
-  std::vector<long unsigned int>& operator[](long unsigned int i)
+  parlay::sequence<long unsigned int>& operator[](long unsigned int i)
   {
     return NN.answer[i];
   };
 private:
   void sfcnn_knng_init(Point *points, long int N, unsigned int k, double eps, int num_threads)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-    
-#ifdef _OPENMP
-    long int chunk = N/num_threads;
-    omp_set_num_threads(num_threads);
-#pragma omp parallel for schedule(static, chunk)
-#endif
-    for(int i=0;i < N;++i)
-      {
-	NN.pointers[i] = i;
-	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      }
-    NN.sfcnn_knng_work_init(N,k,eps,num_threads);
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_knng_work_init(N, k, eps, num_threads);
   };
   sfcnn_knng_work<reviver::dpoint<sep_float<double>, Dim> > NN;
 };
@@ -375,28 +293,16 @@ public:
     sfcnn_knng_init(points,N,k,eps,num_threads);
   }
   ~sfcnn_knng(){};
-  std::vector<long unsigned int>& operator[](long unsigned int i)
+  parlay::sequence<long unsigned int>& operator[](long unsigned int i)
   {
     return NN.answer[i];
   };
 private:
   void sfcnn_knng_init(Point *points, long int N, unsigned int k, double eps, int num_threads)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-
-#ifdef _OPENMP
-    long int chunk = N/num_threads;
-    omp_set_num_threads(num_threads);
-#pragma omp parallel for schedule(static, chunk)
-#endif
-    for(int i=0;i < N;++i)
-      {
-	NN.pointers[i] = i;
-	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      }
-    NN.sfcnn_knng_work_init(N,k,eps,num_threads);
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_knng_work_init(N, k, eps, num_threads);
   };
   sfcnn_knng_work<reviver::dpoint<sep_float<long double>, Dim> > NN;
 };

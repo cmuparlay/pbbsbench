@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = false;
-int algorithm_version = 0;
+int algorithm_version = 2;
 
 #include <algorithm>
 #include <math.h> 

@@ -12,7 +12,7 @@
 #include "../../octTree/oct_tree.h"
 
 bool report_stats = true;
-#include "../include/sfcnn_knng.hpp"
+#include "../include/parlay_sfcnn_knng.hpp"
 #include "../include/dpoint.hpp"
 #define sq(x) (((double) (x))* ((double) (x)))
 
@@ -20,9 +20,8 @@ bool report_stats = true;
 int algorithm_version = 0; 
 int key_bits = 64;
 double eps = 0;
-
 bool check_correctness = false;
-int num_threads = parlay::num_workers();
+
 
 uint abs(uint x, uint y){
 	if (x > y){
@@ -77,7 +76,8 @@ struct NN_helper{
 		point min_point = b.first;
 		// round each point to an integer with key_bits bit
 		int bits = 31; //key_bits/d;    // Guy, fixed this
-		int maxval = (((size_t) 1) << bits) - 1;
+		// does not work with 32 bits.  Not sure why.  perhaps assumes a it is a signed value?
+		size_t maxval = (((size_t) 1) << bits) - 1;
 	    parlay::parallel_for(0, n, [&] (uint i){
 	    	Point p; 
 	    	P[i] = p;
@@ -106,7 +106,6 @@ struct NN_helper{
 	      }
 	    }
 	    if(not (reported_distance <= nearest_dist)){
-	      cout << i << " : " << idx << " : " << nearest << endl;
 	      std::cout << "Query point: ";
 	      print_point(q);
 	      std::cout << "Reported neighbor: ";
@@ -132,8 +131,6 @@ bool do_check_correct(){
 template<int maxK, class vtx, int Dim>
 void ANN_(parlay::sequence<vtx*> &v, int k) {
   timer t("ANN", report_stats);
-  if (report_stats)
-    cout << "num threads = " << num_threads << endl;
 
   uint n = v.size();
   typedef reviver::dpoint<uint, Dim> Point;       
@@ -144,7 +141,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   N.convert(v, n, P);
   t.next("convert to Kumar's types");
 
-  sfcnn_knng<Point, Dim, uint> NN(P, n, k, num_threads); 
+  sfcnn_knng<Point, Dim, uint> NN(P, n, k); 
   t.next("create nearest neighbor graph");
 
   if (check_correctness){
