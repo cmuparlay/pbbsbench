@@ -24,7 +24,7 @@
 #include <algorithm>
 
 #include "compute_bounding_box.hpp"
-#include "qknn.hpp"
+#include "parlay_qknn.hpp"
 #include "zorder_lt.hpp"
 #include "bsearch.hpp"
 
@@ -65,8 +65,7 @@ private:
 
 
 template<typename Point, typename Ptype>
-void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned int k, double eps, int num_threads)
-{
+void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned int k, double eps, int num_threads) {
   timer t("knng init", report_stats);
   zorder_lt<Point> lt;
  
@@ -93,13 +92,11 @@ void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned in
 
   parlay::parallel_for(0, N, [&] (size_t i) {
     Point bound_box_lower_corner, bound_box_upper_corner;
-    qknn que;
+    qknn que(k);
     long int range_b = i-SR;
     if(range_b < 0) range_b = 0;
     long int range_e = i+SR+1;
     if(range_e > N) range_e = N;
-    que.set_epsilon(eps);
-    que.set_size(k);
     for(long int j=range_b;j < i;++j) {
       double distance = points[i].sqr_dist(points[j]);
       que.update(distance, pointers[j]);
@@ -108,7 +105,6 @@ void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned in
       double distance = points[i].sqr_dist(points[j]);
       que.update(distance, pointers[j]);
     }
-    if(range_e > N) range_e = N;
     compute_bounding_box(points[i], bound_box_lower_corner, bound_box_upper_corner, sqrt(que.topdist()));
     if(!lt(bound_box_upper_corner, points[range_e-1]) || !lt(points[range_b], bound_box_lower_corner)) {
       recurse(0, N, i, que,  

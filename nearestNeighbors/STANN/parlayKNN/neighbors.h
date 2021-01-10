@@ -4,20 +4,20 @@
 #include<limits>
 #include<cfloat>
 #include <algorithm>
+#include <type_traits> 
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "common/get_time.h" 
 
 #define NOTSELF 1
-#include "../include/sfcnn.hpp"
+#include "../include/parlay_sfcnn.hpp"
 #include "../include/dpoint.hpp"
 #include "../KNN/helper.h"
 
-
 bool report_stats = true;
 bool check_correctness = false;
-int algorithm_version = 0; 
+int algorithm_version = 0;
 
 template<int maxK, class vtx, int Dim>
 void ANN_(parlay::sequence<vtx*> &v, int k) {
@@ -35,7 +35,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   t.next("initialize scfnn");
 
   auto answers = parlay::tabulate(n, [&] (size_t) {
-      return std::vector<unsigned long>(k);});
+      return parlay::sequence<unsigned long>(k);});
   t.next("initialize answers");
 
   parlay::parallel_for(0, n, [&] (uint i){

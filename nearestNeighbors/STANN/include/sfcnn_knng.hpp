@@ -22,17 +22,17 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
-#include "timer.hpp"
+#include <timer.hpp>
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-#include "compute_bounding_box.hpp"
-#include "pair_iter.hpp"
-#include "qknn.hpp"
-#include "zorder_lt.hpp"
-#include "bsearch.hpp"
+#include <compute_bounding_box.hpp>
+#include <pair_iter.hpp>
+#include <qknn.hpp>
+#include <zorder_lt.hpp>
+#include <bsearch.hpp>
 
 
 /*!
@@ -74,7 +74,6 @@ private:
 template<typename Point, typename Ptype>
 void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned int k, double eps, int num_threads)
 {
-  timer t("knng init", report_stats);
   zorder_lt<Point> lt;
   Point bound_box_lower_corner,
 	bound_box_upper_corner;
@@ -103,7 +102,6 @@ void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned in
     typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
     b(points.end(), pointers.end());
   sort(a,b,lt);
-  t.next("initialize");
   std::vector<qknn> que;
   que.resize(N);
 
@@ -163,7 +161,6 @@ void sfcnn_knng_work<Point, Ptype>::sfcnn_knng_work_init(long int N, unsigned in
 	  
 	}
   }
-    t.next("find all");
       points.clear();
       pointers.clear();
 }
@@ -258,7 +255,7 @@ class sfcnn_knng
 {
 public:
   sfcnn_knng(){};
-  sfcnn_knng(Point *points, long int N, unsigned int k, int num_threads=1)  
+  sfcnn_knng(Point *points, long int N, unsigned int k, int num_threads=1)
   {
     sfcnn_knng_init(points,N,k,0.0,num_threads);
   };

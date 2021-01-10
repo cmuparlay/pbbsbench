@@ -25,7 +25,7 @@
 #include "compute_bounding_box.hpp"
 #include "nnBase.hpp"
 #include "pair_iter.hpp"
-#include "qknn.hpp"
+#include "parlay_qknn.hpp"
 #include "zorder_lt.hpp"
 #include "bsearch.hpp"
 /*!
@@ -86,24 +86,24 @@ private:
     \param eps Error tolerence, default of 0.0.
     \param sl Unused, for backwards compatibility
   */
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0);
+  template<typename Vect>
+  void ksearch(Point &q, unsigned int k, Vect &nn_idx, float eps = 0);
+  //void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0);
   void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, std::vector<double> &dist, float eps = 0);
 
-  std::vector<Point> points;
-  std::vector<long unsigned int> pointers;
+  parlay::sequence<Point> points;
+  parlay::sequence<long unsigned int> pointers;
   zorder_lt<Point> lt;
 
-
-
-  float eps;
+  //float eps;
   typename Point::__NumType max, min;
 
-  void compute_bounding_box(Point q, Point &q1, Point &q2, double r);
+  void compute_bounding_box(Point& q, Point &q1, Point &q2, double r);
   void sfcnn_work_init(int num_threads);
 
-  void ksearch_common(Point q, unsigned int k, long unsigned int j, qknn &que, float Eps);	
+  void ksearch_common(Point& q, unsigned int k, long unsigned int j, qknn &que, float Eps);	
   
-  inline void recurse(long unsigned int s, long unsigned int n, Point q, 
+  inline void recurse(long unsigned int s, long unsigned int n, Point &q, 
 		      qknn &ans, Point &q1, Point &q2, long unsigned int bb, long unsigned int bt);
 	
 };
@@ -120,15 +120,22 @@ void sfcnn_work<Point, Ptype>::sfcnn_work_init(int num_threads)
   max = (std::numeric_limits<typename Point::__NumType>::max)();
   min = (std::numeric_limits<typename Point::__NumType>::min)();
 
-  if(points.size() == 0)
-    {
+  if(points.size() == 0) {
       std::cerr << "Error:  Input point list has size 0" << std::endl;
       exit(1);
-    }
-  pair_iter<typename std::vector<Point>::iterator, 
-    typename std::vector<long unsigned int>::iterator> a(points.begin(), pointers.begin()),
-    b(points.end(), pointers.end());
-  sort(a,b,lt);
+  }
+  
+  size_t n = points.end() - points.begin();
+  auto x = parlay::delayed_tabulate(n , [&] (size_t i) {
+					  return std::pair(points[i], pointers[i]);});
+  auto plt = [&] (auto x, auto y) {return lt(x.first, y.first);};
+  
+  auto s = parlay::sort(x,plt);
+
+  parlay::parallel_for(0, n, [&] (size_t i) {
+			       points[i] = s[i].first;
+			       pointers[i] = s[i].second;});
+
 }
 
 template<typename Point, typename Ptype>
@@ -139,7 +146,7 @@ sfcnn_work<Point, Ptype>::~sfcnn_work()
 template<typename Point, typename Ptype>
 void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting index
 				long unsigned int n,     // Number of points
-				Point q,  // Query point
+				Point &q,  // Query point
 				qknn &ans, // Answer que
 				Point &bound_box_lower_corner,
 				Point &bound_box_upper_corner,
@@ -214,19 +221,19 @@ void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting inde
 }
 
 template<typename Point, typename Ptype>
-void sfcnn_work<Point, Ptype>::compute_bounding_box(Point q, Point &q1, Point &q2, double R)
+void sfcnn_work<Point, Ptype>::compute_bounding_box(Point& q, Point &q1, Point &q2, double R)
 {
   cbb_work<Point, Ptype>::eval(q, q1, q2, R, max, min);
 }
 
 template<typename Point, typename Ptype>
-void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsigned int query_point_index, qknn &que, float Eps)
+void sfcnn_work<Point, Ptype>::ksearch_common(Point& q, unsigned int k, long unsigned int query_point_index, qknn &que, float Eps)
 {
   Point bound_box_lower_corner, bound_box_upper_corner;
   Point low, high;
   
-  que.set_size(k);
-  eps=(float) 1.0+Eps;
+  //  que.set_size(k);
+  //  eps=(float) 1.0+Eps;  // guy, what is this about
   if(query_point_index >= (k)) query_point_index -= (k);
   else query_point_index=0;
   
@@ -236,6 +243,7 @@ void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsi
   
   low = points[query_point_index];
   high = points[initial_scan_upper_range-1];
+  
   for(long unsigned int i=query_point_index;i<initial_scan_upper_range;++i)
     {
 #ifdef NOTSELF      // guy, added not to include self
@@ -252,23 +260,24 @@ void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsi
       //cout << "Bb2: " << bound_box_upper_corner << endl;
       return;
     }
-  
+
   //Recurse through the entire set
   recurse(0, points.size(), q, que, 
-	  bound_box_lower_corner, 
-	  bound_box_upper_corner,
-	  query_point_index,
-	  initial_scan_upper_range);
+  	  bound_box_lower_corner, 
+  	  bound_box_upper_corner,
+  	  query_point_index,
+  	  initial_scan_upper_range);
   //cout << "Bb1: " << bound_box_lower_corner << endl;
   //cout << "Bb2: " << bound_box_upper_corner << endl;
 }
 
 template<typename Point, typename Ptype>
-void sfcnn_work<Point, Ptype>::ksearch(Point q, unsigned int k, 
-			      std::vector<long unsigned int> &nn_idx, float Eps)
+template <typename Vect>
+void sfcnn_work<Point, Ptype>::ksearch(Point &q, unsigned int k, 
+				       Vect &nn_idx, float Eps)
 {
   long unsigned int query_point_index;  
-  qknn que;
+  qknn que(k);
   query_point_index = BinarySearch(points, q, lt);
   ksearch_common(q, k, query_point_index, que, Eps);
   que.answer(nn_idx);
@@ -279,7 +288,7 @@ void sfcnn_work<Point, Ptype>::ksearch(Point q, unsigned int k,
 				std::vector<long unsigned int> &nn_idx, std::vector<double> &dist, float Eps)
 {
   long unsigned int query_point_index;  
-  qknn que;
+  qknn que(k);
   query_point_index = BinarySearch(points, q, lt);
   ksearch_common(q, k, query_point_index, que, Eps);
   que.answer(nn_idx, dist);
@@ -330,7 +339,8 @@ public:
     \param nn_idx Answer vector
     \param eps Error tolerence, default of 0.0.
   */
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     NN.ksearch(q,k,nn_idx,eps);
   };
@@ -357,13 +367,12 @@ private:
   {
     NN.points.resize(N);
     NN.pointers.resize(N);
+
+    parlay::parallel_for(0, N, [&] (size_t i) {
+       NN.pointers[i] = (i);
+       for(unsigned int j=0;j < Dim;++j)
+	 NN.points[i][j] = points[i][j];});
     
-    for(long int i=0;i < N;++i)
-      {
-	NN.pointers[i] = (i);
-	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      }
     NN.sfcnn_work_init(num_threads);
   };
 
@@ -379,7 +388,8 @@ public:
     sfcnn_init(points,N,num_threads);
   };
   ~sfcnn(){};
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     reviver::dpoint<sep_float<float>, Dim> Q;
     for(unsigned int i=0;i < Dim;++i)
@@ -424,7 +434,8 @@ public:
     sfcnn_init(points,N,num_threads);
   };
   ~sfcnn(){};
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     reviver::dpoint<sep_float<double>, Dim> Q;
     for(unsigned int i=0;i < Dim;++i)

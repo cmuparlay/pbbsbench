@@ -178,8 +178,8 @@ void PairBinarySearch(std::vector<Point> &A, Point q1,
   \param lt A less_than comparetor
   \return If found: index of point. Otherwise: index of first smaller point
 */
-template<typename Point>
-long int BinarySearch(std::vector<Point> &A, Point q, zorder_lt<Point> lt) 
+template<typename Point, typename Vect> // Guy : templatized this on Vect
+long int BinarySearch(Vect &A, Point q, zorder_lt<Point> lt) 
 {
 	long int low = 0;
 	long int high = A.size()-1;
