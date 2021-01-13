@@ -3,7 +3,7 @@
 bnchmrk="neighbors"
 benchmark="Nearest Neighbors"
 checkProgram="../bench/neighborsCheck"
-dataDir = "../geometryData/data"
+dataDir = "../../geometryData/data"
 
 tests = [
     # [1, "2DinCube_10","-d 2 -k 1", "-d 2 -k 1"],
@@ -18,8 +18,7 @@ tests = [
     [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
     [1, "3DonSphere_10M","-d 3 -k 1", "-d 3 -k 1"],
 
-    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
-    [1, "3Dplummer_10M","-d 3 -k 10", "-d 3 -k 10"]
+    [1, "3Dplummer_10M","-d 3 -k 1", "-d 3 -k 1"]
 
     ]
 

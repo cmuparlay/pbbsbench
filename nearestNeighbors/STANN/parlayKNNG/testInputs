@@ -18,8 +18,7 @@ tests = [
     [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
     [1, "3DonSphere_10M","-d 3 -k 1", "-d 3 -k 1"],
 
-    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
-    [1, "3Dplummer_10M","-d 3 -k 10", "-d 3 -k 10"]
+    [1, "3Dplummer_10M","-d 3 -k 1", "-d 3 -k 1"]
 
     ]
 

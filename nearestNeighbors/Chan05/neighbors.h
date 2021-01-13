@@ -19,8 +19,8 @@ size_t shift, MAX1;
 int key_bits = 60;
 int d; 
 bool report_stats = true;
-bool check_correctness = true;
-bool parallel_recurse = true;
+bool check_correctness = false;
+bool parallel_recurse = false; //keep this set to false, the parallel recursion is not fully implemented
 int algorithm_version = 0; //just because octTree/neighbors requires this parameter
 double eps = 0; 
 
@@ -311,9 +311,11 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 				if(d==2){
 					Chan_nn<2> C;
 					C.SSS_query(P, n, P[i]);
+					C.check_correct(P, n, P[i]);
 				} else{
 					Chan_nn<3> C; 
 					C.SSS_query(P, n, P[i]);
+					C.check_correct(P, n, P[i]);
 				}
 			}
 			);
