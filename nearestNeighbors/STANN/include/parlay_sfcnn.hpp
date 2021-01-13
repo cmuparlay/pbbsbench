@@ -99,7 +99,7 @@ private:
   typename Point::__NumType max, min;
 
   void compute_bounding_box(Point& q, Point &q1, Point &q2, double r);
-  void sfcnn_work_init(int num_threads);
+  void sfcnn_work_init();
 
   void ksearch_common(Point& q, unsigned int k, long unsigned int j, qknn &que, float Eps);	
   
@@ -114,9 +114,8 @@ sfcnn_work<Point, Ptype>::sfcnn_work()
 }
 
 template<typename Point, typename Ptype>
-void sfcnn_work<Point, Ptype>::sfcnn_work_init(int num_threads)
+void sfcnn_work<Point, Ptype>::sfcnn_work_init()
 {
-  num_threads = 1;
   max = (std::numeric_limits<typename Point::__NumType>::max)();
   min = (std::numeric_limits<typename Point::__NumType>::min)();
 
@@ -127,21 +126,19 @@ void sfcnn_work<Point, Ptype>::sfcnn_work_init(int num_threads)
   
   size_t n = points.end() - points.begin();
   auto x = parlay::delayed_tabulate(n , [&] (size_t i) {
-					  return std::pair(points[i], pointers[i]);});
+		  return std::pair(points[i], pointers[i]);});
   auto plt = [&] (auto x, auto y) {return lt(x.first, y.first);};
   
   auto s = parlay::sort(x,plt);
 
   parlay::parallel_for(0, n, [&] (size_t i) {
-			       points[i] = s[i].first;
-			       pointers[i] = s[i].second;});
+       points[i] = s[i].first;
+       pointers[i] = s[i].second;});
 
 }
 
 template<typename Point, typename Ptype>
-sfcnn_work<Point, Ptype>::~sfcnn_work()
-{
-}
+sfcnn_work<Point, Ptype>::~sfcnn_work() {}
 
 template<typename Point, typename Ptype>
 void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting index
@@ -153,7 +150,7 @@ void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting inde
 				long unsigned int initial_scan_lower_range,
 				long unsigned int initial_scan_upper_range)
 {
-  if(n < 4)
+  if(n < 10)
     {
       if(n == 0) return;
 		
@@ -184,18 +181,15 @@ void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting inde
   //cout << "p2  : " << points[s+n-1] << endl;
   if(dsqb > ans.topdist())
     return;
-  
 	
   if(lt(q,points[s+n/2]))
     {
-      //search_queue.push(pair<int, int>(s, n/2));
       recurse(s, n/2, q, ans, 
 	      bound_box_lower_corner, 
 	      bound_box_upper_corner, 
 	      initial_scan_lower_range, 
 	      initial_scan_upper_range);
       if(lt(points[s+n/2],bound_box_upper_corner))
-	//search_queue.push(pair<int, int>(s+n/2+1, n-n/2-1));
 	recurse(s+n/2+1,n-n/2-1, q, ans, 
 		bound_box_lower_corner, 
 		bound_box_upper_corner, 
@@ -209,9 +203,7 @@ void sfcnn_work<Point, Ptype>::recurse(long unsigned int s,     // Starting inde
 	      bound_box_upper_corner, 
 	      initial_scan_lower_range, 
 	      initial_scan_upper_range);
-      //search_queue.push(pair<int, int>(s+n/2+1, n-n/2-1));
       if(lt(bound_box_lower_corner,points[s+n/2]))
-	//search_queue.push(pair<int, int>(s, n/2));
 	recurse(s, n/2, q, ans, 
 		bound_box_lower_corner, 
 		bound_box_upper_corner, 
@@ -320,11 +312,10 @@ public:
     given data points.  
     \param *points Pointer to the first data point
     \param N number of data points
-    \param num_threads Currently unused.  (multiple processor construction soon!)
   */
-  sfcnn(Point *points, long int N, int num_threads=1)
+  sfcnn(Point *points, long int N)
   {
-    sfcnn_init(points,N,num_threads);
+    sfcnn_init(points, N);
   };
   ~sfcnn(){};
 
@@ -363,29 +354,22 @@ public:
   };
 private:
   sfcnn_work<reviver::dpoint<NumType, Dim> > NN;
-  void sfcnn_init(Point *points, long int N, int num_threads=1)
+  void sfcnn_init(Point *points, long int N)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-
-    parlay::parallel_for(0, N, [&] (size_t i) {
-       NN.pointers[i] = (i);
-       for(unsigned int j=0;j < Dim;++j)
-	 NN.points[i][j] = points[i][j];});
-    
-    NN.sfcnn_work_init(num_threads);
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_work_init();
   };
 
 };
 
 template <typename Point, unsigned int Dim>
-class sfcnn <Point, Dim, float> : public nnBase<Point, Dim, float>
-{
+class sfcnn <Point, Dim, float> : public nnBase<Point, Dim, float> {
 public:
   sfcnn(){};
-  sfcnn(Point *points, long int N, int num_threads=1)
+  sfcnn(Point *points, long int N)
   {
-    sfcnn_init(points,N,num_threads);
+    sfcnn_init(points,N);
   };
   ~sfcnn(){};
   template <typename Vect>
@@ -405,23 +389,13 @@ public:
   };
 
 private:
-  sfcnn_work<reviver::dpoint<sep_float<float>, Dim> > NN;
-  void sfcnn_init(Point *points, long int N, int num_threads=1)
+  void sfcnn_init(Point *points, long int N)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-    
-    for(long int i=0;i < N;++i)
-      {
-	NN.pointers[i] = i;
-	for(unsigned int j=0;j < Dim;++j)
-	  {
-	    NN.points[i][j] = points[i][j];
-	  }
-      }
-    NN.sfcnn_work_init(num_threads);
-  };
-
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_work_init();
+  }
+  sfcnn_work<reviver::dpoint<sep_float<float>, Dim> > NN;
 };
 
 template <typename Point, unsigned int Dim>
@@ -429,9 +403,9 @@ class sfcnn <Point, Dim, double> : public nnBase<Point, Dim, double>
 {
 public:
   sfcnn(){};
-  sfcnn(Point *points, long int N, int num_threads=1)
+  sfcnn(Point *points, long int N)
   {
-    sfcnn_init(points,N,num_threads);
+    sfcnn_init(points,N);
   };
   ~sfcnn(){};
   template <typename Vect>
@@ -450,18 +424,11 @@ public:
     NN.ksearch(Q,k,nn_idx,dist,eps);
   };
 private:
-  void sfcnn_init(Point *points, long int N, int num_threads=1)
+  void sfcnn_init(Point *points, long int N)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-    
-    for(long int i=0;i < N;++i)
-      {
-	NN.pointers[i] = i;
-	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      }
-    NN.sfcnn_work_init(num_threads);
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_work_init();
   };
   sfcnn_work<reviver::dpoint<sep_float<double>, Dim> > NN;
 };
@@ -471,12 +438,13 @@ class sfcnn <Point, Dim, long double> : public nnBase<Point, Dim, long double>
 {
 public:
   sfcnn(){};
-  sfcnn(Point *points, long int N, int num_threads=1)
+  sfcnn(Point *points, long int N)
   {
-    sfcnn_init(points,N,num_threads);
+    sfcnn_init(points, N);
   };
   ~sfcnn(){};
-  void ksearch(Point q, unsigned int k, std::vector<long unsigned int> &nn_idx, float eps = 0)
+  template <typename Vect>
+  void ksearch(Point q, unsigned int k, Vect &nn_idx, float eps = 0)
   {
     reviver::dpoint<sep_float<long double>, Dim> Q;
     for(unsigned int i=0;i < Dim;++i)
@@ -491,18 +459,11 @@ public:
     NN.ksearch(Q,k,nn_idx,dist,eps);
   };
 private:
-  void sfcnn_init(Point *points, long int N, int num_threads=1)
+  void sfcnn_init(Point *points, long int N)
   {
-    NN.points.resize(N);
-    NN.pointers.resize(N);
-    
-    for(long int i=0;i < N;++i)
-      {
-	NN.pointers[i] = i;
-	for(unsigned int j=0;j < Dim;++j)
-	  NN.points[i][j] = points[i][j];
-      }
-    NN.sfcnn_work_init(num_threads);
+    NN.pointers = parlay::tabulate(N, [] (long unsigned int i) {return i;});
+    NN.points = parlay::tabulate(N, [&] (size_t i) {return points[i];});
+    NN.sfcnn_work_init();
   };
   sfcnn_work<reviver::dpoint<sep_float<long double>, Dim> > NN;
 };
