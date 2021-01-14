@@ -8,14 +8,14 @@ endif
 CCFLAGS = -mcx16 -O3 -std=c++17 -DNDEBUG
 CLFLAGS = -ldl $(JEMALLOC)
 
-OMPFLAGS = -DOPENMP -fopenmp
-CILKFLAGS = -DCILK -fcilkplus
+OMPFLAGS = -DPARLAY_OPENMP -fopenmp
+CILKFLAGS = -DPARLAY_CILK -fcilkplus
 PBBFLAGS = -DHOMEGROWN -pthread
 
 ifdef OPENMP
 CC = g++
 CFLAGS = $(OMPFLAGS) $(CCFLAGS)
-LFLAGS = $(OMPFLAGS) $(LCFLAGS)
+LFLAGS = $(OMPFLAGS) $(CLFLAGS)
 
 else ifdef CILK
 CC = g++
@@ -27,3 +27,4 @@ CC = g++
 CFLAGS = $(PBBFLAGS) $(CCFLAGS)
 LFLAGS = $(PBBFLAGS) $(CLFLAGS)
 endif
+

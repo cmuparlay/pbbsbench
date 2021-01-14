@@ -121,6 +121,12 @@ namespace benchIO {
   }
 
   template<typename T, typename Range>
+  inline typename std::enable_if<std::is_same<T, long>::value, sequence<long>>::type
+  parseElements(Range const &S) {
+    return tabulate(S.size(), [&] (long i) -> long {return (long) read_long(S[i]);});
+  }
+
+  template<typename T, typename Range>
   inline typename std::enable_if<std::is_same<T, uint>::value, sequence<uint>>::type
   parseElements(Range const &S) {
     return tabulate(S.size(), [&] (long i) -> uint {return (uint) read_long(S[i]);});

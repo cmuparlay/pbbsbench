@@ -1,0 +1,17 @@
+#!/usr/bin/python 
+ 
+bnchmrk="dedup"
+benchmark="Remove Duplicates"
+checkProgram="../bench/dedupCheck" 
+dataDir = "../sequenceData/data"
+
+tests = [
+    [1, "randomSeq_100M_int","", ""], 
+    [1, "exptSeq_100M_int","", ""], 
+    [1, "trigramSeq_100M", "", ""], 
+    ] 
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
