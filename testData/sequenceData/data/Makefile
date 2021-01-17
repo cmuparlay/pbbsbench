@@ -1,8 +1,12 @@
 GENERATORS = ../randomSeq ../equalSeq ../almostEqualSeq ../almostSortedSeq ../exptSeq ../trigramSeq ../addDataSeq ../trigramString
 
-STRINGFILES = wikipedia250M.txt wikisamp.xml chr22.dna etext99
+STRINGFILES = wikipedia250M.txt wikisamp.xml chr22.dna etext99 
 STRINGFILES_LONG = wikisamp.xml chr22.dna etext99 HG18 howto jdk13c proteins rctail96 rfc sprot34 w3c2
 STRINGBZIP = $(addsuffix .bz2,$(STRINGFILES))
+
+CLASSIFY = covtype.data kddcup.data 
+CLASSIFYFILES = $(addsuffix .train,$(CLASSIFY)) $(addsuffix .test,$(CLASSIFY))
+CLASSIFYBZIP = $(addsuffix .bz2,$(CLASSIFYFILES))
 
 $(GENERATORS) :
 	cd ..; make -s $(subst ../,,$@)
@@ -12,6 +16,16 @@ $(STRINGFILES) : $(STRINGBZIP)
 	touch $@
 
 $(STRINGBZIP) :
+	cp ../../data/$@ .
+
+%.data : %.data.train %.data.test $(CLASSIFYBZIP)
+	echo
+
+$(CLASSIFYFILES) : $(CLASSIFYBZIP)
+	bunzip2 -k -f $@.bz2
+	touch $@
+
+$(CLASSIFYBZIP) :
 	cp ../../data/$@ .
 
 randomSeq_%_pair_int :  ../addDataSeq
@@ -99,4 +113,4 @@ trigramString_% : ../trigramString
 	../trigramString $(subst trigramString_,,$@) $@
 
 clean :
-	rm -f *0* $(STRINGFILES) $(STRINGBZIP)
+	rm -f *0* $(STRINGFILES) $(STRINGBZIP) $(CLASSIFYFILES) $(CLASSIFYBZIP)

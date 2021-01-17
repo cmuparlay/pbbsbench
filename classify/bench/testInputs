@@ -6,6 +6,8 @@ checkProgram="../bench/classifyCheck"
 dataDir = "../sequenceData/data"
 
 tests = [
+    [1, "covtype.data", "", ""],
+    [1, "kddcup.data", "", ""],
 ]
 
 import sys

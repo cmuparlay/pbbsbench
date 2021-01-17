@@ -29,29 +29,41 @@
 #include <iostream>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/io.h"
 #include "parlay/internal/get_time.h"
 #include "classify.h"
 
 using namespace parlay;
 double infinity = std::numeric_limits<double>::infinity();
 
+// some parameters
+
+// minimum size of a node
+size_t min_size = 1;
+// the following helps prevent overfitting if > 0.0
+// probably should be in range [0..1]
+double encode_node_factor = 0.0; 
+
 struct tree {
   bool is_leaf;
   int feature_index;
   int feature_cut;
   value best;
+  size_t size;
   sequence<tree*> children;
-  tree(int i, int c, sequence<tree*> children)
-    : is_leaf(false), feature_index(i), feature_cut(c), children(children) {}
-  tree(value best) : is_leaf(true), best(best) {}
+  tree(int i, int c, int best, sequence<tree*> children)
+    : is_leaf(false), best(best), feature_index(i), feature_cut(c), children(children) {
+    size = reduce(map(children, [] (tree* t) {return t->size;}));}
+  tree(value best) : is_leaf(true), best(best), size(1) {}
 };
 
 tree* Leaf(int best) {
+  if (best > max_value) abort();
   return new tree(best);
 }
 
-tree* Node(int i, int cut, sequence<tree*> children) {
-  return new tree(i, cut, children);
+tree* Internal(int i, int cut, int majority, sequence<tree*> children) {
+  return new tree(i, cut, majority, children);
 }
 
 // To be put into parlay
@@ -77,7 +89,8 @@ auto majority(S1 const &a, size_t m) {
 // entropy * total given a histogram a (total = sum(a))
 template <typename Seq>
 double entropy(Seq a, int total) {
-  return reduce(map(a, [=] (int l) {
+  double ecost = encode_node_factor * log2(float(1 + total)); // to prevent overfitting
+  return ecost + reduce(map(a, [=] (int l) {
       return (l > 0) ? -(l * log2(float(l)/total)) : 0.0;}));
 }
 
@@ -99,8 +112,7 @@ auto cond_info_continuous(feature const &a, feature const &b) {
       high_counts[j] -= sums[a.num*i + j];
       m += sums[a.num*i + j];
     }
-    double e = entropy(low_counts, m) + entropy(high_counts, n - m)
-      + log2(float(i+1)) + log2(float(b.num-i-1));
+    double e = entropy(low_counts, m) + entropy(high_counts, n - m);
     if (e < cur_e) {
       cur_e = e;
       cur_i = i+1;
@@ -110,17 +122,11 @@ auto cond_info_continuous(feature const &a, feature const &b) {
 }
 
 // information content of s (i.e. entropy * size)
-double info(values s, int num_vals) {
+double info(row s, int num_vals) {
   size_t n = s.size();
   if (n == 0) return 0.0;
   auto x = histogram(s, num_vals);
   return entropy(x, n);
-}
-
-// info of a conditioned on b
-double cond_info_discrete_o(feature const &a, feature const &b) {
-  auto groups = group_by_index(delayed_zip(b.vals, a.vals), b.num);
-  return reduce(map(groups, [&] (auto g) {return log2(float(1 + g.size())) + info(g, a.num);}));
 }
 
 // info of a conditioned on b
@@ -139,12 +145,12 @@ double node_cost(int n, int num_features, int num_groups) {
   return log2(float(num_features));
 }
 
-auto build_tree(features &A) {
+auto build_tree(features &A, bool verbose) {
   int num_features = A.size();
   int num_entries = A[0].vals.size();
-  if (num_entries < 64 || all_equal(A[0].vals))
-    return Leaf(majority(A[0].vals, A[0].num));
-
+  int majority_value = (num_entries == 0) ? -1 : majority(A[0].vals, A[0].num);
+  if (num_entries < 2 || all_equal(A[0].vals))
+    return Leaf(majority_value);
   double label_info = info(A[0].vals,A[0].num);
   auto costs = tabulate(num_features - 1, [&] (int i) {
       if (A[i+1].discrete) {
@@ -159,14 +165,15 @@ auto build_tree(features &A) {
   auto [best_info, best_i, cut] = reduce(costs, min_m);
   double threshold = log2(float(num_features));
 
-  //cout << num_entries << ", " << best_i << ", " << cut << ", " << label_info << ", " 
-  //     << best_info << endl;
+  if (verbose)
+    cout << num_entries << ", " << best_i << ", " << cut << ", " << label_info << ", " 
+	 << best_info << endl;
 
   if (label_info - best_info < threshold)
-    return Leaf(majority(A[0].vals, A[0].num));
+    return Leaf(majority_value);
   else {
     int m;
-    values split_on;
+    row split_on;
     if (A[best_i].discrete) {
       m = A[best_i].num;
       split_on = A[best_i].vals;
@@ -181,12 +188,36 @@ auto build_tree(features &A) {
       auto x = group_by_index(delayed_zip(split_on, A[j].vals), m);
       for (int i=0; i < m; i++) B[i][j].vals = std::move(x[i]);
     }, 1);
+    //A.clear();
 
-    auto r = map(B, [&] (features &a) {return build_tree(a);}, 1);
-    return Node(best_i, cut, r);
+    auto children = map(B, [&] (features &a) {return build_tree(a, verbose);}, 1);
+    return Internal(best_i - 1, cut, majority_value, children); //-1 since first is label
   }
 }
 
-void classify(features &A) {
-  build_tree(A);
+int classify_row(tree* T, row const&r) {
+  if (T->is_leaf) {
+    return T->best;
+  } else if (T->feature_cut == -1) { // discrete partition
+    if (!(r[T->feature_index] < T->children.size())) return -1;
+    int val = classify_row(T->children[r[T->feature_index]], r);
+    return (val == -1) ? T->best : val;
+  } else {  // continuous cut
+    int idx = (r[T->feature_index] < T->feature_cut) ? 0 : 1;
+    int val = classify_row(T->children[idx], r);
+    return (val == -1) ? T->best : val;
+  }
+}
+
+void classify(features const &Train, rows const &Test, bool verbose) {
+  features A = Train;
+  tree* T = build_tree(A, verbose);
+  if (true) cout << "Tree size = " << T->size << endl;
+  int num_features = Test[0].size();
+  auto predictions = map(Test, [&] (row const& r) {return classify_row(T, r);});
+  size_t num_correct = reduce(tabulate(predictions.size(), [&] (size_t i) {
+         return (predictions[i] == Test[i][num_features-1]) ? 1 : 0;}));
+  float percent_correct = (100.0 * num_correct)/predictions.size();
+  cout << num_correct << " correct out of " << predictions.size()
+       << ", " << percent_correct << " percent" << endl;
 }
