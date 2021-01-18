@@ -29,10 +29,17 @@ tests = [
  ["wordCounts/histogramStar",True],
  ["wordCounts/serial",False],
 
+ ["removeDuplicates/parlayhash", True],
+
  ["BWDecode/listRank",True],
+
  ["histogram/parallel",True],
- ["index/parallel",True],
+
+ ["index/parallel", True],
+
  ["longestRepeatedSubstring/doubling",True],
+
+ ["classify/decisionTree", True],
 
  ["minSpanningForest/parallelKruskal",True],
  ["minSpanningForest/parallelFilterKruskal",True],

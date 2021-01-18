@@ -13,4 +13,4 @@ struct feature {
 
 using features = parlay::sequence<feature>;
 
-void classify(features const &Train, rows const &Test, bool verbose);
+row classify(features const &Train, rows const &Test, bool verbose);

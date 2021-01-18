@@ -35,13 +35,49 @@
 using namespace std;
 using namespace benchIO;
 
-void timeClassify(features const &Train, rows const &Test, int rounds, bool verbose, char* outFile) {
+parlay::sequence<char> comma(1, ',');
+parlay::sequence<char> newline(1, '\n');
+template <typename Seq>
+sequence<char> csv_row(Seq const &e) {
+  size_t len = e.size()*2;
+  auto ss = parlay::tabulate(len, [&] (size_t i) {
+    if (i == len-1) return newline;
+    if (i%2 == 1) return comma;
+    return parlay::to_chars(e[i/2]);});
+  return parlay::flatten(ss);
+};
+
+void report_correct(row result, row labels) {
+  size_t n = result.size();
+  if (n != labels.size()) {
+    cout << "size mismatch of results and labels" << endl;
+    return;
+  }
+  size_t num_correct = parlay::reduce(parlay::tabulate(n, [&] (size_t i) {
+         return (result[i] == labels[i]) ? 1 : 0;}));
+  float percent_correct = (100.0 * num_correct)/n;
+  cout << num_correct << " correct out of " << n
+       << ", " << percent_correct << " percent" << endl;
+}
+
+void timeClassify(features const &Train, rows const &Test, row const &labels,
+		  int rounds, bool verbose, char* outFile) {
+  row result;
   time_loop(rounds, 2.0,
 	    [&] () {},
-	    [&] () {classify(Train, Test, verbose);},
+	    [&] () {result = classify(Train, Test, verbose);},
 	    [&] () {});
   cout << endl;
-  //if (outFile != NULL) writeHistogramsToFile(R, outFile);
+
+  report_correct(result, labels);
+  if (outFile != NULL) parlay::chars_to_file(csv_row(result), outFile);
+}
+
+auto read_row(string filename) {
+  auto is_item = [] (char c) -> bool { return c == ',';};
+  auto str = parlay::chars_from_file(filename);
+  return parlay::map(parlay::tokens(str, is_item), 
+		     [] (auto s) -> value {return parlay::chars_to_int(s);});
 }
 
 auto read_data(string filename) {
@@ -87,12 +123,13 @@ int main(int argc, char* argv[]) {
   string iFile = P.getArgument(0);
   string train_file = iFile;
   string test_file = iFile;
+  string label_file = iFile;
   char* oFile = P.getOptionValue("-o");
   bool verbose = P.getOption("-v");
   int rounds = P.getOptionIntValue("-r",1);
   auto [types, Train] = read_data(train_file.append(".train"));
   auto [xtypes, Test] = read_data(test_file.append(".test"));
-  cout << "num tests: " << Test.size() << endl;
+  auto labels = read_row(label_file.append(".labels"));
   features TrainFeatures = rows_to_features(types, Train);
-  timeClassify(TrainFeatures, Test, rounds, verbose, oFile);
+  timeClassify(TrainFeatures, Test, labels, rounds, verbose, oFile);
 }

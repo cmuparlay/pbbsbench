@@ -195,7 +195,7 @@ auto build_tree(features &A, bool verbose) {
   }
 }
 
-int classify_row(tree* T, row const&r) {
+value classify_row(tree* T, row const&r) {
   if (T->is_leaf) {
     return T->best;
   } else if (T->feature_cut == -1) { // discrete partition
@@ -209,15 +209,10 @@ int classify_row(tree* T, row const&r) {
   }
 }
 
-void classify(features const &Train, rows const &Test, bool verbose) {
+row classify(features const &Train, rows const &Test, bool verbose) {
   features A = Train;
   tree* T = build_tree(A, verbose);
   if (true) cout << "Tree size = " << T->size << endl;
   int num_features = Test[0].size();
-  auto predictions = map(Test, [&] (row const& r) {return classify_row(T, r);});
-  size_t num_correct = reduce(tabulate(predictions.size(), [&] (size_t i) {
-         return (predictions[i] == Test[i][num_features-1]) ? 1 : 0;}));
-  float percent_correct = (100.0 * num_correct)/predictions.size();
-  cout << num_correct << " correct out of " << predictions.size()
-       << ", " << percent_correct << " percent" << endl;
+  return map(Test, [&] (row const& r) {return classify_row(T, r);});
 }

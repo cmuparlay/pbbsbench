@@ -92,24 +92,29 @@ auto convert(sequence<sequence<charseq>> const &rows) {
   return std::pair(header, entries);
 }
 
+auto strip_target_label(sequence<sequence<int>> const &rows) {
+  return std::pair(map(rows, [&] (sequence<int> const &r) {return to_sequence(r.cut(0,r.size()-1));}),
+		   map(rows, [&] (sequence<int> const &r) {return r[r.size()-1];}));
+}
+
+sequence<char> comma(1, ',');
+sequence<char> newline(1, '\n');
+
 template <typename Seq>
-sequence<char> to_string(sequence<charseq> const &header,
-			 Seq const &rows) {
-  // convert to output string
-  sequence<char> comma(1, ',');
-  sequence<char> newline(1, '\n');
-  auto to_line = [&] (auto const &e) {
-     size_t len = e.size()*2;
-     auto ss = tabulate(len, [&] (size_t i) {
-       if (i == len-1) return newline;
-       if (i%2 == 1) return comma;
-       return parlay::to_chars(e[i/2]);});
-     return parlay::flatten(ss);};
+sequence<char> csv_row(Seq const &e) {
+  size_t len = e.size()*2;
+  auto ss = tabulate(len, [&] (size_t i) {
+    if (i == len-1) return newline;
+    if (i%2 == 1) return comma;
+    return parlay::to_chars(e[i/2]);});
+  return parlay::flatten(ss);
+};
 
-  auto b = map(rows, to_line);
-  auto outstr = parlay::append(to_line(header), parlay::flatten(b));
-
-  return outstr;
+template <typename Seq>
+sequence<char> csv_string(sequence<charseq> const &header,
+			    Seq const &rows) {
+  return parlay::append(csv_row(header), 
+			parlay::flatten(map(rows, [] (auto x) {return csv_row(x);})));
 }
 
 int main(int argc, char* argv[]) {
@@ -130,10 +135,13 @@ int main(int argc, char* argv[]) {
   auto perm = parlay::random_permutation(n);
   size_t num_train = round(n * (1.0 - test_percent/100.0));
   auto train = map(perm.cut(0,num_train), [&] (size_t i) {return rows[i];});
-  auto test = map(perm.cut(num_train, n), [&] (size_t i) {return rows[i];});
+  auto testr = map(perm.cut(num_train, n), [&] (size_t i) {return rows[i];});
+  auto [test, labels] = strip_target_label(testr);
 
   std::string train_file = oFile;
   std::string test_file = oFile;
-  chars_to_file(to_string(header, train), train_file.append(".data.train"));
-  chars_to_file(to_string(header, test), test_file.append(".data.test"));
+  std::string label_file = oFile;
+  chars_to_file(csv_string(header, train), train_file.append(".data.train"));
+  chars_to_file(csv_string(header, test), test_file.append(".data.test"));
+  chars_to_file(csv_row(labels), label_file.append(".data.labels"));
 }

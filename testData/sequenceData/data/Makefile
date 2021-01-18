@@ -5,7 +5,7 @@ STRINGFILES_LONG = wikisamp.xml chr22.dna etext99 HG18 howto jdk13c proteins rct
 STRINGBZIP = $(addsuffix .bz2,$(STRINGFILES))
 
 CLASSIFY = covtype.data kddcup.data 
-CLASSIFYFILES = $(addsuffix .train,$(CLASSIFY)) $(addsuffix .test,$(CLASSIFY))
+CLASSIFYFILES = $(addsuffix .train,$(CLASSIFY)) $(addsuffix .test,$(CLASSIFY)) $(addsuffix .labels,$(CLASSIFY))
 CLASSIFYBZIP = $(addsuffix .bz2,$(CLASSIFYFILES))
 
 $(GENERATORS) :
@@ -18,7 +18,7 @@ $(STRINGFILES) : $(STRINGBZIP)
 $(STRINGBZIP) :
 	cp ../../data/$@ .
 
-%.data : %.data.train %.data.test $(CLASSIFYBZIP)
+%.data : %.data.train %.data.test %.data.labels $(CLASSIFYBZIP)
 	echo
 
 $(CLASSIFYFILES) : $(CLASSIFYBZIP)
