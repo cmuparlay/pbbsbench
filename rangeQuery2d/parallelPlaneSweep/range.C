@@ -10,17 +10,11 @@
 */
 
 #include <algorithm>
-#include <iostream>
-#include <vector>
-#include <climits>
-#include <cstdlib>
 #include "parlay/primitives.h"
 #include "parlay/internal/get_time.h"
 #include "pam/pam.h"
 #include "sweep.h"
 #include "range.h"
-
-using namespace std;
 
 struct RangeQuery {
   struct set_t {
@@ -65,8 +59,8 @@ struct RangeQuery {
   }
 };
 
-long range(Points const &points, Queries const &queries) {
-  parlay::internal::timer t("range");
+long range(Points const &points, Queries const &queries, bool verbose) {
+  parlay::internal::timer t("range", verbose);
   RangeQuery r(points);
   t.next("build");
   long total = parlay::reduce(parlay::map(queries, [&] (query q) {

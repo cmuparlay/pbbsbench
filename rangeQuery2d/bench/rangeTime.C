@@ -40,7 +40,7 @@ void timeRange(Points const &points, Queries const& queries,
   long result;
   time_loop(rounds, 2.0,
 	    [&] () {},
-	    [&] () {result = range(points, queries);},
+	    [&] () {result = range(points, queries, verbose);},
 	    [&] () {});
   cout << endl;
 
