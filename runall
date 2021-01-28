@@ -74,6 +74,8 @@ tests = [
 
  ["delaunayRefine/incrementalRefine",True],
 
+ ["rangeQuery2d/parallelPlaneSweep",True],
+
  ["nBody/parallelCK",True],
 
 

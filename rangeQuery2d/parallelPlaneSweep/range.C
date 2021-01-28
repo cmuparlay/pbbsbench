@@ -23,81 +23,45 @@
 using namespace std;
 
 struct RangeQuery {
-
-  using entry_t = pair<coord, weight>;
-  
-  struct map_t {
+  struct set_t {
     using key_t = coord;
-    using val_t = weight;
     static bool comp(key_t a, key_t b) { return a < b;}
-    using aug_t = weight;
-    static aug_t get_empty() {return 0;}
-    static aug_t from_entry(key_t k, val_t v) {return v;}
-    static aug_t combine(aug_t a, aug_t b) {return a + b;}
   };
+  using coord_set = pam_set<set_t>;
 
-  using c_map = aug_map<map_t>;
-  parlay::sequence<c_map> ts;
+  parlay::sequence<coord_set> ts;
   parlay::sequence<coord> xs;
-  size_t n;
 
   RangeQuery(parlay::sequence<point> const &points) {
-    n = points.size();
-    c_map::reserve(36 * n);
-
     auto less = [] (point a, point b) {return a.x < b.x;};
     auto A = parlay::sort(points, less);
     
-    xs = parlay::sequence<coord>::uninitialized(n);
-    auto ys = parlay::sequence<entry_t>::uninitialized(n);
-    parlay::parallel_for (0, n, [&] (size_t i) {
-      xs[i] = A[i].x;
-      ys[i] = entry_t(A[i].y, A[i].w);
-      });
-
-    auto plus = [] (weight a, weight b) {return a + b;};
+    xs = parlay::map(A, [] (point p) {return p.x;});
+    auto ys = parlay::map(A, [] (point p) {return p.y;});
     
-    auto insert = [&] (c_map m, entry_t a) {
-      return c_map::insert(m, a, plus);
-    };
+    auto insert = [&] (coord_set m, coord a) {
+      return coord_set::insert(m, a);};
 
-    auto build = [&] (entry_t* s, entry_t* e) {
-      return c_map(s,e,plus);
-    };
+    auto build = [&] (coord* s, coord* e) {
+      return coord_set(s,e);};
 
-    auto fold = [&] (c_map m1, c_map m2) {
-      return c_map::map_union(m1, std::move(m2), plus);};
+    auto fold = [&] (coord_set m1, coord_set m2) {
+      return coord_set::map_union(m1, std::move(m2));};
 
-    ts = sweep<c_map>(ys, c_map(), insert, build, fold);
+    ts = sweep<coord_set>(ys, coord_set(), insert, build, fold);
   }
 
-  int get_index(const coord q) {
-    int l = 0, r = n;
-    int mid = (l+r)/2;
-    if (xs[0]>q) return -1;
-    while (l<r-1) {
-      if (xs[mid] == q) break;
-      if (xs[mid] < q) l = mid;
-      else r = mid;
-      mid = (l+r)/2;
-    }
-    return mid;
-  }
-
-  weight count_in_range(query q) {
-    int l = get_index(q.x1);
-    int r = get_index(q.x2);
-    weight left = (l<0) ? 0.0 : ts[l].aug_range(q.y1, q.y2);
-    weight right = (r<0) ? 0.0 : ts[r].aug_range(q.y1, q.y2);
+  long count_in_range(query q) {
+    long l = std::lower_bound(xs.begin(), xs.end(), q.x1) - xs.begin();
+    long r = std::lower_bound(xs.begin(), xs.end(), q.x2) - xs.begin();
+    long left = ts[l].rank(q.y2) - ts[l].rank(q.y1);
+    long right = ts[r].rank(q.y2) - ts[r].rank(q.y1);
     return right-left;
   }
 
-  static void print_allocation_stats() {
-    cout << "allocation stats:" ;  c_map::GC::print_stats();
-  }
-
-  static void finish() {
-    c_map::GC::finish();
+  void clear() {
+    ts.clear();
+    coord_set::GC::finish();
   }
 };
 
@@ -105,9 +69,10 @@ long range(Points const &points, Queries const &queries) {
   parlay::internal::timer t("range");
   RangeQuery r(points);
   t.next("build");
-  query q = queries[0];
   long total = parlay::reduce(parlay::map(queries, [&] (query q) {
   	          return (long) r.count_in_range(q);}));
   t.next("query");
+  r.clear();
+  t.next("clear");
   return total;
 }

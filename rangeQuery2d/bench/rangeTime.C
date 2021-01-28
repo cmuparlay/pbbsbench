@@ -45,7 +45,7 @@ void timeRange(Points const &points, Queries const& queries,
   cout << endl;
 
   cout << "total count = " << result << endl;
-  if (outFile != NULL);
+  if (outFile != NULL) parlay::chars_to_file(parlay::to_chars(result), outFile);
 }
 
 using pointx = point2d<coord>;
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   parlay::sequence<pointx> A = readPointsFromFile<pointx>(iFile);
   size_t n = A.size();
   size_t num_q = n/3;
-  auto points = parlay::map(A.cut(2 * num_q, n), [&] (pointx pt) {return point(pt.x,pt.y,1);});
+  auto points = parlay::map(A.cut(2 * num_q, n), [&] (pointx pt) {return point{pt.x,pt.y};});
   auto queries = parlay::tabulate(num_q, [&] (size_t i) {
      query q;					 
      coord x1 = A[2*i].x;
@@ -68,8 +68,6 @@ int main(int argc, char* argv[]) {
      coord x2 = A[2*i+1].x;
      coord y2 = A[2*i+1].y;
      query a{min(x1,x2), max(x1,x2), min(y1,y2), max(y1,y2)};
-     //query a;
-     //a.x1 = min(x1,x2); a.x2 = max(x1,x2); a.y1 = min(y1,y2); a.y2 = max(y1,y2);
      return a;});
   timeRange(points, queries, rounds, verbose, oFile);
 }
