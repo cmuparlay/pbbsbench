@@ -5,7 +5,11 @@ JEMALLOCLD = $(shell jemalloc-config --libdir)
 JEMALLOC = -L$(JEMALLOCLD) -ljemalloc 
 endif
 
+<<<<<<< HEAD
 CCFLAGS = -mcx16 -DPARLAY_SEQUENTIAL -O3 -std=c++17 
+=======
+CCFLAGS = -DPARLAY_SEQUENTIAL -mcx16 -O3 -std=c++17
+>>>>>>> Magdalen
 CLFLAGS = $(JEMALLOC)
 
 CC = g++

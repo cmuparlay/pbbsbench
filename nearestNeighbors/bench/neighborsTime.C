@@ -38,8 +38,6 @@ using coord = double;
 using point2 = point2d<coord>;
 using point3 = point3d<coord>;
 
-#define K 10
-
 template <class PT, int KK>
 struct vertex {
   using pointT = PT;
@@ -76,7 +74,7 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
     parlay::sequence<int> Pout(m);
     parlay::parallel_for (0, n, [&] (size_t i) {
 	for (int j=0; j < k; j++)
-	  Pout[maxK*i + j] = (v[i]->ngh[j])->identifier;
+	  Pout[k*i + j] = (v[i]->ngh[j])->identifier;
       });
     writeIntSeqToFile(Pout, outFile);
   }
@@ -89,6 +87,7 @@ int main(int argc, char* argv[]) {
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   int d = P.getOptionIntValue("-d",2);
+  algorithm_version = P.getOptionIntValue("-t",algorithm_version);
   if (k > 10 || k < 1) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 

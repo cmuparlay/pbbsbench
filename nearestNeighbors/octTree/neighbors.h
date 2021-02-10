@@ -20,9 +20,15 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define report_stats false
+bool report_stats = false;
+int algorithm_version = 2;
+
 #include <algorithm>
+<<<<<<< HEAD
 #include <math.h> // so we can have the square root
+=======
+#include <math.h> 
+>>>>>>> Magdalen
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
@@ -38,13 +44,20 @@ struct k_nearest_neighbors {
   using o_tree = oct_tree<vtx>;
   using node = typename o_tree::node;
   using tree_ptr = typename o_tree::tree_ptr;
+  using box = typename o_tree::box;
 
   tree_ptr tree;
 
-  // generates the search structure
+    // generates the search structure
   k_nearest_neighbors(parlay::sequence<vtx*> &V) {
+<<<<<<< HEAD
     tree = o_tree::build(V); //double colon because o_tree is a static method, not specific to the tree
+=======
+    tree = o_tree::build(V); 
+>>>>>>> Magdalen
   }
+
+
 
   // returns the vertices in the search structure, in an
   //  order that has spacial locality
@@ -140,7 +153,11 @@ struct k_nearest_neighbors {
 	  auto &Vtx = T->Vertices();
 	  for (int i = 0; i < T->size(); i++)
 	    if (Vtx[i] != vertex) update_nearest(Vtx[i]);
+<<<<<<< HEAD
 	} else if (T->size() > 10000) { 
+=======
+	} else if (T->size() > 10000 && algorithm_version != 0) { 
+>>>>>>> Magdalen
 	  auto L = *this; // make copies of the distances
 	  auto R = *this; // so safe to call in parallel
 	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
@@ -178,6 +195,21 @@ struct k_nearest_neighbors {
   }; // this ends the knn structure
 
 
+<<<<<<< HEAD
+=======
+  using box_delta = std::pair<box, double>;
+
+  box_delta get_box_delta(node* T, int dims){
+    box b = T -> Box(); 
+    double Delta = 0;
+    for (int i = 0; i < dims; i++) 
+      Delta = std::max(Delta, b.second[i] - b.first[i]);
+    box_delta bd = make_pair(b, Delta);
+    return bd;
+  }
+
+
+>>>>>>> Magdalen
   // takes in an integer and a position in said integer and returns whether the bit at that position is 0 or 1
   int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
     size_t val = ((size_t) 1) << (pos - 1);
@@ -190,6 +222,7 @@ struct k_nearest_neighbors {
   }
 
 //This finds the leaf in the search structure that p is located in
+<<<<<<< HEAD
 node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave_bits() takes in a point
   //first, we use code copied over from oct_tree to go from a point to an interleave integer
   using box = typename o_tree::box;
@@ -198,6 +231,11 @@ node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave
   double Delta = 0;
   for (int i = 0; i < dims; i++) 
     Delta = std::max(Delta, b.second[i] - b.first[i]);
+=======
+node* find_leaf0(point p, node* T, box b, double Delta){ //takes in a point since interleave_bits() takes in a point
+  //first, we use code copied over from oct_tree to go from a point to an interleave integer
+  node* current = T;
+>>>>>>> Magdalen
   size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //calling interleave_bits from oct_tree
   //then, we use this interleave integer to find the correct leaf
   while (not (current->is_leaf())){
@@ -206,6 +244,7 @@ node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave
     } else{
       current = current->Left();
     }
+<<<<<<< HEAD
   };
   //this is a test case, only works for a two-dimensional sample size
   // bool check = false; 
@@ -229,6 +268,95 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     p->ngh[i] = nn[i];
 }
 
+=======
+  };
+  //this is a test case, only works for a two-dimensional sample size
+  // bool check = false; 
+  // auto &Vtx = current -> Vertices();
+  // for (int i = 0; i < current -> size(); i++)
+  //   if ( ((Vtx[i] -> pt).x == p.x) and ((Vtx[i] -> pt).y == p.y)) { //this is a hack since it doesn't work properly for 3d
+  //   //need a notion of equality here---check that components are equal?
+  //     check = true;
+  //   }
+  // std::cout << "check " << check << "\n"; 
+  return current;
+}
+
+node* find_leaf(point p, int dims, node* R){
+  box_delta bd = get_box_delta(R, dims);
+  node* T = find_leaf0(p, R, bd.first, bd.second);
+  return T; 
+}
+
+  //instantiates the leaf_sequence as a member of k_nearest_neighbors
+  using node_index = std::pair<size_t, node*>;
+  parlay::sequence<node_index> leaf_sequence = parlay::sequence<node_index>(); 
+
+
+  // sort the sequence based on the interlaved integers so we can binary search it later
+  void sort_leaf_sequence(){
+    auto less = [] (node_index a, node_index b) { 
+      return a.first < b.first;
+    };                                            
+    parlay::sort(leaf_sequence, less); //TODO does using the center point always work?         
+  }
+
+
+  // for a node, add a pair of an interleaved center point and a node pointer to the leaf sequence
+  void g_internal(node* T, box b, double Delta){
+    size_t interleaved_center = o_tree::interleave_bits(T -> center(), b.first, Delta); 
+    node_index current = std::make_pair(interleaved_center, T);
+    leaf_sequence.push_back(current); //TODO check this is right
+  }
+
+
+  // populate the sequence with pairs of interleaved center points and node pointers
+  void get_leaf_sequence0(node* R, box b, double Delta, size_t size){
+    leaf_sequence.resize(size); //re-assign to just a sequence of the correct size
+    // wrapper function so that map_node() can be called on g_internal
+    auto g = [&] (node* T){ 
+      return g_internal(T, b, Delta); 
+    };
+    R -> map_node(g);
+  }
+
+  void get_leaf_sequence(node* R, int dims, size_t size){
+    box_delta bd = get_box_delta(R, dims);
+    get_leaf_sequence0(R, bd.first, bd.second, size);
+    sort_leaf_sequence();
+  }
+
+//given a point, finds a leaf by binary searching through the leaf_sequence
+node* find_leaf_using_seq0(point p, box b, double Delta){ 
+  //find the interleaved version of the point
+  size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //TODO does center have only integer coords?
+  auto less = [] (node_index a, size_t b){
+    return a.first < b;
+  };
+  node_index closest = parlay::internal::binary_search(leaf_sequence, searchInt, less);
+  return closest.second;
+}
+
+node* find_leaf_using_seq(point p, node* R, int dims){ //pointer to the root so it can interleave the bits
+  box_delta bd = get_box_delta(R, dims); //TODO move this to ANN()
+  node* T = find_leaf_using_seq0(p, bd.first, bd.second);
+  return T;
+}
+
+void delete_leaf_seq(){ //TODO this is messed up
+  leaf_sequence.clear();
+}
+
+//this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
+void k_nearest_leaf(vtx* p, node* T, int k) { 
+  kNN nn(p, k); 
+  nn.k_nearest_fromLeaf(T);
+  if (report_stats) p->counter = nn.internal_cnt;
+  for (int i=0; i < k; i++)
+    p->ngh[i] = nn[i];
+}
+
+>>>>>>> Magdalen
   void k_nearest(vtx* p, int k) {
     kNN nn(p,k);
     nn.k_nearest_rec(tree.get()); //this is passing in a pointer to the o_tree root
@@ -257,10 +385,15 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     if (report_stats) 
       std::cout << "depth = " << T.tree->depth() << std::endl;
 
+<<<<<<< HEAD
     int type = 2;
 
     // *******************
     if (type == 0) { // this is for starting from root 
+=======
+    // *******************
+    if (algorithm_version == 0) { // this is for starting from root 
+>>>>>>> Magdalen
       // this reorders the vertices for locality
       parlay::sequence<vtx*> vr = T.vertices();
       t.next("flatten tree");
@@ -270,6 +403,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 	  T.k_nearest(vr[i], k);}, 1);
 
     // *******************
+<<<<<<< HEAD
     } else if (type == 1) { // using find_leaf
       // this reorders the vertices for locality
       parlay::sequence<vtx*> vr = T.vertices();
@@ -287,6 +421,32 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
       // find nearest k neighbors for each point
       T.tree -> map(f);
+=======
+    } else if (algorithm_version == 1) { // using find_leaf
+      // this reorders the vertices for locality
+      parlay::sequence<vtx*> vr = T.vertices();
+      t.next("flatten tree");
+
+      int dims = (v[0]->pt).dimension();   
+      size_t size = v.size();
+      //construct the sequence which indexes leaves with their center points, and sorts it
+      T.get_leaf_sequence(T.tree.get(), dims, size);
+      T.delete_leaf_seq();
+
+      
+             
+      parlay::parallel_for(0, size, [&] (size_t i) {   
+	  T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, dims, T.tree.get()), k);});
+
+    // *******************      
+    } else { //(algorithm_version == 2) this is for starting from leaf, finding leaf using map()
+        auto f = [&] (vtx* p, node* n){ 
+  	     return T.k_nearest_leaf(p, n, k); 
+        };
+
+        // find nearest k neighbors for each point
+        T.tree -> map(f);
+>>>>>>> Magdalen
     }
 
     t.next("try all");
