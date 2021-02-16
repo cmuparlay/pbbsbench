@@ -84,26 +84,26 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
 }
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-k {1,...,10}] [-d {2,3}] [-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-k {1,...,100}] [-d {2,3}] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   int d = P.getOptionIntValue("-d",2);
   algorithm_version = P.getOptionIntValue("-t",algorithm_version);
-  if (k > 10 || k < 1) P.badArgument();
+  if (k > 100 || k < 1) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 
   if (d == 2) {
     parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
     if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
-    else timeNeighbors<10>(PIn, k, rounds, oFile);
+    else timeNeighbors<100>(PIn, k, rounds, oFile);
   }
 
   if (d == 3) {
     parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
     if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
-    else timeNeighbors<10>(PIn, k, rounds, oFile);
+    else timeNeighbors<100>(PIn, k, rounds, oFile);
   }
 
 }
