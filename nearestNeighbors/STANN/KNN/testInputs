@@ -1,0 +1,16 @@
+#!/usr/bin/python
+
+bnchmrk="neighbors"
+benchmark="Nearest Neighbors"
+checkProgram="../bench/neighborsCheck"
+dataDir = "../../geometryData/data"
+
+tests = [    
+    [1, "3DinCube_20000000","-d 3 -k 1", "-d 3 -k 1"]
+    ]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+
