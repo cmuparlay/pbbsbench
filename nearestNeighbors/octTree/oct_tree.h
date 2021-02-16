@@ -156,7 +156,7 @@ struct oct_tree {
 
     //pass in a function to compute nearest neighbors
     template <typename F>
-    void map(F f) { // wait a sec, how come map() is a method in node() rather than o_tree()?
+    void map(F f) { 
       if (is_leaf())
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {

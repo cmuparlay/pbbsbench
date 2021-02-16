@@ -1,4 +1,4 @@
-include common/parallelDefs_OMP
+include common/parallelDefs
 
 BENCH = neighbors
 REQUIRE = 

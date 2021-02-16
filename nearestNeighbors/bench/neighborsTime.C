@@ -77,7 +77,7 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
     parlay::sequence<int> Pout(m);
     parlay::parallel_for (0, n, [&] (size_t i) {
 	for (int j=0; j < k; j++)
-	  Pout[maxK*i + j] = (v[i]->ngh[j])->identifier;
+	  Pout[k*i + j] = (v[i]->ngh[j])->identifier;
       });
     writeIntSeqToFile(Pout, outFile);
   }

@@ -238,7 +238,10 @@ void sfcnn_work<Point, Ptype>::ksearch_common(Point q, unsigned int k, long unsi
   high = points[initial_scan_upper_range-1];
   for(long unsigned int i=query_point_index;i<initial_scan_upper_range;++i)
     {
-      que.update(points[i].sqr_dist(q), pointers[i]);
+#ifdef NOTSELF      // guy, added not to include self
+      if (q != points[i])
+#endif
+	que.update(points[i].sqr_dist(q), pointers[i]);
     }
   compute_bounding_box(q, bound_box_lower_corner, bound_box_upper_corner, sqrt(que.topdist()));
   

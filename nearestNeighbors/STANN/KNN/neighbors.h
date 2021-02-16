@@ -15,6 +15,7 @@
 #include "../KNN/helper.h"
 
 
+
 bool report_stats = false;
 bool check_correctness = false;
 int algorithm_version = 0; 

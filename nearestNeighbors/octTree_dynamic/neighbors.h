@@ -287,6 +287,7 @@ node* find_leaf_using_seq(point p, box b, double Delta){ //pointer to the root s
 }
 
 
+<<<<<<< HEAD
 //this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
 void k_nearest_leaf(vtx* p, node* T, int k) { 
   kNN nn(p, k); 
@@ -296,14 +297,92 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     p->ngh[i] = nn[i];
 }
 
-  void k_nearest(vtx* p, int k) {
-    kNN nn(p,k);
-    nn.k_nearest_rec(tree.get()); //this is passing in a pointer to the o_tree root
+  //this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
+  void k_nearest_leaf(vtx* p, node* T, int k) { 
+    kNN nn(p, k); 
+    nn.k_nearest_fromLeaf(T);
     if (report_stats) p->counter = nn.internal_cnt;
     for (int i=0; i < k; i++)
       p->ngh[i] = nn[i];
   }
 
+  //there is an absolutely pathological edge case where the point you're inserting changes the max dimension
+  //and you have to update literally everything fml
+
+  //inserts vertex v into the k_nearest_neighbors structure, and all sub-structures
+  void insert(vtx* v, node* R, box b, double Delta){
+    using indexed_point = typename o_tree::indexed_point; 
+    size_t interleaved_point = o_tree::interleave_bits(v->pt, b.first, Delta);
+    //check that Delta and our smallest point are still the same
+    size_t corner1 = o_tree::interleave_bits(b.first, b.first, Delta);
+    size_t corner2 = o_tree::interleave_bits(b.second, b.first, Delta);
+    bool oneway = (interleaved_point >= corner1 && interleaved_point <= corner2);
+    bool otherway = (interleaved_point >= corner2 && interleaved_point <= corner1);
+    if(not (oneway || otherway)){
+      std::cout << "error: tried to insert point outside bounding box" << std::endl;
+      abort(); 
+    }
+    indexed_point ip = std::make_pair(interleaved_point, v);
+    node* leaf = find_leaf(v->pt, R, b, Delta);
+    //if the size of the leaf is small, or if there is no more bit, insert the new point directly to the leaf
+    if(leaf->size() < (o_tree::node_cutoff-1) || leaf->bit == 0){
+        std::cout << "updating node" << std::endl;
+        leaf->update_node(ip);
+    } else{ //split the node
+        std::cout << "splitting node" << std::endl; 
+        o_tree::split(ip, leaf);
+    }
+  }
+
+
+  // using indexed_point = typename o_tree::indexed_point; 
+
+  // void batch_insert0(parlay::sequence<indexed_point> idpts, node* T){
+  //   if(T-> is_leaf()){
+  //     if(T->size() + idpts.size < o_tree::node_cutoff || T->bit == 0){
+  //       //update node
+  //     } else{
+  //       //split node
+  //     }
+  //   } else{
+  //       int new_bit = T-> bit; 
+  //       size_t val = ((size_t) 1) << (new_bit - 1);
+  //       size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+  //       auto less = [&] (indexed_point x) {
+  //         return (x.first & mask) < val;
+  //       };
+  //       cut_point = parlay::internal::binary_search(indexed_points, less);
+  //       if (cut_point == 0){
+
+  //       } else if(cut_point == idpts.size){
+
+  //       } else{
+
+  //       }
+  //   }
+  // }
+
+  // void batch_insert(parlay::sequence(vtx*) v, node* R, box b, double Delta){
+  //   size_t corner1 = o_tree::interleave_bits(b.first, b.first, Delta);
+  //   size_t corner2 = o_tree::interleave_bits(b.second, b.first, Delta);
+  //   bool oneway = (interleaved_point >= corner1 && interleaved_point <= corner2);
+  //   bool otherway = (interleaved_point >= corner2 && interleaved_point <= corner1);
+  //   if(not (oneway || otherway)){
+  //     std::cout << "error: tried to insert point outside bounding box" << std::endl;
+  //     abort(); 
+  //   }
+  //   size_t vsize = v.size();
+  //   parlay::sequence<indexed_point> idpts; 
+  //   idpts = parlay::sequence<indexed_point>(vsize);
+  //   for(size_t i=0; i<vsize; i++){
+  //     size_t interleaved_point = o_tree::interleave_bits(v[i]->pt, b.first, Delta);
+  //     idpts[i] = std::make_pair(interleaved_point, v[i]);
+  //   }
+  //   auto less = [] (indexed_point a, indexed_point b){
+  //     return a.first < b.first; 
+  //   };
+  //   parlay::sort(idpts, less);
+  // }
 }; //this ends the k_nearest_neighbors structure
 
 
@@ -321,6 +400,13 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
     knn_tree T(v);
+    int dims = v[0]->pt.dimension();
+    node* root = T.tree.get();
+    box_delta bd = T.get_box_delta(root, dims);
+    for(int i=2; i<24; i++){
+      T.insert(v[2], root, bd.first, bd.second);
+    }
+
     t.next("build tree");
 
     if (report_stats) 

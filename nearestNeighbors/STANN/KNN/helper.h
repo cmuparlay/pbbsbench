@@ -75,6 +75,7 @@ struct NN_helper{
 	}
 
 
+
 	void separate(uint n, Point P[], Point Q[], Point N[]){
 		parlay::parallel_for(0, n, [&] (uint i){
 			if((i%2)==0){

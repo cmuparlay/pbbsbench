@@ -15,6 +15,7 @@
 #include "../include/dpoint.hpp"
 #include "../KNN/helper.h"
 
+
 bool report_stats = false;
 bool check_correctness = false;
 int algorithm_version = 0;
@@ -36,6 +37,14 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   N.convert(v, n, P);
   // N.separate(n, P, Q, M);
   t.next("convert to Kumar's types");     
+  typedef reviver::dpoint<uint, Dim> Point;
+  Point *P;
+  P = (Point*) parlay::p_malloc(n*sizeof(Point));
+  NN_helper<Dim> N;
+
+  N.convert(v, n, P);
+  t.next("convert to Kumar's types");
+
 
   sfcnn<Point, Dim, uint> NN(P, n);
   t.next("initialize scfnn");
@@ -47,6 +56,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   parlay::parallel_for(0, n, [&] (uint i){
       NN.ksearch(P[i], k, answers[i]);});
   t.next("find all");
+
 
   // if (check_correctness) {
   //   parlay::parallel_for(0, n, [&] (uint i){
@@ -63,4 +73,3 @@ void ANN(parlay::sequence<vtx*> &v, int k){
   if (d==2) ANN_<maxK, vtx, 2>(v, k);
   else ANN_<maxK, vtx, 3>(v, k);
 }
-

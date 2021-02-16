@@ -41,7 +41,7 @@ struct oct_tree {
   using slice_t = decltype(make_slice(parlay::sequence<indexed_point>()));
   using slice_v = decltype(make_slice(parlay::sequence<vtx*>()));
 
-
+  constexpr static int node_cutoff = 32;
 
 
 
@@ -80,11 +80,13 @@ struct oct_tree {
     return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
   }
 
-  struct node { //should store what bit it has, then extract by shifting over while searching
+  struct node { 
+
 
   public:
     int bit;
     int num_leaf_children; 
+    parlay::sequence<indexed_point> indexed_pts;
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
@@ -105,13 +107,82 @@ struct oct_tree {
 
     // construct a leaf node with a sequence of points directly in it
     node(slice_t Pts, int currentBit) { //this needs to be handed a bit as well
+    void set_vertices(parlay::sequence<vtx*> Vertices0){
+      size_t n = Vertices0.size();
+      std::cout << n << std::endl; 
+      P = parlay::sequence<vtx*>(n);
+      for(size_t i=0; i<n; i++){
+        P[i] = Vertices0[i];
+      }
+    }
+
+    void set_idpts(parlay::sequence<indexed_point> idpts){
+      size_t n = idpts.size();
+      indexed_pts.resize(n);
+      for(size_t i=0; i<n; i++){
+        indexed_pts[i] = idpts[i];
+      }
+    }
+
+    void set_box(box B){
+      b = B; 
+    }
+
+    void set_parent(node* Parent){
+      parent = Parent; 
+    }
+
+    void set_child(node* child, bool left){
+      if(left) L = child;
+      else R = child;
+    }
+
+    void update_node(indexed_point ip){ 
+      std::cout << "here1" << std::endl; 
+      parlay::sequence<indexed_point> idpts;
+      idpts = parlay::sequence<indexed_point>(n+1);
+      parlay::sequence<vtx*> Q;
+      Q = parlay::sequence<vtx*>(n+1);
+      std::cout << "here2" << std::endl; 
+      auto less = [&] (indexed_point i){
+        return i.first < ip.first;
+      };
+      size_t pos = parlay::internal::binary_search(indexed_pts, less);
+      for(size_t i=0; i<pos; i++){
+        idpts[i] = (indexed_pts)[i];
+        Q[i] = (indexed_pts)[i].second;
+      }
+      idpts[pos] = ip;
+      Q[pos] = ip.second; 
+      for(size_t i=pos; i<(n+1); i++){
+        idpts[i+1] = (indexed_pts)[i];
+        Q[i+1] = (indexed_pts)[i].second;
+      }
+      std::cout << "here3" << std::endl; 
+      n += 1; 
+      set_vertices(Q);
+      std::cout << "here4" << std::endl;
+      set_idpts(idpts);
+      std::cout << "here5" << std::endl; 
+      set_box(get_box(P));
+      set_center(); 
+    }
+
+    
+
+
+    // construct a leaf node with a sequence of points directly in it
+    node(slice_t Pts, int currentBit) { 
       n = Pts.size();
       parent = nullptr;
 
       // strips off the integer tag, no longer needed
       P = leaf_seq(n);
-      for (int i = 0; i < n; i++)
-	P[i] = Pts[i].second;  
+      indexed_pts = parlay::sequence<indexed_point>(n);
+      for (int i = 0; i < n; i++) {
+        P[i] = Pts[i].second;
+        indexed_pts[i] = Pts[i];  
+      }
       L = R = nullptr;
       b = get_box(P);
       set_center();
@@ -236,6 +307,110 @@ struct oct_tree {
     }
   }; // this ends the node structure
 
+  static parlay::sequence<indexed_point> update_idpts(indexed_point ip, node*T, int n){
+    parlay::sequence<indexed_point> idpts;
+    idpts = parlay::sequence<indexed_point>(n);
+    auto less = [&] (indexed_point i){
+      return i.first < ip.first;
+    };
+    size_t pos = parlay::internal::binary_search(T->indexed_pts, less);
+    for(size_t i=0; i<pos; i++){
+      idpts[i] = (T->indexed_pts)[i];
+    }
+    idpts[pos] = ip;
+    for(size_t i=pos; i<n; i++){
+      idpts[i+1] = (T->indexed_pts)[i];
+    }
+    return idpts; 
+  }
+
+  static void update(indexed_point ip, node* T){
+      std::cout << "at update point" << std::endl; 
+      int n = T->size() + 1;
+      parlay::sequence<indexed_point> indexed_points = update_idpts(ip, T, n);
+      int new_bit = T->bit; 
+      std::cout << "making new node" << std::endl; 
+      node* updated_node = node::new_leaf(parlay::make_slice(indexed_points), new_bit);
+      std::cout << "created new node" << std::endl; 
+      node* parent = T->Parent();
+      //set everyone's parent pointers
+      if(parent->Left() == T) parent->set_child(updated_node, true);
+      else parent->set_child(updated_node, false);
+      updated_node->set_parent(parent);
+      T->set_parent(nullptr);
+      node::delete_tree(T);
+    }
+
+  //splits the node in two since point p would make it too big
+  static void split(indexed_point ip, node* T){
+      //insert the indexed_point into a leaf sequence at the correct place
+      int n = T->size()+1;
+      parlay::sequence<indexed_point> indexed_points = update_idpts(ip, T, n);
+      //find the point at which to cut the sequence
+      int new_bit = (T->bit);
+      size_t cut_point = 0;
+      //if all points are on one side, keep trying until they're not
+      while(cut_point == 0 || cut_point == n){ //and bit != 1, fix this later
+        new_bit -= 1;
+        if(new_bit == 0){
+          update(ip, T);
+          return;
+        } else{
+          size_t val = ((size_t) 1) << (new_bit - 1);
+          size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+          auto less = [&] (indexed_point x) {
+            return (x.first & mask) < val;
+          };
+          cut_point = parlay::internal::binary_search(indexed_points, less);
+        }  
+      }
+      //create two new nodes with the sequence split along the cut 
+      node* left = node::new_leaf(parlay::make_slice(indexed_points).cut(0, cut_point), new_bit);
+      node* right = node::new_leaf(parlay::make_slice(indexed_points).cut(cut_point, n), new_bit);
+      //create a new internal node to replace the old node
+      node* parent = node::new_node(left, right, T->bit);
+      //set everyone's parent pointers
+      node* grandparent = T->Parent();
+      if(grandparent->Left() == T) grandparent->set_child(parent, true);
+      else grandparent->set_child(parent, false);
+      left->set_parent(parent);
+      right->set_parent(parent);
+      T->set_parent(nullptr);
+      node::delete_tree(T);
+    }
+
+    // //occasionally, inserting a point will require not splitting an existing node but creating a new one
+    // //this function creates the new node and a new intermediate node
+    // //TODO this actually needs to be recursive since the list might be longer than 32
+    // static void create_new(node* parent, parlay::sequence<indexed_point> indexed_points, int bit, bool left){
+    //   parent->set_bit(bit);
+    //   node* new_node = node::new_leaf(parlay::make_slice(indexed_points), bit-1);
+    //   node* left_child = parent->Left();
+    //   node* right_child = parent->Right();
+    //   node* new_parent = node::new_node(left_child, right_child, bit-1);
+    //   //set the correct parent pointers
+    //   if(left){
+    //     parent->set_child(new_parent, true);
+    //     parent->set_child(new_node, false);
+    //   } else{
+    //     parent->set_child(new_parent, false);
+    //     parent->set_child(new_node, true);
+    //   }
+    //   left_child->set_parent(new_parent);
+    //   right_child->set_parent(new_parent);  
+    // }
+
+    // static void batch_update(node* leaf, parlay::sequence<indexed_point> new_points){
+
+    // }
+
+    // static void batch_split(node* leaf, parlay::sequence<indexed_point> new_points){
+
+    // }
+
+    //TODO batch split needs to be recursive since a list of updates might be more than two nodes' worth
+
+
   
   // A unique pointer to a tree node to ensure the tree is
   // destructed when the pointer is, and that  no copies are made.
@@ -256,12 +431,6 @@ struct oct_tree {
 
 private:
   constexpr static int key_bits = 64;
-
-
-  
-
-
-
 
   // tags each point (actually a pointer to it), with an interger
   // consisting of the interleaved bits for the x,y,z coordinates.
@@ -296,10 +465,9 @@ private:
   static node* build_recursive(slice_t Pts, int bit) {
     size_t n = Pts.size();
     if (n == 0) abort();
-    int cutoff = 32;
 
     // if run out of bit, or small then generate a leaf
-    if (bit == 0 || n < cutoff) {
+    if (bit == 0 || n < node_cutoff) {
       return node::new_leaf(Pts, bit); 
     } else {
 

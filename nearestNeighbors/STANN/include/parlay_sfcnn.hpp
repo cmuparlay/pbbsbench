@@ -468,3 +468,4 @@ private:
   sfcnn_work<reviver::dpoint<sep_float<long double>, Dim> > NN;
 };
 #endif
+

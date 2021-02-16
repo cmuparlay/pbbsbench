@@ -10,6 +10,7 @@
 #include "common/get_time.h" 
 #include "../../octTree/oct_tree.h"
 
+
 bool report_stats = false;
 #include "../include/parlay_sfcnn_knng.hpp"
 #include "../include/dpoint.hpp"
