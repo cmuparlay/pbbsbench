@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 // This code is part of the Problem Based Benchmark Suite (PBBS)
 // Copyright (c) 2011 Guy Blelloch and the PBBS team
 //
