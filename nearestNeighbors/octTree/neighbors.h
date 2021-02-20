@@ -1,4 +1,3 @@
-
 // This code is part of the Problem Based Benchmark Suite (PBBS)
 // Copyright (c) 2011 Guy Blelloch and the PBBS team
 //
@@ -35,6 +34,7 @@ int queue_cutoff = 10;
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "oct_tree.h"
+#include "qknn.hpp"
 
 
 // A k-nearest neighbor structure
@@ -64,9 +64,6 @@ struct k_nearest_neighbors {
     return tree->flatten();
   }
 
-  static bool compare(vtx_dist a, vtx_dist b){
-    return a.second < b.second; 
-  } 
 
   struct kNN {
     vtx *vertex;  // the vertex for which we are trying to find a NN
@@ -79,7 +76,7 @@ struct k_nearest_neighbors {
     size_t internal_cnt;
 
      
-    std::priority_queue<vtx_dist, std::vector<vtx_dist>, decltype(&(k_nearest_neighbors::compare))> nearest_nbh;      
+    qknn<vtx> nearest_nbh;      
 
 
     kNN() {}
@@ -107,9 +104,8 @@ struct k_nearest_neighbors {
         }
       }
       max_distance = numeric_limits<double>::max();
-      nearest_nbh.push(std::make_pair(p, 0));
-      nearest_nbh.pop();
-      std::cout << "made kNN" << std::endl; 
+      nearest_nbh = qknn<vtx>();
+      nearest_nbh.set_size(k);
     }
     
 
@@ -131,18 +127,11 @@ struct k_nearest_neighbors {
 
     //put into queue if vtx is closer than the furthest neighbor
     void update_nearest_queue(vtx* other){
-      std::cout << "updating queue" << std::endl;
-      // std::cout << (vertex->pt - other->pt).sqLength();
       auto dist = (vertex->pt - other->pt).sqLength();
-      if (dist < max_distance){
-        // std::cout << "popping" << std::endl; 
-        nearest_nbh.pop();
-        // std::cout << "popped, now pushing new elt" << std::endl; 
-        nearest_nbh.push(std::make_pair(other, dist));
-        // std::cout << "pushed" << std::endl; 
-        max_distance = dist; 
+      bool updated = nearest_nbh.update(other, dist);
+      if (updated){
+        max_distance = nearest_nbh.topdist();
       }
-      std::cout << "successfully updated queue" << std::endl; 
     }
 
 
@@ -184,35 +173,17 @@ struct k_nearest_neighbors {
       }
     }
 
-    //this is not the smartest, but it is unlikely to be a bottleneck
     void merge_queue(kNN &L, kNN &R){
-      while (nearest_nbh.size()>0) nearest_nbh.pop();
-      int L_size = L.nearest_nbh.size();
-      int R_size = R.nearest_nbh.size();
-      int total = L_size + R_size;
       max_distance = max(L.max_distance, R.max_distance);   
-      parlay::sequence<vtx_dist> queue_merge;
-      queue_merge = parlay::sequence<vtx_dist>();
-      for(int i=0; i<L_size; i++){
-        queue_merge[i] = L.nearest_nbh.top();
+      while(L.nearest_nbh.size()>0){
+        vtx_dist elt = L.nearest_nbh.top();
         L.nearest_nbh.pop();
+        nearest_nbh.update(elt.first, elt.second);
       }
-      for(int i=0; i<total; i++){
-        queue_merge[L_size+i] = R.nearest_nbh.top();
+      while(R.nearest_nbh.size()>0){
+        vtx_dist elt = R.nearest_nbh.top();
         R.nearest_nbh.pop();
-      }
-      auto compare = [&] (vtx_dist a, vtx_dist b){
-            return a.second < b.second;
-      };
-      auto x = parlay::sort(queue_merge, compare);
-      int i=0;
-      vtx_dist prev;
-      while (i<k){
-        if(x[i] != prev){
-          nearest_nbh.push(x[i]);
-          prev = x[i];
-          i += 1; 
-        }
+        nearest_nbh.update(elt.first, elt.second);
       }
     }
     
@@ -423,7 +394,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     t.next("build tree");
 
     if (report_stats) 
-      std::cout << "depth = " << T.tree->depth() << std::endl;
+      std::cout << "depth = " << T.tree->depth() << std::endl;      
 
     // *******************
     if (algorithm_version == 0) { // this is for starting from root 
@@ -432,9 +403,8 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       t.next("flatten tree");
 
       // find nearest k neighbors for each point
-      parlay::parallel_for (0, 2, [&] (size_t i) {
+      parlay::parallel_for (0, vr.size(), [&] (size_t i) {
 	       T.k_nearest(vr[i], k);
-         std::cout << "found neighbor for point " << i << std::endl; 
       }, 1);
 
       // for (size_t i=0; i<v.size(); i++){

@@ -80,10 +80,11 @@ struct oct_tree {
     return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
   }
 
-  struct node { //should store what bit it has, then extract by shifting over while searching
+  struct node { 
 
   public:
     int bit;
+    int num_leaf_children; 
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
@@ -98,8 +99,12 @@ struct oct_tree {
       bit = currentBit;
     }
 
+    void set_children(int num_children){
+      num_leaf_children = num_children;
+    }
+
     // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts, int currentBit) { //this needs to be handed a bit as well
+    node(slice_t Pts, int currentBit) { 
       n = Pts.size();
       parent = nullptr;
 
@@ -111,6 +116,7 @@ struct oct_tree {
       b = get_box(P);
       set_center();
       set_bit(currentBit);
+      set_children(1); 
     }
 
     // construct an internal binary node
@@ -121,6 +127,8 @@ struct oct_tree {
       n = L->size() + R->size();
       set_center();
       set_bit(currentBit);
+      //set the number of leaf children
+      set_children(L->num_leaf_children + R->num_leaf_children);
     }
     
     static node* new_leaf(slice_t Pts, int currentBit) {
@@ -166,19 +174,6 @@ struct oct_tree {
       }
     }
 
-    //like map(), but the function f only has to be over a node, not a point
-    //will be used to make sequence for sorting in Method 2
-    template <typename F>
-    void map_node(F f){
-      if(is_leaf()){
-        f(this);
-      }
-      else{
-        parlay::par_do_if(n>1000,
-        [&] () {L -> map_node(f);},
-        [&] () {R -> map_node(f);});
-      }
-    }
 
     size_t depth() {
       if (is_leaf()) return 0;
@@ -327,7 +322,7 @@ private:
 	parlay::par_do_if(n > 1000,
            [&] () {L = build_recursive(Pts.cut(0, pos), bit - 1);},
 	   [&] () {R = build_recursive(Pts.cut(pos, n), bit - 1);});
-	return node::new_node(L,R, bit); //TODO add bit here
+	return node::new_node(L,R, bit); 
       }
     }
   }
