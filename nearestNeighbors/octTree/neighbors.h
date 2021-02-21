@@ -24,7 +24,7 @@ bool report_stats = true;
 int algorithm_version = 0;
 // 0=root based, 2=bit based, >3=map based
 // 1 is cursed
-int queue_cutoff = 10; 
+int queue_cutoff = 50;     
 
 
 #include <algorithm>
@@ -74,8 +74,6 @@ struct k_nearest_neighbors {
     int dimensions;
     size_t leaf_cnt;
     size_t internal_cnt;
-
-     
     qknn<vtx> nearest_nbh;      
 
 
@@ -102,10 +100,11 @@ struct k_nearest_neighbors {
         	neighbors[i] = (vtx*) NULL; 
         	distances[i] = numeric_limits<double>::max();
         }
+      } else{
+        nearest_nbh = qknn<vtx>();
+        nearest_nbh.set_size(k);
       }
       max_distance = numeric_limits<double>::max();
-      nearest_nbh = qknn<vtx>();
-      nearest_nbh.set_size(k);
     }
     
 
@@ -115,13 +114,13 @@ struct k_nearest_neighbors {
       if (dist < max_distance) { 
       	neighbors[0] = other;
       	distances[0] = dist;
-        max_distance = dist; 
       	for (int i = 1;
       	     i < k && distances[i-1] < distances[i];
       	     i++) {
       	  swap(distances[i-1], distances[i]);
       	  swap(neighbors[i-1], neighbors[i]); 
         }
+        max_distance = distances[0];
       }
     }
 
@@ -174,7 +173,6 @@ struct k_nearest_neighbors {
     }
 
     void merge_queue(kNN &L, kNN &R){
-      max_distance = max(L.max_distance, R.max_distance);   
       while(L.nearest_nbh.size()>0){
         vtx_dist elt = L.nearest_nbh.top();
         L.nearest_nbh.pop();
@@ -185,6 +183,7 @@ struct k_nearest_neighbors {
         R.nearest_nbh.pop();
         nearest_nbh.update(elt.first, elt.second);
       }
+      max_distance = nearest_nbh.topdist();
     }
     
     // looks for nearest neighbors for pt in Tree node T
