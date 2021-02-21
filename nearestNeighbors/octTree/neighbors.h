@@ -20,8 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = true;
-int algorithm_version = 0;
+bool report_stats = false;
+int algorithm_version = 3;
 // 0=root based, 2=bit based, >3=map based
 // 1 is cursed
 int queue_cutoff = 50;     
@@ -204,7 +204,7 @@ struct k_nearest_neighbors {
                   // std::cout << "here6" << std::endl; 
                 }
               } 
-	} else if (T->size() > 10000 && algorithm_version != 0) { 
+	} else if (T->size() > 10000 && algorithm_version != 0 && k < queue_cutoff) { 
 	  auto L = *this; // make copies of the distances
 	  auto R = *this; // so safe to call in parallel
 	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},

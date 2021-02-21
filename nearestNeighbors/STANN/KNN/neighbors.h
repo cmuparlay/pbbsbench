@@ -15,7 +15,6 @@
 #include "../KNN/helper.h"
 
 
-
 bool report_stats = false;
 bool check_correctness = false;
 int algorithm_version = 0; 
@@ -41,7 +40,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   sfcnn<Point, Dim, uint> NN(M, h);
   t.next("initialize scfnn");
 
-  auto answers = parlay::tabulate(n, [&] (size_t) {        
+  auto answers = parlay::tabulate(h, [&] (size_t) {        
       return std::vector<unsigned long>(k);});
   t.next("initialize answers");
 
