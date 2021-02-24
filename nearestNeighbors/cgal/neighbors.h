@@ -1,5 +1,6 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
 
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Orthogonal_k_neighbor_search.h>
@@ -9,6 +10,8 @@
 #include "parlay/primitives.h"
 
 int algorithm_version = 3; // just to interface with the timing code
+int nthreads=20;
+tbb::task_scheduler_init TBBinit(nthreads);
 
 using Kernel = CGAL::Simple_cartesian<double>;
 using Point_3 = Kernel::Point_3;
@@ -17,6 +20,7 @@ using Traits = CGAL::Search_traits_3<Kernel>;
 using Neighbor_search = CGAL::Orthogonal_k_neighbor_search<Traits>;
 using Tree = Neighbor_search::Tree;
 using Point_with_distance = Neighbor_search::Point_with_transformed_distance;
+
 
 template <int max_k, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k) {
