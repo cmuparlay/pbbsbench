@@ -1,6 +1,7 @@
 #include "ips4o.hpp"
+#include "parlay/sequence.h"
 
-template <class E, class BinPred>
-void compSort(E* A, unsigned int n, const BinPred& f) {
-  ips4o::parallel::sort(A, A+n, f);
+template <class T, class BinPred>
+void compSort(parlay::sequence<T> &A, const BinPred& f) {
+  ips4o::parallel::sort(A.begin(), A.end(), f);
 }

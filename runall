@@ -223,6 +223,7 @@ try :
                     n = len(processors)
                     for p in processors[0:n-1] :
                         runtest(test, p, False)
+                        os.system("echo")
                     runtest(test, processors[n-1], not(noCheck))
 
 except NameError,v :
