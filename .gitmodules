@@ -4,3 +4,6 @@
 [submodule "PAM"]
 	path = PAM
 	url = https://github.com/cmuparlay/PAM.git
+[submodule "comparisonSort/ips4o/ips4oRepository"]
+	path = comparisonSort/ips4o/ips4oRepository
+	url = https://github.com/ips4o/ips4o.git
