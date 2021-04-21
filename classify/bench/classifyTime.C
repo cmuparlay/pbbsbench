@@ -69,6 +69,7 @@ void timeClassify(features const &Train, rows const &Test, row const &labels,
 	    [&] () {});
   cout << endl;
 
+  auto x = parlay::filter(result, [] (long i) {return (i > 9) || (i < 0);});
   report_correct(result, labels);
   if (outFile != NULL) parlay::chars_to_file(csv_row(result), outFile);
 }

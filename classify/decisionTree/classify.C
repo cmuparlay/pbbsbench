@@ -48,13 +48,13 @@ struct tree {
   bool is_leaf;
   int feature_index;
   int feature_cut;
-  value best;
+  int best;
   size_t size;
   sequence<tree*> children;
   tree(int i, int c, int best, sequence<tree*> children)
     : is_leaf(false), best(best), feature_index(i), feature_cut(c), children(children) {
     size = reduce(map(children, [] (tree* t) {return t->size;}));}
-  tree(value best) : is_leaf(true), best(best), size(1) {}
+  tree(int best) : is_leaf(true), best(best), size(1) {}
 };
 
 tree* Leaf(int best) {
@@ -195,14 +195,18 @@ auto build_tree(features &A, bool verbose) {
   }
 }
 
-value classify_row(tree* T, row const&r) {
+int classify_row(tree* T, row const&r) {
   if (T->is_leaf) {
     return T->best;
   } else if (T->feature_cut == -1) { // discrete partition
-    if (!(r[T->feature_index] < T->children.size())) return -1;
+    // could be a feature value in the test data that did not appear in training data
+    // in this case return the best
+    if (!(r[T->feature_index] < T->children.size())) return T->best; // -1;
+    // go to child based on feature value
     int val = classify_row(T->children[r[T->feature_index]], r);
     return (val == -1) ? T->best : val;
   } else {  // continuous cut
+    // go to child based on whether below or at-above cut value
     int idx = (r[T->feature_index] < T->feature_cut) ? 0 : 1;
     int val = classify_row(T->children[idx], r);
     return (val == -1) ? T->best : val;
@@ -214,5 +218,5 @@ row classify(features const &Train, rows const &Test, bool verbose) {
   tree* T = build_tree(A, verbose);
   if (true) cout << "Tree size = " << T->size << endl;
   int num_features = Test[0].size();
-  return map(Test, [&] (row const& r) {return classify_row(T, r);});
+  return map(Test, [&] (row const& r) -> value {return classify_row(T, r);});
 }
