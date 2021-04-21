@@ -37,7 +37,7 @@ namespace benchIO {
   using parlay::make_slice;
 
   typedef unsigned int uint;
-  typedef sequence<char> charSeq;
+  typedef parlay::chars charSeq;
   typedef pair<int,int> intPair;
   typedef pair<unsigned int, unsigned int> uintPair;
   typedef pair<unsigned int, int> uintIntPair;
@@ -98,13 +98,13 @@ namespace benchIO {
     else return none;
   }
 
-  long read_long(sequence<char> const &S) {
+  long read_long(parlay::chars const &S) {
     return parlay::chars_to_long(S);}
 
-  double read_double(sequence<char> const &S) {
+  double read_double(parlay::chars const &S) {
     return parlay::chars_to_double(S);}
 
-  using charseq_slice = parlay::slice<const sequence<char>*, const sequence<char>*>;
+  using charseq_slice = parlay::slice<const parlay::chars*, const parlay::chars*>;
   
 
   // specialized parsing functions
