@@ -12,13 +12,13 @@ tests = [
  ["integerSort/parallelRadixSort",True],
 # ["integerSort/serialRadixSort",False],
 
-# ["comparisonSort/ips4o",True],
  ["comparisonSort/sampleSort",True],
  ["comparisonSort/quickSort",True],
  ["comparisonSort/mergeSort",True],
  ["comparisonSort/stableSampleSort",True],
  ["comparisonSort/serialSort",False],
  ["comparisonSort/stlParallelSort",True],
+ ["comparisonSort/ips4o",True],
 
 #["suffixArray/serialKS",False],  
  ["suffixArray/parallelKS",True],
