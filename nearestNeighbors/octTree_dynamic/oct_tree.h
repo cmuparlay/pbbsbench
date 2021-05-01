@@ -331,7 +331,7 @@ struct oct_tree {
     //occasionally, inserting a point will require not splitting an existing node but creating a new one
     //this function creates the new node and a new intermediate node
     static void create_new(node* parent, slice_t indexed_points, int bit, bool left){
-      if (indexed_points.size() == 0) abort();
+      if (indexed_points.size() == 0) return; 
       node* new_node = build_recursive(indexed_points, bit-1);
       node* left_child = parent->Left();
       node* right_child = parent->Right();

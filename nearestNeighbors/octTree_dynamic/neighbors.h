@@ -400,7 +400,8 @@ void print_seq(parlay::sequence<vtx*> v){
   for(size_t i=0; i<v.size(); i++) std::cout << v[i] << std::endl; 
 }
 
-int p = 100;
+//the parameter p means that p points will be added dynamically
+int p = 5000000;  
 
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
@@ -414,24 +415,18 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
     size_t n = v.size();
-    size_t v_2 = n/p;
-    size_t v_1 = n - v_2;
+    size_t v_2 = n/2;
+    size_t v_1 = n/2;
     // std::cout << v_2 << std::endl; 
     parlay::sequence<vtx*> v1;
     v1 = parlay::sequence<vtx*>(v_1);
     parlay::sequence<vtx*> v2;
     v2 = parlay::sequence<vtx*>(v_2);
     // std::cout << "initialized sequences" << std::endl; 
-    parlay::parallel_for (0, v.size(), [&] (size_t i) {
-      if(i < v_2){
-        v2[i] = v[i];
-      } else{
-         v1[i-v_2] = v[i];
-      }
+    parlay::parallel_for (0, n, [&] (size_t i) {
+      if(i < n/2) v1[i] = v[i];
+      else v2[i] = v[i];
     }, 1);
-    // print_seq(v1);
-    // std::cout << "v1" << std::endl;
-    // print_seq(v2);
     t.next("made query sequences");
     knn_tree T(v1);
     t.next("build tree");
@@ -439,7 +434,9 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     node* root = T.tree.get();
     box_delta bd = T.get_box_delta(root, dims);
     // std::cout << "entering batch insertion" << std::endl; 
-    T.batch_insert(v2, root, bd.first, bd.second);
+    
+    // std::cout << "at batch insertion" << std::endl; 
+      T.batch_insert(v2, root, bd.first, bd.second);
     t.next("do batch insertion");
 
     // if (report_stats) 

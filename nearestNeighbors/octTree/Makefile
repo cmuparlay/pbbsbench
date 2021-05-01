@@ -1,6 +1,6 @@
 include common/parallelDefs
 
 BENCH = neighbors
-REQUIRE = oct_tree.h
+REQUIRE = 
 
 include common/MakeBench

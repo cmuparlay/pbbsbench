@@ -10,7 +10,6 @@
 #include "common/get_time.h" 
 #include "../../octTree/oct_tree.h"
 
-
 bool report_stats = false;
 #include "../include/parlay_sfcnn_knng.hpp"
 #include "../include/dpoint.hpp"
@@ -18,6 +17,7 @@ bool report_stats = false;
 
 bool check_correctness = false;
 int algorithm_version = 0; 
+int d = 100000; 
 
 template<int maxK, class vtx, int Dim>
 void ANN_(parlay::sequence<vtx*> &v, int k) {
@@ -47,7 +47,19 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
 
 template<int maxK, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k){
-  int d = (v[0]->pt.dimension());
-  if (d==2) ANN_<maxK, vtx, 2>(v, k);
-  else ANN_<maxK, vtx, 3>(v, k);
+  size_t n = v.size(); 
+  size_t rounds = n/d; 
+  size_t used = 0; 
+  for(size_t i = 0; i < rounds; i++){
+
+    parlay::sequence<vtx*> v1;
+    v1 = parlay::sequence<vtx*>(d);
+    parlay::parallel_for(0, d, [&] (size_t i){
+      v1[i] = v[used+i];
+    });
+    used += d; 
+    int d = (v[0]->pt.dimension());
+    if (d==2) ANN_<maxK, vtx, 2>(v1, k);
+    else ANN_<maxK, vtx, 3>(v1, k);
+  }
 }

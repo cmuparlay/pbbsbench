@@ -84,7 +84,6 @@ struct oct_tree {
 
   public:
     int bit;
-    int num_leaf_children; 
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
@@ -97,10 +96,6 @@ struct oct_tree {
 
     void set_bit(int currentBit){
       bit = currentBit;
-    }
-
-    void set_children(int num_children){
-      num_leaf_children = num_children;
     }
 
     // construct a leaf node with a sequence of points directly in it
@@ -116,7 +111,6 @@ struct oct_tree {
       b = get_box(P);
       set_center();
       set_bit(currentBit);
-      set_children(1); 
     }
 
     // construct an internal binary node
@@ -127,8 +121,6 @@ struct oct_tree {
       n = L->size() + R->size();
       set_center();
       set_bit(currentBit);
-      //set the number of leaf children
-      set_children(L->num_leaf_children + R->num_leaf_children);
     }
     
     static node* new_leaf(slice_t Pts, int currentBit) {

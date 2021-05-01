@@ -1,3 +1,5 @@
+#include "../../octTree/oct_tree.h"
+
 #define sq(x) (((double) (x))* ((double) (x)))
 
 uint abs(uint x, uint y){
@@ -8,8 +10,10 @@ uint abs(uint x, uint y){
 	}
 }
 
-template<int d>
+template<int d, class vtx>
 struct NN_helper{
+	using o_tree = oct_tree<vtx>;
+	using box = typename o_tree::box;
 
 	typedef reviver::dpoint<uint, d> Point;
 
@@ -39,13 +43,12 @@ struct NN_helper{
 	}
 
 
-	template<class vtx>
-	void convert(parlay::sequence<vtx*> &v, uint n, Point P[]){
+	void convert(parlay::sequence<vtx*> &v, uint n, Point P[], Point Q[]){
 	  //prelims for rounding each point to an integer: 
 	  // 1) find the smallest point in each dimension
 	  // 2) find the largest gap between min and max over all dimensions
 	  using point = typename vtx::pointT;
-	  using box = std::pair<point,point>;
+	  using box = typename o_tree::box;
 
 	  auto minmax = [&] (box x, box y) {
 	    return box(x.first.minCoords(y.first),
@@ -61,10 +64,16 @@ struct NN_helper{
 	  for (int i = 0; i < d; i++) 
 	    Delta = std::max(Delta, b.second[i] - b.first[i]); 
 	  point min_point = b.first;
+	  parlay::sequence<vtx*> v1; 
+	  v1 = parlay::sequence<vtx*>(n/2);
+	  parlay::parallel_for(0, n/2, [&] (size_t i){
+	  	v1[i] = v[n/2+i];
+	  });
+	  parlay::sequence<vtx*> v2 = v1;// z_sort(v1, b, Delta);
 	  // round each point to an integer with key_bits bit
 	  int bits = 31; // for some reason 32 bits does not work
 	  int maxval = (((size_t) 1) << bits) - 1;
-	  parlay::parallel_for(0, n, [&] (uint i){
+	  parlay::parallel_for(0, n/2, [&] (uint i){
 	      Point p; 
 	      P[i] = p;
 	      for (int j = 0; j < d; j++){
@@ -72,7 +81,39 @@ struct NN_helper{
 		P[i][j] = coord;
 	      }
 	    });
+	  parlay::parallel_for(0, n/2, [&] (uint i){
+	      Point p; 
+	      Q[i] = p;
+	      for (int j = 0; j < d; j++){
+		uint coord = (uint) floor(maxval * ((v2[i] -> pt)[j] - min_point[j])/Delta); 
+		Q[i][j] = coord;
+	      }
+	    });
+	  
 	}
+
+
+	parlay::sequence<vtx*> z_sort(parlay::sequence<vtx*> v, box b, double Delta){ 
+	    using indexed_point = typename o_tree::indexed_point; 
+	    size_t n = v.size();
+	    parlay::sequence<indexed_point> points;
+	    points = parlay::sequence<indexed_point>(n);
+	    parlay::parallel_for(0, n, [&] (size_t i){
+	      size_t p1 = o_tree::interleave_bits(v[i]->pt, b.first, Delta);
+	      indexed_point i1 = std::make_pair(p1, v[i]);
+	      points[i] = i1; 
+	    });
+	    auto less = [&] (indexed_point a, indexed_point b){
+	      return a.first < b.first;
+	    };
+	    auto x = parlay::sort(points, less);
+	    parlay::sequence<vtx*> v3; 
+	    v3 = parlay::sequence<vtx*>(n);
+	    parlay::parallel_for(0, n, [&] (size_t i){
+	      v3[i] = x[i].second; 
+	    });
+	    return v3; 
+  	}
 
 
 	void separate(uint n, Point P[], Point Q[], Point N[]){

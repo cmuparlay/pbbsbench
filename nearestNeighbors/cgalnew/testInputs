@@ -6,11 +6,11 @@ checkProgram="../bench/neighborsCheck"
 dataDir = "../geometryData/data"
 
 tests = [    
-    [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
-    [1, "3DinCube_10M","-d 3 -k 2", "-d 3 -k 2"],
-    [1, "3DinCube_10M","-d 3 -k 5", "-d 3 -k 5"],
-    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
-    [1, "3DinCube_10M","-d 3 -k 15", "-d 3 -k 15"],
+    [1, "3DinCube_20000000","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_20000000","-d 3 -k 2", "-d 3 -k 2"],
+    [1, "3DinCube_20000000","-d 3 -k 5", "-d 3 -k 5"],
+    [1, "3DinCube_20000000","-d 3 -k 10", "-d 3 -k 10"],
+    [1, "3DinCube_20000000","-d 3 -k 15", "-d 3 -k 15"],
     [1, "3DinCube_10M","-d 3 -k 20", "-d 3 -k 20"],
     [1, "3DinCube_10M","-d 3 -k 25", "-d 3 -k 25"],
     [1, "3DinCube_10M","-d 3 -k 30", "-d 3 -k 30"],

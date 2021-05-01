@@ -6,22 +6,15 @@ checkProgram="../bench/neighborsCheck"
 dataDir = "../geometryData/data"
 
 tests = [    
-    [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
-    [1, "3DinCube_10M","-d 3 -k 2", "-d 3 -k 2"],
-    [1, "3DinCube_10M","-d 3 -k 5", "-d 3 -k 5"],
-    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
-    [1, "3DinCube_10M","-d 3 -k 15", "-d 3 -k 15"],
-    [1, "3DinCube_10M","-d 3 -k 20", "-d 3 -k 20"],
-    [1, "3DinCube_10M","-d 3 -k 25", "-d 3 -k 25"],
-    [1, "3DinCube_10M","-d 3 -k 30", "-d 3 -k 30"],
-    [1, "3DinCube_10M","-d 3 -k 40", "-d 3 -k 40"],
-    [1, "3DinCube_10M","-d 3 -k 50", "-d 3 -k 50"],
-    [1, "3DinCube_10M","-d 3 -k 60", "-d 3 -k 60"],
-    [1, "3DinCube_10M","-d 3 -k 70", "-d 3 -k 70"],
-    [1, "3DinCube_10M","-d 3 -k 80", "-d 3 -k 80"],
-    [1, "3DinCube_10M","-d 3 -k 90", "-d 3 -k 90"],
-    [1, "3DinCube_10M","-d 3 -k 100", "-d 3 -k 100"]
-    ]
+    [1, "3DinCube_20","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_200","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_2000","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_20000","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_200000","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_2000000","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_20000000","-d 3 -k 1", "-d 3 -k 1"],
+    [1, "3DinCube_200000000","-d 3 -k 1", "-d 3 -k 1"]
+]
 
 import sys
 sys.path.insert(0, 'common')

@@ -10,7 +10,13 @@
 #include "common/get_time.h"
 #include "../octTree/oct_tree.h"
 
-int algorithm_version = 3; // just to interface with the timing code
+//these next three lines allow you to control the number of threads used
+//we also recommend running only on one chip to reduce contention
+
+// #include <tbb/task_scheduler_init.h>
+// int nthreads=36;
+// tbb::task_scheduler_init TBBinit(nthreads);
+int algorithm_version = 0; // just to interface with the timing code
 
 using Kernel = CGAL::Simple_cartesian<double>;
 using Point_3 = Kernel::Point_3;
@@ -53,59 +59,57 @@ template <int max_k, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k) {
   using o_tree = oct_tree<vtx>;
   using box = typename o_tree::box;
-  timer t("ANN",true);
+  timer t("ANN",false);
   
   const unsigned int N = v.size();
 
-  // std::vector<Point_3> points;
-  // points.reserve (N);
-  // for (unsigned int i = 0; i < N; ++ i) {
-  //   auto pt = v[i]->pt;
-  //   points.push_back (Point_3(pt[0],pt[1],pt[2]));
-  // }
 
-  auto minmax = [&] (box x, box y) {
-    return box(x.first.minCoords(y.first),
-         x.second.maxCoords(y.second));};
-  
-  // uses a delayed sequence to avoid making a copy
-  auto pts = parlay::delayed_seq<box>(N, [&] (size_t i) {
-      return box(v[i]->pt, v[i]->pt);});
-  box identity = pts[0];
-  box b = parlay::reduce(pts, parlay::make_monoid(minmax,identity));
+    auto minmax = [&] (box x, box y) {
+      return box(x.first.minCoords(y.first),
+           x.second.maxCoords(y.second));};
+    
+    // uses a delayed sequence to avoid making a copy
+    auto pts = parlay::delayed_seq<box>(N, [&] (size_t i) {
+        return box(v[i]->pt, v[i]->pt);});
+    box identity = pts[0];
+    box b = parlay::reduce(pts, parlay::make_monoid(minmax,identity));
 
-  double Delta = 0;
-  for (int i = 0; i < N; i++) 
-    Delta = std::max(Delta, b.second[i] - b.first[i]); 
+    int dim = (v[0]->pt).dimension();
 
-  sorter<vtx> S;
-  parlay::sequence<vtx*> v1 = S.z_sort(v, b, Delta);
+    double Delta = 0;
+    for (int i = 0; i < dim; i++) 
+      Delta = std::max(Delta, b.second[i] - b.first[i]); 
 
-  auto points = parlay::tabulate(N, [&] (size_t i) {    
-				      auto pt = v1[i]->pt;
-				      return Point_3(pt[0],pt[1],pt[2]);});
-  t.next("convert data");
+    sorter<vtx> S;
+    parlay::sequence<vtx*> v1 = S.z_sort(v, b, Delta);
 
-  // Build tree in parallel
-  Tree tree(points.begin(), points.end());
-  tree.build<CGAL::Parallel_tag>();
-  t.next("build tree");
-  Point_3 a(0,0,0);
 
-  // Query tree in parallel
-  auto neighbors = parlay::tabulate(N, [&] (size_t s) {
-                         // Neighbor search can be instantiated from
-                         // several threads at the same time
-                         Neighbor_search search (tree, points[s], k);
-			 parlay::sequence<Point_3> ngh;
-                         ngh.reserve(k);
+    auto points = parlay::tabulate(N, [&] (size_t i) {    
+  				      auto pt = v1[i]->pt;
+  				      return Point_3(pt[0],pt[1],pt[2]);});
 
-                         // neighbor search returns a set of pair of
-                         // point and distance <Point_3,FT>, here we
-                         // keep the points only
-                         for (const Point_with_distance& pwd : search)
-                           ngh.push_back (pwd.first);
-			 return ngh;
-				       });
-  t.next("search tree");
+    t.next("convert data");
+
+    // Build tree in parallel
+    Tree tree(points.begin(), points.end());
+    tree.build<CGAL::Parallel_tag>();
+    t.next("build tree");
+    Point_3 a(0,0,0);
+
+    // Query tree in parallel
+    auto neighbors = parlay::tabulate(N, [&] (size_t s) {
+                           // Neighbor search can be instantiated from
+                           // several threads at the same time
+                           Neighbor_search search (tree, points[s], k);
+  			 parlay::sequence<Point_3> ngh;
+                           ngh.reserve(k);
+
+                           // neighbor search returns a set of pair of
+                           // point and distance <Point_3,FT>, here we
+                           // keep the points only
+                           for (const Point_with_distance& pwd : search)
+                             ngh.push_back (pwd.first);
+  			 return ngh;
+  				       });
+    t.next("search tree");
 }

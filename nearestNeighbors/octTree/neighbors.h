@@ -20,11 +20,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = false;
-int algorithm_version = 3;
-// 0=root based, 2=bit based, >3=map based
-// 1 is cursed
-int queue_cutoff = 50;     
+bool report_stats = true;
+int algorithm_version = 0;
+// 0=root based, 1=bit based, >2=map based
+int queue_cutoff = 50;   
+
 
 
 #include <algorithm>
@@ -171,26 +171,11 @@ struct k_nearest_neighbors {
 	r--;
       }
     }
-
-    void merge_queue(kNN &L, kNN &R){
-      while(L.nearest_nbh.size()>0){
-        vtx_dist elt = L.nearest_nbh.top();
-        L.nearest_nbh.pop();
-        nearest_nbh.update(elt.first, elt.second);
-      }
-      while(R.nearest_nbh.size()>0){
-        vtx_dist elt = R.nearest_nbh.top();
-        R.nearest_nbh.pop();
-        nearest_nbh.update(elt.first, elt.second);
-      }
-      max_distance = nearest_nbh.topdist();
-    }
     
     // looks for nearest neighbors for pt in Tree node T
     void k_nearest_rec(node* T) {
       if (report_stats) internal_cnt++;
       if (within_epsilon_box(T, sqrt(max_distance))) { 
-         // std::cout << "here4" << std::endl; 
 	       if (T->is_leaf()) {
 	         if (report_stats) leaf_cnt++;
 	         auto &Vtx = T->Vertices();
@@ -199,9 +184,7 @@ struct k_nearest_neighbors {
                 if (k < queue_cutoff){
                   update_nearest(Vtx[i]);
                 } else{
-                  // std::cout << "here5" << std::endl; 
                   update_nearest_queue(Vtx[i]);
-                  // std::cout << "here6" << std::endl; 
                 }
               } 
 	} else if (T->size() > 10000 && algorithm_version != 0 && k < queue_cutoff) { 
@@ -209,11 +192,7 @@ struct k_nearest_neighbors {
 	  auto R = *this; // so safe to call in parallel
 	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
 			 [&] () {R.k_nearest_rec(T->Right());});
-    if (k < queue_cutoff){
-	     merge(L,R); // merge the results
-    } else{
-      merge_queue(L, R);
-    }
+	  merge(L,R); // merge the results
 	} else if (distance(T->Left()) < distance(T->Right())) {
 	  k_nearest_rec(T->Left());
 	  k_nearest_rec(T->Right());
@@ -288,73 +267,8 @@ node* find_leaf(point p, node* T, box b, double Delta){ //takes in a point since
       current = current->Left();
     }
   };
-  //this is a test case, only works for a two-dimensional sample size
-  // bool check = false; 
-  // auto &Vtx = current -> Vertices();
-  // for (int i = 0; i < current -> size(); i++)
-  //   if ( ((Vtx[i] -> pt).x == p.x) and ((Vtx[i] -> pt).y == p.y)) { //this is a hack since it doesn't work properly for 3d
-  //   //need a notion of equality here---check that components are equal?
-  //     check = true;
-  //   }
-  // std::cout << "check " << check << "\n"; 
   return current;
 }
-
-
-//   //instantiates the leaf_sequence as a member of k_nearest_neighbors
-//   using node_index = std::pair<size_t, node*>;
-//   parlay::sequence<node_index> leaf_sequence; 
-
-
-//   void populate_leaf_sequence0(node* T, box b, double Delta, int min, int max){
-//     if(T -> is_leaf()){
-//       size_t lower_left = o_tree::interleave_bits(b.first, b.first, Delta); 
-//       size_t upper_right = o_tree::interleave_bits(b.second, b.first, Delta);
-//       size_t smallest;
-//       if(lower_left < upper_right) smallest = lower_left;
-//       else smallest = upper_right;
-//       node_index current = std::make_pair(smallest, T);
-//       leaf_sequence[min] = current;
-//     } else{
-//       node* L = T->Left();
-//       node* R = T->Right();
-//       int L_children = L->num_leaf_children;
-//       int R_children = R->num_leaf_children;
-//       parlay::par_do_if(max > 1000,
-//         [&] () {populate_leaf_sequence0(L, b, Delta, min, min+L_children-1);},
-//         [&] () {populate_leaf_sequence0(R, b, Delta, min+L_children, max);}
-//       );
-//     }
-//   }
-
-//   void populate_leaf_sequence(node* R, box b, double Delta){
-//     int children = R->num_leaf_children;
-//     leaf_sequence = parlay::sequence<node_index>(children);
-//     populate_leaf_sequence0(R, b, Delta, 0, children-1);
-//     auto less = [] (node_index a, node_index b){
-//       return a.first < b.first;
-//     };
-//     parlay::sort(leaf_sequence);
-//   }
-
-
-// //given a point, finds a leaf by binary searching through the leaf_sequence
-// node* find_leaf_using_seq0(point p, box b, double Delta){ 
-//   //find the interleaved version of the point
-//   size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); 
-//   auto less = [&] (node_index a){
-//     return a.first < searchInt;
-//   };
-//   size_t closest_index = parlay::internal::binary_search(leaf_sequence, less); 
-//   node* closest = leaf_sequence[closest_index].second;
-//   return closest; 
-// }
-
-// node* find_leaf_using_seq(point p, box b, double Delta){ //pointer to the root so it can interleave the bits
-//   node* T = find_leaf_using_seq0(p, b, Delta);
-//   return T;
-// }
-
 
 //this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
 void k_nearest_leaf(vtx* p, node* T, int k) { 
@@ -373,8 +287,30 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       p->ngh[i] = nn[i];
   }
 
-}; //this ends the k_nearest_neighbors structure
+ 
+  parlay::sequence<vtx*> z_sort(parlay::sequence<vtx*> v, box b, double Delta){ 
+    using indexed_point = typename o_tree::indexed_point; 
+    size_t n = v.size();
+    parlay::sequence<indexed_point> points;
+    points = parlay::sequence<indexed_point>(n);
+    parlay::parallel_for(0, n, [&] (size_t i){
+      size_t p1 = o_tree::interleave_bits(v[i]->pt, b.first, Delta);
+      indexed_point i1 = std::make_pair(p1, v[i]);
+      points[i] = i1; 
+    });
+    auto less = [&] (indexed_point a, indexed_point b){
+      return a.first < b.first;
+    };
+    auto x = parlay::sort(points, less);
+    parlay::sequence<vtx*> v3; 
+    v3 = parlay::sequence<vtx*>(n);
+    parlay::parallel_for(0, n, [&] (size_t i){
+      v3[i] = x[i].second; 
+    });
+    return v3; 
+  }
 
+}; //this ends the k_nearest_neighbors structure
 
 
 
@@ -389,11 +325,15 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using node = typename knn_tree::node;
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
+    
+    size_t n = v.size();
+
     knn_tree T(v);
     t.next("build tree");
 
     if (report_stats) 
-      std::cout << "depth = " << T.tree->depth() << std::endl;      
+      std::cout << "depth = " << T.tree->depth() << std::endl; 
+   
 
     // *******************
     if (algorithm_version == 0) { // this is for starting from root 
@@ -402,54 +342,25 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       t.next("flatten tree");
 
       // find nearest k neighbors for each point
-      parlay::parallel_for (0, vr.size(), [&] (size_t i) {
+      parlay::parallel_for (0, n, [&] (size_t i) {
 	       T.k_nearest(vr[i], k);
       }, 1);
-
-      // for (size_t i=0; i<v.size(); i++){
-      //   T.k_nearest(vr[i], k);
-      // }
-
-    // *******************
-    // } else if (algorithm_version == 1) { // using find_leaf
-    //   // this reorders the vertices for locality
-    //   parlay::sequence<vtx*> vr = T.vertices();
-    //   t.next("flatten tree");
-
-    //   int dims = (v[0]->pt).dimension();  
-    //   node* root = T.tree.get(); 
-    //   size_t size = v.size();
-    //   box_delta bd = T.get_box_delta(root, dims);
-    //   //construct the sorted sequence which indexes leaves with their center points
-    //   T.populate_leaf_sequence(root, bd.first, bd.second);
-    //   t.next("populate leaf sequence");
-    //   node* leaf = T.find_leaf_using_seq(vr[0]->pt, bd.first, bd.second);
-    //   bool check = leaf->is_leaf(); 
-    //   if(check == true) std::cout << "yes" << "\n";
-    //   t.next("find leaf for last point");
-      
-    //   parlay::parallel_for(size-1, size, [&] (size_t i) {   
-	   //     T.k_nearest_leaf(vr[i], T.find_leaf_using_seq(vr[i]->pt, bd.first, bd.second), k);
-    //    }
-    //    );
-
-    // *******************      
-    } else if (algorithm_version == 2) {
+    
+    } else if (algorithm_version == 1) {
         parlay::sequence<vtx*> vr = T.vertices();
         t.next("flatten tree");
 
         int dims = (v[0]->pt).dimension();  
         node* root = T.tree.get(); 
         box_delta bd = T.get_box_delta(root, dims);
-        size_t size = v.size();
 
-        parlay::parallel_for(0, size, [&] (size_t i) {
+        parlay::parallel_for(0, n, [&] (size_t i) {
           T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, root, bd.first, bd.second), k);
         }
         );
 
 
-    } else { //(algorithm_version == 3) this is for starting from leaf, finding leaf using map()
+    } else { //(algorithm_version == 2) this is for starting from leaf, finding leaf using map()
         auto f = [&] (vtx* p, node* n){ 
   	     return T.k_nearest_leaf(p, n, k); 
         };
@@ -467,7 +378,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 		<< ", average internal = " << sum/((double) v.size()) << std::endl;
       t.next("stats");
     }
-  t.next("delete tree");
+    t.next("delete tree");
 
 
 };
