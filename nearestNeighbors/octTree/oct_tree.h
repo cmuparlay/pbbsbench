@@ -62,7 +62,23 @@ struct oct_tree {
     return r;
   }
 
-  struct node { //should store what bit it has, then extract by shifting over while searching
+    // generates a box consisting of a lower left corner,
+  // and an upper right corner.
+  template <typename Seq>
+  static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
+    size_t n = V.size();
+    auto minmax = [&] (box x, box y) {
+      return box(x.first.minCoords(y.first),
+     x.second.maxCoords(y.second));};
+
+    // uses a delayed sequence to avoid making a copy
+    auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
+  return box(V[i]->pt, V[i]->pt);});
+    box identity = pts[0];
+    return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
+  }
+
+  struct node { 
 
   public:
     int bit;
@@ -81,7 +97,7 @@ struct oct_tree {
     }
 
     // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts, int currentBit) { //this needs to be handed a bit as well
+    node(slice_t Pts, int currentBit) { 
       n = Pts.size();
       parent = nullptr;
 
@@ -138,7 +154,7 @@ struct oct_tree {
 
     //pass in a function to compute nearest neighbors
     template <typename F>
-    void map(F f) { // wait a sec, how come map() is a method in node() rather than o_tree()?
+    void map(F f) { 
       if (is_leaf())
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {
@@ -147,6 +163,7 @@ struct oct_tree {
 			  [&] () {R->map(f);});
       }
     }
+
 
     size_t depth() {
       if (is_leaf()) return 0;
@@ -233,21 +250,7 @@ private:
   
 
 
-  // generates a box consisting of a lower left corner,
-  // and an upper right corner.
-  template <typename Seq>
-  static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
-    size_t n = V.size();
-    auto minmax = [&] (box x, box y) {
-      return box(x.first.minCoords(y.first),
-		 x.second.maxCoords(y.second));};
 
-    // uses a delayed sequence to avoid making a copy
-    auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
-	return box(V[i]->pt, V[i]->pt);});
-    box identity = pts[0];
-    return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
-  }
 
   // tags each point (actually a pointer to it), with an interger
   // consisting of the interleaved bits for the x,y,z coordinates.
@@ -285,7 +288,7 @@ private:
     int cutoff = 32;
 
     // if run out of bit, or small then generate a leaf
-    if (bit == 0 || n < LEAF_SIZE_CUTOFF) {
+    if (bit == 0 || n < cutoff) {
       return node::new_leaf(Pts, bit); 
     } else {
 
@@ -308,7 +311,7 @@ private:
 	parlay::par_do_if(n > 1000,
            [&] () {L = build_recursive(Pts.cut(0, pos), bit - 1);},
 	   [&] () {R = build_recursive(Pts.cut(pos, n), bit - 1);});
-	return node::new_node(L,R, bit); //TODO add bit here
+	return node::new_node(L,R, bit); 
       }
     }
   }

@@ -67,7 +67,7 @@ int checkNeighbors(parlay::sequence<long> &neighbors, parlay::sequence<point2> &
 
 int main(int argc, char* argv[]) {
   commandLine P(argc,argv,
-		"[-k {1,...,10}] [-d {2,3}] [-r <numtests>] <inFile> <outfile>");
+		"[-k {1,...,100}] [-d {2,3}] [-r <numtests>] <inFile> <outfile>");
   pair<char*,char*> fnames = P.IOFileNames();
   char* iFile = fnames.first;
   char* oFile = fnames.second;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 
   int k = P.getOptionIntValue("-k",1);
   int d = P.getOptionIntValue("-d",2);
-  if (k > 10 || k < 1) P.badArgument();
+  if (k > 100 || k < 1) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 
   parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
