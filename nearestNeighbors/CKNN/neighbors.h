@@ -41,6 +41,7 @@ struct k_nearest_neighbors{
 	using tree_ptr = typename ck_tree_vtx::tree_ptr;
   	using box = typename ck_tree_vtx::box;
   	using slice_n = decltype(make_slice(parlay::sequence<node*>()));
+  	using vtx_dist = std::pair<vtx*, double>;
 
   	tree_ptr tree; 
 
@@ -59,6 +60,7 @@ struct k_nearest_neighbors{
 		int k;
     	vtx *neighbors[max_k];  // the current k nearest neighbors (nearest last)
     	double distances[max_k]; // distance to current k nearest neighbors
+    	int interactions_cnt; 
 
     	kNN() {}
 
@@ -112,8 +114,11 @@ struct k_nearest_neighbors{
     			node* R = T->Right();
     			int num_leaves_left = L->size();
     			int num_leaves_right = R->size();
-    			flatten_rec(L, ints.cut(0, num_leaves_left));
-    			flatten_rec(R, ints.cut(num_leaves_left, num_leaves_left+num_leaves_right));
+    			int num_leaves = num_leaves_left + num_leaves_right;
+    			parlay::par_do_if(num_leaves > 2,
+    				[&] () {flatten_rec(L, ints.cut(0, num_leaves_left));},
+    				[&] () {flatten_rec(R, ints.cut(num_leaves_left, num_leaves_left+num_leaves_right));}
+    			);
     		}
     	}
 
@@ -134,19 +139,39 @@ struct k_nearest_neighbors{
       		}
     	}
 
+    	vtx_dist update_rec(slice_n leaves){
+    		size_t num_leaves = leaves.size();
+    		if (num_leaves==1){
+    			auto dist = (vertex->pt - (leaves[0]->Vertex())->pt).sqLength();
+    			return std::make_pair(leaves[0]->Vertex(), dist);
+    		} else{
+    			vtx_dist L, R; 
+    			parlay::par_do_if(num_leaves > 2,
+    				[&] () {L = update_rec(leaves.cut(0, num_leaves/2));},
+    				[&] () {R = update_rec(leaves.cut(num_leaves/2, num_leaves));}
+    			);
+    			if(L.second < R.second) return L;
+    			else return R; 
+    		}
+    	}
+
     	void k_nearest_neighbors(){
     		parlay::sequence<node*> interactions = leaf->Interactions();
     		// std::cout << "size of interaction list " << interactions.size() << std::endl; 
     		slice_n leaves = flatten(interactions);
-    		size_t num_leaves = leaves.size();
+    		if (report_stats) vertex->counter = leaves.size();
+    		vtx_dist nearest = update_rec(leaves);
+    		neighbors[0] = nearest.first;
+    		distances[0] = nearest.second; 
+    		// size_t num_leaves = leaves.size();
     		// std::cout << "number of leaves being searched " << num_leaves << std::endl; 
     		// std::cout << "query point:" << std::endl; 
     		// print_point(vertex->pt);
     		// std::cout << "interactions:" << std::endl; 
-    		for(size_t i=0; i<num_leaves; i++){
-    			// print_point((leaves[i]->Vertex())->pt);
-    			update_nearest(leaves[i]->Vertex());
-    		}
+    		// for(size_t i=0; i<num_leaves; i++){
+    		// 	// print_point((leaves[i]->Vertex())->pt);
+    		// 	update_nearest(leaves[i]->Vertex());
+    		// }
     	}
 
 	};
@@ -216,21 +241,9 @@ struct k_nearest_neighbors{
 	void k_nearest(vtx* v, node* T, int k, parlay::sequence<vtx*> V){
 		kNN nn(v, T, k);
 		nn.k_nearest_neighbors();
-		vtx* ans = nn.get_nbh();
-		double dist = nn.get_dist();
-		check_correct(v, ans, dist, V);
-	}
-
-	void print_tree(){
-		node* root = tree.get();
-		node* L = root->Left();
-		node* R = root->Right();
-		std::cout << "Left children: " << std::endl; 
-		print_point(((L->Left())->Vertex())->pt);
-		print_point(((L->Right())->Vertex())->pt);
-		std::cout << "Right children: " << std::endl; 
-		print_point(((R->Left())->Vertex())->pt);
-		print_point(((R->Right())->Vertex())->pt);
+		// vtx* ans = nn.get_nbh();
+		// double dist = nn.get_dist();
+		// check_correct(v, ans, dist, V);
 	}
 
 };
@@ -258,18 +271,22 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 	T.get_wsr(T.tree.get(), s);
 	t.next("find well-separated realization");
 
-	// auto f = [&] (vtx* p, node* n){
-	// 	return T.k_nearest(p, n, k, v);
-	// };
+	auto f = [&] (vtx* p, node* n){
+		return T.k_nearest(p, n, k, v);
+	};
 
-	// T.tree->map(f);
-	// T.print_tree(); 
+	T.tree->map(f);
 	t.next("compute nearest neighbors");
 
-	// if (report_stats) {
-	// t.next("stats");
-	// }
-	// t.next("delete tree");
+	if (report_stats) {
+		auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
+      	size_t i = parlay::max_element(s) - s.begin();
+      	size_t sum = parlay::reduce(s);
+      	std::cout << "max internal = " << s[i] 
+			<< ", average internal = " << sum/((double) v.size()) << std::endl;
+		t.next("stats");
+	}
+	t.next("delete tree");
   };
 
 

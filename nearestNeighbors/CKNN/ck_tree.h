@@ -58,6 +58,8 @@ struct ck_tree{
 		public:
 		    box Box() {return b;}
 		    point center() {return centerv;}
+		    double Max_dim() {return max_dim;}
+		    double Diameter() {return diameter;}
 		    size_t size() {return n;}
 		    bool is_leaf() {return L == nullptr;}
 		    node* Left() {return L;}
@@ -89,6 +91,8 @@ struct ck_tree{
 	     	L = R = nullptr;
 	      	b = get_box(Pts);
 	      	set_center();
+	      	set_max_dim();
+	      	set_diameter();
 	      	interactions = parlay::sequence<node*>();
 	      	V = Pts[0];
 	    }
@@ -100,6 +104,8 @@ struct ck_tree{
 			  	L->b.second.maxCoords(R->b.second));
 		    n = L->size() + R->size();
 		    set_center();
+		    set_max_dim(); 
+		    set_diameter();
 		    interactions = parlay::sequence<node*>();
 	    }
 
@@ -133,7 +139,7 @@ struct ck_tree{
 	    void map(F f) { 
 	      	if (is_leaf()) f(V, this);
 	      	else {
-				parlay::par_do_if(n > 1000,
+				parlay::par_do_if(n > 10,
 					[&] () {L->map(f);},
 					[&] () {R->map(f);});
 	      	}
@@ -169,6 +175,8 @@ struct ck_tree{
 	private:
 
     	size_t n;
+    	double diameter; 
+    	double max_dim; 
     	node *parent;
     	node *L;
     	node *R;
@@ -181,6 +189,23 @@ struct ck_tree{
       		centerv = b.first + (b.second-b.first)/2;
     	}
 
+    	void set_max_dim(){
+			double maxdim = 0; 
+			int dim = b.first.dimension();
+			for(int i=0; i<dim; i++){
+				double new_max = abs(b.first[i]-b.second[i]);
+				if (new_max > maxdim){
+					maxdim = new_max;
+				}
+			}
+			max_dim = maxdim; 
+		}
+
+		void set_diameter(){
+			double diam = (b.first-b.second).Length();
+			diameter = diam; 
+		}
+
     	// uses the parlay memory manager, could be replaced will alloc/free
    		static parlay::type_allocator<node> node_allocator;
     	static node* alloc_node() {
@@ -191,24 +216,12 @@ struct ck_tree{
 
 	}; //ends node structure
 
-	static double max_dim(box a){
-		double maxdim = 0; 
-		int dim = a.first.dimension();
-		for(int i=0; i<dim; i++){
-			double new_max = abs(a.first[i]-a.second[i]);
-			if (new_max > maxdim){
-				maxdim = new_max;
-			}
-		}
-		return maxdim; 
-	}
-
 	static bool well_separated(node* A, node* B, double s){
 		// std::cout << "here1" << std::endl; 
-		double m_a = ((A->Box()).first - (A->Box()).second).Length();
+		double m_a = A->Diameter();
 		// std::cout << "here2" << std::endl; 
 		// std::cout << B->is_leaf() << std::endl; 
-		double m_b = ((B->Box()).first - (B->Box()).second).Length();
+		double m_b = B->Diameter();
 		// std::cout << "here3" << std::endl; 
 		double diameter = max(m_a, m_b); //diameter of the smallest sphere that can capture each box
 		// std::cout << "here4" << std::endl; 
@@ -218,7 +231,7 @@ struct ck_tree{
 	}
 
 	// A unique pointer to a tree node to ensure the tree is
-  	// destructed when the pointer is, and that  no copies are made.
+  	// destructed when the pointer is, and that no copies are made.
   	struct delete_tree {void operator() (node *T) const {node::delete_tree(T);}};
   	using tree_ptr = std::unique_ptr<node,delete_tree>;
 
@@ -229,13 +242,11 @@ struct ck_tree{
   			size_t n = T->size();
 			node* L = T -> Left();
 			node* R = T -> Right();
-			// parlay::par_do_if(n > 1000, 
-			// 	[&] () {wsr(L, s);},
-			// 	[&] () {wsr(R, s);}
-			// );
 			wsrChildren(L, R, s);
-			wsr(L, s);
-			wsr(R, s);
+			parlay::par_do_if(n > 1000, 
+				[&] () {wsr(L, s);},
+				[&] () {wsr(R, s);}
+			);
   		}
 	}
 
@@ -244,12 +255,16 @@ struct ck_tree{
 			// std::cout << (L->is_leaf() && R->is_leaf()) << std::endl; 
 			// std::cout << "well separated true" << std::endl; 
 			// std::cout << "prev size of left interactions " << (L->Interactions()).size() << std::endl; 
-			std::cout << "here1" << std::endl; 
-			L -> add_interaction(R);
-			std::cout << "here2" << std::endl; 
+			// std::cout << "here1" << std::endl; 
+			if(L->is_leaf()){
+				L -> add_interaction(R);
+			}
+			// std::cout << "here2" << std::endl; 
 			// std::cout << "new size of left interactions " << (L->Interactions()).size() << std::endl; 
-			R -> add_interaction(L);
-			std::cout << "here3" << std::endl; 
+			if(R->is_leaf()){
+				R -> add_interaction(L);
+			}
+			// std::cout << "here3" << std::endl; 
 		} else{
 			size_t n = L->size() + R->size();
 			// std::cout << "left size and box " << L->size() << std::endl;
@@ -258,21 +273,17 @@ struct ck_tree{
 			// std::cout << "right size and box " << R->size() << std::endl; 
 			// print_point(R->Box().first);
 			// print_point(R->Box().second);
-			double m_L = max_dim(L->Box());
+			double m_L = L->Max_dim();
 			// std::cout << "left max dim " << m_L << std::endl; 
-			double m_R = max_dim(R->Box());
-			std::cout << "here4" << std::endl; 
+			double m_R = R->Max_dim();
+			// std::cout << "here4" << std::endl; 
 			// std::cout << "right max dim " << m_R << std::endl; 
 			if(m_L > m_R){
-				parlay::par_do_if(n > 1, 
-	  				[&] () {wsrChildren(R, L->Left(), s);},
-	  				[&] () {wsrChildren(R, L->Right(), s);}
-	  			);
+	  			wsrChildren(R, L->Left(), s);
+	  			wsrChildren(R, L->Right(), s);
 			} else{
-				parlay::par_do_if(n > 1, 
-	  				[&] () {wsrChildren(L, R->Left(), s);},
-	  				[&] () {wsrChildren(L, R->Right(), s);}
-	  			);
+	  			wsrChildren(L, R->Left(), s);
+	  			wsrChildren(L, R->Right(), s);
 			}
 		}
 	}
