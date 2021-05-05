@@ -12,13 +12,13 @@ tests = [
  ["integerSort/parallelRadixSort",True],
 # ["integerSort/serialRadixSort",False],
 
-# ["comparisonSort/ips4o",True],
  ["comparisonSort/sampleSort",True],
  ["comparisonSort/quickSort",True],
  ["comparisonSort/mergeSort",True],
  ["comparisonSort/stableSampleSort",True],
  ["comparisonSort/serialSort",False],
  ["comparisonSort/stlParallelSort",True],
+ ["comparisonSort/ips4o",True],
 
 #["suffixArray/serialKS",False],  
  ["suffixArray/parallelKS",True],
@@ -29,10 +29,17 @@ tests = [
  ["wordCounts/histogramStar",True],
  ["wordCounts/serial",False],
 
+ ["removeDuplicates/parlayhash", True],
+
  ["BWDecode/listRank",True],
+
  ["histogram/parallel",True],
- ["index/parallel",True],
+
+ ["index/parallel", True],
+
  ["longestRepeatedSubstring/doubling",True],
+
+ ["classify/decisionTree", True],
 
  ["minSpanningForest/parallelKruskal",True],
  ["minSpanningForest/parallelFilterKruskal",True],
@@ -66,6 +73,8 @@ tests = [
  ["delaunayTriangulation/incrementalDelaunay",True],
 
  ["delaunayRefine/incrementalRefine",True],
+
+ ["rangeQuery2d/parallelPlaneSweep",True],
 
  ["nBody/parallelCK",True],
 
@@ -214,6 +223,7 @@ try :
                     n = len(processors)
                     for p in processors[0:n-1] :
                         runtest(test, p, False)
+                        os.system("echo")
                     runtest(test, processors[n-1], not(noCheck))
 
 except NameError,v :

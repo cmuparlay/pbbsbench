@@ -32,7 +32,7 @@ using namespace std;
 using namespace benchIO;
 
 template <typename T, typename Less>
-int timeSort(sequence<sequence<char>> const &In, Less less, int rounds, bool permute, char* outFile) {
+int timeSort(sequence<parlay::chars> const &In, Less less, int rounds, bool permute, char* outFile) {
   sequence<T> A = parseElements<T>(In.cut(1, In.size()));
   
   size_t n = A.size();
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     auto less = [] (dpair a, dpair b) {return a.first < b.first;};
     return timeSort<dpair>(In, less, rounds, permute, oFile);
   } else if (in_type == stringT) {
-    using str = sequence<char>;
+    using str = parlay::chars;
     auto strless = [&] (str const &a, str const &b) -> bool {
       auto sa = a.data();
       auto sb = b.data();

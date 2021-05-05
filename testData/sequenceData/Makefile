@@ -2,12 +2,14 @@ include common/parallelDefs
 
 COMMON = common/sequenceIO.h common/IO.h common/parse_command_line.h
 LIB = parlay/parallel.h
-PBBS = 
-SEQUENCEGEN = $(COMMON) $(LIB) $(PBBS)
-GENERATORS = equalSeq randomSeq almostSortedSeq almostEqualSeq exptSeq trigramSeq addDataSeq trigramString
+SEQUENCEGEN = $(COMMON) $(LIB) 
+GENERATORS = classifyClean equalSeq randomSeq almostSortedSeq almostEqualSeq exptSeq trigramSeq addDataSeq trigramString
 
 .PHONY: all clean
 all: $(GENERATORS)
+
+classifyClean : classifyClean.C $(SEQUENCEGEN)
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C 
 
 addDataSeq : addDataSeq.C sequenceData.h $(SEQUENCEGEN)
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C

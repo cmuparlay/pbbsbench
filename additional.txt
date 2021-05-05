@@ -1,19 +1,5 @@
 Ideas:
 
-countWords 
-input : string
-output : sequence of pairs each with a word and the number of times it appears
-
-BWdecode
-input : the output of the burrows-wheeler transform as a string of characteres and a start position
-output : the original string
-
-longestRepeatedString
-input : a string
-output : two locations in the input string corresponding to the start of the longest repeated string
-
-longestPalindrome
-
 segmentIntersecrions
 input : a sequence of n horizontal and m vertical lines
 output : the total number of segments that intersect
@@ -21,8 +7,3 @@ output : the total number of segments that intersect
 rangeQuery
 inpt : a sequence of n points, and m rectangles
 ouput : the number of points within each rectangle
-
-histogram
-input : a sequence of integers of length n in range [0:m)
-output : a sequence of length m with a count of each value
-

@@ -1,0 +1,17 @@
+#!/usr/bin/python
+
+bnchmrk="classify"
+benchmark="Feature Based Classification"
+checkProgram="../bench/classifyCheck"
+dataDir = "../sequenceData/data"
+
+tests = [
+    [1, "covtype.data", "", ""],
+    [1, "kddcup.data", "", ""],
+]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+

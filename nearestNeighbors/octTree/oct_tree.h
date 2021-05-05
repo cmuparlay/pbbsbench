@@ -78,6 +78,7 @@ struct oct_tree {
     return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
   }
 
+
   struct node { 
 
   public:
