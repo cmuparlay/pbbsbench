@@ -27,6 +27,8 @@
 // Adds cost of encoding a node to each node for the purpose of pruning.
 
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/io.h"
@@ -43,6 +45,9 @@ size_t min_size = 1;
 // the following helps prevent overfitting if > 0.0
 // probably should be in range [0..1]
 double encode_node_factor = 0.0; 
+
+// random forest parameters
+const bool use_random_forest = true;
 
 struct tree {
   bool is_leaf;
@@ -123,9 +128,13 @@ auto cond_info_continuous(feature const &a, feature const &b) {
 
 // information content of s (i.e. entropy * size)
 double info(row s, int num_vals) {
+  //printf("start info %d %d\n", s.size(), num_vals);
   size_t n = s.size();
   if (n == 0) return 0.0;
+  //printf("hello? %d\n", s[0]);
+  //printf("printing\n");
   auto x = histogram(s, num_vals);
+  //printf("?\n");
   return entropy(x, n);
 }
 
@@ -146,12 +155,18 @@ double node_cost(int n, int num_features, int num_groups) {
 }
 
 auto build_tree(features &A, bool verbose) {
+  //printf("A\n");
   int num_features = A.size();
   int num_entries = A[0].vals.size();
+  //printf("B %d %d\n", num_features, num_entries);
+ 
   int majority_value = (num_entries == 0) ? -1 : majority(A[0].vals, A[0].num);
+  //printf("C %d \n", majority_value);
   if (num_entries < 2 || all_equal(A[0].vals))
     return Leaf(majority_value);
+  //printf("D\n");
   double label_info = info(A[0].vals,A[0].num);
+  //printf("E\n");
   auto costs = tabulate(num_features - 1, [&] (int i) {
       if (A[i+1].discrete) {
 	return std::tuple(cond_info_discrete(A[0], A[i+1]), i+1, -1);
@@ -159,7 +174,7 @@ auto build_tree(features &A, bool verbose) {
 	auto [info, cut] = cond_info_continuous(A[0], A[i+1]);
 	return std::tuple(info, i+1, cut);
       }},1);
-
+  //printf("E\n");
   auto min1 = [&] (auto a, auto b) {return (std::get<0>(a) < std::get<0>(b)) ? a : b;};
   auto min_m = make_monoid(min1, std::tuple(infinity, 0, 0));
   auto [best_info, best_i, cut] = reduce(costs, min_m);
@@ -191,6 +206,7 @@ auto build_tree(features &A, bool verbose) {
     //A.clear();
 
     auto children = map(B, [&] (features &a) {return build_tree(a, verbose);}, 1);
+    //printf("Z\n");
     return Internal(best_i - 1, cut, majority_value, children); //-1 since first is label
   }
 }
@@ -213,10 +229,61 @@ int classify_row(tree* T, row const&r) {
   }
 }
 
-row classify(features const &Train, rows const &Test, bool verbose) {
+tree* buildRandomTree(features const &Train, bool verbose) {
   features A = Train;
-  tree* T = build_tree(A, verbose);
-  if (true) cout << "Tree size = " << T->size << endl;
-  int num_features = Test[0].size();
-  return map(Test, [&] (row const& r) -> value {return classify_row(T, r);});
+ 
+  int num_features = A.size();
+  int num_entries = A[0].vals.size();
+
+  sequence<int> entriesSampleIdxs = tabulate(num_entries, [&] (size_t i) {
+    return rand() % num_entries;
+    //return (int)i;
+  });
+
+  features B = map(A, [&] (feature f) {
+    row v = tabulate(num_entries, [&] (size_t i){
+      return f.vals[entriesSampleIdxs[i]];
+    });
+    value maxv = reduce(v, maxm<value>());
+    feature fp = feature(f.discrete, maxv + 1, v);
+    return fp;
+  }); 
+  return build_tree(B, verbose);
+}
+
+auto buildForest(features const &Train, const size_t numTrees, bool verbose) {
+  return tabulate(numTrees, [&] (size_t i) {
+    return buildRandomTree(Train, verbose);
+  });
+}
+
+row classifyRandomForest(features const &Train, rows const &Test, bool verbose) {
+  const size_t numTrees = 27;
+
+  sequence<value> testLabels = map(Test, [&] (row const &r) {
+    return r[0];
+  });
+  value maxLabel = std::max(Train[0].num, (int)reduce(testLabels, maxm<value>()));
+
+  sequence<tree*> forest = buildForest(Train, numTrees, verbose);
+
+  return map(Test, [&] (row const &r) {
+    sequence<value> preds = map(forest, [&] (tree* T) -> value { return classify_row(T, r); });
+    value maj = majority(preds, maxLabel);
+    return maj;
+  }); 
+}
+
+row classify(features const &Train, rows const &Test, bool verbose) {
+  if(use_random_forest) {
+    srand((unsigned) time(0));
+    return classifyRandomForest(Train, Test, verbose);
+  }
+  else {
+    features A = Train;
+    tree* T = build_tree(A, verbose);
+    if (true) cout << "Tree size = " << T->size << endl;
+    int num_features = Test[0].size();
+    return map(Test, [&] (row const& r) -> value {return classify_row(T, r);});
+  }
 }
