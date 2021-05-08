@@ -48,6 +48,10 @@ double encode_node_factor = 0.0;
 
 // random forest parameters
 const bool use_random_forest = true;
+const bool use_random_entries_sample = true;
+const bool use_random_features_sample = true;
+const double features_include_prob = 0.7;
+const size_t num_trees = 21;
 
 struct tree {
   bool is_leaf;
@@ -128,13 +132,9 @@ auto cond_info_continuous(feature const &a, feature const &b) {
 
 // information content of s (i.e. entropy * size)
 double info(row s, int num_vals) {
-  //printf("start info %d %d\n", s.size(), num_vals);
   size_t n = s.size();
   if (n == 0) return 0.0;
-  //printf("hello? %d\n", s[0]);
-  //printf("printing\n");
   auto x = histogram(s, num_vals);
-  //printf("?\n");
   return entropy(x, n);
 }
 
@@ -155,38 +155,48 @@ double node_cost(int n, int num_features, int num_groups) {
 }
 
 auto build_tree(features &A, bool verbose) {
-  //printf("A\n");
   int num_features = A.size();
   int num_entries = A[0].vals.size();
-  //printf("B %d %d\n", num_features, num_entries);
- 
+  //printf("A %d %d %d\n", num_features, num_entries, A[0].num);
   int majority_value = (num_entries == 0) ? -1 : majority(A[0].vals, A[0].num);
-  //printf("C %d \n", majority_value);
   if (num_entries < 2 || all_equal(A[0].vals))
     return Leaf(majority_value);
-  //printf("D\n");
+  //printf("B\n");
   double label_info = info(A[0].vals,A[0].num);
-  //printf("E\n");
-  auto costs = tabulate(num_features - 1, [&] (int i) {
+  sequence<int> featuresIdxs = tabulate(num_features - 1, [&] (int i) { return i; });
+  
+  if(use_random_features_sample) {
+    double prob = sqrt(num_features) / num_features;
+    featuresIdxs = filter(featuresIdxs, [&] (int i) { 
+      double r = (double)(rand() % 10000) / 10000.0;
+      return r <= prob;
+    });
+    if(featuresIdxs.size() == 0) {
+      featuresIdxs = tabulate(num_features - 1, [&] (int i) { return i; });
+    }
+  } 
+  //printf("C\n");
+  auto costs = tabulate(featuresIdxs.size(), [&] (int j) {
+      int i = featuresIdxs[j];
       if (A[i+1].discrete) {
 	return std::tuple(cond_info_discrete(A[0], A[i+1]), i+1, -1);
       } else {
 	auto [info, cut] = cond_info_continuous(A[0], A[i+1]);
 	return std::tuple(info, i+1, cut);
       }},1);
-  //printf("E\n");
   auto min1 = [&] (auto a, auto b) {return (std::get<0>(a) < std::get<0>(b)) ? a : b;};
   auto min_m = make_monoid(min1, std::tuple(infinity, 0, 0));
   auto [best_info, best_i, cut] = reduce(costs, min_m);
-  double threshold = log2(float(num_features));
+  //printf("D\n");
+  double threshold = log2(float(num_features));  
 
   if (verbose)
-    cout << num_entries << ", " << best_i << ", " << cut << ", " << label_info << ", " 
-	 << best_info << endl;
+    cout << num_entries << ", " << ", " << num_features << ", " << best_i << ", " << cut << ", " << label_info << ", " 
+	 << best_info << ", " << featuresIdxs.size() << ", " << threshold << endl;
 
-  if (label_info - best_info < threshold)
+  if (label_info - best_info < threshold){
     return Leaf(majority_value);
-  else {
+  } else {
     int m;
     row split_on;
     if (A[best_i].discrete) {
@@ -204,9 +214,8 @@ auto build_tree(features &A, bool verbose) {
       for (int i=0; i < m; i++) B[i][j].vals = std::move(x[i]);
     }, 1);
     //A.clear();
-
     auto children = map(B, [&] (features &a) {return build_tree(a, verbose);}, 1);
-    //printf("Z\n");
+
     return Internal(best_i - 1, cut, majority_value, children); //-1 since first is label
   }
 }
@@ -235,37 +244,38 @@ tree* buildRandomTree(features const &Train, bool verbose) {
   int num_features = A.size();
   int num_entries = A[0].vals.size();
 
-  sequence<int> entriesSampleIdxs = tabulate(num_entries, [&] (size_t i) {
-    return rand() % num_entries;
-    //return (int)i;
-  });
-
-  features B = map(A, [&] (feature f) {
-    row v = tabulate(num_entries, [&] (size_t i){
-      return f.vals[entriesSampleIdxs[i]];
+  features B = Train;  
+  if(use_random_entries_sample) {
+    sequence<int> entriesSampleIdxs = tabulate(num_entries, [&] (size_t i) {
+      return rand() % num_entries;
     });
-    value maxv = reduce(v, maxm<value>());
-    feature fp = feature(f.discrete, maxv + 1, v);
-    return fp;
-  }); 
+
+    B = map(A, [&] (feature f) {
+      row v = tabulate(num_entries, [&] (size_t i){
+        return f.vals[entriesSampleIdxs[i]];
+      });
+      value maxv = reduce(v, maxm<value>());
+      feature fp = feature(f.discrete, maxv + 1, v);
+      return fp;
+    });
+  }
+
   return build_tree(B, verbose);
 }
 
-auto buildForest(features const &Train, const size_t numTrees, bool verbose) {
-  return tabulate(numTrees, [&] (size_t i) {
+auto buildForest(features const &Train, bool verbose) {
+  return tabulate(num_trees, [&] (size_t i) {
     return buildRandomTree(Train, verbose);
   });
 }
 
 row classifyRandomForest(features const &Train, rows const &Test, bool verbose) {
-  const size_t numTrees = 27;
-
   sequence<value> testLabels = map(Test, [&] (row const &r) {
     return r[0];
   });
   value maxLabel = std::max(Train[0].num, (int)reduce(testLabels, maxm<value>()));
 
-  sequence<tree*> forest = buildForest(Train, numTrees, verbose);
+  sequence<tree*> forest = buildForest(Train, verbose);
 
   return map(Test, [&] (row const &r) {
     sequence<value> preds = map(forest, [&] (tree* T) -> value { return classify_row(T, r); });
