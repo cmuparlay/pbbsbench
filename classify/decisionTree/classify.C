@@ -29,6 +29,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <set>
+#include <iterator>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/io.h"
@@ -47,11 +49,11 @@ size_t min_size = 1;
 double encode_node_factor = 0.0; 
 
 // random forest parameters
-const bool use_random_forest = true;
-const bool use_random_entries_sample = true;
-const bool use_random_features_sample = true;
-const double features_include_prob = 0.7;
-const size_t num_trees = 21;
+const bool use_random_forest = false;
+const bool use_random_entries_sample = false;
+const bool use_random_features_sample = false;
+const double features_include_prob = 0.1;
+const size_t num_trees = 51;
 
 struct tree {
   bool is_leaf;
@@ -77,6 +79,14 @@ tree* Internal(int i, int cut, int majority, sequence<tree*> children) {
 
 // To be put into parlay
 
+auto histogramSequential(auto &s, int max){
+  sequence<int> freqs = tabulate(max, [&] (size_t i) { return 0; });
+  for(int i = 0; i < s.size(); i++) {
+    freqs[s[i]]++;
+  }
+  return freqs; 
+}
+
 template <typename S1, typename S2>
 auto delayed_zip(S1 const &a, S2 const &b) {
   return delayed_tabulate(a.size(), [&] (size_t i) {return std::pair(a[i],b[i]);});
@@ -88,8 +98,8 @@ auto all_equal(S1 const &a) {
 }
 
 template <typename S1>
-auto majority(S1 const &a, size_t m) {
-  auto x = histogram(a,m);
+auto majority(S1 const &a, size_t m) { 
+  auto x = histogramSequential(a,m);
   return max_element(x) - x.begin();
 }
 
@@ -134,7 +144,7 @@ auto cond_info_continuous(feature const &a, feature const &b) {
 double info(row s, int num_vals) {
   size_t n = s.size();
   if (n == 0) return 0.0;
-  auto x = histogram(s, num_vals);
+  auto x = histogramSequential(s, num_vals);
   return entropy(x, n);
 }
 
@@ -154,28 +164,76 @@ double node_cost(int n, int num_features, int num_groups) {
   return log2(float(num_features));
 }
 
-auto build_tree(features &A, bool verbose) {
+
+
+int majoritySequential(auto &s, int max) {
+  auto freqs = histogramSequential(s, max);
+  int majFreq = -1;
+  int majElem = -1;
+  for(int i = 0; i < freqs.size(); i++) {
+    if(freqs[i] > majFreq) {
+	majFreq = freqs[i];
+        majElem = i;
+    }
+  }
+  return majElem;
+}
+
+auto infoSequential(row s, int num_vals) {
+  size_t n = s.size();
+  if(n == 0) return 0.0;
+  auto x = histogramSequential(s, num_vals);
+  return entropy(x, n);
+}
+
+auto build_tree(features &A, bool verbose, auto usedFeatures) {
   int num_features = A.size();
   int num_entries = A[0].vals.size();
-  //printf("A %d %d %d\n", num_features, num_entries, A[0].num);
+  //printf("A %d %d %d %d\n", num_features, num_entries, A[0].num, usedFeatures.size());
+
   int majority_value = (num_entries == 0) ? -1 : majority(A[0].vals, A[0].num);
   if (num_entries < 2 || all_equal(A[0].vals))
     return Leaf(majority_value);
   //printf("B\n");
   double label_info = info(A[0].vals,A[0].num);
+  //printf("C\n");
+  
+  /*
   sequence<int> featuresIdxs = tabulate(num_features - 1, [&] (int i) { return i; });
   
   if(use_random_features_sample) {
     double prob = sqrt(num_features) / num_features;
     featuresIdxs = filter(featuresIdxs, [&] (int i) { 
       double r = (double)(rand() % 10000) / 10000.0;
-      return r <= prob;
+      return true;
+      //return r <= prob;
     });
     if(featuresIdxs.size() == 0) {
       featuresIdxs = tabulate(num_features - 1, [&] (int i) { return i; });
     }
-  } 
-  //printf("C\n");
+  }  */
+
+  sequence<int> featuresIdxs = tabulate(num_features - 1, [&] (int i) { return i; });
+  
+  if(use_random_features_sample) {
+    sequence<int> nonUsed = filter(featuresIdxs, [&] (int f) {
+      return usedFeatures.find(f + 1) == usedFeatures.end();
+    });
+    int n = nonUsed.size();
+    sequence<int> permuted = tabulate(n, [&] (int i) { return nonUsed[i]; });
+    for(int i = n - 1; i >= 1; i--) {
+      int j = rand() % (i + 1);
+      int tmp = permuted[i];
+      permuted[i] = permuted[j];
+      permuted[j] = tmp;
+    }
+    int num = (int)(n * 0.3);
+    if(num <= 0) num = 1;
+    else if(num > n) num = n;
+    featuresIdxs = tabulate(num, [&] (int i) { return permuted[i]; });
+  }
+
+  //printf("C %d\n", featuresIdxs.size());
   auto costs = tabulate(featuresIdxs.size(), [&] (int j) {
       int i = featuresIdxs[j];
       if (A[i+1].discrete) {
@@ -191,7 +249,7 @@ auto build_tree(features &A, bool verbose) {
   double threshold = log2(float(num_features));  
 
   if (verbose)
-    cout << num_entries << ", " << ", " << num_features << ", " << best_i << ", " << cut << ", " << label_info << ", " 
+    cout << num_entries << ", " << num_features << ", " << best_i << ", " << cut << ", " << label_info << ", " 
 	 << best_info << ", " << featuresIdxs.size() << ", " << threshold << endl;
 
   if (label_info - best_info < threshold){
@@ -214,7 +272,10 @@ auto build_tree(features &A, bool verbose) {
       for (int i=0; i < m; i++) B[i][j].vals = std::move(x[i]);
     }, 1);
     //A.clear();
-    auto children = map(B, [&] (features &a) {return build_tree(a, verbose);}, 1);
+
+    if(use_random_features_sample && A[best_i].discrete)
+    	usedFeatures.insert(best_i);
+    auto children = map(B, [&] (features &a) {return build_tree(a, verbose, usedFeatures);}, 1);
 
     return Internal(best_i - 1, cut, majority_value, children); //-1 since first is label
   }
@@ -259,8 +320,8 @@ tree* buildRandomTree(features const &Train, bool verbose) {
       return fp;
     });
   }
-
-  return build_tree(B, verbose);
+  std::set<int, std::greater<int>> usedFeatures;
+  return build_tree(B, verbose, usedFeatures);
 }
 
 auto buildForest(features const &Train, bool verbose) {
@@ -285,15 +346,21 @@ row classifyRandomForest(features const &Train, rows const &Test, bool verbose) 
 }
 
 row classify(features const &Train, rows const &Test, bool verbose) {
+  auto startTime = time(0);
+  row result;
   if(use_random_forest) {
     srand((unsigned) time(0));
-    return classifyRandomForest(Train, Test, verbose);
+    result = classifyRandomForest(Train, Test, verbose);
   }
   else {
     features A = Train;
-    tree* T = build_tree(A, verbose);
+    std::set<int, std::greater<int>> usedFeatures;
+    tree* T = build_tree(A, verbose, usedFeatures);
     if (true) cout << "Tree size = " << T->size << endl;
     int num_features = Test[0].size();
-    return map(Test, [&] (row const& r) -> value {return classify_row(T, r);});
+    result = map(Test, [&] (row const& r) -> value {return classify_row(T, r);});
   }
+  auto endTime = time(0);
+  cout << endTime - startTime << endl;
+  return result;
 }
