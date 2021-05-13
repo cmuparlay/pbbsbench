@@ -36,6 +36,7 @@
 #include "parlay/io.h"
 #include "parlay/internal/get_time.h"
 #include "classify.h"
+#include <random>
 
 using namespace parlay;
 double infinity = std::numeric_limits<double>::infinity();
@@ -53,6 +54,7 @@ const bool use_random_forest = true;
 const bool use_random_entries_sample = true;
 const double random_entries_sample_factor = 1.0;
 const bool use_random_features_sample = true;
+const double random_features_sample_factor = 0.5;
 const size_t num_trees = 51;
 
 struct tree {
@@ -181,13 +183,14 @@ auto build_tree(features &A, bool verbose, auto usedFeatures) {
     });
     int n = nonUsed.size();
     sequence<int> permuted = tabulate(n, [&] (int i) { return nonUsed[i]; }, 1);
+    thread_local std::random_device rng;
+    thread_local std::default_random_engine e(rng());
     for(int i = n - 1; i >= 1; i--) {
-      int j = rand() % (i + 1);
-      int tmp = permuted[i];
-      permuted[i] = permuted[j];
-      permuted[j] = tmp;
+      std::uniform_int_distribution<int> uniform_dist(0, i);
+      int j = uniform_dist(e) % (i + 1);
+      std::swap(permuted[i], permuted[j]);
     }
-    int num = n * 0.5;
+    int num = n * random_features_sample_factor;
     if(num <= 0) num = 1;
     else if(num > n) num = n;
     featuresIdxs = tabulate(num, [&] (int i) { return permuted[i]; });
@@ -267,7 +270,10 @@ tree* buildRandomTree(features const &Train, bool verbose) {
   if(use_random_entries_sample) {
     int numSamples = (int)(num_entries * random_entries_sample_factor);
     sequence<int> entriesSampleIdxs = tabulate(numSamples, [&] (size_t i) {
-      return rand() % num_entries;
+      thread_local std::random_device r;
+      thread_local std::default_random_engine e1(r());
+      thread_local std::uniform_int_distribution<int> rng(0, num_entries - 1);
+      return rng(e1) % num_entries;
     });
 
     B = map(A, [&] (feature f) {
@@ -308,7 +314,6 @@ row classify(features const &Train, rows const &Test, bool verbose) {
   auto startTime = time(0);
   row result;
   if(use_random_forest) {
-    srand((unsigned) time(0));
     result = classifyRandomForest(Train, Test, verbose);
   }
   else {
@@ -320,6 +325,6 @@ row classify(features const &Train, rows const &Test, bool verbose) {
     result = map(Test, [&] (row const& r) -> value {return classify_row(T, r);});
   }
   auto endTime = time(0);
-  cout << endTime - startTime << endl;
+  cout << "Time: " << endTime - startTime << endl;
   return result;
 }
