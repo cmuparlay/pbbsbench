@@ -50,12 +50,12 @@ size_t min_size = 1;
 double encode_node_factor = 0.0; 
 
 // random forest parameters
-const bool use_random_forest = true;
-const bool use_random_entries_sample = true;
+const bool use_random_forest = false;
+const bool use_random_entries_sample = false;
 const double random_entries_sample_factor = 1.0;
-const bool use_random_features_sample = true;
+const bool use_random_features_sample = false;
 const double random_features_sample_factor = 0.5;
-const size_t num_trees = 51;
+const size_t num_trees = 11;
 
 struct tree {
   bool is_leaf;
