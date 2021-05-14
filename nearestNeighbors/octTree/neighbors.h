@@ -335,49 +335,49 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       std::cout << "depth = " << T.tree->depth() << std::endl; 
    
 
-    // *******************
-    if (algorithm_version == 0) { // this is for starting from root 
-      // this reorders the vertices for locality
-      parlay::sequence<vtx*> vr = T.vertices();
-      t.next("flatten tree");
+    // // *******************
+    // if (algorithm_version == 0) { // this is for starting from root 
+    //   // this reorders the vertices for locality
+    //   parlay::sequence<vtx*> vr = T.vertices();
+    //   t.next("flatten tree");
 
-      // find nearest k neighbors for each point
-      parlay::parallel_for (0, n, [&] (size_t i) {
-	       T.k_nearest(vr[i], k);
-      }, 1);
+    //   // find nearest k neighbors for each point
+    //   parlay::parallel_for (0, n, [&] (size_t i) {
+	   //     T.k_nearest(vr[i], k);
+    //   }, 1);
     
-    } else if (algorithm_version == 1) {
-        parlay::sequence<vtx*> vr = T.vertices();
-        t.next("flatten tree");
+    // } else if (algorithm_version == 1) {
+    //     parlay::sequence<vtx*> vr = T.vertices();
+    //     t.next("flatten tree");
 
-        int dims = (v[0]->pt).dimension();  
-        node* root = T.tree.get(); 
-        box_delta bd = T.get_box_delta(root, dims);
+    //     int dims = (v[0]->pt).dimension();  
+    //     node* root = T.tree.get(); 
+    //     box_delta bd = T.get_box_delta(root, dims);
 
-        parlay::parallel_for(0, n, [&] (size_t i) {
-          T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, root, bd.first, bd.second), k);
-        }
-        );
+    //     parlay::parallel_for(0, n, [&] (size_t i) {
+    //       T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, root, bd.first, bd.second), k);
+    //     }
+    //     );
 
 
-    } else { //(algorithm_version == 2) this is for starting from leaf, finding leaf using map()
-        auto f = [&] (vtx* p, node* n){ 
-  	     return T.k_nearest_leaf(p, n, k); 
-        };
+    // } else { //(algorithm_version == 2) this is for starting from leaf, finding leaf using map()
+    //     auto f = [&] (vtx* p, node* n){ 
+  	 //     return T.k_nearest_leaf(p, n, k); 
+    //     };
 
-        // find nearest k neighbors for each point
-        T.tree -> map(f);
-    }
+    //     // find nearest k neighbors for each point
+    //     T.tree -> map(f);
+    // }
 
     t.next("try all");
-    if (report_stats) {
-      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
-      size_t i = parlay::max_element(s) - s.begin();
-      size_t sum = parlay::reduce(s);
-      std::cout << "max internal = " << s[i] 
-		<< ", average internal = " << sum/((double) v.size()) << std::endl;
-      t.next("stats");
-    }
+  //   if (report_stats) {
+  //     auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
+  //     size_t i = parlay::max_element(s) - s.begin();
+  //     size_t sum = parlay::reduce(s);
+  //     std::cout << "max internal = " << s[i] 
+		// << ", average internal = " << sum/((double) v.size()) << std::endl;
+  //     t.next("stats");
+  //   }
     t.next("delete tree");
 
 

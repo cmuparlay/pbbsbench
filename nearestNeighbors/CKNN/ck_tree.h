@@ -23,15 +23,20 @@
 #include <iostream>
 #include <algorithm>
 #include <math.h>  
+#include <mutex>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "common/get_time.h"
+#include "common/atomics.h"
+#include "parlay/hash_table.h"
 
 // vtx must support v->pt
 // and v->pt must support pt.dimension(), pt[i],
 //    (pt1 - pt2).Length(), pt1 + (pt2 - pt3)
 //    pt1.minCoords(pt2), pt1.maxCoords(pt2),
+
+
 template <typename vtx>
 struct ck_tree{
 
@@ -55,37 +60,57 @@ struct ck_tree{
 
 	struct node{
 
+
+		// struct hashNode{
+		// 	using eType = node*;
+		// 	using kType = node*; 
+		// 	eType empty() {return NULL;}
+		// 	kType getKey(eType v) {return v;}
+		// 	size_t hash(kType s) {return parlay::hash64((s->center())[0]);} //+(s->second->center())[0]);}
+		// 	bool replaceQ(eType, eType) { return 0; }
+	 //  		bool cas(eType* p, eType o, eType n) {
+		// 	    return pbbs::atomic_compare_and_swap(p, o, n);
+		// 	}
+		// 	int cmp(kType s, kType s2) {
+		// 	    return ((s->center())[0] > (s2->center())[0]) ? 1 : (((s->center())[0] == (s2->center())[0]) ? 0 : -1);
+		// 	}
+		// };
+
+		// typedef parlay::hashtable<hashNode> NodeTable;
+		// static NodeTable makeNodeTable(size_t m) {
+		//  	return NodeTable(m, hashNode());
+		// }
+
 		public:
 		    box Box() {return b;}
 		    point center() {return centerv;}
 		    double Max_dim() {return max_dim;}
 		    double Diameter() {return diameter;}
 		    size_t size() {return n;}
+		    size_t ID() {return id;}
 		    bool is_leaf() {return L == nullptr;}
 		    node* Left() {return L;}
 		    node* Right() {return R;}
 		    node* Parent() {return parent;}
-		    parlay::sequence<node*> Interactions() {return interactions;}
 		    vtx* Vertex() {return V;}
+			// interactions_wrapper I; 
+			parlay::sequence<node*> Interactions() {return interactions;}
+			// std::mutex m; 
+			// slice_n Interactions() {return node_table.entries();}
 
 		void add_interaction(node* T){
-			size_t len = interactions.size();
-			for(size_t i=0; i<len; i++){
-				if(interactions[i] == T){
-					return;
-				}
-			}
-			parlay::sequence<node*> ints;
-			ints = parlay::sequence<node*>(len+1);
-			for(size_t i=0; i<len; i++){
-				ints[i] = interactions[i];
-			}
-			ints[len] = T;
-			interactions = ints; 
+			// std::mutex m; 
+			// std::scoped_lock lock(m);
+			interactions.push_back(T);
 		}
 
+			// void add_interaction(node* T){
+			// 	node_table.insert(T);
+			// }
+
+
 		// construct a leaf node with a sequence of points directly in it
-	    node(slice_t Pts) { 
+	    node(slice_t Pts, size_t idty) { 
 	    	n = 1;
 	      	parent = nullptr;
 	     	L = R = nullptr;
@@ -94,11 +119,14 @@ struct ck_tree{
 	      	set_max_dim();
 	      	set_diameter();
 	      	interactions = parlay::sequence<node*>();
+	      	// I = interactions_wrapper();
+	      	// node_table = makeNodeTable(100);
 	      	V = Pts[0];
+	      	id = idty;
 	    }
 
 	    // construct an internal binary node
-	    node(node* L, node* R) : L(L), R(R) { 
+	    node(node* L, node* R, size_t idty) : L(L), R(R) { 
 		    parent = nullptr;
 		    b = box(L->b.first.minCoords(R->b.first),
 			  	L->b.second.maxCoords(R->b.second));
@@ -107,17 +135,21 @@ struct ck_tree{
 		    set_max_dim(); 
 		    set_diameter();
 		    interactions = parlay::sequence<node*>();
+		    // I = interactions_wrapper(); 
+		    // node_table = makeNodeTable(100);
+		    id = idty; 
 	    }
 
-	    static node* new_leaf(slice_t Pts) {
+
+	    static node* new_leaf(slice_t Pts, size_t ID) {
       		node* r = alloc_node();
-      		new (r) node(Pts);
+      		new (r) node(Pts, ID);
       		return r;
     	}
 
-    	static node* new_node(node* L, node* R) {
+    	static node* new_node(node* L, node* R, size_t ID) {
       		node* nd = alloc_node();
-      		new (nd) node(L, R);
+      		new (nd) node(L, R, ID);
       		// both children point to this node as their parent
       		L->parent = R->parent = nd;
      		return nd;
@@ -137,7 +169,10 @@ struct ck_tree{
 	    //pass in a function to compute nearest neighbors
 	    template <typename F>
 	    void map(F f) { 
-	      	if (is_leaf()) f(V, this);
+	      	if (is_leaf()){ 
+	      		// std::cout << "at map" << std::endl; 
+	      		f(V, this);
+	      	}
 	      	else {
 				parlay::par_do_if(n > 10,
 					[&] () {L->map(f);},
@@ -177,6 +212,7 @@ struct ck_tree{
     	size_t n;
     	double diameter; 
     	double max_dim; 
+    	size_t id; 
     	node *parent;
     	node *L;
     	node *R;
@@ -184,6 +220,7 @@ struct ck_tree{
     	point centerv;
     	vtx* V; 
     	parlay::sequence<node*> interactions;
+    	// NodeTable node_table; 
 
     	void set_center() {			   
       		centerv = b.first + (b.second-b.first)/2;
@@ -206,7 +243,6 @@ struct ck_tree{
 			diameter = diam; 
 		}
 
-    	// uses the parlay memory manager, could be replaced will alloc/free
    		static parlay::type_allocator<node> node_allocator;
     	static node* alloc_node() {
       		return node_allocator.alloc();}
@@ -217,16 +253,10 @@ struct ck_tree{
 	}; //ends node structure
 
 	static bool well_separated(node* A, node* B, double s){
-		// std::cout << "here1" << std::endl; 
 		double m_a = A->Diameter();
-		// std::cout << "here2" << std::endl; 
-		// std::cout << B->is_leaf() << std::endl; 
 		double m_b = B->Diameter();
-		// std::cout << "here3" << std::endl; 
 		double diameter = max(m_a, m_b); //diameter of the smallest sphere that can capture each box
-		// std::cout << "here4" << std::endl; 
 		double d = (A->center()- B->center()).Length(); //distance between the centers of the two boxes
-		// std::cout << "here5" << std::endl; 
 		return (d-diameter >= .5*s*diameter); //is the distance between the two balls larger than .5*s*r
 	}
 
@@ -235,55 +265,111 @@ struct ck_tree{
   	struct delete_tree {void operator() (node *T) const {node::delete_tree(T);}};
   	using tree_ptr = std::unique_ptr<node,delete_tree>;
 
-  	static void wsr(node* T, double s){
+ //  	using slice_n = decltype(make_slice(parlay::sequence<node*>()));
+ //  	using node_pair = std::pair<node*, node*>;
+
+	// struct hashNode{
+	// 	using eType = node_pair*;
+	// 	using kType = node_pair*; 
+	// 	eType empty() {return NULL;}
+	// 	kType getKey(eType v) {return v;}
+	// 	size_t hash(kType s) {return parlay::hash64(rand());}
+	// 	// size_t hash(kType s) {return parlay::hash64((s->first->center())[0]+(s->second->center())[0]+rand());}
+	// 	// size_t hash(kType s) {return std::hash<double>{}(31*std::hash<double>{}(31*std::hash<double>{}(23)
+	// 	// 	+(s->first->center())[0])+(s->second->center())[1]);}
+	// 	bool replaceQ(eType, eType) { return 0; }
+ //  		bool cas(eType* p, eType o, eType n) {
+	// 	    return pbbs::atomic_compare_and_swap(p, o, n);
+	// 	}
+	// 	int cmp(kType s, kType s2) {
+	// 	    // return ((s->first->ID()+3*(s->second->ID()) > s2->first->ID()+3*(s2->second->ID())) ? 1
+	// 	    //  : (s->first->ID()+3*(s->second->ID())== s2->first->ID()+3*(s2->second->ID())) ? 0 : -1);
+	// 	    return 1; 
+	// 	}
+	// };
+
+	// typedef parlay::hashtable<hashNode> NodeTable;
+	// static NodeTable makeNodeTable(size_t m) {
+	//  	return NodeTable(m, hashNode());
+	// }
+
+	// static void ints_rec(parlay::slice<node_pair*> ints){
+	// 	return; 
+	// }
+
+	// static void apply_interactions(node* T, NodeTable interactionsTable){
+	// 	std::cout << interactionsTable.count() << std::endl; 
+	// 	auto less = [&] (node_pair* a, node_pair* b){
+	// 		return a->first->ID() < b->first->ID();
+	// 	};
+	// 	// std::cout << "made lambda" << std::endl; 
+	// 	// auto x = parlay::sort(interactionsTable.entries(), less);
+	// 	// std::cout << "here" << std::endl; 
+	// 	// std::cout << x[0]->first->Vertex()->pt[0];
+	// 	// ints_rec(parlay::make_slice(x));
+	// }
+
+	// static void wsr_wrapper(size_t n, node* T, double s, int k){
+	// 	NodeTable interactionsTable = makeNodeTable(10*k*n);
+	// 	wsr(T, s, k, interactionsTable);
+	// 	std::cout << "done with interactions" << std::endl; 
+	// 	apply_interactions(T, interactionsTable);
+	// }
+
+
+  	static void wsr(node* T, double s, int k){ //, NodeTable &interactionsTable){
+  		// NodeTable table = makeNodeTable(1000);
   		if(T->is_leaf()){
   			return;
   		} else{
-  			size_t n = T->size();
 			node* L = T -> Left();
 			node* R = T -> Right();
-			wsrChildren(L, R, s);
-			parlay::par_do_if(n > 1000, 
-				[&] () {wsr(L, s);},
-				[&] () {wsr(R, s);}
+			wsrChildren(L, R, s, k);
+			size_t n = T->size();
+			parlay::par_do_if(n > 100, 
+				[&] () {wsr(L, s, k);},
+				[&] () {wsr(R, s, k);}
 			);
   		}
 	}
 
-	static void wsrChildren(node* L, node* R, double s){ //s should be set greater than 2 for nearest neighbor applications	
+	//s should be set greater than 2 for nearest neighbor applications
+	static void wsrChildren(node* L, node* R, double s, int k){ //, NodeTable &interactionsTable){ 	
 		if(well_separated(L, R, s)){
-			// std::cout << (L->is_leaf() && R->is_leaf()) << std::endl; 
-			// std::cout << "well separated true" << std::endl; 
-			// std::cout << "prev size of left interactions " << (L->Interactions()).size() << std::endl; 
-			// std::cout << "here1" << std::endl; 
-			if(L->is_leaf()){
+			if(L->size() <= k){
+				// std::scoped_lock lock(L->m);
+				// std::cout << "count before first insertion " << interactionsTable.count() << std::endl; 
+				// node_pair pair = std::make_pair(L, R);
+				// node_pair* pair_ptr = &pair;
+				// interactionsTable.insert(pair_ptr);
+				// std::cout << "count after first insertion " << interactionsTable.count() << std::endl; 
 				L -> add_interaction(R);
 			}
-			// std::cout << "here2" << std::endl; 
-			// std::cout << "new size of left interactions " << (L->Interactions()).size() << std::endl; 
-			if(R->is_leaf()){
+			if(R->size() <= k){
+				// std::scoped_lock lock(R->m);
+				// node_pair pair = std::make_pair(R, L);
+				// node_pair* pair_ptr = &pair;
+				// interactionsTable.insert(pair_ptr);
 				R -> add_interaction(L);
 			}
-			// std::cout << "here3" << std::endl; 
 		} else{
 			size_t n = L->size() + R->size();
-			// std::cout << "left size and box " << L->size() << std::endl;
-			// print_point(L->Box().first);
-			// print_point(L->Box().second);
-			// std::cout << "right size and box " << R->size() << std::endl; 
-			// print_point(R->Box().first);
-			// print_point(R->Box().second);
 			double m_L = L->Max_dim();
-			// std::cout << "left max dim " << m_L << std::endl; 
 			double m_R = R->Max_dim();
-			// std::cout << "here4" << std::endl; 
-			// std::cout << "right max dim " << m_R << std::endl; 
 			if(m_L > m_R){
-	  			wsrChildren(R, L->Left(), s);
-	  			wsrChildren(R, L->Right(), s);
+				// parlay::par_do_if(n > 100, 
+				// 	[&] () {wsrChildren(R, L->Left(), s);},
+				// 	[&] () {wsrChildren(R, L->Right(), s);}
+				// );
+	  			wsrChildren(R, L->Left(), s, k);
+	  			wsrChildren(R, L->Right(), s, k);
 			} else{
-	  			wsrChildren(L, R->Left(), s);
-	  			wsrChildren(L, R->Right(), s);
+				// parlay::par_do_if(n > 100, 
+				// 	[&] () {wsrChildren(L, R->Left(), s);},
+				// 	[&] () {wsrChildren(L, R->Right(), s);}
+				// );
+	  			wsrChildren(L, R->Left(), s, k);
+	  			wsrChildren(L, R->Right(), s, k);
 			}
 		}
 	}
@@ -295,20 +381,10 @@ struct ck_tree{
     	size_t n = P.size();
   		parlay::sequence<vtx*> Tmp;
   		Tmp = parlay::sequence<vtx*>(n);
-    	node* r = build_recursive(parlay::make_slice(P), parlay::make_slice(Tmp));
+    	node* r = build_recursive(parlay::make_slice(P), parlay::make_slice(Tmp), 0);
     	t.next("build");
     	return tree_ptr(r);
   	}
-
-
-	static void print_point(point p){
-		int d = p.dimension();
-		std::cout << "Point: ";
-		for(int j=0; j<d; j++){
-			std::cout << p[j] << ", ";
-		}
-		std::cout << "\n";
-	}
 
 	static bool are_equal(point p, point q){
 		int d = p.dimension();
@@ -320,20 +396,15 @@ struct ck_tree{
 		return true;
 	}
 
-  	static node* build_recursive(slice_t points, slice_t Tmp){
+  	static node* build_recursive(slice_t points, slice_t Tmp, size_t id_offset){
   		if(points.size() == 0){
   			std::cout << "ERROR: passed in slice of size 0 when building tree" << std::endl; 
   			abort(); 
   		}
 		if(points.size() == 1){
-  			return node::new_leaf(points);
-  		}else if((points.size()==2) && are_equal(points[0]->pt, points[1]->pt)){
-  			node* L = build_recursive(points.cut(0,1), points.cut(0, 1));
-  			node* R = build_recursive(points.cut(0,1), points.cut(0, 1));
-  			return node::new_node(L, R);
+  			return node::new_leaf(points, id_offset);
   		}else{
 	  		//identify the box around the points and its largest dimension
-	  		//TODO see if box calculations can be made more efficient by just splitting
 	  		int dim = (points[0]->pt).dimension();
 	  		box b = get_box(points);
 	  		size_t d = 0;
@@ -344,9 +415,7 @@ struct ck_tree{
 	      			Delta = std::abs(b.second[i] - b.first[i]);
 	    		}
 	  		}
-	  		// std::cout << d << std::endl; 
 	  		double splitpoint = (b.first[d] + b.second[d])/2.0;
-	  		// std::cout << splitpoint << std::endl; 
 	  		//pack points into new arrays based on splitpoint
 	  		auto flagsLeft = parlay::map(points, [&] (vtx* p) -> bool {
 	      		return p->pt[d] < splitpoint;});
@@ -357,42 +426,171 @@ struct ck_tree{
 	  		parlay::pack_into(points, flagsRight, Tmp.cut(nl, n));
 	  		if(nl == 0){ //edge case where all points are the same
 	  			nl = n/2; 
-	  			// std::cout << nl << std::endl; 
 	  		}
-	  		// std::cout << "New Round" << std::endl; 
-	  		// std::cout << "Left Points" << std::endl; 
-	  		// for(size_t i=0; i<nl; i++){
-	  		// 	print_point(Tmp[i]->pt);
-	  		// }
-	  		// std::cout << "Right Points" << std::endl; 
-	  		// for(size_t i=nl; i<n; i++){
-	  		// 	print_point(Tmp[i]->pt);
-	  		// }
-	  		// for(size_t i=0; i<n; i++){
-	  		// 	print_point(Tmp[i]->pt);
-	  		// }
 	  		//create left and right children
   			node *L, *R; 
 	  		parlay::par_do_if(n > 1000, 
-	  			[&] () {L = build_recursive(Tmp.cut(0, nl), points.cut(0, nl));},
-	  			[&] () {R = build_recursive(Tmp.cut(nl, n), points.cut(nl, n));}
+	  			[&] () {L = build_recursive(Tmp.cut(0, nl), points.cut(0, nl), id_offset);},
+	  			[&] () {R = build_recursive(Tmp.cut(nl, n), points.cut(nl, n), id_offset+nl);}
 	  		);
 	  		//create parent node
-	  		return node::new_node(L, R);
+	  		return node::new_node(L, R, (nl+id_offset)*2);
 	  	}
   	}
 
 }; //ends CKtree structure
 
-	  		// if(nl==0){
-	  		// 	node* R = build_recursive(points.cut(0, nl), Tmp.cut(0, nl));
-	  		// }else if(nl==n){
-	  		// 	node* L = build_recursive(points.cut(nl, n), Tmp.cut(nl, n)); 
-	  		// }else{
-	  		// 	node *L, *R; 
-		  	// 	parlay::par_do_if(n > 1000, 
-		  	// 		[&] () {L = build_recursive(points.cut(0, nl), Tmp.cut(0, nl));},
-		  	// 		[&] () {R = build_recursive(points.cut(nl, n), Tmp.cut(nl, n));}
-		  	// 	);
-	  		// }
+
+
+
+
+  	// 	// build a tree given a sequence of pointers to points
+  	// template <typename Seq>
+  	// static tree_ptr build_ck_0(Seq &P) {
+   //  	timer t("oct_tree", false);
+   //  	size_t n = P.size();
+  	// 	parlay::sequence<vtx*> Tmp;
+  	// 	Tmp = parlay::sequence<vtx*>(n);
+   //  	node* r = build_recursive_ck_0(parlay::make_slice(P), parlay::make_slice(Tmp));
+   //  	t.next("build");
+   //  	return tree_ptr(r);
+  	// }
+
+  	// static node* build_recursive_ck_0(slice_t points, slice_t Tmp){
+  	// 	size_t initial_size = points.size();
+  	// 	size_t current_size = initial_size; 
+  	// 	while(current_size > initial_size/2){
+  	// 		int dim = (points[0]->pt).dimension();
+	  // 		box b = get_box(points);
+	  // 		size_t d = 0;
+	  // 		double Delta = 0.0;
+	  // 		for (int i=0; i < dim; i++) {
+	  //   		if (std::abs(b.second[i] - b.first[i]) > Delta) {
+	  //     			d = i;
+	  //     			Delta = std::abs(b.second[i] - b.first[i]);
+	  //   		}
+	  // 		}
+	  // 		// std::cout << d << std::endl; 
+	  // 		double splitpoint = (b.first[d] + b.second[d])/2.0;
+	  // 		// std::cout << splitpoint << std::endl; 
+	  // 		//pack points into new arrays based on splitpoint
+	  // 		auto flagsLeft = parlay::map(points, [&] (vtx* p) -> bool {
+	  //     		return p->pt[d] < splitpoint;});
+	  // 		auto flagsRight = parlay::delayed_map(flagsLeft, [] (bool x) {
+	  //     		return !x;});
+	  // 		size_t n = points.size();
+	  // 		size_t nl = parlay::pack_into(points, flagsLeft, Tmp);
+	  // 		parlay::pack_into(points, flagsRight, Tmp.cut(nl, n));
+	  // 		if(nl == 0){ //edge case where all points are the same
+	  // 			nl = n/2; 
+	  // 		}
+  	// 	}
+  	// }
+
+  	// // build a tree given a sequence of pointers to points
+  	// template <typename Seq>
+  	// static tree_ptr build_ck(Seq &P) {
+   //  	timer t("ck_tree", false);
+   //  	size_t n = P.size();
+   //  	int dim = P[0]->pt.dimension();
+   //  	parlay::sequence<slice_t> slice_seq;
+   //  	slice_seq = parlay::sequence<slice_t>(dim);
+   //  	parlay::sequence<slice_t> slice_seq_tmp;
+   //  	slice_seq_tmp = parlay::sequence<slice_t>(dim);
+   //  	for(int i=0; i<dim; i++){
+   //  		slice_seq[i] = sort_coord(P, i);
+   //  		parlay::sequence<vtx*> Tmp;
+  	// 		Tmp = parlay::sequence<vtx*>(n);
+  	// 		slice_seq_tmp[i] = Tmp; 
+   //  	}
+   //  	node* r = build_ck_rec(slice_seq, slice_seq_tmp, dim);
+   //  	t.next("build");
+   //  	return tree_ptr(r);
+  	// }
+
+  	// slice_t sort_coord(parlay::sequence<vtx*> v, int dim){
+  	// 	auto less = [] (vtx* a, vtx* b){
+  	// 		return (a->pt)[dim] < (b->pt)[dim];
+  	// 	};
+  	// 	auto x = parlay::sort(v, less);
+  	// 	return parlay::make_slice(x);
+  	// }
+
+  	// static node* build_ck_rec(parlay::sequence<slice_t> slice_seq, parlay::sequence<slice_t> size_seq_tmp, int dims){
+  	// 	size_t size_init = slice_seq[0].size();
+  	// 	size_t running_size = size_init; 
+  	// 	while(running_size > size_init/2){
+  	// 		double maxdim = 0; 
+  	// 		double d = 0; 
+  	// 		for(int i=0; i<dims; i++){
+
+  	// 		}
+  	// 		double splitpoint = maxdim/2;
+  	// 		auto less = [&] (vtx* a){
+  	// 			return (a->pt)[d] < splitpoint; 
+  	// 		};
+  	// 		size_t splitcoord = parlay::internal::binary_search(slice_seq[d], less);
+  	// 		//create new wrappers for the sorted sequences
+  	// 		parlay::sequence<slice_t> slice_seq_less = parlay::sequence<slice_t>(dims);
+  	// 		parlay::sequence<slice_t> slice_seq_tmp_less = parlay::sequence<slice_t>(dims);
+  	// 		parlay::sequence<slice_t> slice_seq_greater = parlay::sequence<slice_t>(dims);
+  	// 		parlay::sequence<slice_t> slice_seq_tmp_greater = parlay::sequence<slice_t>(dims);
+  	// 		//split the sorted sequence we cut on
+  	// 		slice_seq_less[d] = slice_seq[d].cut(0, splitcoord);
+  	// 		slice_seq_tmp_less[d] = slice_seq_tmp[d].cut(0, splitcoord);
+  	// 		slice_seq_greater[d] = slice_seq[d].cut(splitcoord, running_size);
+  	// 		slice_seq_tmp_less[d] = slice_seq_tmp[d].cut(splitcoord, running_size);
+  	// 		for(int i=0; i<dims; i++){
+  	// 			if(i != d){
+
+  	// 			}
+  	// 		}
+  	// 	}
+  	// }
+
+
+		// parlay::hashtable<hash_node> table; 
+
+		// // Example for hashing numeric values.
+		// // T must be some integer type
+		// template <class T>
+		// struct hash_numeric {
+		//   using eType = T;
+		//   using kType = T;
+		//   eType empty() { return -1; }
+		//   kType getKey(eType v) { return v; }
+		//   size_t hash(kType v) { return static_cast<size_t>(hash64(v)); }
+		//   int cmp(kType v, kType b) { return (v > b) ? 1 : ((v == b) ? 0 : -1); }
+		//   bool replaceQ(eType, eType) { return 0; }
+		//   eType update(eType v, eType) { return v; }
+		//   bool cas(eType* p, eType o, eType n) {
+		//     // TODO: Make this use atomics properly. This is a quick
+		//     // fix to get around the fact that the hashtable does
+		//     // not use atomics. This will break for types that
+		//     // do not inline perfectly inside a std::atomic (i.e.,
+		//     // any type that the standard library chooses to lock)
+		//     return std::atomic_compare_exchange_strong_explicit(
+		//       reinterpret_cast<std::atomic<eType>*>(p), &o, n, std::memory_order_relaxed, std::memory_order_relaxed);
+		//   }
+		// };
+
+		// parlay::hashtable<hash_numeric<int>> table;
+
+		// struct interactions_wrapper{
+		// 	parlay::sequence<node*> interactions;
+		// 	std::mutex *m; 
+
+		// 	interactions_wrapper(){
+		// 		interactions = parlay::sequence<node*>();
+		// 		m = new std::mutex();
+		// 	}
+
+
+		// 	void add_interaction(node* T){
+		// 		std::scoped_lock lock(*m);
+		// 		interactions.push_back(T);
+		// 	}
+
+		// };
+
 

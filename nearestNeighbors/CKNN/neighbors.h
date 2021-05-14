@@ -26,10 +26,12 @@
 #include <limits>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/hash_table.h"
 #include "common/geometry.h"
 #include "ck_tree.h"
 
 bool report_stats = true; 
+bool check_correctness = false; 
 int algorithm_version = 0; //just keep this at 0
 
 template<class vtx, int max_k>
@@ -49,8 +51,8 @@ struct k_nearest_neighbors{
     	tree = ck_tree_vtx::build(V); 
   	}
 
-  	void get_wsr(node* T, double s){
-  		ck_tree_vtx::wsr(T, s);
+  	void get_wsr(node* T, double s, int k){
+  		ck_tree_vtx::wsr(T, s, k);
   	}
 
 	struct kNN{
@@ -64,8 +66,6 @@ struct k_nearest_neighbors{
 
     	kNN() {}
 
-    	vtx* get_nbh() {return neighbors[0];}
-    	double get_dist() {return distances[0];}
 
 	    // returns the ith smallest element (0 is smallest) up to k-1
 	    vtx* operator[] (const int i) { return neighbors[k-i-1]; } 
@@ -76,7 +76,6 @@ struct k_nearest_neighbors{
 				abort();
 			}
 		    k = kk;
-		    // print_point(p->pt);
 		    vertex = p;
 		    leaf = T; 
 		    // initialize nearest neighbors to point to Null with
@@ -115,17 +114,22 @@ struct k_nearest_neighbors{
     			int num_leaves_left = L->size();
     			int num_leaves_right = R->size();
     			int num_leaves = num_leaves_left + num_leaves_right;
-    			parlay::par_do_if(num_leaves > 2,
-    				[&] () {flatten_rec(L, ints.cut(0, num_leaves_left));},
-    				[&] () {flatten_rec(R, ints.cut(num_leaves_left, num_leaves_left+num_leaves_right));}
-    			);
+    			// parlay::par_do_if(num_leaves > 2,
+    			// 	[&] () {flatten_rec(L, ints.cut(0, num_leaves_left));},
+    			// 	[&] () {flatten_rec(R, ints.cut(num_leaves_left, num_leaves_left+num_leaves_right));}
+    			// );
+				flatten_rec(L, ints.cut(0, num_leaves_left));
+				flatten_rec(R, ints.cut(num_leaves_left, num_leaves_left+num_leaves_right));
+    		}
+    	}
+
+    	void update_nonrec(slice_n leaves){
+    		for(size_t i=0; i<leaves.size(); i++){
+    			update_nearest(leaves[i]->Vertex());
     		}
     	}
 
     	void update_nearest(vtx *other) {  
-    		// std::cout << "updating nearest" << std::endl; 
-    		// print_point(vertex->pt);
-    		// print_point(other->pt);
       		auto dist = (vertex->pt - other->pt).sqLength();
       		if (dist < distances[0]) { 
       			neighbors[0] = other;
@@ -146,42 +150,45 @@ struct k_nearest_neighbors{
     			return std::make_pair(leaves[0]->Vertex(), dist);
     		} else{
     			vtx_dist L, R; 
-    			parlay::par_do_if(num_leaves > 2,
-    				[&] () {L = update_rec(leaves.cut(0, num_leaves/2));},
-    				[&] () {R = update_rec(leaves.cut(num_leaves/2, num_leaves));}
-    			);
+    			L = update_rec(leaves.cut(0, num_leaves/2));
+    			R = update_rec(leaves.cut(num_leaves/2, num_leaves));
     			if(L.second < R.second) return L;
     			else return R; 
     		}
     	}
 
-    	void k_nearest_neighbors(){
-    		parlay::sequence<node*> interactions = leaf->Interactions();
-    		// std::cout << "size of interaction list " << interactions.size() << std::endl; 
-    		slice_n leaves = flatten(interactions);
-    		if (report_stats) vertex->counter = leaves.size();
-    		vtx_dist nearest = update_rec(leaves);
-    		neighbors[0] = nearest.first;
-    		distances[0] = nearest.second; 
-    		// size_t num_leaves = leaves.size();
-    		// std::cout << "number of leaves being searched " << num_leaves << std::endl; 
-    		// std::cout << "query point:" << std::endl; 
-    		// print_point(vertex->pt);
-    		// std::cout << "interactions:" << std::endl; 
-    		// for(size_t i=0; i<num_leaves; i++){
-    		// 	// print_point((leaves[i]->Vertex())->pt);
-    		// 	update_nearest(leaves[i]->Vertex());
-    		// }
+    	parlay::sequence<node*> get_interactions(){
+    		node* current = leaf; 
+    		parlay::sequence<node*> ints_per_node = parlay::sequence<node*>();
+    		while(current->size() <= k && current->Parent() != nullptr){
+    			ints_per_node.push_back(current);
+    			current = current->Parent();
+    		}
+    		parlay::sequence<node*> all_ints = parlay::sequence<node*>();
+    		for(size_t i=0; i<ints_per_node.size(); i++){
+    			parlay::sequence<node*> interactions = ints_per_node[i]->Interactions();
+    			for(size_t j=0; j<interactions.size(); j++){
+    				all_ints.push_back(interactions[j]);
+    			}
+    		}
+    		return all_ints;
     	}
 
-	};
+    	void k_nearest_neighbors(){
+    		parlay::sequence<node*> interactions = get_interactions();
+    		slice_n leaves = flatten(interactions);
+    		if (report_stats) vertex->counter = leaves.size();
+    		update_nonrec(leaves);
+    	}
 
-  	//brute-force check correctness for approximately 100 points out of every 10 million
-	bool do_check_correct(){
-		// float check = (float) rand()/RAND_MAX;
-		// if (check < .00001) return true;
-		// return false;
-		return true; 
+	}; //end KNN struct
+
+  	//brute-force check correctness for approximately 1% of the points
+	bool do_check_correct(size_t n){
+		float check = (float) rand()/RAND_MAX;
+		float threshold = (1/(n*.01));
+		if (check < threshold) return true;
+		else return false;
 	}
 
 	bool are_equal(point p, point q){
@@ -203,50 +210,75 @@ struct k_nearest_neighbors{
 		std::cout << "\n";
 	}
 
-	void check_correct(vtx* v, vtx* ans, double original_dist, parlay::sequence<vtx*> V){
-		// print_point(ans->pt);
-		// std::cout << original_dist << std::endl;
-		if (do_check_correct()){
-			// std::cout << "here1" << std::endl; 
-			size_t n = V.size(); 
-			vtx* nearest;
-			double nearest_dist = numeric_limits<double>::max();
-			// std::cout << "here2" << std::endl; 
+	void update_nearest(vtx* other, vtx* vertex, vtx* neighbors[], double distances[], int k) {  
+  		auto dist = (vertex->pt - other->pt).sqLength();
+  		if (dist < distances[0]) { 
+  			neighbors[k] = other;
+  			distances[k] = dist;
+      		for (int i = 1;
+      	     	i < k && distances[k-i] < distances[k-i+1];
+      	     	i++) {
+      	  		swap(distances[k-i], distances[k-i+1]);
+      	  		swap(neighbors[k-i], neighbors[k-i+1]); 
+        	}
+  		}
+	}
+
+	void check_correct_vtx(vtx* v, parlay::sequence<vtx*> V, int k){
+		size_t n = V.size(); 
+		if (do_check_correct(n)){
+			//collect reported neighbors and distances
+			vtx* original_neighbors[k]; 
+			double original_distances[k]; 
+			for(int i=0; i<k; i++){
+				original_neighbors[i] = v->ngh[i];
+				original_distances[k] = ((v->pt) - (original_neighbors[i]->pt)).sqLength();
+			}
+			//initialize vectors for correctness check
+			vtx* neighbors[k];  
+    		double distances[k];
+    		for (int i=0; i<k; i++) {
+	        	neighbors[i] = (vtx*) NULL; 
+	        	distances[i] = numeric_limits<double>::max();
+	        }
 			for(size_t i = 0; i < n; i++){
-				// std::cout << "here3" << std::endl; 
 				if(not are_equal(V[i]->pt, v->pt)){ //make sure we don't report the query point as its own nearest neighbor
-					// std::cout << "here4" << std::endl; 
-					double dist = (v->pt - V[i]->pt).sqLength();
-					if(dist < nearest_dist){
-						nearest = V[i];
-						nearest_dist = dist; 
-					}
+					update_nearest(V[i], v, neighbors, distances, k);
 				}
 			} 
-			if(not (original_dist <= nearest_dist)){
-				std::cout << "Query point: ";
-				print_point(v->pt);
-				std::cout << "Reported neighbor: ";
-				print_point(ans->pt);
-				std::cout << "Reported distance: " << (ans->pt - v->pt).sqLength() << "\n";
-				std::cout << "Actual neighbor: ";
-				print_point(nearest->pt);
-				std::cout << "Actual distance: " << nearest_dist << "\n";
-				std::cout<<"ERROR: nearest neighbor not correct"<< "\n";
-				abort();
+			for(int i=0; i<k; i++){
+				if(not (original_distances[i] <= distances[i])){
+					std::cout<<"ERROR: nearest neighbor not correct for neighbor " << i << "\n";
+					std::cout << "Query point: ";
+					print_point(v->pt);
+					std::cout << "Reported neighbor: ";
+					print_point(original_neighbors[i]->pt);
+					std::cout << "Reported distance: " << (original_neighbors[i]->pt - v->pt).sqLength() << "\n";
+					std::cout << "Actual neighbor: ";
+					print_point(neighbors[i]->pt);
+					std::cout << "Actual distance: " << distances[i] << "\n";
+					abort();
+				}
 			}
 		}		
 	}
 
-	void k_nearest(vtx* v, node* T, int k, parlay::sequence<vtx*> V){
-		kNN nn(v, T, k);
-		nn.k_nearest_neighbors();
-		// vtx* ans = nn.get_nbh();
-		// double dist = nn.get_dist();
-		// check_correct(v, ans, dist, V);
+	void check_correct(parlay::sequence<vtx*> V, int k){
+		size_t n = V.size();
+		for(size_t i=0; i<n; i++){
+			check_correct_vtx(V[i], V, k);
+		}
 	}
 
-};
+	void k_nearest(vtx* v, node* T, int k){ //, parlay::sequence<vtx*> V){
+		kNN nn(v, T, k);
+		nn.k_nearest_neighbors();
+		for(int i=0; i<k; i++){
+			v->ngh[i] = nn.neighbors[i];
+		}
+	}
+
+}; //end k_nearest_neighbors struct
 
 
 
@@ -268,22 +300,27 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 	if (report_stats) 
 	std::cout << "depth = " << T.tree->depth() << std::endl; 
 
-	T.get_wsr(T.tree.get(), s);
-	t.next("find well-separated realization");
+	T.get_wsr(T.tree.get(), s, k);
+	t.next("find well-separated realization");  
+
 
 	auto f = [&] (vtx* p, node* n){
-		return T.k_nearest(p, n, k, v);
+		return T.k_nearest(p, n, k);
 	};
 
 	T.tree->map(f);
 	t.next("compute nearest neighbors");
+	if(check_correctness){
+		T.check_correct(v, k);
+		t.next("check correctness");
+	}
 
 	if (report_stats) {
 		auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
       	size_t i = parlay::max_element(s) - s.begin();
       	size_t sum = parlay::reduce(s);
-      	std::cout << "max internal = " << s[i] 
-			<< ", average internal = " << sum/((double) v.size()) << std::endl;
+      	std::cout << "max interactions = " << s[i] 
+			<< ", average interactions = " << sum/((double) v.size()) << std::endl;
 		t.next("stats");
 	}
 	t.next("delete tree");
