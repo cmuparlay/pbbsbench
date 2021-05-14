@@ -50,12 +50,12 @@ size_t min_size = 1;
 double encode_node_factor = 0.0; 
 
 // random forest parameters
-const bool use_random_forest = false;
-const bool use_random_entries_sample = false;
+const bool use_random_forest = true;
+const bool use_random_entries_sample = true;
 const double random_entries_sample_factor = 1.0;
-const bool use_random_features_sample = false;
-const double random_features_sample_factor = 0.5;
-const size_t num_trees = 11;
+const bool use_random_features_sample = true;
+const double random_features_sample_factor = 0.7;
+const size_t num_trees = 27;
 
 struct tree {
   bool is_leaf;
@@ -268,12 +268,14 @@ tree* buildRandomTree(features const &Train, bool verbose) {
 
   features B = Train;  
   if(use_random_entries_sample) {
-    int numSamples = (int)(num_entries * random_entries_sample_factor);
+    int numSamples = num_entries * random_entries_sample_factor;
+    if(numSamples <= 0) numSamples = 1;
     sequence<int> entriesSampleIdxs = tabulate(numSamples, [&] (size_t i) {
       thread_local std::random_device r;
       thread_local std::default_random_engine e1(r());
-      thread_local std::uniform_int_distribution<int> rng(0, num_entries - 1);
-      return rng(e1) % num_entries;
+      thread_local std::uniform_int_distribution<int> gen(0, num_entries - 1);
+      int res = gen(e1) % num_entries;
+      return res;
     });
 
     B = map(A, [&] (feature f) {
