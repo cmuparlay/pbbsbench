@@ -11,7 +11,7 @@
 */
 
 template <class vtx>
-class q_intelementCompare {
+class q_intelementCompare {   
 public:
 
   //! Less than operator

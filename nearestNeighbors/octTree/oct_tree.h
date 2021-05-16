@@ -24,10 +24,8 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "common/geometry.h"
+#include "common/geometry.h"   
 #include "common/get_time.h"
-
-constexpr int LEAF_SIZE_CUTOFF = 32;
 
 // vtx must support v->pt
 // and v->pt must support pt.dimension(), pt[i],
@@ -42,6 +40,10 @@ struct oct_tree {
   using indexed_point = std::pair<size_t,vtx*>;
   using slice_t = decltype(make_slice(parlay::sequence<indexed_point>()));
   using slice_v = decltype(make_slice(parlay::sequence<vtx*>()));
+
+
+
+
 
     // takes a point, rounds each coordinate to an integer, and interleaves
   // the bits into "key_bits" total bits.
@@ -77,7 +79,6 @@ struct oct_tree {
     box identity = pts[0];
     return parlay::reduce(pts, parlay::make_monoid(minmax,identity));
   }
-
 
   struct node { 
 
@@ -138,7 +139,7 @@ struct oct_tree {
     
     ~node() {
       // need to collect in parallel
-      parlay::par_do_if(n > 100,
+      parlay::par_do_if(n > 1000,
 			[&] () { delete_tree(L);},
 			[&] () { delete_tree(R);});
     }
@@ -159,7 +160,7 @@ struct oct_tree {
       if (is_leaf())
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {
-	parlay::par_do_if(n > 100,
+	parlay::par_do_if(n > 1000,
 			  [&] () {L->map(f);},
 			  [&] () {R->map(f);});
       }
@@ -226,6 +227,7 @@ struct oct_tree {
       }
     }
   }; // this ends the node structure
+
   
   // A unique pointer to a tree node to ensure the tree is
   // destructed when the pointer is, and that  no copies are made.
@@ -286,7 +288,7 @@ private:
   static node* build_recursive(slice_t Pts, int bit) {
     size_t n = Pts.size();
     if (n == 0) abort();
-    int cutoff = 32;
+    int cutoff = 1;
 
     // if run out of bit, or small then generate a leaf
     if (bit == 0 || n < cutoff) {

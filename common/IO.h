@@ -72,8 +72,11 @@ namespace benchIO {
     return SA;
   }
 
-  inline int xToStringLen(parlay::chars const &a) { return a.size();}
-  inline void xToString(char* s, parlay::chars const &a) {
+  //using this as a typename so we can replace with parlay::chars easily if desired
+  using charstring = typename parlay::sequence<char>;
+
+  inline int xToStringLen(charstring const &a) { return a.size();}
+  inline void xToString(char* s, charstring const &a) {
     for (int i=0; i < a.size(); i++) s[i] = a[i];}
 
   inline int xToStringLen(long a) { return 21;}
@@ -108,7 +111,7 @@ namespace benchIO {
   }
 
   template <class Seq>
-  parlay::chars seqToString(Seq const &A) {
+  charstring seqToString(Seq const &A) {
     size_t n = A.size();
     auto L = parlay::tabulate(n, [&] (size_t i) -> long {
 	typename Seq::value_type x = A[i];
@@ -116,7 +119,7 @@ namespace benchIO {
     size_t m;
     std::tie(L,m) = parlay::scan(std::move(L));
 
-    parlay::chars B(m+1, (char) 0);
+    charstring B(m+1, (char) 0);
     char* Bs = B.begin();
 
     parlay::parallel_for(0, n-1, [&] (long i) {
@@ -126,7 +129,7 @@ namespace benchIO {
     xToString(Bs + L[n-1], A[n-1]);
     Bs[m] = Bs[m-1] = '\n';
     
-    parlay::chars C = parlay::filter(B, [&] (char c) {return c != 0;}); 
+    charstring C = parlay::filter(B, [&] (char c) {return c != 0;}); 
     C[C.size()-1] = 0;
     return C;
   }
@@ -139,7 +142,7 @@ namespace benchIO {
     while (offset < n) {
       // Generates a string for a sequence of size at most bsize
       // and then wrties it to the output stream
-      parlay::chars S = seqToString(A.cut(offset, min(offset + bsize, n)));
+      charstring S = seqToString(A.cut(offset, min(offset + bsize, n)));
       os.write(S.begin(), S.size()-1);
       offset += bsize;
     }
@@ -179,7 +182,7 @@ namespace benchIO {
     return 0;
   }
 
-  parlay::chars readStringFromFile(char const *fileName) {
+  charstring readStringFromFile(char const *fileName) {
     ifstream file (fileName, ios::in | ios::binary | ios::ate);
     if (!file.is_open()) {
       std::cout << "Unable to open file: " << fileName << std::endl;
@@ -188,7 +191,7 @@ namespace benchIO {
     long end = file.tellg();
     file.seekg (0, ios::beg);
     long n = end - file.tellg();
-    parlay::chars bytes(n, (char) 0);
+    charstring bytes(n, (char) 0);
     file.read (bytes.begin(), n);
     file.close();
     return bytes;
@@ -201,12 +204,12 @@ namespace benchIO {
     return writeSeqToFile(intHeaderIO, A, fileName);
   }
 
-  sequence<parlay::chars> get_tokens(char const *fileName) {
+  sequence<sequence<char>> get_tokens(char const *fileName) {
     // parlay::internal::timer t("get_tokens");
     // auto S = parlay::chars_from_file(fileName);
     auto S = parlay::file_map(fileName);
     // t.next("file map");
-    sequence<parlay::chars> r =  parlay::tokens(S, benchIO::is_space);
+    auto r =  parlay::tokens(S, benchIO::is_space);
     // t.next("tokens");
     return r;
   }

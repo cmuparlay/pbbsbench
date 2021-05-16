@@ -230,6 +230,7 @@ struct k_nearest_neighbors {
 
   }; // this ends the knn structure
 
+
   using box_delta = std::pair<box, double>;
 
   box_delta get_box_delta(node* T, int dims){
@@ -240,6 +241,7 @@ struct k_nearest_neighbors {
     box_delta bd = make_pair(b, Delta);
     return bd;
   }
+
 
   // takes in an integer and a position in said integer and returns whether the bit at that position is 0 or 1
   int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
@@ -253,14 +255,9 @@ struct k_nearest_neighbors {
   }
 
 //This finds the leaf in the search structure that p is located in
-node* find_leaf(point p, int dims, node* T){ //takes in a point since interleave_bits() takes in a point
-   //first, we use code copied over from oct_tree to go from a point to an interleave integer
-   using box = typename o_tree::box;
-   node* current = T;
-   box b = current -> Box(); 
-   double Delta = 0;
-   for (int i = 0; i < dims; i++) 
-     Delta = std::max(Delta, b.second[i] - b.first[i]);
+node* find_leaf(point p, node* T, box b, double Delta){ //takes in a point since interleave_bits() takes in a point
+  //first, we use code copied over from oct_tree to go from a point to an interleave integer
+  node* current = T;
   size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //calling interleave_bits from oct_tree
   //then, we use this interleave integer to find the correct leaf
   while (not (current->is_leaf())){
@@ -315,6 +312,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
 }; //this ends the k_nearest_neighbors structure
 
+
+
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
 template <int max_k, class vtx>
@@ -333,8 +332,10 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     t.next("build tree");
 
     if (report_stats) 
-      std::cout << "depth = " << T.tree->depth() << std::endl;
-    // *******************
+      std::cout << "depth = " << T.tree->depth() << std::endl; 
+   
+
+    // // *******************
     if (algorithm_version == 0) { // this is for starting from root 
       // this reorders the vertices for locality
       parlay::sequence<vtx*> vr = T.vertices();
@@ -377,8 +378,9 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 		<< ", average internal = " << sum/((double) v.size()) << std::endl;
       t.next("stats");
     }
-    t.next("delete tree");
+    t.next("delete tree");   
 
 
 };
 }
+
