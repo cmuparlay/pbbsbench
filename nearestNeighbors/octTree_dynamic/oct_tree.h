@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <algorithm>
-#include "parlay/parallel.h"    
+#include "parlay/parallel.h"      
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "common/get_time.h"
@@ -86,13 +86,12 @@ struct oct_tree {
 
   public:
     int bit;
-    int num_leaf_children; 
     parlay::sequence<indexed_point> indexed_pts;
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
     size_t size() {return n;}
-    bool is_leaf() {return L == nullptr;}
+    bool is_leaf() {return (L == nullptr) && (R == nullptr);}
     node* Left() {return L;}
     node* Right() {return R;}
     node* Parent() {return parent;}
@@ -100,10 +99,6 @@ struct oct_tree {
 
     void set_bit(int currentBit){
       bit = currentBit;
-    }
-
-    void set_children(int num_children){
-      num_leaf_children = num_children;
     }
 
     void set_size(int size){
@@ -128,6 +123,10 @@ struct oct_tree {
       }
     }
 
+    void reset_center(){
+      set_center();
+    }
+
     void set_box(box B){
       b = B; 
     }
@@ -143,26 +142,61 @@ struct oct_tree {
 
     void batch_update(slice_t new_points){
       int new_size = new_points.size();
-      parlay::sequence<indexed_point> idpts;
-      idpts = parlay::sequence<indexed_point>(n+new_size);
-      parlay::sequence<vtx*> Q;
-      Q = parlay::sequence<vtx*>(n+new_size);
-      for(size_t i=0; i<n; i++){
-        idpts[i] = indexed_pts[i];
-        Q[i] = indexed_pts[i].second;
-      }
       for(size_t i=0; i<new_size; i++){
-        idpts[n+i] = new_points[i];
-        Q[n+i] = new_points[i].second;
+        indexed_pts.push_back(new_points[i]);
+        P.push_back(new_points[i].second);
       }
       n += new_size;
-      set_vertices(Q);
-      set_idpts(idpts);
-      set_box(get_box(P));
+      b = get_box(P);
       set_center();
     }
 
-    
+    static void print_point(point p){
+      int d = p.dimension();
+      std::cout << "Point: ";
+      for(int j=0; j<d; j++){
+        std::cout << p[j] << ", ";
+      }
+      std::cout << "\n";
+    }
+
+    void print_seq(parlay::sequence<vtx*> v){
+      for(size_t i=0; i<v.size(); i++) print_point(v[i]->pt);
+    }
+
+    void print_slice(slice_t v){
+      for(size_t i=0; i<v.size(); i++) print_point(v[i].second->pt);
+    }
+
+    void batch_remove(slice_t points_to_delete){
+      int deleted_size = points_to_delete.size();
+      // std::cout << "entering remove loop" << std::endl; 
+      // std::cout << "size of vertices before removal " << P.size() << std::endl;
+      // print_slice(points_to_delete);
+      // parlay::sequence<indexed_point> new_idpts;
+      // parlay::sequence<vtx*> new_seq;
+      for(size_t i=0; i<deleted_size; i++){
+        auto pred1 = [&] (indexed_point a){
+          return a != points_to_delete[i];
+        };
+        indexed_pts = remove_if(indexed_pts, pred1);
+        auto pred2 = [&] (vtx* a){
+          return a != points_to_delete[i].second;
+        };
+        P = remove_if(P, pred2);
+      }
+      // print_seq(P);
+      // P = new_seq;
+      // indexed_pts = new_idpts; 
+      // std::cout << "size of vertices after removal " << P.size() << std::endl;  
+      // std::cout << "exiting remove loop" << std::endl; 
+      n -= deleted_size;
+      // std::cout << "reset size" << std::endl; 
+      b = get_box(P);
+      // std::cout << "reset box" << std::endl; 
+      set_center();
+      // std::cout << "exiting batch removal" << std::endl; 
+    }
 
 
     // construct a leaf node with a sequence of points directly in it
@@ -181,7 +215,6 @@ struct oct_tree {
       b = get_box(P);
       set_center();
       set_bit(currentBit);
-      set_children(1); 
     }
 
     // construct an internal binary node
@@ -192,8 +225,6 @@ struct oct_tree {
       n = L->size() + R->size();
       set_center();
       set_bit(currentBit);
-      //set the number of leaf children
-      set_children(L->num_leaf_children + R->num_leaf_children);
     }
     
     static node* new_leaf(slice_t Pts, int currentBit) {
@@ -301,6 +332,8 @@ struct oct_tree {
     }
   }; // this ends the node structure
 
+    //takes in a sequence of points and a leaf node and splits based on the leaf node
+    //TODO fix edge case where T has no parent 
     static void batch_split(slice_t new_points, node* T){
       //get the new sequence of indexed points and sort it
       int size = T->size();
@@ -346,6 +379,93 @@ struct oct_tree {
       }
       left_child->set_parent(new_parent);
       right_child->set_parent(new_parent);  
+    }
+
+    //delete a node and all its children
+    //replace the node's parent with its other child
+    //must then also set the grandparent's pointer correctly
+    static void prune(node* T){
+      if(T->Parent() == nullptr || (T->Parent())->Parent() == nullptr){
+        std::cout << "ERROR: deleting the root or one of its two children is not supported" << std::endl;
+        abort(); 
+      } 
+      if(T == (T->Parent())->Left()) (T->Parent())->set_child(nullptr, true);
+      else (T->Parent())->set_child(nullptr, false);
+      node::delete_tree(T);
+    }
+
+    //gets rid of any nodes which only have one child due to pruning
+    //can assume due to constraints on prune() that the deleted node has a parent
+    static void compress(node* T){
+      if((T->Left() == nullptr) && (T->Right() == nullptr)) return; 
+      if((T->Left() != nullptr) && (T->Right() != nullptr)){
+        parlay::par_do_if(T->size()>1000,
+          [&] () {compress(T->Right());},
+          [&] () {compress(T->Left());}
+        );
+      }else{
+        node* grandparent = T->Parent();
+        node* T_replacement;
+        if(T->Left() == nullptr){
+          // std::cout << "left child is null" << std::endl; 
+          T_replacement = T->Right();
+          T -> set_child(nullptr, false);
+        } else if(T->Right() == nullptr){ //the right child of T is the nullptr
+          // std::cout << "right child is null" << std::endl; 
+          T_replacement = T->Left();
+          T -> set_child(nullptr, true);
+          // std::cout << "left child now null: " << (T->is_leaf()) << std::endl; 
+          // std::cout << "T_replacement == nullptr: " << (T_replacement == nullptr) << std::endl; 
+        }
+        // std::cout << T->is_leaf() << std::endl; 
+        T_replacement -> set_parent(grandparent);
+        if(T == grandparent -> Left()) grandparent -> set_child(T_replacement, true);
+        else grandparent -> set_child(T_replacement, false);
+        // std::cout << (grandparent->Right() == nullptr || grandparent->Left() == nullptr) << std::endl;  
+        node::delete_tree(T);
+        compress(T_replacement);
+      }  
+    }
+
+    static void verify_compress(node* T){
+      if((T->Left() == nullptr) && (T->Right() == nullptr)){
+        std::cout << "is_leaf result: " << T->is_leaf() << std::endl;
+        std::cout << "definitely a leaf" << std::endl; 
+      } else if((T->Left() != nullptr) && (T->Right() != nullptr)){
+        std::cout << "is_leaf result: " << T->is_leaf() << std::endl; 
+        std::cout << "this is not a leaf" << std::endl; 
+        verify_compress(T->Left());
+        verify_compress(T->Right());
+      } else{
+        std::cout << "this node has one nullptr child" << std::endl; 
+        if((T->Left() == nullptr) && (T->Right() != nullptr)){
+          std::cout << "it's the left child" << std::endl; 
+           std::cout << "for the node with one nullptr, the result for is leaf: " << T->is_leaf() << std::endl; 
+           verify_compress(T->Right());
+        } else if((T->Left() != nullptr) && (T->Right() == nullptr)){
+          std::cout << "it's the right child" << std::endl; 
+           std::cout << "for the node with one nullptr, the result for is leaf: " << T->is_leaf() << std::endl; 
+           verify_compress(T->Left());
+        }
+        abort();
+      }
+    }
+
+    static box update_boxes(node* T){
+      if (T->is_leaf()){
+        return T->Box();
+      } else{
+        size_t n = T->size();
+        box b_L, b_R;
+        parlay::par_do_if(n > 1000,
+          [&] () {b_L = update_boxes(T->Left());},
+          [&] () {b_R = update_boxes(T->Right());} 
+        );
+        box b_T = box(b_L.first.minCoords(b_R.first), b_L.second.maxCoords(b_R.second));
+        T->set_box(b_T);
+        T->reset_center();
+        return b_T;
+      }
     }
 
   

@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = true;
-int algorithm_version = 0;
+int algorithm_version = 3;  
 
 #include <algorithm>
 #include <math.h> 
@@ -317,21 +317,15 @@ node* find_leaf_using_seq(point p, box b, double Delta){ //pointer to the root s
   }
 
   void batch_insert0(slice_t idpts, node* T){
-    // std::cout << idpts.size() << std::endl; 
     if (idpts.size()==0) return;
     if(T-> is_leaf()){
       if(T->size() + idpts.size() < o_tree::node_cutoff || T->bit == 0){
-        // std::cout << "updating node" << std::endl; 
         T->batch_update(idpts);
-        // std::cout << "successfully updated" << std::endl; 
-      } else{
-        // std::cout << "splitting node" << std::endl;     
+      } else{    
         o_tree::batch_split(idpts, T);
-        // std::cout << "successfully split" << std::endl; 
       }
     } else{
         T->set_size(T->size()+idpts.size());
-        // std::cout << "set new size" << std::endl; 
         int new_bit = T->bit; 
         size_t val = ((size_t) 1) << (new_bit - 1);
         size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
@@ -340,9 +334,7 @@ node* find_leaf_using_seq(point p, box b, double Delta){ //pointer to the root s
         };
         int cut_point = parlay::internal::binary_search(idpts, less);
         int child_bit = (T->Right())->bit;
-        // std::cout << "found cut point" << std::endl; 
         if(child_bit == (new_bit-1)){
-          // std::cout << "recursing in normal case" << std::endl; 
           parlay::par_do_if(idpts.size() > 100,
             [&] () {batch_insert0(idpts.cut(0, cut_point), T->Left());},
             [&] () {batch_insert0(idpts.cut(cut_point, idpts.size()), T->Right());}
@@ -350,7 +342,6 @@ node* find_leaf_using_seq(point p, box b, double Delta){ //pointer to the root s
         } else{
           indexed_point sample = get_point(T);
           int sample_pos = lookup_bit(sample.first, new_bit-1);
-          // std::cout << "recursing in edge case" << std::endl; 
           if (sample_pos==0){
             o_tree::create_new(T, idpts.cut(0, cut_point), new_bit, true);
             batch_insert0(idpts.cut(cut_point, idpts.size()), T->Right());
@@ -376,20 +367,74 @@ node* find_leaf_using_seq(point p, box b, double Delta){ //pointer to the root s
         abort(); 
       }
     }, 1);
-    // std::cout << "checked bounding boxes" << std::endl; 
     parlay::sequence<indexed_point> idpts; 
     idpts = parlay::sequence<indexed_point>(vsize);
-    // std::cout << "initialized sequences" << std::endl; 
     auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
   return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
       });
-    // std::cout << "populated sequence" << std::endl; 
     auto less = [] (indexed_point a, indexed_point b){
       return a.first < b.first; 
     };
     auto x = parlay::sort(points, less);
-    // std::cout << "entering recursive step" << std::endl; 
     batch_insert0(parlay::make_slice(x), R);
+    box root_box = o_tree::update_boxes(R);
+  }
+
+  void batch_delete0(slice_t idpts, node* R){
+    // std::cout << "at batch delete recursion" << std::endl; 
+    // std::cout << idpts.size() << std::endl; 
+    // std::cout << (R == nullptr) << std::endl; 
+    if(idpts.size()==0) return;
+    else if(R->is_leaf()){
+      // std::cout << "at leaf" << std::endl; 
+      size_t n = idpts.size();
+      if(n == R->size()){
+        // std::cout << "pruning leaf" << std::endl; 
+        o_tree::prune(R);
+      }else{
+        // std::cout << "removing " << n << " points" << std::endl; 
+        // std::cout << "from a node of size " << R->size() << std::endl; 
+        R->batch_remove(idpts);
+      }
+    } else{
+      // std::cout << "at internal node" << std::endl; 
+      size_t n = idpts.size();
+      if(n == R->size()){
+        // std::cout << "pruning internal node" << std::endl; 
+        o_tree::prune(R);
+      } else{
+        R->set_size(R->size()-n);
+        int new_bit = R->bit; 
+        size_t val = ((size_t) 1) << (new_bit - 1);
+        size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+        auto less = [&] (indexed_point x) {
+          return (x.first & mask) < val;
+        };
+        int cut_point = parlay::internal::binary_search(idpts, less);
+        // std::cout << "cutting sequence" << std::endl; 
+        parlay::par_do_if(n > 100,
+          [&] () {batch_delete0(idpts.cut(0, cut_point), R->Left());},
+          [&] () {batch_delete0(idpts.cut(cut_point, n), R->Right());}
+        );
+      }
+    }
+  }
+
+  void batch_delete(parlay::sequence<vtx*> v, node* R, box b, double Delta){
+    size_t vsize = v.size();
+    parlay::sequence<indexed_point> idpts; 
+    idpts = parlay::sequence<indexed_point>(vsize);
+    auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
+      return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
+    });
+    auto less = [] (indexed_point a, indexed_point b){
+      return a.first < b.first; 
+    };
+    auto x = parlay::sort(points, less);
+    batch_delete0(parlay::make_slice(x), R);
+    o_tree::compress(R);
+    // o_tree::verify_compress(R);
+    box root_box = o_tree::update_boxes(R);  
   }
 
 }; //this ends the k_nearest_neighbors structure
@@ -399,9 +444,6 @@ template<class vtx>
 void print_seq(parlay::sequence<vtx*> v){
   for(size_t i=0; i<v.size(); i++) std::cout << v[i] << std::endl; 
 }
-
-//the parameter p means that p points will be added dynamically
-int p = 5000000;  
 
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
@@ -414,80 +456,89 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using node = typename knn_tree::node;
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
-    size_t n = v.size();
-    size_t v_2 = n/2;
-    size_t v_1 = n/2;
-    // std::cout << v_2 << std::endl; 
-    parlay::sequence<vtx*> v1;
-    v1 = parlay::sequence<vtx*>(v_1);
-    parlay::sequence<vtx*> v2;
-    v2 = parlay::sequence<vtx*>(v_2);
-    // std::cout << "initialized sequences" << std::endl; 
-    parlay::parallel_for (0, n, [&] (size_t i) {
-      if(i < n/2) v1[i] = v[i];
-      else v2[i] = v[i];
-    }, 1);
-    t.next("made query sequences");
-    knn_tree T(v1);
+    // size_t n = v.size();
+    // size_t v_2 = n/2;
+    // size_t v_1 = n/2;
+    // // std::cout << v_2 << std::endl; 
+    // parlay::sequence<vtx*> v1;
+    // v1 = parlay::sequence<vtx*>(v_1);
+    // parlay::sequence<vtx*> v2;
+    // v2 = parlay::sequence<vtx*>(v_2);
+    // // std::cout << "initialized sequences" << std::endl; 
+    // parlay::parallel_for (0, n, [&] (size_t i) {
+    //   if(i < n/2) v1[i] = v[i];
+    //   else v2[i-v_2] = v[i];
+    // }, 1);
+    // t.next("made query sequences");
+    knn_tree T(v);
     t.next("build tree");
     int dims = v[0]->pt.dimension();
     node* root = T.tree.get();
     box_delta bd = T.get_box_delta(root, dims);
-    // std::cout << "entering batch insertion" << std::endl; 
+    // std::cout << "entering batch insertion" << std::endl;   
     
     // std::cout << "at batch insertion" << std::endl; 
-      T.batch_insert(v2, root, bd.first, bd.second);
-    t.next("do batch insertion");
+    // T.batch_insert(v2, root, bd.first, bd.second);
+    // t.next("do batch insertion");
 
-    // if (report_stats) 
-    //   std::cout << "depth = " << T.tree->depth() << std::endl;
+    std::cout << "tree size before deletion: " << root->size() << std::endl; 
+    size_t n = root->size(); 
+    size_t p = .5*n;
+    parlay::sequence<vtx*> to_delete = parlay::sequence<vtx*>(p);
+    for(size_t i=0; i<p; i++) to_delete[i] = v[i];
+    T.batch_delete(to_delete, root, bd.first, bd.second);
+    t.next("do batch deletion");
+    std::cout << "tree size after deletion: " << root->size() << std::endl; 
 
-  //   // *******************
-  //   if (algorithm_version == 0) { // this is for starting from root 
-  //     // this reorders the vertices for locality
-  //     parlay::sequence<vtx*> vr = T.vertices();    
-  //     t.next("flatten tree");
-  //     // find nearest k neighbors for each point
-  //     parlay::parallel_for (0, vr.size(), [&] (size_t i) {
-	 //  T.k_nearest(vr[i], k);}, 1);
+    if (report_stats) 
+      std::cout << "depth = " << T.tree->depth() << std::endl;
 
-  //   // *******************
-  //   } else if (algorithm_version == 2) {
-  //       parlay::sequence<vtx*> vr = T.vertices();
-  //       t.next("flatten tree");
+    // *******************
+    if (algorithm_version == 0) { // this is for starting from root 
+      // this reorders the vertices for locality
+      parlay::sequence<vtx*> vr = T.vertices();    
+      t.next("flatten tree");
+      // find nearest k neighbors for each point
+      parlay::parallel_for (0, vr.size(), [&] (size_t i) {
+	  T.k_nearest(vr[i], k);}, 1);
 
-  //       int dims = (v[0]->pt).dimension();  
-  //       node* root = T.tree.get(); 
-  //       box_delta bd = T.get_box_delta(root, dims);
-  //       size_t size = v.size();
+    // *******************
+    } else if (algorithm_version == 2) {
+        parlay::sequence<vtx*> vr = T.vertices();
+        t.next("flatten tree");
 
-  //       parlay::parallel_for(0, size, [&] (size_t i) {
-  //         T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, root, bd.first, bd.second), k);
-  //       }
-  //       );
+        int dims = (v[0]->pt).dimension();  
+        node* root = T.tree.get(); 
+        box_delta bd = T.get_box_delta(root, dims);
+        size_t size = v.size();
+
+        parlay::parallel_for(0, size, [&] (size_t i) {
+          T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, root, bd.first, bd.second), k);
+        }
+        );
 
 
-  //   }
+    }
 
-  //   // *******************      
-  //    else { //(algorithm_version == 3) this is for starting from leaf, finding leaf using map()
-  //       auto f = [&] (vtx* p, node* n){ 
-  // 	     return T.k_nearest_leaf(p, n, k); 
-  //       };
+    // *******************      
+     else { //(algorithm_version == 3) this is for starting from leaf, finding leaf using map()
+        auto f = [&] (vtx* p, node* n){ 
+  	     return T.k_nearest_leaf(p, n, k); 
+        };
 
-  //       // find nearest k neighbors for each point
-  //       T.tree -> map(f);
-  //   }
+        // find nearest k neighbors for each point
+        T.tree -> map(f);
+    }
 
-  //   t.next("try all");
-  //   if (report_stats) {
-  //     auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
-  //     size_t i = parlay::max_element(s) - s.begin();
-  //     size_t sum = parlay::reduce(s);
-  //     std::cout << "max internal = " << s[i] 
-		// << ", average internal = " << sum/((double) v.size()) << std::endl;
-  //     t.next("stats");
-  //   }
+    t.next("try all");
+    if (report_stats) {
+      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
+      size_t i = parlay::max_element(s) - s.begin();
+      size_t sum = parlay::reduce(s);
+      std::cout << "max internal = " << s[i] 
+		<< ", average internal = " << sum/((double) v.size()) << std::endl;
+      t.next("stats");
+    }
   t.next("delete tree");
 
 
