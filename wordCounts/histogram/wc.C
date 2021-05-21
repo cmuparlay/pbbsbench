@@ -24,7 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/io.h"
-#include "parlay/internal/collect_reduce.h"
+#include "parlay/internal/group_by.h"
 #include "parlay/internal/get_time.h"
 #include "wc.h"
 
@@ -46,7 +46,7 @@ parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
   t.next("tokens");
   if (verbose) cout << "number of words = " << words.size() << endl;
 
-  auto result = parlay::count_by_key(std::move(words)); 
+  auto result = parlay::histogram_by_key(std::move(words)); 
   t.next("count by key");
   cout << words.size() << endl;
 

@@ -64,7 +64,7 @@ parlay::sequence<result_type> wordCounts(charseq const &s, bool verbose=false) {
     
   auto eql = [] (char* a, char* b) {return strcmp(a,b) == 0;};
 
-  auto hist = parlay::count_by_key(words, strhash, eql);
+  auto hist = parlay::histogram_by_key(words, strhash, eql);
   t.next("count by key");
 
   cout << "distinct words: " << hist.size() << endl;
