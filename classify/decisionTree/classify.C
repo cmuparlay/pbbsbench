@@ -34,6 +34,8 @@
 #include "classify.h"
 
 using namespace parlay;
+using std::cout;
+using std::endl;
 double infinity = std::numeric_limits<double>::infinity();
 
 // some parameters
@@ -80,7 +82,7 @@ auto all_equal(S1 const &a) {
 
 template <typename S1>
 auto majority(S1 const &a, size_t m) {
-  auto x = histogram(a,m);
+  auto x = histogram_by_index(a,m);
   return max_element(x) - x.begin();
 }
 
@@ -97,7 +99,7 @@ double entropy(Seq a, int total) {
 auto cond_info_continuous(feature const &a, feature const &b) {
   int num_buckets = a.num * b.num;
   size_t n = a.vals.size();
-  auto sums = histogram(delayed_tabulate(n, [&] (size_t i) {
+  auto sums = histogram_by_index(delayed_tabulate(n, [&] (size_t i) {
 			   return a.vals[i] + b.vals[i]*a.num;}), num_buckets);
   sequence<int> low_counts(a.num, 0);
   sequence<int> high_counts(a.num, 0);
@@ -125,7 +127,7 @@ auto cond_info_continuous(feature const &a, feature const &b) {
 double info(row s, int num_vals) {
   size_t n = s.size();
   if (n == 0) return 0.0;
-  auto x = histogram(s, num_vals);
+  auto x = histogram_by_index(s, num_vals);
   return entropy(x, n);
 }
 
@@ -133,7 +135,7 @@ double info(row s, int num_vals) {
 double cond_info_discrete(feature const &a, feature const &b) {
   int num_buckets = a.num * b.num;
   size_t n = a.vals.size();
-  auto sums = histogram(delayed_tabulate(n, [&] (size_t i) {
+  auto sums = histogram_by_index(delayed_tabulate(n, [&] (size_t i) {
 			   return a.vals[i] + b.vals[i]*a.num;}), num_buckets);
   return reduce(tabulate(b.num, [&] (size_t i) {
       auto x = sums.cut(i*a.num,(i+1)*a.num);				      

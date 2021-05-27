@@ -68,7 +68,7 @@ struct edge_map {
   }
 
   auto edge_map_sparse(vertex_subset_sparse const &vtx_subset) {
-    if (verbose) cout << "edge map sparse: " << vtx_subset.size() << endl;
+    if (verbose) std::cout << "edge map sparse: " << vtx_subset.size() << std::endl;
     auto nested_edges = parlay::map(vtx_subset, [&] (vertexId v) {
 	return parlay::delayed_tabulate(G[v].degree, [&, v] (size_t i) {
 	    return std::pair(v, G[v].Neighbors[i]);});});
@@ -85,7 +85,7 @@ struct edge_map {
   }
 
   auto edge_map_dense(vertex_subset_dense const &vtx_subset) {
-    if (verbose) cout << "edge map dense:  " << vtx_subset.size() << endl;
+    if (verbose) std::cout << "edge map dense:  " << vtx_subset.size() << std::endl;
     auto r = parlay::tabulate(G.numVertices(), [&] (vertexId v) -> bool {
         bool result = false;
         if (cond(v)) {        
