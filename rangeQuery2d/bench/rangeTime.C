@@ -37,6 +37,7 @@ using namespace benchIO;
 
 void timeRange(Points const &points, Queries const& queries,
 	       int rounds, bool verbose, char* outFile) {
+  cout << "start timeRange" << endl;
   long result;
   time_loop(rounds, 2.0,
 	    [&] () {},
@@ -51,7 +52,7 @@ void timeRange(Points const &points, Queries const& queries,
 using pointx = point2d<coord>;
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-o <outFile>] [-r <rounds>] [-v] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   bool verbose = P.getOption("-v");
