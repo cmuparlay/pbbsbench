@@ -20,10 +20,10 @@ tests = [
  ["comparisonSort/stlParallelSort",True],
  ["comparisonSort/ips4o",True],
 
-#["suffixArray/serialKS",False],  
+#["suffixArray/serialKS",False],
  ["suffixArray/parallelKS",True],
  ["suffixArray/parallelRange",True],
- ["suffixArray/serialDivsufsort",False],  
+ ["suffixArray/serialDivsufsort",False],
 
  ["wordCounts/histogram",True],
  ["wordCounts/histogramStar",True],
@@ -46,7 +46,7 @@ tests = [
  ["minSpanningForest/serialMST",False],
 
  ["spanningForest/incrementalST",True],
- ["spanningForest/ndST",True], 
+ ["spanningForest/ndST",True],
  ["spanningForest/serialST",False],
 
  ["breadthFirstSearch/simpleBFS",True],
@@ -54,8 +54,8 @@ tests = [
  ["breadthFirstSearch/deterministicBFS",True],
  ["breadthFirstSearch/serialBFS",False],
 
-#["maximalMatching/serialMatching",False],
 #["maximalMatching/ndMatching",True],
+ ["maximalMatching/serialMatching",False],
  ["maximalMatching/incrementalMatching",True],
 
  ["maximalIndependentSet/ndMIS",True],
@@ -136,26 +136,26 @@ if (sys.argv.count("-h") > 0 or sys.argv.count("-help")):
     print(" -from <bnchmrk> : only run from given benchmark")
     forceCompile = True
     exit()
-    
+
 def detectCPUs():
-    """                                                                                                                                                  
-     Detects the number of CPUs on a system. Cribbed from pp.                                                                                            
+    """
+     Detects the number of CPUs on a system. Cribbed from pp.
      """
-    # Linux, Unix and MacOS:                                                                                                                             
+    # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
        if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
-           # Linux & Unix:                                                                                                                               
+           # Linux & Unix:
            ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
            if isinstance(ncpus, int) and ncpus > 0:
                return ncpus
-       else: # OSX:                                                                                                                                      
+       else: # OSX:
            return int(os.popen2("sysctl -n hw.ncpu")[1].read())
-    # Windows:                                                                                                                                           
+    # Windows:
     if os.environ.has_key("NUMBER_OF_PROCESSORS"):
            ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
            if ncpus > 0:
                return ncpus
-    return 1 # Default   
+    return 1 # Default
 
 maxcpus = detectCPUs()
 
@@ -185,7 +185,7 @@ def compiletest(dir) :
     os.system("echo")
     os.system("echo \"" + ss + "\"")
     os.system(ss)
-    
+
 def runtest(test,procs,check) :
     if (procs==1) : rounds = 1
     elif (procs < 16) : rounds = 3
@@ -204,7 +204,7 @@ def runtest(test,procs,check) :
         sc = "cd " + dir + " ; ./testInputs " + options
     os.system("echo \"" + sc + "\"")
     x = os.system(sc)
-    if (x) :  
+    if (x) :
         raise NameError("  " + sc)
 
 try :
@@ -214,11 +214,11 @@ try :
         isParallel = test[1]
         if (isParallel or not(parOnly)) :
             compiletest(test[0])
-            if not(noTime) : 
+            if not(noTime) :
                 if (not(isParallel)) :
                     runtest(test, 1, not(noCheck))
                 elif (not(scale)) :
-                    runtest(test, maxcpus, not(noCheck)) 
+                    runtest(test, maxcpus, not(noCheck))
                 else :
                     n = len(processors)
                     for p in processors[0:n-1] :
