@@ -43,6 +43,7 @@ int timeDedup(sequence<sequence<char>> const &In, int rounds, char* outFile) {
        [&] () {R = dedup(A);},
        [] () {});
   if (outFile != NULL) writeSequenceToFile(R, outFile);
+  return 1;
 }
 
 int main(int argc, char* argv[]) {
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
   int verbose = P.getOption("-v");
-  
+
   auto In = get_tokens(iFile);
   elementType in_type = elementTypeFromHeader(In[0]);
   size_t n = In.size() - 1;
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
     return timeDedup<int>(In, rounds, oFile);
   } else if (in_type == stringT) {
     using str = sequence<char>;
-    return timeDedup<str>(In, rounds, oFile); 
+    return timeDedup<str>(In, rounds, oFile);
   } else {
     cout << "dedupTime: input file not of right type" << endl;
     return(1);
