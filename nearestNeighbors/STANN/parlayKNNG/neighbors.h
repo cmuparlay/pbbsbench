@@ -1,3 +1,25 @@
+// This code is part of the Problem Based Benchmark Suite (PBBS)
+// Copyright (c) 2011 Guy Blelloch and the PBBS team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights (to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 #include<iostream>
 #include<cstdlib>
 #include<math.h>
@@ -8,16 +30,15 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "common/get_time.h" 
-#include "../../octTree/oct_tree.h"
 
-bool report_stats = false;
+bool report_stats = true;
 #include "../include/parlay_sfcnn_knng.hpp"
 #include "../include/dpoint.hpp"
 #include "../KNN/helper.h"
 
 bool check_correctness = false;
 int algorithm_version = 0; 
-int d = 100000; 
+int d = 100; 
 
 template<int maxK, class vtx, int Dim>
 void ANN_(parlay::sequence<vtx*> &v, int k) {
@@ -27,7 +48,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
   typedef reviver::dpoint<uint, Dim> Point;       
   Point *P;
   P = (Point*) parlay::p_malloc(n*sizeof(Point)*1);                  
-  NN_helper<Dim> N;
+  NN_helper<Dim, vtx> N;
 
   N.convert(v, n, P);
   t.next("convert to Kumar's types");
@@ -47,19 +68,7 @@ void ANN_(parlay::sequence<vtx*> &v, int k) {
 
 template<int maxK, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k){
-  size_t n = v.size(); 
-  size_t rounds = n/d; 
-  size_t used = 0; 
-  for(size_t i = 0; i < rounds; i++){
-
-    parlay::sequence<vtx*> v1;
-    v1 = parlay::sequence<vtx*>(d);
-    parlay::parallel_for(0, d, [&] (size_t i){
-      v1[i] = v[used+i];
-    });
-    used += d; 
     int d = (v[0]->pt.dimension());
-    if (d==2) ANN_<maxK, vtx, 2>(v1, k);
-    else ANN_<maxK, vtx, 3>(v1, k);
-  }
+    if (d==2) ANN_<maxK, vtx, 2>(v, k);
+    else ANN_<maxK, vtx, 3>(v, k);
 }
