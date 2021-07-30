@@ -29,6 +29,8 @@ tests = [
  ["wordCounts/histogramStar",True],
  ["wordCounts/serial",False],
 
+ ["removeDuplicates/serial_hash", False],
+ ["removeDuplicates/serial_sort", False],
  ["removeDuplicates/parlayhash", True],
 
  ["BWDecode/listRank",True],
