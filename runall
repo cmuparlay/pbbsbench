@@ -35,8 +35,10 @@ tests = [
 
  ["BWDecode/listRank",True],
 
+ ["histogram/sequential",False],
  ["histogram/parallel",True],
 
+ ["index/sequential", False],
  ["index/parallel", True],
 
  ["longestRepeatedSubstring/doubling",True],
