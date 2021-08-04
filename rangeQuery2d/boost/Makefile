@@ -1,6 +1,6 @@
-include ../../common/parallelDefs
+include common/parallelDefs
 
 BENCH = range
 OBJS = range.o
 
-include ../../common/MakeBenchLink
+include common/MakeBenchLink
