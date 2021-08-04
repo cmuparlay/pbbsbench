@@ -1,3 +1,25 @@
+// This code is part of the Problem Based Benchmark Suite (PBBS)
+// Copyright (c) 2011 Guy Blelloch and the PBBS team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights (to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 #include "../../octTree/oct_tree.h"
 
 #define sq(x) (((double) (x))* ((double) (x)))
@@ -43,7 +65,7 @@ struct NN_helper{
 	}
 
 
-	void convert(parlay::sequence<vtx*> &v, uint n, Point P[], Point Q[]){
+	void convert(parlay::sequence<vtx*> &v, uint n, Point P[]){
 	  //prelims for rounding each point to an integer: 
 	  // 1) find the smallest point in each dimension
 	  // 2) find the largest gap between min and max over all dimensions
@@ -69,11 +91,11 @@ struct NN_helper{
 	  parlay::parallel_for(0, n/2, [&] (size_t i){
 	  	v1[i] = v[n/2+i];
 	  });
-	  parlay::sequence<vtx*> v2 = v1;// z_sort(v1, b, Delta);
+	  parlay::sequence<vtx*> v2 = z_sort(v1, b, Delta);
 	  // round each point to an integer with key_bits bit
 	  int bits = 31; // for some reason 32 bits does not work
 	  int maxval = (((size_t) 1) << bits) - 1;
-	  parlay::parallel_for(0, n/2, [&] (uint i){
+	  parlay::parallel_for(0, n, [&] (uint i){
 	      Point p; 
 	      P[i] = p;
 	      for (int j = 0; j < d; j++){
@@ -81,15 +103,6 @@ struct NN_helper{
 		P[i][j] = coord;
 	      }
 	    });
-	  parlay::parallel_for(0, n/2, [&] (uint i){
-	      Point p; 
-	      Q[i] = p;
-	      for (int j = 0; j < d; j++){
-		uint coord = (uint) floor(maxval * ((v2[i] -> pt)[j] - min_point[j])/Delta); 
-		Q[i][j] = coord;
-	      }
-	    });
-	  
 	}
 
 

@@ -20,8 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = false;
-int algorithm_version = 2;
+bool report_stats = true;
+int algorithm_version = 0;
 // 0=root based, 1=bit based, >2=map based
 
 #include <algorithm>
@@ -46,34 +46,35 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
   
     box whole_box = knn_tree::o_tree::get_box(v);
 
-    //create sequences for insertion and deletion
+    // create sequences for insertion and deletion
     size_t size = v.size(); 
     size_t p = .5*size;
     parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>(p);
     parlay::sequence<vtx*> v2 = parlay::sequence<vtx*>(p);
     parlay::parallel_for(0, size, [&] (size_t i){
-      if(i<p){
-        v1[i] = v[i];
-      } else{
-        v2[i-p] = v[i];
-      }
+      if(i<p) v1[i] = v[i];
+      else v2[i-p] = v[i];
     }, 1
     );
 
-    //build tree with larger box
+    //build tree with optional box
     knn_tree T(v1, whole_box);
     t.next("build tree");
 
-    //batch-dynamic insertion
+    //prelims for insert/delete
     int dims = v[0]->pt.dimension();
     node* root = T.tree.get();
     box_delta bd = T.get_box_delta(dims);
+
+    //batch-dynamic insertion
     T.batch_insert(v2, root, bd.first, bd.second);
     t.next("batch insertion");
 
     //batch-dynamic deletion
     T.batch_delete(v2, root, bd.first, bd.second);
     t.next("batch deletion");
+
+
 
     if (report_stats) 
       std::cout << "depth = " << T.tree->depth() << std::endl;
