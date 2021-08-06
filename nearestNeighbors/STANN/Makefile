@@ -1,35 +1,23 @@
+include parlayKNNG/common/parallelDefs
 
-# Modify your compiler here. (icpc supported)
-CC=g++
+BENCH = neighbors
+REQUIRE = 
 
-ifeq ($(CC),g++)
-	FLAGS = -O3 -Wall -pedantic -ansi -Wextra -fopenmp -Wconversion
-else ifeq ($(CC),sunCC)
-	# Sun's compiler. Has some issues for now
-	FLAGS = -O3 -library=stlport4 
-else 
-	# icpc 
-	FLAGS = -O3 -openmp -ansi
-endif
+include parlayKNNG/common/MakeBench
+
 
 all:
 	@echo "*--------------------------------*"
 	@echo "| Welcome to STANN!  See         |"
-	@echo "| README.txt for usage           |"
-	@echo "| instructions or visit us at:   |"
-	@echo "| http://www.compgeom.com/~stann |"
+	@echo "| README.txt in NearestNeighbors |"
+	@echo "| for information on usage.      |"
 	@echo "|                                |"
-	@echo "| use 'make test' to run tests   |"
-	@echo "| use 'make docs' to generate    |"
-	@echo "| doxygen html in docs dir       |"
+	@echo "| The default compiled version   |"
+	@echo "| is parlayKNNG. Compile in the  |"
+	@echo "| specific folder if you don't   |"
+	@echo "| want to see this message each  |"
+	@echo "| time you compile               |"
 	@echo "*--------------------------------*"
 
-.PHONY: test docs
 
-test:
-	$(CC) $(FLAGS) -o stann_test test.cpp -I./include
-	./stann_test
-	@rm stann_test*
 
-docs:
-	cd docs; doxygen Doxyfile
