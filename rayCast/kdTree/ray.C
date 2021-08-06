@@ -356,8 +356,8 @@ index_t findRay(ray_t r, treeNode* TN, triangs const &Tri) {
 }
 
 sequence<index_t> rayCast(triangles<point> const &Tri,
-			  sequence<ray<point>> const &rays) {
-  parlay::internal::timer t("ray cast", true);
+			  sequence<ray<point>> const &rays, bool verbose = false) {
+  parlay::internal::timer t("ray cast", verbose);
   index_t numRays = rays.size();
 
   // Extract triangles into a separate array for each dimension with

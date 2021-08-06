@@ -1,6 +1,6 @@
-include common/seqDefs
+include common/parallelDefs
 
-BENCH = wc
-OBJS = wc.o
+BENCH = range
+OBJS = range.o
 
 include common/MakeBenchLink

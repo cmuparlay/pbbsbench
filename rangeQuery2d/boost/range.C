@@ -23,7 +23,7 @@
 #include <boost/foreach.hpp>
 #include "parlay/primitives.h"
 #include "parlay/internal/get_time.h"
-#include "../bench/range.h"
+#include "range.h"
 
 namespace bg = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -83,7 +83,7 @@ long range(Points const &pts, Queries const &queries, bool verbose)
 	
 	cout << "start querying ..."  << endl;
 	#pragma omp parallel for
-	for (int i = 1; i < num_queries; i++) {
+	for (int i = 0; i < num_queries; i++) {
 		//cout << "query: " << queries[i].x1 << " " << queries[i].y1 << " " << queries[i].x2 << " " << queries[i].y2 << endl;
 		box query_box(point(queries[i].x1, queries[i].y1), point(queries[i].x2, queries[i].y2));
 		std::vector<value> result_s;
