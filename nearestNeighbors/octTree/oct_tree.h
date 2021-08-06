@@ -85,6 +85,7 @@ struct oct_tree {
   struct node { 
 
   public:
+    bool flag = false; 
     int bit;
     parlay::sequence<indexed_point> indexed_pts;
     using leaf_seq = parlay::sequence<vtx*>;
@@ -96,6 +97,13 @@ struct oct_tree {
     node* Right() {return R;}
     node* Parent() {return parent;}
     leaf_seq& Vertices() {return P;}
+
+    //the flag is for the batch dynamic updates
+    //it keeps track of whether a node has been updated or not
+    //so that we can go back and fix boxes etc where necessary
+    void set_flag(bool new_flag){
+      flag = new_flag; 
+    }
 
     void set_bit(int currentBit){
       bit = currentBit;
@@ -386,7 +394,8 @@ struct oct_tree {
     //gets rid of any nodes which only have one child due to pruning
     //can assume due to constraints on prune() that the deleted node has a parent
     static void compress(node* T){
-      if((T->Left() == nullptr) && (T->Right() == nullptr)) return; 
+      if(T->is_leaf()) return;
+      if(T->flag == false) return; 
       if((T->Left() != nullptr) && (T->Right() != nullptr)){
         parlay::par_do_if(T->size()>1000,
           [&] () {compress(T->Right());},
@@ -443,8 +452,13 @@ struct oct_tree {
     }
 
     static box update_boxes(node* T){
+      if(T->flag == false){ //if the node was not traversed during the update, stop recursing
+        // std::cout << "here" << std::endl; 
+        return T->Box();
+      }
       if (T->is_leaf()){
         return T->Box();
+        T->set_flag(false);
       } else{
         size_t n = T->size();
         box b_L, b_R;
@@ -455,6 +469,7 @@ struct oct_tree {
         box b_T = box(b_L.first.minCoords(b_R.first), b_L.second.maxCoords(b_R.second));
         T->set_box(b_T);
         T->reset_center();
+        T->set_flag(false);
         return b_T;
       }
     }

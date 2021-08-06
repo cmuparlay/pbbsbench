@@ -351,6 +351,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
   void batch_insert0(slice_t idpts, node* T){
     if (idpts.size()==0) return;
+    T->set_flag(true);
     if(T->is_leaf()){
       if(T->size() + idpts.size() < o_tree::node_cutoff || T->bit == 0){
         T->batch_update(idpts);
@@ -420,7 +421,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
   void batch_delete0(slice_t idpts, node* R){
     if(idpts.size()==0) return;
-    else if(R->is_leaf()){
+    R->set_flag(true);
+    if(R->is_leaf()){
       size_t n = idpts.size();
       if(n == R->size()){
         o_tree::prune(R);
@@ -458,10 +460,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     auto less = [] (indexed_point a, indexed_point b){
       return a.first < b.first; 
     };
-    auto x = parlay::sort(points, less);
+    auto x = parlay::sort(points, less); 
     batch_delete0(parlay::make_slice(x), R);
     o_tree::compress(R);  
-    box root_box = o_tree::update_boxes(R);  
+    box root_box = o_tree::update_boxes(R);
   }
 
 }; //this ends the k_nearest_neighbors structure

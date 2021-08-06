@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = true;
-int algorithm_version = 0;
+int algorithm_version = 2;
 // 0=root based, 1=bit based, >2=map based
 
 #include <algorithm>
@@ -58,7 +58,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     );
 
     //build tree with optional box
-    knn_tree T(v1, whole_box);
+    knn_tree T(v, whole_box);
     t.next("build tree");
 
     //prelims for insert/delete
@@ -66,13 +66,13 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     node* root = T.tree.get();
     box_delta bd = T.get_box_delta(dims);
 
-    //batch-dynamic insertion
-    T.batch_insert(v2, root, bd.first, bd.second);
-    t.next("batch insertion");
-
     //batch-dynamic deletion
     T.batch_delete(v2, root, bd.first, bd.second);
     t.next("batch deletion");
+
+    //batch-dynamic insertion
+    T.batch_insert(v2, root, bd.first, bd.second);
+    t.next("batch insertion");
 
 
 
