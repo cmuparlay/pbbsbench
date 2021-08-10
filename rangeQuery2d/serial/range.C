@@ -49,43 +49,6 @@ struct RangeQuery {
 
     ts = sweep<coord_set>(ys, coord_set(), insert, build, fold, 1);
 	
-	/*
-	int from = 0;
-	for (int i = 1; i < ts.size(); i++) {
-		//cout << "tree " << i << ", size: " << ts[i].size() << endl;
-		if (ts[i].size() != ts[i-1].size()+1) {
-			if (from == 0) from = i;
-			//break;
-			cout << "didn't insert: " << i << endl;
-		}
-		
-		auto keys = coord_set::entries(ts[i]);
-		for (int j = 0; j < keys.size(); j++) {
-			cout << keys[j] << " ";
-		}
-		cout << endl;
-	}
-	cout.precision(8);
-	coord currentY = from-1;
-	cout << "from " << from << ". YValue = " << ys[currentY] << ", XValue = " << xs[currentY] << endl;
-	coord ycheck = ys[currentY];
-	if (ts[from-1].contains(ycheck)) cout << "previous one contains this!" << endl;
-	
-	
-	for (int i = 0; i < from; i++) {
-		if (ts[i].contains(ycheck)) {
-			cout << "it is contained in " << i << ", x = " << xs[i-1] << endl;
-			break;
-		}
-	}
-	
-	for (int i = 0; i < ys.size(); i++) {
-		if (!(set_t::comp(ys[currentY], ys[i])) && !(set_t::comp(ys[i], ys[currentY]))) {
-			cout << "equal! position = " << i << ", x = " << xs[i] << ", y = " << ys[i] << endl;
-			break;
-		}
-	}
-	*/
   }
 
   long count_in_range(query q) {
