@@ -102,8 +102,8 @@ auto parse_fvecs(const char* filename) {
   parlay::sequence<fvec_point> points(num_vectors);
 
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
-    size_t offset = vector_size * i + 4;  // skip dimension
-    float* start = ((float*)fileptr) + offset;
+    size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
+    float* start = (float*)(fileptr + offset_in_bytes);
     float* end = start + 4*d;
     points[i].coordinates = parlay::make_slice(start, end);
   });
