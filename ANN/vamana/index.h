@@ -50,10 +50,8 @@ struct knn_index{
 				int j = uni(rng);
 				indexset.insert(j);
 			}
-			std::cout << indexset.size() << std::endl; 
 			
 			for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
-				std::cout << *it << std::endl;
         		v[i] -> out_nbh.push_back(v[*it]);
 			} 
 
