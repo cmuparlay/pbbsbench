@@ -49,16 +49,6 @@ struct fvec_point {
     coordinates(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
 };
 
-//template <class PT, int KK>
-//struct vertex {
-//  using pointT = PT;
-//  int identifier;
-//  pointT pt;         // the point itself
-//  vertex* ngh[KK];    // the list of neighbors
-//  vertex(pointT p, int id) : pt(p), identifier(id) {}
-//  size_t counter;
-//};
-
 // *************************************************************
 // Parsing code (should move to common?)
 // *************************************************************
@@ -100,6 +90,7 @@ auto parse_fvecs(const char* filename) {
   // Each vector is 4 + 4*d bytes.
   // * first 4 bytes encode the dimension (as an integer)
   // * next d values are floats representing vector components
+  // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
   std::cout << "Dimension = " << d << std::endl;
@@ -116,7 +107,6 @@ auto parse_fvecs(const char* filename) {
     float* end = start + 4*d;
     points[i].coordinates = parlay::make_slice(start, end);
   });
-  std::cout << "Finished parsing" << std::endl;
 
   return points;
 }
@@ -128,6 +118,7 @@ auto parse_fvecs(const char* filename) {
 
 template <class point>
 void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile) {
+// TODO
 //  size_t n = pts.size();
 //  using vtx = vertex<point,maxK>;
 //  int dimensions = pts[0].dimension();
@@ -167,6 +158,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
 
+// TODO
 //  if (d == 2) {
 //    parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
 //    timeNeighbors(PIn, 1, k, rounds);
