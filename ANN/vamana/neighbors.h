@@ -24,27 +24,20 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
+#include "index.h"
+// #include "distance.h"  
 
-int algorithm_version = 0; //necessary to make everything compile since octTree/neighbors.h requires it
+bool report_stats = true;
 
 // naive n^2 solution, currently just for k = 1
-template <int maxK, class vtx>
-void ANN(parlay::sequence<vtx*> &v, int k) {
-  if (k > 1) {
-    std::cout << "not implemented for k > 1" << std::endl;
-    abort();
-  }
-  size_t n = v.size();
-  parlay::parallel_for (0, n, [&] (size_t i) {
-      int k = (i + 1) % n;
-      double d = (v[k]->pt - v[i]->pt).Length();
-      for (int j = 0; j < n; j++) {
-	if (j != i) 
-	  if ((v[j]->pt - v[i]->pt).Length() < d) {
-	    k = j;
-	    d = (v[k]->pt - v[i]->pt).Length();
-	  }
-      }
-      v[i]->ngh[0] = v[k];
-    });
+template<class fvec_point>
+void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg) {
+  parlay::internal::timer t("ANN",report_stats); 
+  {
+    using findex = knn_index<fvec_point>;
+
+    findex I(maxDeg);
+    I.random_index(v);
+    t.next("Running ANN");
+  };
 }

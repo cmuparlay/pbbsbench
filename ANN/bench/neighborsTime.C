@@ -47,7 +47,11 @@ struct fvec_point {
   parlay::slice<float*, float*> coordinates;
   fvec_point() :
     coordinates(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
+  parlay::sequence<fvec_point*> out_nbh = parlay::sequence<fvec_point*>();
+  parlay::sequence<fvec_point*> new_out_nbh = parlay::sequence<fvec_point*>();
 };
+
+
 
 // *************************************************************
 // Parsing code (should move to common?)
@@ -117,57 +121,28 @@ auto parse_fvecs(const char* filename) {
 // *************************************************************
 
 template <class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile) {
-// TODO
-//  size_t n = pts.size();
-//  using vtx = vertex<point,maxK>;
-//  int dimensions = pts[0].dimension();
-//  auto vv = parlay::tabulate(n, [&] (size_t i) -> vtx {
-//      return vtx(pts[i],i);
-//    });
-//  auto v = parlay::tabulate(n, [&] (size_t i) -> vtx* {
-//      return &vv[i];});
-//
-//  // run once for warmup
-//  time_loop(rounds, 1.0,
-//	    [&] () {},
-//	    [&] () {ANN<maxK>(v, k);},
-//	    [&] () {});
-//
-//  if (outFile != NULL) {
-//    int m = n * k;
-//    parlay::sequence<int> Pout(m);
-//    parlay::parallel_for (0, n, [&] (size_t i) {
-//	for (int j=0; j < k; j++)
-//	  Pout[k*i + j] = (v[i]->ngh[j])->identifier;
-//      });
-//    writeIntSeqToFile(Pout, outFile);
-//  }
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg) {
+  size_t n = pts.size();
+  auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
+      return &pts[i];});
+
+  time_loop(rounds, 1.0,
+      [&] () {},
+      [&] () {ANN(v, k, maxDeg);},
+      [&] () {});
 }
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-k {1,...,100}] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-R <maxDeg>] [-k {1,...,100}] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
-  int d = P.getOptionIntValue("-d",2);
-  algorithm_version = P.getOptionIntValue("-t",algorithm_version);
   if (k > 100 || k < 1) P.badArgument();
+  int maxDeg = P.getOptionIntValue("R", 10);
 
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
 
-// TODO
-//  if (d == 2) {
-//    parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
-//    timeNeighbors(PIn, 1, k, rounds);
-//  }
-//
-//  if (d == 3) {
-//    parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
-//    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
-//    else timeNeighbors<100>(PIn, k, rounds, oFile);
-//  }
-
+  timeNeighbors(points, k, rounds, maxDeg);
 }
