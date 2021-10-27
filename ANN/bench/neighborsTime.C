@@ -1,0 +1,181 @@
+// This code is part of the Problem Based Benchmark Suite (PBBS)
+// Copyright (c) 2011 Guy Blelloch and the PBBS team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights (to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#include <iostream>
+#include <algorithm>
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
+#include "common/geometry.h"
+#include "common/geometryIO.h"
+#include "common/parse_command_line.h"
+#include "common/time_loop.h"
+
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+using namespace benchIO;
+
+// *************************************************************
+//  SOME DEFINITIONS
+// *************************************************************
+
+// Just a wrapper around a parlay::slice for now. Using mmap + slices
+// lets us avoid copying the input points.
+struct fvec_point {
+  parlay::slice<float*, float*> coordinates;
+  fvec_point() :
+    coordinates(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
+};
+
+//template <class PT, int KK>
+//struct vertex {
+//  using pointT = PT;
+//  int identifier;
+//  pointT pt;         // the point itself
+//  vertex* ngh[KK];    // the list of neighbors
+//  vertex(pointT p, int id) : pt(p), identifier(id) {}
+//  size_t counter;
+//};
+
+// *************************************************************
+// Parsing code (should move to common?)
+// *************************************************************
+
+// returns a pointer and a length
+std::pair<char*, size_t> mmapStringFromFile(const char* filename) {
+  struct stat sb;
+  int fd = open(filename, O_RDONLY);
+  if (fd == -1) {
+    perror("open");
+    exit(-1);
+  }
+  if (fstat(fd, &sb) == -1) {
+    perror("fstat");
+    exit(-1);
+  }
+  if (!S_ISREG(sb.st_mode)) {
+    perror("not a file\n");
+    exit(-1);
+  }
+  char* p =
+      static_cast<char*>(mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+  if (p == MAP_FAILED) {
+    perror("mmap");
+    exit(-1);
+  }
+  if (close(fd) == -1) {
+    perror("close");
+    exit(-1);
+  }
+  size_t n = sb.st_size;
+  return std::make_pair(p, n);
+}
+
+auto parse_fvecs(const char* filename) {
+  auto [fileptr, length] = mmapStringFromFile(filename);
+  std::cout << "Successfully mmap'd" << std::endl;
+
+  // Each vector is 4 + 4*d bytes.
+  // * first 4 bytes encode the dimension (as an integer)
+  // * next d values are floats representing vector components
+
+  int d = *((int*)fileptr);
+  std::cout << "Dimension = " << d << std::endl;
+
+  size_t vector_size = 4 + 4*d;
+  size_t num_vectors = length / vector_size;
+  std::cout << "Num vectors = " << num_vectors << std::endl;
+
+  parlay::sequence<fvec_point> points(num_vectors);
+
+  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    size_t offset = vector_size * i + 4;  // skip dimension
+    float* start = ((float*)fileptr) + offset;
+    float* end = start + 4*d;
+    points[i].coordinates = parlay::make_slice(start, end);
+  });
+  std::cout << "Finished parsing" << std::endl;
+
+  return points;
+}
+
+
+// *************************************************************
+//  TIMING
+// *************************************************************
+
+template <class point>
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile) {
+//  size_t n = pts.size();
+//  using vtx = vertex<point,maxK>;
+//  int dimensions = pts[0].dimension();
+//  auto vv = parlay::tabulate(n, [&] (size_t i) -> vtx {
+//      return vtx(pts[i],i);
+//    });
+//  auto v = parlay::tabulate(n, [&] (size_t i) -> vtx* {
+//      return &vv[i];});
+//
+//  // run once for warmup
+//  time_loop(rounds, 1.0,
+//	    [&] () {},
+//	    [&] () {ANN<maxK>(v, k);},
+//	    [&] () {});
+//
+//  if (outFile != NULL) {
+//    int m = n * k;
+//    parlay::sequence<int> Pout(m);
+//    parlay::parallel_for (0, n, [&] (size_t i) {
+//	for (int j=0; j < k; j++)
+//	  Pout[k*i + j] = (v[i]->ngh[j])->identifier;
+//      });
+//    writeIntSeqToFile(Pout, outFile);
+//  }
+}
+
+// Infile is a file in .fvecs format
+int main(int argc, char* argv[]) {
+  commandLine P(argc,argv,"[-k {1,...,100}] [-r <rounds>] <inFile>");
+  char* iFile = P.getArgument(0);
+  int rounds = P.getOptionIntValue("-r",1);
+  int k = P.getOptionIntValue("-k",1);
+  int d = P.getOptionIntValue("-d",2);
+  algorithm_version = P.getOptionIntValue("-t",algorithm_version);
+  if (k > 100 || k < 1) P.badArgument();
+
+  std::cout << "Input (fvecs format): " << iFile << std::endl;
+  auto points = parse_fvecs(iFile);
+
+//  if (d == 2) {
+//    parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
+//    timeNeighbors(PIn, 1, k, rounds);
+//  }
+//
+//  if (d == 3) {
+//    parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
+//    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
+//    else timeNeighbors<100>(PIn, k, rounds, oFile);
+//  }
+
+}
