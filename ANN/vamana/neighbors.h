@@ -25,7 +25,7 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "index.h"
-// #include "distance.h"  
+#include "distance.h"  
 
 bool report_stats = true;
 
@@ -34,10 +34,11 @@ template<class fvec_point>
 void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg) {
   parlay::internal::timer t("ANN",report_stats); 
   {
-    using findex = knn_index<fvec_point>;
+    parlay::slice<float*, float*> test = v[0]->coordinates;
 
+    using findex = knn_index<fvec_point>;
     findex I(maxDeg);
-    I.random_index(v);
+    I.build_index(v);
     t.next("Running ANN");
   };
 }

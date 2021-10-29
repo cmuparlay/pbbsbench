@@ -31,10 +31,9 @@
 template<class fvec_point>
 struct knn_index{
 	int maxDeg;
+	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
 
-	knn_index(int md){
-		maxDeg = md;
-	}
+	knn_index(int md) : maxDeg(md) {}
 
 	//give each vertex maxDeg random out neighbors
 	void random_index(parlay::sequence<fvec_point*> v){
@@ -59,9 +58,88 @@ struct knn_index{
 	    );
 	}
 
+	// struct coordplus{
+	// 	int d;
+	// 	fvec_point tmp;
+	// 	fvec_point* identity;
+	// 	fvec_point answer;
+
+	// 	coordplus(int dim) : d(dim), tmp {typename fvec_point::fvec_point()}, 
+	// 	identity {&tmp}, 
+	// 	answer {typename fvec_point::fvec_point()} {
+	// 		tmp.coordinates = parlay::make_slice(parlay::sequence<float>(dim, 0));
+	// 	} 
+
+	// 	fvec_point* f(fvec_point* a, fvec_point* b) const {
+	// 		parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
+	// 		for(int i=0; i<d; i++){
+	// 			float result = (a->coordinates)[i] + (b->coordinates)[i];
+	// 			centroid_coords[i] = result;
+	// 		}
+	// 		answer.coordinates = parlay::make_slice(centroid_coords);
+	// 		return &answer;
+	// 	}
+
+	// };
+
+	parlay::sequence<float> centroid_helper(slice_fvec a, int d){
+		if(a.size() == 1){
+			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
+			for(int i=0; i<d; i++) centroid_coords[i] = (a[0]->coordinates)[i];
+			return centroid_coords;
+		}
+		else{
+			size_t n = a.size();
+			// std::cout << n << std::endl; 
+			parlay::sequence<float> c1;
+			parlay::sequence<float> c2;
+			parlay::par_do_if(n>1000,
+				[&] () {c1 = centroid_helper(a.cut(0, n/2), d);},
+				[&] () {c2 = centroid_helper(a.cut(n/2, n), d);}
+			);
+			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
+			for(int i=0; i<d; i++){
+				float result = c1[i] + c2[i];
+				centroid_coords[i] = result;
+			}
+			return centroid_coords;
+		}
+	}
+
+	fvec_point* medoid_helper(fvec_point* centroid, slice_fvec a, int d){
+		if(a.size() == 1){
+			return a[0];
+		}
+		else{
+			size_t n = a.size();
+			fvec_point* a1;
+			fvec_point* a2;
+			parlay::par_do_if(n>1000,
+				[&] () {a1 = medoid_helper(centroid, a.cut(0, n/2), d);},
+				[&] () {a2 = medoid_helper(centroid, a.cut(n/2, n), d);}
+			);
+			float d1 = distance(centroid, a1);
+			float d2 = distance(centroid, a2);
+			if(d1<d2) return a1;
+			else return a2;
+		}
+	}
+
+
 	//computes the centroid and then assigns the approx medoid as the point in v
 	//closest to the centroid
-	void find_approx_medoid(){
+	fvec_point* find_approx_medoid(parlay::sequence<fvec_point*> v){
+		size_t n = v.size();
+		int d = ((v[0]->coordinates).size())/4;
+		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v), d);
+		fvec_point centroidp = typename fvec_point::fvec_point();
+		centroidp.coordinates = parlay::make_slice(centroid);
+		fvec_point* medoid = medoid_helper(&centroidp, parlay::make_slice(v), d);
+		return medoid; 
+	}
 
+	void build_index(parlay::sequence<fvec_point*> v){
+		random_index(v);
+		find_approx_medoid(v);
 	}
 };
