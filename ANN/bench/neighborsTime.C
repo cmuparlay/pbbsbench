@@ -44,11 +44,12 @@ using namespace benchIO;
 // Just a wrapper around a parlay::slice for now. Using mmap + slices
 // lets us avoid copying the input points.
 struct fvec_point {
+  int id;
   parlay::slice<float*, float*> coordinates;
   fvec_point() :
     coordinates(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
-  parlay::sequence<fvec_point*> out_nbh = parlay::sequence<fvec_point*>();
-  parlay::sequence<fvec_point*> new_out_nbh = parlay::sequence<fvec_point*>();
+  parlay::sequence<int> out_nbh = parlay::sequence<int>();
+  parlay::sequence<int> new_out_nbh = parlay::sequence<int>();
 };
 
 
@@ -109,6 +110,7 @@ auto parse_fvecs(const char* filename) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     float* start = (float*)(fileptr + offset_in_bytes);
     float* end = start + 4*d;
+    points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
   });
 
@@ -121,28 +123,29 @@ auto parse_fvecs(const char* filename) {
 // *************************************************************
 
 template <class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg) {
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, int beamSize) {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
       return &pts[i];});
 
   time_loop(rounds, 1.0,
       [&] () {},
-      [&] () {ANN(v, k, maxDeg);},
+      [&] () {ANN(v, k, maxDeg, beamSize);},
       [&] () {});
 }
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-R <maxDeg>] [-k {1,...,100}] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   if (k > 100 || k < 1) P.badArgument();
   int maxDeg = P.getOptionIntValue("R", 10);
+  int beamSize = P.getOptionIntValue("L", 5);
 
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
 
-  timeNeighbors(points, k, rounds, maxDeg);
+  timeNeighbors(points, k, rounds, maxDeg, beamSize);
 }

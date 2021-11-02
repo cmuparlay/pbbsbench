@@ -31,13 +31,13 @@ bool report_stats = true;
 
 // naive n^2 solution, currently just for k = 1
 template<class fvec_point>
-void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg) {
+void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize) {
   parlay::internal::timer t("ANN",report_stats); 
   {
-    parlay::slice<float*, float*> test = v[0]->coordinates;
+    // std::cout << v[0]->id << std::endl; 
 
     using findex = knn_index<fvec_point>;
-    findex I(maxDeg);
+    findex I(maxDeg, beamSize, k);
     I.build_index(v);
     t.next("Running ANN");
   };

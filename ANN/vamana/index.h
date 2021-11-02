@@ -31,9 +31,11 @@
 template<class fvec_point>
 struct knn_index{
 	int maxDeg;
+	int beamSize;
+	int k; 
 	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
 
-	knn_index(int md) : maxDeg(md) {}
+	knn_index(int md, int bs, int kk) : maxDeg(md), beamSize(bs), k(kk) {}
 
 	//give each vertex maxDeg random out neighbors
 	void random_index(parlay::sequence<fvec_point*> v){
@@ -51,36 +53,13 @@ struct knn_index{
 			}
 			
 			for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
-        		v[i] -> out_nbh.push_back(v[*it]);
+        		v[i] -> out_nbh.push_back(*it);
 			} 
 
 	    }, 1
 	    );
 	}
 
-	// struct coordplus{
-	// 	int d;
-	// 	fvec_point tmp;
-	// 	fvec_point* identity;
-	// 	fvec_point answer;
-
-	// 	coordplus(int dim) : d(dim), tmp {typename fvec_point::fvec_point()}, 
-	// 	identity {&tmp}, 
-	// 	answer {typename fvec_point::fvec_point()} {
-	// 		tmp.coordinates = parlay::make_slice(parlay::sequence<float>(dim, 0));
-	// 	} 
-
-	// 	fvec_point* f(fvec_point* a, fvec_point* b) const {
-	// 		parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
-	// 		for(int i=0; i<d; i++){
-	// 			float result = (a->coordinates)[i] + (b->coordinates)[i];
-	// 			centroid_coords[i] = result;
-	// 		}
-	// 		answer.coordinates = parlay::make_slice(centroid_coords);
-	// 		return &answer;
-	// 	}
-
-	// };
 
 	parlay::sequence<float> centroid_helper(slice_fvec a, int d){
 		if(a.size() == 1){
@@ -136,6 +115,10 @@ struct knn_index{
 		centroidp.coordinates = parlay::make_slice(centroid);
 		fvec_point* medoid = medoid_helper(&centroidp, parlay::make_slice(v), d);
 		return medoid; 
+	}
+
+	parlay::sequence<int> beam_collect(){
+
 	}
 
 	void build_index(parlay::sequence<fvec_point*> v){
