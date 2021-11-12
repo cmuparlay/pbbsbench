@@ -38,13 +38,21 @@ struct knn_index{
 
 	knn_index(int md, int bs, int kk) : maxDeg(md), beamSize(bs), k(kk) {}
 
+	void clear(parlay::sequence<fvec_point*> v){
+		size_t n = v.size();
+		parlay::parallel_for(0, n, [&] (size_t i){
+			parlay::sequence<int> clear_seq = parlay::sequence<int>();
+			v[i]->out_nbh = clear_seq;
+		});
+	}
+
 	//give each vertex maxDeg random out neighbors
 	void random_index(parlay::sequence<fvec_point*> v){
 		size_t n = v.size(); 
 		parlay::parallel_for(0, n, [&] (size_t i){
 	    	std::random_device rd;    
 			std::mt19937 rng(rd());   
-			std::uniform_int_distribution<int> uni(0,n); 
+			std::uniform_int_distribution<int> uni(0,n-1); 
 
 			//use a set to make sure each out neighbor is unique
 			std::set<int> indexset;
@@ -133,31 +141,44 @@ struct knn_index{
 		return 0;
 	}
 
+	void print_frontier(parlay::sequence<int> frontier){
+		int fsize = frontier.size();
+		std::cout << "["; 
+		for(int i=0; i<fsize; i++){
+			std::cout << frontier[i] << ", ";
+		}
+		std::cout << "]" << std::endl; 
+	}
+
 
 	//actually should redo this using sets, just also need a sorted list for the frontier
 	//so frontier has a sorted list AND a set, while visited has just a set
 	std::pair<std::set<int>, std::set<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> v){
+		//initialize data structures
 		std::set<int> visited;
 		std::set<int> frontier; 
 		parlay::sequence<int> sortedFrontier = parlay::sequence<int>();
+		//the frontier starts with the medoid
 		sortedFrontier.push_back(medoid->id);
 		frontier.insert(medoid->id);
+		// std::cout << "here1" << std::endl; 
+		//terminate beam search when the entire frontier has been visited
 		while(intersect_nonempty(visited, sortedFrontier)){
-			//identify the node we are visiting
+			//the next node to visit is the unvisited frontier node that is closest to p
 			int currentIndex = id_next(visited, sortedFrontier);
 			fvec_point* current = v[currentIndex]; 
 			parlay::sequence<int> outnbh = current->out_nbh;
-			for(int i=0; i++; i<(outnbh.size())){
-				if(frontier.find(outnbh[i]) != frontier.end()){
+			int outsize = outnbh.size();
+			//add the outneighbors of the visited node to the frontier if they are not already in it
+			for(int i=0; i<(outsize); i++){
+				if(frontier.find(outnbh[i]) == frontier.end()){
 					auto less = [&] (int a){
 						return distance(v[a], p) < distance(v[outnbh[i]], p);
-						// return a<outnbh[i]; 
 					};
 					int insertion_point = parlay::internal::binary_search(parlay::make_slice(sortedFrontier), less);
-					// sortedFrontier.begin()+insertion_point; 
 					const int to_insert = outnbh[i];
 					sortedFrontier.insert(sortedFrontier.begin()+insertion_point, to_insert);
-					frontier.insert(outnbh[i]);
+					frontier.insert(outnbh[i]); 
 				}
 			}
 			//remove nodes from frontier if too large
@@ -170,7 +191,7 @@ struct knn_index{
 			}
 			//add the node to the visited list
 			visited.insert(current->id);
-		}
+		} 
 		return std::make_pair(frontier, visited);
 	}
 
@@ -186,6 +207,7 @@ struct knn_index{
 	// }
 
 	void build_index(parlay::sequence<fvec_point*> v){
+		clear(v);
 		random_index(v);
 		find_approx_medoid(v);
 		beam_search(v[0], v);
