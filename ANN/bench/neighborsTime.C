@@ -123,29 +123,30 @@ auto parse_fvecs(const char* filename) {
 // *************************************************************
 
 template <class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, int beamSize) {
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, int beamSize, double alpha) {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
       return &pts[i];});
 
   time_loop(rounds, 1.0,
       [&] () {},
-      [&] () {ANN(v, k, maxDeg, beamSize);},
+      [&] () {ANN(v, k, maxDeg, beamSize, alpha);},
       [&] () {});
 }
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-a <alpha>] [-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   if (k > 100 || k < 1) P.badArgument();
   int maxDeg = P.getOptionIntValue("R", 10);
   int beamSize = P.getOptionIntValue("L", 5);
+  double alpha = P.getOptionDoubleValue("alpha", 1.5);
 
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
 
-  timeNeighbors(points, k, rounds, maxDeg, beamSize);
+  timeNeighbors(points, k, rounds, maxDeg, beamSize, alpha);
 }

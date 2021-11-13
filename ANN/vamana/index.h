@@ -33,12 +33,13 @@ struct knn_index{
 	int maxDeg;
 	int beamSize;
 	int k; 
+	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	fvec_point* medoid; 
 	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
 
-	knn_index(int md, int bs, int kk) : maxDeg(md), beamSize(bs), k(kk) {}
+	knn_index(int md, int bs, int kk, double a) : maxDeg(md), beamSize(bs), k(kk), r2_alpha(a) {}
 
-	void clear(parlay::sequence<fvec_point*> v){
+	void clear(parlay::sequence<fvec_point*> &v){
 		size_t n = v.size();
 		parlay::parallel_for(0, n, [&] (size_t i){
 			parlay::sequence<int> clear_seq = parlay::sequence<int>();
@@ -47,7 +48,7 @@ struct knn_index{
 	}
 
 	//give each vertex maxDeg random out neighbors
-	void random_index(parlay::sequence<fvec_point*> v){
+	void random_index(parlay::sequence<fvec_point*> &v){
 		size_t n = v.size(); 
 		parlay::parallel_for(0, n, [&] (size_t i){
 	    	std::random_device rd;    
@@ -115,7 +116,7 @@ struct knn_index{
 
 	//computes the centroid and then assigns the approx medoid as the point in v
 	//closest to the centroid
-	void find_approx_medoid(parlay::sequence<fvec_point*> v){
+	void find_approx_medoid(parlay::sequence<fvec_point*> &v){
 		size_t n = v.size();
 		int d = ((v[0]->coordinates).size())/4;
 		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v), d);
@@ -133,6 +134,8 @@ struct knn_index{
 		return false;
 	}
 
+	//will only be used when there is an element in F that is not in V
+	//hence the ``return 0" line will never be called
 	int id_next(std::set<int> V, parlay::sequence<int> F){
 		int fsize = F.size();
 		for(int i=0; i<fsize; i++){
@@ -141,19 +144,26 @@ struct knn_index{
 		return 0;
 	}
 
-	void print_frontier(parlay::sequence<int> frontier){
-		int fsize = frontier.size();
+	//for debugging
+	void print_seq(parlay::sequence<int> seq){
+		int fsize = seq.size();
 		std::cout << "["; 
 		for(int i=0; i<fsize; i++){
-			std::cout << frontier[i] << ", ";
+			std::cout << seq[i] << ", ";
+		}
+		std::cout << "]" << std::endl; 
+	}
+
+	void print_set(std::set<int> myset){
+		std::cout << "["; 
+		for (std::set<int>::iterator it=myset.begin(); it!=myset.end(); ++it){
+			std::cout << *it << ", ";
 		}
 		std::cout << "]" << std::endl; 
 	}
 
 
-	//actually should redo this using sets, just also need a sorted list for the frontier
-	//so frontier has a sorted list AND a set, while visited has just a set
-	std::pair<std::set<int>, std::set<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> v){
+	std::pair<parlay::sequence<int>, std::set<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v){
 		//initialize data structures
 		std::set<int> visited;
 		std::set<int> frontier; 
@@ -161,7 +171,6 @@ struct knn_index{
 		//the frontier starts with the medoid
 		sortedFrontier.push_back(medoid->id);
 		frontier.insert(medoid->id);
-		// std::cout << "here1" << std::endl; 
 		//terminate beam search when the entire frontier has been visited
 		while(intersect_nonempty(visited, sortedFrontier)){
 			//the next node to visit is the unvisited frontier node that is closest to p
@@ -184,7 +193,7 @@ struct knn_index{
 			//remove nodes from frontier if too large
 			if(sortedFrontier.size() > beamSize){ //beamSize is a global var taken from command line
 				for(int i=sortedFrontier.size(); i>beamSize; i--){
-					int to_del = sortedFrontier[i];
+					int to_del = sortedFrontier[i-1];
 					sortedFrontier.pop_back();
 					frontier.erase(to_del);
 				}
@@ -192,24 +201,57 @@ struct knn_index{
 			//add the node to the visited list
 			visited.insert(current->id);
 		} 
-		return std::make_pair(frontier, visited);
+		return std::make_pair(sortedFrontier, visited);
 	}
 
-	// void robustPrune(fvec_point* p, std::set<int> candidates){
-	// 	//transform the candidate set to a sequence, add the out_nbhs of p, and sort
-	// 	for(int i=0; i<(p->out_nbh.size()); i++){
-	// 		candidates.insert(p->out_nbh[i]);
-	// 	}
-	// 	parlay::sequence<int> sortedCandidates = parlay::sequence<int>(candidates.size());
-	// 	for(int i=0; i<candidates.size(); i++){ //need to use the set iterator
+	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
+	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
+	void robustPrune(fvec_point* p, std::set<int> candidates, parlay::sequence<fvec_point*> &v, double alpha){
+		//add out neighbors of p to the candidate set
+		for(int i=0; i<(p->out_nbh.size()); i++){
+			candidates.insert(p->out_nbh[i]);
+		}
+		//transform to a sequence so that it can be sorted
+		parlay::sequence<int> Candidates = parlay::sequence<int>();
+		for (std::set<int>::iterator it=candidates.begin(); it!=candidates.end(); ++it){
+        	Candidates.push_back(*it);
+		} 
+		//sort the candidate set in reverse order according to distance from p
+		auto less = [&] (int a, int b){
+			return distance(v[a], p) > distance(v[b], p);
+		};
+		auto sortedCandidates = parlay::sort(Candidates, less);
+		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
+		while(new_nbhs.size() <= maxDeg && sortedCandidates.size() > 0){
+			int c = sortedCandidates.size();
+			int p_star = sortedCandidates[c-1];
+			sortedCandidates.pop_back();
+			new_nbhs.push_back(p_star);
+			parlay::sequence<int> to_delete = parlay::sequence<int>();
+			for(int i=0; i<c-1; i++){
+				int p_prime = sortedCandidates[i];
+				float dist_starprime = distance(v[p_star], v[p_prime]);
+				float dist_pprime = distance(p, v[p_prime]);
+				if(alpha*dist_starprime <= dist_pprime){
+					to_delete.push_back(i);
+				}
+			}
+			if(to_delete.size() > 0){
+				for(int i=0; i<to_delete.size(); i++){
+					sortedCandidates.erase(sortedCandidates.begin()+to_delete[i]-i);
+				}
+			}
+		}
+		p->new_out_nbh = new_nbhs;
+	}
 
-	// 	}
-	// }
-
-	void build_index(parlay::sequence<fvec_point*> v){
+	void build_index(parlay::sequence<fvec_point*> &v){
 		clear(v);
 		random_index(v);
 		find_approx_medoid(v);
-		beam_search(v[0], v);
+		size_t n = v.size();
+		parlay::parallel_for(0, n, [&] (size_t i){
+			robustPrune(v[i], (beam_search(v[i], v)).second, v, r2_alpha);
+		});
 	}
 };
