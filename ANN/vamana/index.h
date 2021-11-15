@@ -26,6 +26,7 @@
 #include "common/geometry.h"
 #include <random>
 #include <set>
+#include <math.h>
 
 
 template<class fvec_point>
@@ -36,6 +37,8 @@ struct knn_index{
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	fvec_point* medoid; 
 	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
+	using index_pair = std::pair<int, int>;
+	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
 
 	knn_index(int md, int bs, int kk, double a) : maxDeg(md), beamSize(bs), k(kk), r2_alpha(a) {}
 
@@ -250,8 +253,54 @@ struct knn_index{
 		random_index(v);
 		find_approx_medoid(v);
 		size_t n = v.size();
-		parlay::parallel_for(0, n, [&] (size_t i){
-			robustPrune(v[i], (beam_search(v[i], v)).second, v, r2_alpha);
-		});
+		size_t inc = 0;
+		while(pow(2, inc) < n){
+			size_t floor = static_cast<size_t>(pow(2, inc))-1;
+			size_t ceiling = std::min(static_cast<size_t>(pow(2, inc+1)), n)-1;
+			//search for each node starting from the medoid, then call
+			//robustPrune with the visited list as its candidate set
+			parlay::parallel_for(floor, ceiling, [&] (size_t i){
+				robustPrune(v[i], (beam_search(v[i], v)).second, v, 1);
+			});
+			//make each edge bidirectional by first adding each new edge
+			//(i,j) to a sequence, then semisorting the sequence by key values
+			parlay::sequence<parlay::sequence<index_pair>> to_flatten = 
+				parlay::sequence<parlay::sequence<index_pair>>(ceiling-floor);
+			parlay::parallel_for(floor, ceiling, [&] (size_t i){
+				parlay::sequence<int> new_nbh = v[i]->new_out_nbh;
+				parlay::sequence<index_pair> edges = parlay::sequence<index_pair>(new_nbh.size());
+				for(int j=0; j<new_nbh.size(); j++){
+					edges[j] = std::make_pair(new_nbh[j], i);
+				}
+				to_flatten[i-floor] = edges;
+				v[i]->out_nbh = new_nbh;
+				v[i]->new_out_nbh = parlay::sequence<int>();
+			});
+			auto new_edges = parlay::flatten(to_flatten);
+			auto grouped_by = parlay::group_by_key(new_edges);
+			//finally, add the bidirectional edges; if they do not make 
+			//the vertex exceed the degree bound, just add them to out_nbhs;
+			//otherwise, use robustPrune on the vertex with user-specified alpha
+			parlay::parallel_for(0, grouped_by.size(), [&] (size_t i){
+				size_t index = grouped_by[i].first;
+				parlay::sequence<int> candidates = grouped_by[i].second;
+				int newsize = candidates.size() + (v[index]->out_nbh).size();
+				if(newsize <= maxDeg){
+					for(int i=0; i<candidates.size(); i++){
+						(v[index]->out_nbh).push_back(candidates[i]);
+					}
+				} else{
+					std::set<int> candidateSet;
+					for(int i=0; i<candidates.size(); i++){
+						candidateSet.insert(candidates[i]);
+					}
+					robustPrune(v[index], candidateSet, v, r2_alpha);
+					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
+					v[index]->out_nbh = new_nbh;
+					v[index]->new_out_nbh = parlay::sequence<int>();
+				}
+			});
+			inc += 1; 
+		}
 	}
 };
