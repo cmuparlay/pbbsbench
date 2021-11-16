@@ -62,7 +62,8 @@ struct knn_index{
 			std::set<int> indexset;
 			while(indexset.size() < maxDeg){
 				int j = uni(rng);
-				indexset.insert(j);
+				//disallow self edges
+				if(j != i) indexset.insert(j);
 			}
 			
 			for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
@@ -210,6 +211,10 @@ struct knn_index{
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
 	void robustPrune(fvec_point* p, std::set<int> candidates, parlay::sequence<fvec_point*> &v, double alpha){
+		//make sure the candidate set does not include p
+		if(candidates.find(p->id) != candidates.end()){
+			candidates.erase(p->id);
+		}
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
 			candidates.insert(p->out_nbh[i]);
@@ -250,7 +255,9 @@ struct knn_index{
 
 	void build_index(parlay::sequence<fvec_point*> &v){
 		clear(v);
+		//populate with random edges
 		random_index(v);
+		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
 		size_t n = v.size();
 		size_t inc = 0;
@@ -302,5 +309,28 @@ struct knn_index{
 			});
 			inc += 1; 
 		}
+	}
+
+	void searchNeighbors(parlay::sequence<fvec_point*> &v){
+		if((k+1)>beamSize){
+			std::cout << "Error: beam search parameter too small" << std::endl;
+			abort();
+		}
+		parlay::parallel_for(0, v.size(), [&] (size_t i){
+			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
+			parlay::sequence<int> beamElts = (beam_search(v[i], v)).first;
+			//the first element of the frontier may be the point itself
+			//if this occurs, do not report it as a neighbor
+			if(beamElts[0]==i){
+				for(int j=0; j<k; j++){
+					neighbors[j] = beamElts[j+1];
+				}
+			} else{
+				for(int j=0; j<k; j++){
+					neighbors[j] = beamElts[j];
+				}
+			}
+			v[i]->ngh = neighbors;
+		});
 	}
 };

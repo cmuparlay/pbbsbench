@@ -50,6 +50,7 @@ struct fvec_point {
     coordinates(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
   parlay::sequence<int> out_nbh = parlay::sequence<int>();
   parlay::sequence<int> new_out_nbh = parlay::sequence<int>();
+  parlay::sequence<int> ngh = parlay::sequence<int>();
 };
 
 
@@ -123,7 +124,7 @@ auto parse_fvecs(const char* filename) {
 // *************************************************************
 
 template <class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, int beamSize, double alpha) {
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
       return &pts[i];});
@@ -132,12 +133,24 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, 
       [&] () {},
       [&] () {ANN(v, k, maxDeg, beamSize, alpha);},
       [&] () {});
+
+  if (outFile != NULL) {
+    int m = n * (k+1);
+    parlay::sequence<int> Pout(m);
+    parlay::parallel_for (0, n, [&] (size_t i) {
+      Pout[(k+1)*i] = v[i]->id;
+      for (int j=0; j < k; j++)
+        Pout[(k+1)*i + j+1] = (v[i]->ngh)[j];
+    });
+    writeIntSeqToFile(Pout, outFile);
+  }
 }
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-a <alpha>] [-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-a <alpha>] [-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
+  char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   if (k > 100 || k < 1) P.badArgument();
@@ -148,5 +161,5 @@ int main(int argc, char* argv[]) {
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
 
-  timeNeighbors(points, k, rounds, maxDeg, beamSize, alpha);
+  timeNeighbors(points, k, rounds, maxDeg, beamSize, alpha, oFile);
 }
