@@ -28,6 +28,7 @@
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
+#include "benchUtils.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -37,120 +38,69 @@
 
 using namespace benchIO;
 
-// *************************************************************
-//  SOME DEFINITIONS
-// *************************************************************
-
-// Just a wrapper around a parlay::slice for now. Using mmap + slices
-// lets us avoid copying the input points.
-struct fvec_point {
-  int id;
-  parlay::slice<float*, float*> coordinates;
-  fvec_point() :
-    coordinates(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
-  parlay::sequence<int> out_nbh = parlay::sequence<int>();
-  parlay::sequence<int> new_out_nbh = parlay::sequence<int>();
-  parlay::sequence<int> ngh = parlay::sequence<int>();
-};
-
-
-
-// *************************************************************
-// Parsing code (should move to common?)
-// *************************************************************
-
-// returns a pointer and a length
-std::pair<char*, size_t> mmapStringFromFile(const char* filename) {
-  struct stat sb;
-  int fd = open(filename, O_RDONLY);
-  if (fd == -1) {
-    perror("open");
-    exit(-1);
-  }
-  if (fstat(fd, &sb) == -1) {
-    perror("fstat");
-    exit(-1);
-  }
-  if (!S_ISREG(sb.st_mode)) {
-    perror("not a file\n");
-    exit(-1);
-  }
-  char* p =
-      static_cast<char*>(mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
-  if (p == MAP_FAILED) {
-    perror("mmap");
-    exit(-1);
-  }
-  if (close(fd) == -1) {
-    perror("close");
-    exit(-1);
-  }
-  size_t n = sb.st_size;
-  return std::make_pair(p, n);
-}
-
-auto parse_fvecs(const char* filename) {
-  auto [fileptr, length] = mmapStringFromFile(filename);
-  std::cout << "Successfully mmap'd" << std::endl;
-
-  // Each vector is 4 + 4*d bytes.
-  // * first 4 bytes encode the dimension (as an integer)
-  // * next d values are floats representing vector components
-  // See http://corpus-texmex.irisa.fr/ for more details.
-
-  int d = *((int*)fileptr);
-  std::cout << "Dimension = " << d << std::endl;
-
-  size_t vector_size = 4 + 4*d;
-  size_t num_vectors = length / vector_size;
-  std::cout << "Num vectors = " << num_vectors << std::endl;
-
-  parlay::sequence<fvec_point> points(num_vectors);
-
-  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
-    size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
-    float* start = (float*)(fileptr + offset_in_bytes);
-    float* end = start + 4*d;
-    points[i].id = i; 
-    points[i].coordinates = parlay::make_slice(start, end);
-  });
-
-  return points;
-}
-
 
 // *************************************************************
 //  TIMING
 // *************************************************************
 
 template <class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) {
+void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
+  int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) 
+{
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
       return &pts[i];});
 
-  time_loop(rounds, 1.0,
+  parlay::sequence<fvec_point> qpoints;
+  parlay::sequence<fvec_point*> qpts;
+
+  if(qFile != NULL){
+    qpoints = parse_fvecs(qFile);
+    size_t q = qpoints.size();
+    qpts = parlay::tabulate(q, [&] (size_t i) -> point* {
+      return &qpoints[i];});
+
+    time_loop(rounds, 1.0,
       [&] () {},
-      [&] () {ANN(v, k, maxDeg, beamSize, alpha);},
+      [&] () {ANN(v, k, maxDeg, beamSize, alpha, qpts);},
       [&] () {});
 
-  if (outFile != NULL) {
-    int m = n * (k+1);
-    parlay::sequence<int> Pout(m);
-    parlay::parallel_for (0, n, [&] (size_t i) {
-      Pout[(k+1)*i] = v[i]->id;
-      for (int j=0; j < k; j++)
-        Pout[(k+1)*i + j+1] = (v[i]->ngh)[j];
-    });
-    writeIntSeqToFile(Pout, outFile);
+    if (outFile != NULL) {
+      int m = n * (k+1);
+      parlay::sequence<int> Pout(m);
+      parlay::parallel_for (0, q, [&] (size_t i) {
+        Pout[(k+1)*i] = qpts[i]->id;
+        for (int j=0; j < k; j++)
+          Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
+      });
+      writeIntSeqToFile(Pout, outFile);
+    }
+  } else{
+      time_loop(rounds, 1.0,
+      [&] () {},
+      [&] () {ANN(v, k, maxDeg, beamSize, alpha);},
+      [&] () {});  
+
+      if (outFile != NULL) {
+        int m = n * (k+1);
+        parlay::sequence<int> Pout(m);
+        parlay::parallel_for (0, n, [&] (size_t i) {
+          Pout[(k+1)*i] = v[i]->id;
+          for (int j=0; j < k; j++)
+            Pout[(k+1)*i + j+1] = (v[i]->ngh)[j];
+        });
+        writeIntSeqToFile(Pout, outFile);
+      }
   }
+
 }
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-a <alpha>] [-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-a <alpha>] [-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-o <outFile>] [-q <queryFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
+  char* qFile = P.getOptionValue("-q");
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   if (k > 100 || k < 1) P.badArgument();
@@ -160,6 +110,7 @@ int main(int argc, char* argv[]) {
 
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
+  // auto qpoints = parse_fvecs(qFile);
 
-  timeNeighbors(points, k, rounds, maxDeg, beamSize, alpha, oFile);
+  timeNeighbors(points, qFile, k, rounds, maxDeg, beamSize, alpha, oFile);
 }

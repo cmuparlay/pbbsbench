@@ -29,35 +29,36 @@
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
+#include "benchUtils.h"
+
 using namespace benchIO;
 
-using coord = double;
+//start with 1@1, later move to other types
+int checkNeighbors(int k, parlay::sequence<fvec_point> groundTruth, parlay::sequence<long> neighbors){
+	int numCorrect = 0;
+	size_t n = (neighbors.size())/(k+1);
+	for(int i=0; i<n; i++){
+		int reported_index = neighbors[(k+1)*i+1];
+		int true_index = (groundTruth[i].coordinates)[0];
+		if(reported_index == true_index) numCorrect += 1;
+	}
+	float recall = static_cast<float>(numCorrect)/static_cast<float>(n);
+	std:: cout << "Recall 1@1: " << recall << std::endl; 
+	return 0;
+}
 
 int main(int argc, char* argv[]) {
-//  commandLine P(argc,argv,
-//		"[-k {1,...,100}] [-d {2,3}] [-r <numtests>] <inFile> <outfile>");
-//  pair<char*,char*> fnames = P.IOFileNames();
-//  char* iFile = fnames.first;
-//  char* oFile = fnames.second;
-//
-//  // number of random points to test
-//  int r = P.getOptionIntValue("-r",10);
-//
-//  int k = P.getOptionIntValue("-k",1);
-//  int d = P.getOptionIntValue("-d",2);
-//  if (k > 100 || k < 1) P.badArgument();
-//  if (d < 2 || d > 3) P.badArgument();
-//
-//  parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
-//
-//  if (d == 2) {
-//    parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
-//    return checkNeighbors(neighbors, PIn, k, r);
-//  }
-//  // } else if (d == 3) {
-//  //   parlay::sequence<point3d> PIn = readPointsFromFile<point3d>(iFile);
-//  //   intT n = PIn.n;
-//  //   point3d* P = PIn.A;
-//  //   return checkNeighbors(neighbors, PIn.A, PIn.n, k, r);
-//  // } else return 1;
+	commandLine P(argc, argv, "[-k {1,...,100}] <inFile> <outfile>");
+	pair<char*,char*> fnames = P.IOFileNames();
+	char* iFile = fnames.first; //the ground truth
+	char* oFile = fnames.second; //the output of the algorithm
+
+	int k = P.getOptionIntValue("-k",1);
+	if (k > 100 || k < 1) P.badArgument();
+
+	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
+	auto groundTruth = parse_fvecs(iFile);
+	checkNeighbors(k, groundTruth, neighbors);
+	std::cout << "Executing check file" << std::endl; 
+
 }

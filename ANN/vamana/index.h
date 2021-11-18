@@ -311,14 +311,14 @@ struct knn_index{
 		}
 	}
 
-	void searchNeighbors(parlay::sequence<fvec_point*> &v){
+	void searchNeighbors(parlay::sequence<fvec_point*> &q, parlay::sequence<fvec_point*> &v){
 		if((k+1)>beamSize){
 			std::cout << "Error: beam search parameter too small" << std::endl;
 			abort();
 		}
-		parlay::parallel_for(0, v.size(), [&] (size_t i){
+		parlay::parallel_for(0, q.size(), [&] (size_t i){
 			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			parlay::sequence<int> beamElts = (beam_search(v[i], v)).first;
+			parlay::sequence<int> beamElts = (beam_search(q[i], v)).first;
 			//the first element of the frontier may be the point itself
 			//if this occurs, do not report it as a neighbor
 			if(beamElts[0]==i){
@@ -330,7 +330,7 @@ struct knn_index{
 					neighbors[j] = beamElts[j];
 				}
 			}
-			v[i]->ngh = neighbors;
+			q[i]->ngh = neighbors;
 		});
 	}
 };
