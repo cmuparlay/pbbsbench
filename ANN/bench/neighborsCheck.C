@@ -34,17 +34,17 @@
 using namespace benchIO;
 
 //start with 1@1, later move to other types
-int checkNeighbors(int k, parlay::sequence<fvec_point> groundTruth, parlay::sequence<long> neighbors){
+int checkNeighbors(int k, parlay::sequence<ivec_point> groundTruth, parlay::sequence<long> neighbors){
 	int numCorrect = 0;
-	size_t n = (neighbors.size())/(k+1);
-	for(int i=0; i<n; i++){
-		int reported_index = neighbors[(k+1)*i+1];
-		int true_index = (groundTruth[i].coordinates)[0];
+	size_t n = (neighbors.size())/(k+1); 
+	for(int i=0; i<n-1; i++){
+		long reported_index = neighbors[(k+1)*i+1];
+		long true_index = (groundTruth[i].coordinates)[0];
 		if(reported_index == true_index) numCorrect += 1;
 	}
 	float recall = static_cast<float>(numCorrect)/static_cast<float>(n);
 	std:: cout << "Recall 1@1: " << recall << std::endl; 
-	return 0;
+	return 0; 
 }
 
 int main(int argc, char* argv[]) {
@@ -57,8 +57,6 @@ int main(int argc, char* argv[]) {
 	if (k > 100 || k < 1) P.badArgument();
 
 	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
-	auto groundTruth = parse_fvecs(iFile);
+	auto groundTruth = parse_ivecs(iFile);
 	checkNeighbors(k, groundTruth, neighbors);
-	std::cout << "Executing check file" << std::endl; 
-
 }

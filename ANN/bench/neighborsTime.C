@@ -66,7 +66,7 @@ void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
       [&] () {});
 
     if (outFile != NULL) {
-      int m = n * (k+1);
+      int m = q * (k+1);
       parlay::sequence<int> Pout(m);
       parlay::parallel_for (0, q, [&] (size_t i) {
         Pout[(k+1)*i] = qpts[i]->id;

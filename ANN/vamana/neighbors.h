@@ -36,7 +36,7 @@ void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, doub
     using findex = knn_index<fvec_point>;
     findex I(maxDeg, beamSize, k, alpha);
     I.build_index(v);
-    t.next("Running ANN");
+    t.next("Built index");
     I.searchNeighbors(q, v);
     t.next("Found nearest neighbors");
   };
@@ -51,8 +51,6 @@ void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, doub
     using findex = knn_index<fvec_point>;
     findex I(maxDeg, beamSize, k, alpha);
     I.build_index(v);
-    t.next("Running ANN");
-    I.searchNeighbors(v, v);
-    t.next("Found nearest neighbors");
+    t.next("Built index");
   };
 }
