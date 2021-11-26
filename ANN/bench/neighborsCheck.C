@@ -82,23 +82,18 @@ parlay::sequence<int> parse_recall(std::string recall, int k){
 }
 
 int main(int argc, char* argv[]) {
-	commandLine P(argc, argv, "[-k {1,...,100}] -r <recall> <inFile> <outfile>");
+	commandLine P(argc, argv, "[-r <recall> <inFile> <outfile>");
 	pair<char*,char*> fnames = P.IOFileNames();
 	char* iFile = fnames.first; //the ground truth
 	char* oFile = fnames.second; //the output of the algorithm
-	// char* gFile = P.getOptionValue("-g");
-
 	std::string recall = P.getOptionValue("-r", "[1]");
-
-	int k = P.getOptionIntValue("-k", 1);
-	if (k > 100 || k < 1) P.badArgument();
-
-	parlay::sequence<int> recall_vec = parse_recall(recall, k);
 	// std::cout << "[";
 	// for(int i=0; i<recall_vec.size(); i++) std::cout << recall_vec[i] << ", ";
 	// std::cout << "]" << std::endl; 
 
 	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
 	auto groundTruth = parse_ivecs(iFile);
+	int k = (neighbors.size())/(groundTruth.size())-1;
+	parlay::sequence<int> recall_vec = parse_recall(recall, k);
 	return checkNeighbors(k, groundTruth, neighbors, recall_vec);
 }
