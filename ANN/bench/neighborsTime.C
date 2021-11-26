@@ -97,20 +97,22 @@ void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-a <alpha>] [-R <maxDeg>] [-L <beamSize>] [-k {1,...,100}] [-o <outFile>] [-q <queryFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-a <alpha>] [-R {1,...,1000}] [-L {1,...,1000}] [-k {1,...,100}] [-q <queryFile>] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   char* qFile = P.getOptionValue("-q");
-  int rounds = P.getOptionIntValue("-r",1);
-  int k = P.getOptionIntValue("-k",1);
+  int R = P.getOptionIntValue("-R", 5);
+  if (R > 1000 || R < 1) P.badArgument();
+  int L = P.getOptionIntValue("-L", 10);
+  if (L > 1000 || L < 1) P.badArgument();
+  int rounds = P.getOptionIntValue("-r", 1);
+  int k = P.getOptionIntValue("-k", 1);
   if (k > 100 || k < 1) P.badArgument();
-  int maxDeg = P.getOptionIntValue("R", 10);
-  int beamSize = P.getOptionIntValue("L", 5);
-  double alpha = P.getOptionDoubleValue("alpha", 1.5);
+  double alpha = P.getOptionDoubleValue("-a", 1.5);
 
   std::cout << "Input (fvecs format): " << iFile << std::endl;
   auto points = parse_fvecs(iFile);
   // auto qpoints = parse_fvecs(qFile);
 
-  timeNeighbors(points, qFile, k, rounds, maxDeg, beamSize, alpha, oFile);
+  timeNeighbors(points, qFile, k, rounds, R, L, alpha, oFile);
 }

@@ -313,7 +313,7 @@ struct knn_index{
 
 	void searchNeighbors(parlay::sequence<fvec_point*> &q, parlay::sequence<fvec_point*> &v){
 		if((k+1)>beamSize){
-			std::cout << "Error: beam search parameter too small" << std::endl;
+			std::cout << "Error: beam search parameter L = " << beamSize << " same size or smaller than k = " << k << std::endl;
 			abort();
 		}
 		parlay::parallel_for(0, q.size(), [&] (size_t i){

@@ -100,7 +100,7 @@ std::pair<char*, size_t> mmapStringFromFile(const char* filename) {
 
 auto parse_fvecs(const char* filename) {
   auto [fileptr, length] = mmapStringFromFile(filename);
-  std::cout << "Successfully mmap'd" << std::endl;
+  // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + 4*d bytes.
   // * first 4 bytes encode the dimension (as an integer)
@@ -108,11 +108,11 @@ auto parse_fvecs(const char* filename) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  std::cout << "Dimension = " << d << std::endl;
+  // std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
-  std::cout << "Num vectors = " << num_vectors << std::endl;
+  // std::cout << "Num vectors = " << num_vectors << std::endl;
 
   parlay::sequence<fvec_point> points(num_vectors);
 
@@ -129,7 +129,7 @@ auto parse_fvecs(const char* filename) {
 
 auto parse_ivecs(const char* filename) {
   auto [fileptr, length] = mmapStringFromFile(filename);
-  std::cout << "Successfully mmap'd" << std::endl;
+  // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + 4*d bytes.
   // * first 4 bytes encode the dimension (as an integer)
@@ -137,11 +137,11 @@ auto parse_ivecs(const char* filename) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  std::cout << "Dimension = " << d << std::endl;
+  // std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
-  std::cout << "Num vectors = " << num_vectors << std::endl;
+  // std::cout << "Num vectors = " << num_vectors << std::endl;
 
   parlay::sequence<ivec_point> points(num_vectors);
 

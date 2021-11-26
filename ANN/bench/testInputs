@@ -3,39 +3,23 @@
 bnchmrk="neighbors"
 benchmark="Nearest Neighbors"
 checkProgram="../bench/neighborsCheck"
-dataDir = "../geometryData/data"
+dataDir = "/ssd0/ANN/sift10k"
 
 tests = [    
-    [1, "2DinCube_10M","-d 2 -k 1", "-d 2 -k 1"],
-    [1, "2Dkuzmin_10M","-d 2 -k 1", "-d 2 -k 1"],
-    
-    [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
-    [1, "3DonSphere_10M","-d 3 -k 1", "-d 3 -k 1"],
-
-    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
-    [1, "3Dplummer_10M","-d 3 -k 10", "-d 3 -k 10"]
+    [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
+        "-a 1.2 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
+    [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
+        "-a 1.2 -R 25 -L 35 -k 30", "-k 30 -r '[1, 2, 5, 10, 20]'"],
+    [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
+        "-a 1.2 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50]'"],
+    [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
+        "-a 1.2 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
     ]
 
-tests3d = [    
-    [1, "3DinCube_10M","-d 3 -k 1", "-d 3 -k 1"],
-    [1, "3DinCube_10M","-d 3 -k 2", "-d 3 -k 2"],
-    [1, "3DinCube_10M","-d 3 -k 5", "-d 3 -k 5"],
-    [1, "3DinCube_10M","-d 3 -k 10", "-d 3 -k 10"],
-    [1, "3DinCube_10M","-d 3 -k 15", "-d 3 -k 15"],
-    [1, "3DinCube_10M","-d 3 -k 20", "-d 3 -k 20"],
-    [1, "3DinCube_10M","-d 3 -k 25", "-d 3 -k 25"],
-    [1, "3DinCube_10M","-d 3 -k 30", "-d 3 -k 30"],
-    [1, "3DinCube_10M","-d 3 -k 40", "-d 3 -k 40"],
-    [1, "3DinCube_10M","-d 3 -k 50", "-d 3 -k 50"],
-    [1, "3DinCube_10M","-d 3 -k 60", "-d 3 -k 60"],
-    [1, "3DinCube_10M","-d 3 -k 70", "-d 3 -k 70"],
-    [1, "3DinCube_10M","-d 3 -k 80", "-d 3 -k 80"],
-    [1, "3DinCube_10M","-d 3 -k 90", "-d 3 -k 90"],
-    [1, "3DinCube_10M","-d 3 -k 100", "-d 3 -k 100"]
-    ]
 
 import sys
 sys.path.insert(0, 'common')
-import runTests
-runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+import runTestsANN
+runTestsANN.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
 
+#-R 125 -L 150 -k 100

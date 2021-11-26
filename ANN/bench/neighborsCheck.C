@@ -38,7 +38,10 @@ using namespace benchIO;
 //cut seq of the reported neighbors
 //loop over seq, add one if find() reports something
 int checkNeighbors(int k, parlay::sequence<ivec_point> groundTruth, parlay::sequence<long> neighbors, parlay::sequence<int> recall_types){
+	// std::cout << "Size of reported neighbors: " << neighbors.size() << std::endl; 
 	size_t n = (neighbors.size())/(k+1); 
+	// std::cout << "Number of neighbors: " << n << std::endl; 
+	// std::cout << "Size of ground truth: " << groundTruth.size() << std::endl; 
 	for(int j=0; j<recall_types.size(); j++){
 		int r = recall_types[j];
 		int numCorrect = 0;
@@ -49,23 +52,31 @@ int checkNeighbors(int k, parlay::sequence<ivec_point> groundTruth, parlay::sequ
 			for(int l=0; l<r; l++) reported_nbhs[l] = neighbors[i*(k+1)+1+l];
 			for(int l=0; l<r; l++) if(true_nbhs.find(reported_nbhs[l]) != true_nbhs.end()) numCorrect += 1;
 		}
+		// std::cout << "here" << std::endl;
 		float recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
 		std:: cout << "Recall " << r << "@" << r << ": " << recall << std::endl; 
 	}
-	return 0; 
+	return 1;       
 }
 
 //parses a string of the form "[i, j, l]" to a vector of ints
 //removes all ints i which are greater than k
 parlay::sequence<int> parse_recall(std::string recall, int k){
 	parlay::sequence<int> recall_vec = parlay::sequence<int>();
-	for(char const &c: recall){
-		std::string s = std::string(1, c);
-		if(c == ' ' | c == '[' | c == ']' | c == ',') continue;
-		else{
-			int elt = std::stoi(s);
-			if(elt <= k) recall_vec.push_back(elt);
-		}
+	for(std::string::size_type i = 0; i < recall.size(); i++){
+		char c = recall[i];
+			if(c == ' ' | c == '[' | c == ']' | c == ',') continue;
+			else{
+				std::string s = std::string(1, c);
+				char next = recall[i+1];
+				while(next != ' ' && next != '[' && next != ']' && next != ','){
+					s += next;
+					i += 1;
+					next = recall[i+1];
+				}
+				int elt = std::stoi(s);
+				if(elt <= k) recall_vec.push_back(elt);
+			}
 	}
 	return recall_vec;
 }
@@ -75,15 +86,19 @@ int main(int argc, char* argv[]) {
 	pair<char*,char*> fnames = P.IOFileNames();
 	char* iFile = fnames.first; //the ground truth
 	char* oFile = fnames.second; //the output of the algorithm
+	// char* gFile = P.getOptionValue("-g");
 
 	std::string recall = P.getOptionValue("-r", "[1]");
 
-	int k = P.getOptionIntValue("-k",1);
+	int k = P.getOptionIntValue("-k", 1);
 	if (k > 100 || k < 1) P.badArgument();
 
 	parlay::sequence<int> recall_vec = parse_recall(recall, k);
+	// std::cout << "[";
+	// for(int i=0; i<recall_vec.size(); i++) std::cout << recall_vec[i] << ", ";
+	// std::cout << "]" << std::endl; 
 
 	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
 	auto groundTruth = parse_ivecs(iFile);
-	checkNeighbors(k, groundTruth, neighbors, recall_vec);
+	return checkNeighbors(k, groundTruth, neighbors, recall_vec);
 }
