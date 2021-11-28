@@ -1,0 +1,97 @@
+This is the readme file for the PPoPP  artifact evaluation.
+
+GETTING STARTED:
+
+The submitted directory should be self contained.   It can also be downloaded from github using:
+
+> git clone https://github.com/cmuparlay/pbbsbench.git
+> cd pbbsbench
+> git submodule init
+> git submodule update
+
+Requirements:
+
+- some linux based OS (we tested on ubuntu)
+- 64GB of memory
+- 30GB of free disk space (generates temporary files)
+
+Not required, but will give better performance
+
+- jemalloc  (only gives slight performance improvement)
+- 20+ cores (the more cores the faster
+- numactl installed (if this is not installed you need to run "./runall -nonuma")
+
+The command ./runall will run all the benchmarks reported but will take longer than 30 minutes.
+For a faster run, try:
+
+  ./runall -par -nocheck
+
+This only runs the parallel benchmarks, which run much faster.  It
+also does not check the correctness of the results (which are all
+correct on the machines we have run the tests on).  This will probably
+run in 30 minutes and reports all the numbers in the paper for the
+parallel benchmarks.
+
+For shorter experiments you can test individual benchmarks.   For example, you can test the
+parallel comparison sort using:
+
+> cd comparisonSort/sampleSort
+> ./testInput -x -r 3
+
+This will run the parallel sampleSort on the default inputs and report average times.  More
+details on arguments are given below.
+
+
+STEP-BY-STEP
+
+Here we describe more options to run all or some of the the benchmarks.
+
+The ./runall script lists the tested benchmarks in the script.    The options for running it can be extracted by using "./runall -h".   The options of interest might be:
+
+  -scale    : this runs it on a range of different thread counts up the the number of threads on the machine
+  -par      : only run benchmarks that are parallel (saves time)
+  -only     : only run a particular benchmark
+  -nocheck  : don't check correctness of results (saves time)
+
+The benchmarks themselves are organized hierarchically.   At the top level are the benchmarks:
+
+  breadthFirstSearch
+  BWDecode
+  classify
+  comparisonSort
+  convexHull
+  delaunayRefine
+  delaunayTriangulation
+  histogram
+  index
+  integerSort
+  longestRepeatedSubstring
+  maximalIndependentSet
+  maximalMatching
+  minSpanningForest
+  nBody
+  nearestNeighbors
+  rayCast
+  removeDuplicates
+  spanningForest
+  suffixArray
+  wordCounts
+
+Within each benchmarks are the implementations.  The benchmarks also
+have some common directories.  In particular each one has a directory
+called "bench" which contains the driver code, testing code, and
+specification of default inputs.
+
+Within each implementation directory, you can run "make" to make the
+executable, and then run "./testInputs" to run the benchmarks.  On a
+machine with multiple chips, using "numactl -i all ./testInputs" will
+give better results.
+
+The "testInputs" script has several options including:
+
+  -x : do not check the output
+  -r <count>  : number of rounds to use
+  -p <count>  : number of threads to use
+
+The actual inputs are specified in the script and can be changed if desired.
+

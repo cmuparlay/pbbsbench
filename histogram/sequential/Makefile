@@ -1,4 +1,4 @@
-include common/sequentialDefs
+include common/seqDefs
 
 BENCH = histogram
 OBJS = histogram.o

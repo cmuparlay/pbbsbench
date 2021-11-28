@@ -37,7 +37,7 @@ void timeRayCast(triangles<point> T, parlay::sequence<ray<point>> rays,
   parlay::sequence<index_t> R;
   time_loop(rounds, 2.0,
 	    [&] () {R.clear();},
-	    [&] () {R = rayCast(T, rays);},
+	    [&] () {R = rayCast(T, rays, false);},
 	    [&] () {});
   cout << endl;
   if (outFile != NULL) writeIntSeqToFile(R, outFile);

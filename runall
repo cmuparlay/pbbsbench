@@ -9,90 +9,80 @@ import sys
 os.system("echo HOSTNAME: `hostname`")
 
 tests = [
- ["integerSort/parallelRadixSort",True],
-# ["integerSort/serialRadixSort",False],
+    ["integerSort/parallelRadixSort",True],
+    # ["integerSort/serialRadixSort",False],
 
- ["comparisonSort/sampleSort",True],
- ["comparisonSort/quickSort",True],
- ["comparisonSort/mergeSort",True],
- ["comparisonSort/stableSampleSort",True],
- ["comparisonSort/serialSort",False],
- ["comparisonSort/stlParallelSort",True],
- ["comparisonSort/ips4o",True],
+    ["comparisonSort/sampleSort",True],
+    # ["comparisonSort/quickSort",True],
+    # ["comparisonSort/mergeSort",True],
+    # ["comparisonSort/stableSampleSort",True],
+    ["comparisonSort/serialSort",False],
+    # ["comparisonSort/stlParallelSort",True],
+    # ["comparisonSort/ips4o",True],
 
-#["suffixArray/serialKS",False],
- ["suffixArray/parallelKS",True],
- ["suffixArray/parallelRange",True],
- ["suffixArray/serialDivsufsort",False],
+    ["removeDuplicates/serial_hash", False],
+    # ["removeDuplicates/serial_sort", False],
+    ["removeDuplicates/parlayhash", True],
 
- ["wordCounts/histogram",True],
- ["wordCounts/histogramStar",True],
- ["wordCounts/serial",False],
+    ["histogram/sequential",False],
+    # ["histogram/parallel",True],
+    
+    ["wordCounts/histogram",True],
+    # ["wordCounts/histogramStar",True],
 
- ["removeDuplicates/serial_hash", False],
- ["removeDuplicates/serial_sort", False],
- ["removeDuplicates/parlayhash", True],
+    ["wordCounts/serial",False],
 
- ["BWDecode/listRank",True],
+    ["index/sequential", False],
+    ["index/parallel", True],
+    
+    #["suffixArray/serialKS",False],
+    # ["suffixArray/parallelKS",True],
+    ["suffixArray/parallelRange",True],
+    ["suffixArray/serialDivsufsort",False],
 
- ["histogram/sequential",False],
- ["histogram/parallel",True],
+    ["longestRepeatedSubstring/doubling",True],
 
- ["index/sequential", False],
- ["index/parallel", True],
+    ["classify/decisionTree", True],
 
- ["longestRepeatedSubstring/doubling",True],
+    # ["minSpanningForest/parallelKruskal",True],
+    ["minSpanningForest/parallelFilterKruskal",True],
+    ["minSpanningForest/serialMST",False],
 
- ["classify/decisionTree", True],
+    # ["spanningForest/incrementalST",True],
+    ["spanningForest/ndST",True],
+    ["spanningForest/serialST",False],
 
- ["minSpanningForest/parallelKruskal",True],
- ["minSpanningForest/parallelFilterKruskal",True],
- ["minSpanningForest/serialMST",False],
+    # ["breadthFirstSearch/simpleBFS",True],
+    ["breadthFirstSearch/backForwardBFS",True],
+    # ["breadthFirstSearch/deterministicBFS",True],
+    ["breadthFirstSearch/serialBFS",False],
 
- ["spanningForest/incrementalST",True],
- ["spanningForest/ndST",True],
- ["spanningForest/serialST",False],
+    #["maximalMatching/ndMatching",True],
+    ["maximalMatching/serialMatching",False],
+    ["maximalMatching/incrementalMatching",True],
 
- ["breadthFirstSearch/simpleBFS",True],
- ["breadthFirstSearch/backForwardBFS",True],
- ["breadthFirstSearch/deterministicBFS",True],
- ["breadthFirstSearch/serialBFS",False],
+    ["maximalIndependentSet/ndMIS",True],
+    # ["maximalIndependentSet/incrementalMIS",True],
+    ["maximalIndependentSet/serialMIS",False],
 
-#["maximalMatching/ndMatching",True],
- ["maximalMatching/serialMatching",False],
- ["maximalMatching/incrementalMatching",True],
+    #["setCover/manis",True],
+    #["setCover/serialDFG",False],
+    
+    ["nearestNeighbors/octTree",True],
 
- ["maximalIndependentSet/ndMIS",True],
- ["maximalIndependentSet/incrementalMIS",True],
- ["maximalIndependentSet/serialMIS",False],
+    ["rayCast/kdTree",True],
 
- ["nearestNeighbors/octTree",True],
+    ["convexHull/quickHull",True],
+    ["convexHull/serialHull",False],
 
- ["rayCast/kdTree",True],
+    #["delaunayTriangulation/serialDelaunay",False],
+    ["delaunayTriangulation/incrementalDelaunay",True],
 
- ["convexHull/quickHull",True],
- ["convexHull/serialHull",False],
+    ["delaunayRefine/incrementalRefine",True],
+    
+    ["rangeQuery2d/parallelPlaneSweep",True],
 
-#["delaunayTriangulation/serialDelaunay",False],
- ["delaunayTriangulation/incrementalDelaunay",True],
-
- ["delaunayRefine/incrementalRefine",True],
-
- ["rangeQuery2d/parallelPlaneSweep",True],
-
- ["nBody/parallelCK",True],
-
-
-#["setCover/manis",True],
-#["setCover/serialDFG",False],
-
-#["spmv/pSPMV",True],
-#["spmv/sSPMV",False],
-
-# ["nearestNeighbor/callahanKosaraju",True],
-
-# ["lassoRegression/parallelShootingLasso",True],
-#["lassoRegression/parallelShootingLasso2",True]
+    ["nBody/parallelCK",True],
 ]
 
 noTime = False
@@ -193,8 +183,8 @@ def compiletest(dir) :
 def runtest(test,procs,check) :
     if (procs==1) : rounds = 1
     elif (procs < 16) : rounds = 3
-    elif (procs < 64) : rounds = 5
-    else : rounds = 7
+    elif (procs < 64) : rounds = 3
+    else : rounds = 5
     dir = test[0]
     numactl = useNumactl and (procs > 1)
     options = "-r " + `rounds`
