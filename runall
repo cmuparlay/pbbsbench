@@ -75,12 +75,12 @@ tests = [
     ["convexHull/quickHull",True],
     ["convexHull/serialHull",False],
 
-    #["delaunayTriangulation/serialDelaunay",False],
     ["delaunayTriangulation/incrementalDelaunay",True],
 
     ["delaunayRefine/incrementalRefine",True],
     
     ["rangeQuery2d/parallelPlaneSweep",True],
+    ["rangeQuery2d/serial",False],
 
     ["nBody/parallelCK",True],
 ]
