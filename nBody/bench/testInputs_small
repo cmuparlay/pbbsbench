@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+bnchmrk="nbody"
+benchmark="nBody"
+checkProgram="../bench/nbodyCheck"
+dataDir = "../geometryData/data"
+
+tests = [
+    [1, "3DonSphere_100000", "", ""],
+    [1, "3DinCube_100000", "", ""],
+    [1, "3Dplummer_100000", "", ""]
+    ]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+

@@ -1,0 +1,20 @@
+#!/usr/bin/python
+
+bnchmrk="sort"
+benchmark="Comparison Sort"
+checkProgram="../bench/sortCheck"
+dataDir = "../sequenceData/data"
+
+tests = [
+    [1, "randomSeq_10M_double", "", ""],
+    [1, "exptSeq_10M_double", "", ""],
+    [1, "almostSortedSeq_10M_double", "", ""],
+    [1, "randomSeq_10M_double_pair_double", "", ""],
+    [1, "trigramSeq_10M", "", ""]
+]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+

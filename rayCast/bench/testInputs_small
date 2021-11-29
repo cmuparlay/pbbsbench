@@ -1,0 +1,17 @@
+#!/usr/bin/python
+
+bnchmrk="ray"
+benchmark="Ray Cast"
+checkProgram="../bench/rayCheck"
+dataDir = "../geometryData/data"
+
+tests = [
+    [1, ["angelTriangles", "angelRays"], "", ""],
+    [1, ["dragonTriangles", "dragonRays"], "", ""]
+    ]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+

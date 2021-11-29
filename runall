@@ -88,6 +88,7 @@ tests = [
 noTime = False
 noCheck = False
 scale = False
+doSmall = False
 forceCompile = False
 parOnly = False
 useNumactl = True
@@ -106,11 +107,14 @@ if (sys.argv.count("-notime") > 0):
 if (sys.argv.count("-nocheck") > 0):
     print("Not Checking")
     noCheck = True
+if (sys.argv.count("-small") > 0):
+    print("Small Inputs")
+    doSmall = True
 if (sys.argv.count("-par") > 0):
-    print("Parallel only")
+    print("Parallel Only")
     parOnly = True
 if (sys.argv.count("-scale") > 0):
-    print("Scale tests")
+    print("Scale Tests")
     scale = True
 if (sys.argv.count("-nonuma") > 0):
     print("No numactl")
@@ -126,6 +130,7 @@ if (sys.argv.count("-h") > 0 or sys.argv.count("-help")):
     print(" -par     : only run parallel benchmarks")
     print(" -notime  : only compile")
     print(" -nocheck : do not check results")
+    print(" -small   : run on small data sets")
     print(" -only <bnchmrk> : only run given benchmark")
     print(" -from <bnchmrk> : only run from given benchmark")
     forceCompile = True
@@ -188,14 +193,16 @@ def runtest(test,procs,check) :
     dir = test[0]
     numactl = useNumactl and (procs > 1)
     options = "-r " + `rounds`
+    if (doSmall) : testInputs = "./testInputs_small"
+    else : testinputs = "./testInputs"
     if (procs > 0) :
         options =  options + " -p " + `procs`
     if not(check):
         options = options + " -x"
     if numactl:
-        sc = "cd " + dir + " ; numactl -i all ./testInputs " + options
+        sc = "cd " + dir + " ; numactl -i all " + testInputs + " " + options
     else:
-        sc = "cd " + dir + " ; ./testInputs " + options
+        sc = "cd " + dir + " ; " + testInputs + " " + options
     os.system("echo \"" + sc + "\"")
     x = os.system(sc)
     if (x) :

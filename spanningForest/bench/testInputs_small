@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+bnchmrk="ST"
+benchmark="Spanning Tree"
+checkProgram="../bench/STCheck"
+dataDir = "../graphData/data"
+
+tests = [
+    [1, "randLocalGraph_E_5_4000000", "", ""],
+    [1, "rMatGraph_E_10_2000000", "", ""],
+    [1, "3Dgrid_E_6440000", "", ""],
+    ]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+

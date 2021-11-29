@@ -12,8 +12,14 @@ The submitted directory should be self contained.   It can also be downloaded fr
 Requirements:
 
 - some linux based OS (we tested on ubuntu)
+
+* For the small inputs
+- 12GB of memory
+- 10GB of free disk space
+
+* For the large inputs
 - 64GB of memory
-- 30GB of free disk space (generates temporary files)
+- 90GB of free disk space (generates large temporary files)
 
 Not required, but will give better performance
 
@@ -21,39 +27,48 @@ Not required, but will give better performance
 - 20+ cores (the more cores the faster
 - numactl installed (if this is not installed you need to run "./runall -nonuma")
 
-The command ./runall will run all the benchmarks reported but will take longer than 30 minutes.
+The command ./runall will run all the benchmarks reported but will take a couple hours.
 For a faster run, try:
 
-  ./runall -par -nocheck
+  ./runall -par -small
 
-This only runs the parallel benchmarks, which run much faster.  It
-also does not check the correctness of the results (which are all
-correct on the machines we have run the tests on).  This will probably
-run in 30 minutes and reports all the numbers in the paper for the
-parallel benchmarks.
+This only runs the parallel benchmarks, which run much faster, and on
+significantly smaller input data (an order of magnitude smaller for some benchmarks).
+This runs in 12 minutes on a 20 core (40 hyperthread) machine.
 
-For shorter experiments you can test individual benchmarks.   For example, you can test the
+You can also test individual benchmarks.   For example, you can test the
 parallel comparison sort using:
 
-> cd comparisonSort/sampleSort
-> ./testInput -x -r 3
+  ./runall -only comparisonSort/sampleSort
 
-This will run the parallel sampleSort on the default inputs and report average times.  More
-details on arguments are given below.
+This will run the parallel sampleSort on the default (full sized) inputs.  
+The call
 
+  ./runall -small -only comparisonSort/sampleSort
+
+will run it on the smaller inputs.  More details on arguments are
+given below.
 
 STEP-BY-STEP
 
 Here we describe more options to run all or some of the the benchmarks.
 
-The ./runall script lists the tested benchmarks in the script.    The options for running it can be extracted by using "./runall -h".   The options of interest might be:
+The ./runall has the following options which can be extracted by using
+"./runall -h".  
 
   -scale    : this runs it on a range of different thread counts up the the number of threads on the machine
+  -small    : runs tests on smaller inputs (calls ./testInput_small instead of ./testInput).
   -par      : only run benchmarks that are parallel (saves time)
-  -only     : only run a particular benchmark
+  -only <name>   : only run a particular benchmark
+  -nonuma   : don't use numactl
   -nocheck  : don't check correctness of results (saves time)
 
-The benchmarks themselves are organized hierarchically.   At the top level are the benchmarks:
+For the -only option use the path to the implementation, e.g.
+
+  ./runall -only comparisonSort/sampleSort
+  
+The benchmarks themselves are organized hierarchically.  At the top
+level are the following benchmarks:
 
   breadthFirstSearch
   BWDecode
@@ -78,14 +93,16 @@ The benchmarks themselves are organized hierarchically.   At the top level are t
   wordCounts
 
 Within each benchmarks are the implementations.  The benchmarks also
-have some common directories.  In particular each one has a directory
-called "bench" which contains the driver code, testing code, and
-specification of default inputs.
+have some directories shared across implementations.  In particular
+each one has a directory called "bench" which contains the driver
+code, testing code, and specification of default inputs.  There is
+also a directory for generating the data.
 
 Within each implementation directory, you can run "make" to make the
-executable, and then run "./testInputs" to run the benchmarks.  On a
-machine with multiple chips, using "numactl -i all ./testInputs" will
-give better results.
+executable, and then run "./testInputs" to run the benchmarks.  These
+are run automatically by the ./runall script.  On a machine with
+multiple chips, using "numactl -i all ./testInputs" will give better
+results.  "./testInputs_small" will use the smaller inputs.
 
 The "testInputs" script has several options including:
 
@@ -95,3 +112,5 @@ The "testInputs" script has several options including:
 
 The actual inputs are specified in the script and can be changed if desired.
 
+There are many more implementations than ./runall will run.  Feel free
+to run any of them.

@@ -31,11 +31,11 @@ $(CHECK) : $(CHECK).C
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 # copy over the generic test code
-testInputs : ../bench/testInputs
-	cp ../bench/testInputs .
+testInputs : ../bench/testInputs ../bench/testInputs_small
+	cp ../bench/testInputs ../bench/testInputs_small .
 
 clean :
 	rm -f $(BENCH) *.o
 
 cleanall : clean
-	rm -f testInputs; cd ../bench; make -s clean
+	rm -f testInputs*; cd ../bench; make -s clean

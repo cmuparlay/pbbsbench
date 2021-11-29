@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+bnchmrk="bw"
+benchmark="Burrows Wheeler"
+checkProgram="../bench/bwCheck"
+dataDir = "../sequenceData/data"
+
+tests = [
+    [1, "trigramString_25000000", "", ""],
+    [1, "chr22.dna", "", ""],
+    [1, "wikisamp.xml", "", ""]
+]
+
+import sys
+sys.path.insert(0, 'common')
+import runTests
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+
