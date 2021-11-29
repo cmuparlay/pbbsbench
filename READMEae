@@ -87,7 +87,8 @@ level are the following benchmarks:
   nBody
   nearestNeighbors
   rayCast
-  removeDuplicates
+  rangeQuery2d
+  removeDuplicates	
   spanningForest
   suffixArray
   wordCounts
@@ -114,3 +115,28 @@ The actual inputs are specified in the script and can be changed if desired.
 
 There are many more implementations than ./runall will run.  Feel free
 to run any of them.
+
+LIST OF CLAIMS
+
+The main claims from the paper are
+
+  1) a set of 23 benchmarks.  One is missing due to an update in the
+underlying library that broke it at the last minute.  We plan to add
+it back (or drop from the paper in the unlikely event we can't get it
+to work).
+
+  2) multiple implementations for most of them.  Sorting, for example,
+  has 7 implementations (the most).   All have a parallel implementation.
+
+  3) test, timing and data generation harnesses for each of them.  The
+  test and timing harnesses are in the bench subdirectory for each
+  benchmark.  The data generation is in the *data subdirectory (where
+  * depends on the benchmark).
+
+  4) default data sets for each benchmark.  We supply both a small and
+  large (default) set (specified in the testInput and testInput_small scripts).
+
+  5) The ability to test across different numbers of threads.
+
+We believe the benchmarks show all these (except the caveat of the
+missing Set Cover benchmark).
