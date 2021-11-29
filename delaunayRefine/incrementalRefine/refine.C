@@ -366,14 +366,18 @@ triangles<point> refineInternal(triangles<point>& Tri) {
   }
 
   t.next("refinement");
-
+  std::cout << numTriangs << " : " << Vertices.size() << " : " << numPoints << std::endl;
+  
   // Extract Vertices for result
-  auto flag = tabulate(numTriangs, [&] (size_t i) -> bool {
+  auto flag = tabulate(numPoints, [&] (size_t i) -> bool {
     return (Vertices[i].badT == NULL);});
 
+  std::cout << "here" << std::endl;
   sequence<size_t> I = pack_index(flag);
   size_t n0 = I.size();
   sequence<point> rp(n0);
+
+  std::cout << "here2" << std::endl;
   parallel_for (0, n0, [&] (size_t i) {
     Vertices[I[i]].id = i;
     rp[i] = Vertices[I[i]].pt;
