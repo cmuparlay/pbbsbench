@@ -29,7 +29,6 @@ make clean -s -C rangeQuery2d/parallelPlaneSweep
 make clean -s -C rangeQuery2d/serial
 
 make clean -s -C nBody/bench
-# make clean -s -C nBody/parallelBarnesHut
 make clean -s -C nBody/parallelCK
 
 make clean -s -C suffixArray/bench
@@ -39,7 +38,6 @@ make clean -s -C suffixArray/serialDivsufsort
 
 make clean -s -C delaunayTriangulation/bench
 make clean -s -C delaunayTriangulation/incrementalDelaunay
-# make clean -s -C delaunayTriangulation/serialDelaunay
 
 make clean -s -C delaunayRefine/bench
 make clean -s -C delaunayRefine/incrementalRefine
@@ -62,15 +60,13 @@ make clean -s -C breadthFirstSearch/serialBFS
 make clean -s -C breadthFirstSearch/deterministicBFS
 
 make clean -s -C maximalMatching/bench
-# make clean -s -C maximalMatching/ndMatching
-# make clean -s -C maximalMatching/serialMatching
+make clean -s -C maximalMatching/serialMatching
 make clean -s -C maximalMatching/incrementalMatching
 
 make clean -s -C maximalIndependentSet/bench
 make clean -s -C maximalIndependentSet/incrementalMIS
 make clean -s -C maximalIndependentSet/ndMIS
 make clean -s -C maximalIndependentSet/serialMIS
-# make clean -s -C maximalIndependentSet/luby
 
 make clean -s -C minSpanningForest/bench
 make clean -s -C minSpanningForest/parallelKruskal
@@ -86,18 +82,10 @@ make clean -s -C wordCounts/serial
 make clean -s -C wordCounts/histogram
 make clean -s -C wordCounts/histogramStar
 
-# make clean -s -C lassoRegression/bench
-# make clean -s -C lassoRegression/parallelShootingLasso
-# make clean -s -C lassoRegression/parallelShootingLasso2
-
 # make clean -s -C setCover/bench
 # make clean -s -C setCover/manis
 # make clean -s -C setCover/serialDFG
 # make clean -s -C setCover/serialGreedy
-
-# make clean -s -C spmv/bench
-# make clean -s -C spmv/pSPMV
-# make clean -s -C spmv/sSPMV
 
 make clean -s -C testData/sequenceData
 make clean -s -C testData/sequenceData/data
