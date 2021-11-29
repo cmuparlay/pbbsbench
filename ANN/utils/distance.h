@@ -25,7 +25,7 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 
-//we used squared distances since there's no real need to take the square root
+
 template<class fvec_point>
 float distance(fvec_point* p, fvec_point* q){
 	float dist = 0;
@@ -33,3 +33,27 @@ float distance(fvec_point* p, fvec_point* q){
 	for(int i=0; i<d; i++) dist += ((p->coordinates)[i] - (q->coordinates[i]))*((p->coordinates)[i] - (q->coordinates[i]));
 	return dist;
 }
+
+// template<class fvec_point>
+// float distance(fvec_point* p, fvec_point* q){
+// 	float dist = 0;
+
+// 	float diff0, diff1, diff2, diff3;
+
+// 	int d = ((p->coordinates).size())/4;
+// 	int i=0;
+// 	while(i<d-3){
+// 		diff0 = (p->coordinates)[i] - (q->coordinates)[i];
+// 		diff1 = (p->coordinates)[i+1] - (q->coordinates)[i+1];
+// 		diff2 = (p->coordinates)[i+2] - (q->coordinates)[i+2];
+// 		diff3 = (p->coordinates)[i+3] - (q->coordinates)[i+3];
+// 		dist += diff0 * diff0 + diff1 * diff1 + diff2 * diff2 + diff3 * diff3;
+// 		i+=4;
+// 	}
+// 	float rem;
+// 	for(int i; i<d; i++){
+// 		rem = (p->coordinates)[i] - (q->coordinates)[i];
+// 		dist += rem*rem;
+// 	}
+// 	return dist; 
+// }

@@ -24,7 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
-#include "distance.h"  
+#include "../utils/distance.h"  
 
 #include "random_split.h"
 

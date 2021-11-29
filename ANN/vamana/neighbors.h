@@ -25,7 +25,8 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "index.h"
-#include "distance.h"  
+#include "../utils/distance.h"  
+#include "../utils/beamSearch.h"
 
 bool report_stats = true;
 
@@ -35,13 +36,12 @@ void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, doub
   {
     using findex = knn_index<fvec_point>;
     findex I(maxDeg, beamSize, k, alpha);
-    I.build_index(v);
+    I.build_index(v, true);
     t.next("Built index");
     I.searchNeighbors(q, v);
     t.next("Found nearest neighbors");
   };
 }
-
 
 
 template<class fvec_point>

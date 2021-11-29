@@ -129,25 +129,6 @@ struct knn_index{
 		medoid = medoid_helper(&centroidp, parlay::make_slice(v), d); 
 	}
 
-	//returns true if F \setminus V = emptyset 
-	bool intersect_nonempty(std::set<int> V, parlay::sequence<int> F){
-		int Fsize = F.size();
-		for(int i=0; i<Fsize; i++){
-			if(V.find(F[i]) == V.end()) return true; 
-		}
-		return false;
-	}
-
-	//will only be used when there is an element in F that is not in V
-	//hence the ``return 0" line will never be called
-	int id_next(std::set<int> V, parlay::sequence<int> F){
-		int fsize = F.size();
-		for(int i=0; i<fsize; i++){
-			if(V.find(F[i]) == V.end()) return F[i];
-		}
-		return 0;
-	}
-
 	//for debugging
 	void print_seq(parlay::sequence<int> seq){
 		int fsize = seq.size();
@@ -164,48 +145,6 @@ struct knn_index{
 			std::cout << *it << ", ";
 		}
 		std::cout << "]" << std::endl; 
-	}
-
-
-	std::pair<parlay::sequence<int>, std::set<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v){
-		//initialize data structures
-		std::set<int> visited;
-		std::set<int> frontier; 
-		parlay::sequence<int> sortedFrontier = parlay::sequence<int>();
-		//the frontier starts with the medoid
-		sortedFrontier.push_back(medoid->id);
-		frontier.insert(medoid->id);
-		//terminate beam search when the entire frontier has been visited
-		while(intersect_nonempty(visited, sortedFrontier)){
-			//the next node to visit is the unvisited frontier node that is closest to p
-			int currentIndex = id_next(visited, sortedFrontier);
-			fvec_point* current = v[currentIndex]; 
-			parlay::sequence<int> outnbh = current->out_nbh;
-			int outsize = outnbh.size();
-			//add the outneighbors of the visited node to the frontier if they are not already in it
-			for(int i=0; i<(outsize); i++){
-				if(frontier.find(outnbh[i]) == frontier.end()){
-					auto less = [&] (int a){
-						return distance(v[a], p) < distance(v[outnbh[i]], p);
-					};
-					int insertion_point = parlay::internal::binary_search(parlay::make_slice(sortedFrontier), less);
-					const int to_insert = outnbh[i];
-					sortedFrontier.insert(sortedFrontier.begin()+insertion_point, to_insert);
-					frontier.insert(outnbh[i]); 
-				}
-			}
-			//remove nodes from frontier if too large
-			if(sortedFrontier.size() > beamSize){ //beamSize is a global var taken from command line
-				for(int i=sortedFrontier.size(); i>beamSize; i--){
-					int to_del = sortedFrontier[i-1];
-					sortedFrontier.pop_back();
-					frontier.erase(to_del);
-				}
-			}
-			//add the node to the visited list
-			visited.insert(current->id);
-		} 
-		return std::make_pair(sortedFrontier, visited);
 	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
@@ -253,10 +192,10 @@ struct knn_index{
 		p->new_out_nbh = new_nbhs;
 	}
 
-	void build_index(parlay::sequence<fvec_point*> &v){
+	void build_index(parlay::sequence<fvec_point*> &v, bool from_empty = false){
 		clear(v);
 		//populate with random edges
-		random_index(v);
+		if(not from_empty) random_index(v);
 		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
 		size_t n = v.size();
@@ -267,7 +206,7 @@ struct knn_index{
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				robustPrune(v[i], (beam_search(v[i], v)).second, v, 1);
+				robustPrune(v[i], (beam_search(v[i], v, medoid, beamSize)).second, v, 1);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
@@ -318,7 +257,7 @@ struct knn_index{
 		}
 		parlay::parallel_for(0, q.size(), [&] (size_t i){
 			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			parlay::sequence<int> beamElts = (beam_search(q[i], v)).first;
+			parlay::sequence<int> beamElts = (beam_search(q[i], v, medoid, beamSize)).first;
 			//the first element of the frontier may be the point itself
 			//if this occurs, do not report it as a neighbor
 			if(beamElts[0]==i){
