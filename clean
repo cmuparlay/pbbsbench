@@ -1,12 +1,15 @@
 #!/bin/sh
 
-# make clean -s -C removeDuplicates/bench
-# make clean -s -C removeDuplicates/deterministicHash
-# make clean -s -C removeDuplicates/serialHash
+make clean -s -C removeDuplicates/bench
+make clean -s -C removeDuplicates/parlayhash
+make clean -s -C removeDuplicates/serial_hash
+make clean -s -C removeDuplicates/serial_sort
 
-# make clean -s -C dictionary/bench
-# make clean -s -C dictionary/deterministicHash
-# make clean -s -C dictionary/serialHash
+make clean -s -C index/sequential
+make clean -s -C index/parallel
+
+make clean -s -C wordCounts/histogram
+make clean -s -C wordCounts/serial
 
 make clean -s -C integerSort/bench
 make clean -s -C integerSort/parallelRadixSort
@@ -17,6 +20,8 @@ make clean -s -C nearestNeighbors/octTree
 
 make clean -s -C rayCast/bench
 make clean -s -C rayCast/kdTree
+
+make clean -s -C classify/decisionTree
 
 make clean -s -C nBody/bench
 # make clean -s -C nBody/parallelBarnesHut
