@@ -158,13 +158,15 @@ auto build_tree(features &A, bool verbose) {
       if (A[i+1].discrete) {
 	return std::tuple(cond_info_discrete(A[0], A[i+1]), i+1, -1);
       } else {
-	auto [info, cut] = cond_info_continuous(A[0], A[i+1]);
-	return std::tuple(info, i+1, cut);
+	//auto [info, cut] = cond_info_continuous(A[0], A[i+1]);
+	auto info_cut = cond_info_continuous(A[0], A[i+1]);
+	return std::tuple(info_cut.first, i+1, info_cut.second);
       }},1);
 
   auto min1 = [&] (auto a, auto b) {return (std::get<0>(a) < std::get<0>(b)) ? a : b;};
   auto min_m = make_monoid(min1, std::tuple(infinity, 0, 0));
-  auto [best_info, best_i, cut] = reduce(costs, min_m);
+  auto [best_info, best_i, cutx] = reduce(costs, min_m);
+  auto cut = cutx;
   double threshold = log2(float(num_features));
 
   if (verbose)

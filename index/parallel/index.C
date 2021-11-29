@@ -93,7 +93,9 @@ charseq build_index(charseq const &s, charseq const &doc_start,
   charseq space(1, ' ');
   charseq newline(1, '\n');
   auto b = parlay::map(words, [&] (auto const &wd_pair) -> charseq {
-     auto [word, doc_ids] = std::move(wd_pair);
+     //auto [word, doc_ids] = std::move(wd_pair);
+     auto word = std::move(wd_pair.first);
+     auto doc_ids = std::move(wd_pair.second);
      size_t len = doc_ids.size()*2 + 2;
      // each line consists of the word followed by
      // the list of documents ids separared by spaces 
