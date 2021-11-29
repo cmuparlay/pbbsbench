@@ -23,6 +23,11 @@ make clean -s -C rayCast/kdTree
 
 make clean -s -C classify/decisionTree
 
+make clean -s -C longestRepeatedSubstring/doubling
+
+make clean -s -C rangeQuery2d/parallelPlaneSweep
+make clean -s -C rangeQuery2d/serial
+
 make clean -s -C nBody/bench
 # make clean -s -C nBody/parallelBarnesHut
 make clean -s -C nBody/parallelCK

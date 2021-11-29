@@ -24,6 +24,7 @@
 #include <algorithm>
 #include "parlay/parallel.h"      
 #include "parlay/primitives.h"
+#include "parlay/alloc.h"
 #include "common/geometry.h"
 #include "common/get_time.h"
 
@@ -85,6 +86,7 @@ struct oct_tree {
   struct node { 
 
   public:
+    static parlay::type_allocator<node> node_allocator;
     bool flag = false; 
     int bit;
     parlay::sequence<indexed_point> indexed_pts;
@@ -307,7 +309,7 @@ struct oct_tree {
     }
 
     // uses the parlay memory manager, could be replaced will alloc/free
-    static parlay::type_allocator<node> node_allocator;
+    //static parlay::type_allocator<node> node_allocator;
     static node* alloc_node() {
       return node_allocator.alloc();}
     static void free_node(node* T) {
