@@ -1,4 +1,7 @@
-# pbbsbench
+---
+title: The PBBS Benchmark Suite (V2)
+---
+
 New version (2020) of pbbs benchmarks
 
 This repository uses a submodule (parlaylib).    To pull the submodule, in pbbsbench:
@@ -20,3 +23,5 @@ Where -r 3 means run three times
 The other options
    [-p n] : run on n processors
    [-x] : do not check the result
+
+[Comparison Sort]({% link foo.md %})
