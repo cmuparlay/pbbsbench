@@ -24,4 +24,4 @@ The other options
    [-p n] : run on n processors
    [-x] : do not check the result
 
-[Comparison Sort]({% link foo.md %})
+[Comparison Sort]({% link benchmarks/foo.md %})
