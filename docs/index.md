@@ -122,14 +122,14 @@ The benchmarks themselves are organized hierarchically.  At the top
 level are the following benchmarks:
 
 - breadthFirstSearch
-- BWDecode
+- [BWDecode](https://cmuparlay.github.io/pbbsbench/benchmarks/BWDecode.html) (BWD)
 - classify
-- [Comparison Sort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html)
+- [comparisonSort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html) (Sort)
 - convexHull
 - delaunayRefine
 - delaunayTriangulation
 - histogram
-- index
+- [index](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html) (II)
 - integerSort
 - longestRepeatedSubstring
 - maximalIndependentSet
