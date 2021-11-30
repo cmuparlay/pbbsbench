@@ -124,7 +124,7 @@ level are the following benchmarks:
 - breadthFirstSearch
 - BWDecode
 - classify
-- [Comparison Sort]({% link pbbsbench/benchmarks/comparisonSort.md %}) 
+- [Comparison Sort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html)
 - convexHull
 - delaunayRefine
 - delaunayTriangulation
