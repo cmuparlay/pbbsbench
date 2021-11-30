@@ -14,7 +14,7 @@ advantage of the specific type beyond the comparison function.
 ### Default Input Distributions
 
 Currently the default size is 100 Million elements.   The small size
-is 10 million elements.  The distributions are as follos
+is 10 million elements.  The distributions are as follows:
 
 - Double precision floating point numbers generated uniformly at random from the range [0:1].
 
