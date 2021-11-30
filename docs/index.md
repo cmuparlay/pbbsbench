@@ -11,9 +11,11 @@ or implementations in different programming languages.
 
 For each benchmark the suite provides:
 
-- a speficication of the input and expected output
+- the speficication of the input and expected output for the problem
+- the specification of a default set of input instances 
 - code for generating inputs (written to a file)
 - code for checking correctness of output (read from a file)
+- code for timing the benchmark across the instances
 - a default parallel implementation
 - a default sequential implementation (for most benchmarks)
 - a variety of other implementations (for some benchmarks)
@@ -26,11 +28,15 @@ benchmark.
 
 ## Getting Started
 
-The submitted directory should be self contained.   It can also be downloaded from github using:
+The benchmark suite can be downloaded from github using:
 
 ```
 > git clone https://github.com/cmuparlay/pbbsbench.git
-> cd pbbsbench
+```
+
+It uses two submodules, which can be initialized with:
+
+```
 > git submodule init
 > git submodule update
 ```
@@ -43,7 +49,7 @@ The software requirements are:
 
 - C++-17 compiler (tested with gcc and clang)
 
-The system requirments are
+The system requirements are
 
 - for small data (12B of RAM and 10GB of disk)
 - for large data (64GB of RAM and 90GB of disk)
@@ -51,19 +57,19 @@ The system requirments are
 The following are not required, but will give better performance
 
 - jemalloc  (only gives slight performance improvement)
-- 20+ cores (the more cores the faster
+- 20+ cores (the more cores the faster)
 - numactl installed (if this is not installed you need to run "./runall -nonuma")
 
 ### Running the benchmarks
 
-The command `./runall` will run all the benchmarks reported but will take a couple hours.
-For a faster run, try:
+The command `./runall` will compile and run all the benchmarks
+reported but will take a couple hours.  For a faster run, try:
 
 ```
   ./runall -par -small
 ```
   
-This only runs the parallel benchmarks, which run much faster, and on
+This only compiles and runs the parallel benchmarks, which run much faster, and on
 significantly smaller input data (an order of magnitude smaller for some benchmarks).
 This runs in 12 minutes on a 20 core (40 hyperthread) machine.
 
@@ -74,7 +80,7 @@ parallel comparison sort using:
   ./runall -only comparisonSort/sampleSort
  ```
   
-This will run the parallel sampleSort on the default (full sized) inputs.  
+This will run the parallel sampleSort on the default (full sized) inputs.
 The call
 
 ```
@@ -93,12 +99,13 @@ The ./runall has the following options which can be extracted by using
 `./runall -h`.
 
 ```
-  \-scale    : this runs it on a range of different thread counts up the the number of threads on the machine
-  \-small    : runs tests on smaller inputs (calls ./testInput_small instead of ./testInput).
-  \-par      : only run benchmarks that are parallel (saves time)
-  \-only <name>   : only run a particular benchmark
-  \-nonuma   : don't use numactl
-  \-nocheck  : don't check correctness of results (saves time)
+  -scale    : this runs it on a range of different thread counts up the the number of threads on the machine
+  -small    : runs tests on smaller inputs (calls ./testInput_small instead of ./testInput).
+  -par      : only run benchmarks that are parallel (saves time)
+  -only <name>   : only run a particular benchmark
+  -notime   : only compile the benchmarks
+  -nonuma   : don't use numactl
+  -nocheck  : don't check correctness of results (saves time)
 ```
   
 For the `-only` option use the path to the implementation, e.g.
