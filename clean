@@ -5,11 +5,14 @@ make clean -s -C removeDuplicates/parlayhash
 make clean -s -C removeDuplicates/serial_hash
 make clean -s -C removeDuplicates/serial_sort
 
+make clean -s -C index/bench
 make clean -s -C index/sequential
 make clean -s -C index/parallel
 
+make clean -s -C wordCounts/bench
 make clean -s -C wordCounts/histogram
 make clean -s -C wordCounts/serial
+make clean -s -C wordCounts/histogramStar
 
 make clean -s -C integerSort/bench
 make clean -s -C integerSort/parallelRadixSort
@@ -21,10 +24,13 @@ make clean -s -C nearestNeighbors/octTree
 make clean -s -C rayCast/bench
 make clean -s -C rayCast/kdTree
 
+make clean -s -C classify/bench
 make clean -s -C classify/decisionTree
 
+make clean -s -C longestRepeatedSubstring/bench
 make clean -s -C longestRepeatedSubstring/doubling
 
+make clean -s -C rangeQuery2d/bench
 make clean -s -C rangeQuery2d/parallelPlaneSweep
 make clean -s -C rangeQuery2d/serial
 
@@ -77,10 +83,6 @@ make clean -s -C spanningForest/bench
 make clean -s -C spanningForest/incrementalST
 make clean -s -C spanningForest/serialST
 make clean -s -C spanningForest/ndST
-
-make clean -s -C wordCounts/serial
-make clean -s -C wordCounts/histogram
-make clean -s -C wordCounts/histogramStar
 
 # make clean -s -C setCover/bench
 # make clean -s -C setCover/manis
