@@ -16,7 +16,7 @@ advantage of the specific type beyond the comparison function.
 The input and output data need to be in the sequence file format, both with the same element type.  The output file
 must be in sorted order with respect to the given comparison function.
 
-### Default Input Distributions</h3>
+### Default Input Distributions
 
 Currently the default size is 100 Million elements.   The small size
 is 10 million elements.  The distributions are as follos

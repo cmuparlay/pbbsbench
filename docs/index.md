@@ -2,26 +2,160 @@
 title: The PBBS Benchmark Suite (V2)
 ---
 
-New version (2020) of pbbs benchmarks
+#  The PBBS Benchmark Suite (V2)
 
-This repository uses a submodule (parlaylib).    To pull the submodule, in pbbsbench:
+This documents the Problem Based Benchmark Suite (PBBS), a collection
+of over 20 benchmarks defined in terms of their IO characteristics.
+They are designed to make it possible to compare different algorithms,
+or implementations in different programming languages.
 
-\> git submodule init
+For each benchmark the suite provides:
 
-\> git submodule update
+- a speficication of the input and expected output
+- code for generating inputs (written to a file)
+- code for checking correctness of output (read from a file)
+- a default parallel implementation
+- a default sequential implementation (for most benchmarks)
+- a variety of other implementations (for some benchmarks)
 
-To run a test, for example, try:
+The benchmarks are designed to be agnostic to the programming
+language.  However, the framework is mostly in C++ and some of the
+tools are easier to use with C++.  For example there is a timing
+driver for C++ that can be linked with any implementation of a
+benchmark.
 
-\> cd comparisonSort/sampleSort
+## Getting Started
 
-\> make
+The submitted directory should be self contained.   It can also be downloaded from github using:
 
-\> ./testInputs -r 3
+```
+> git clone https://github.com/cmuparlay/pbbsbench.git
+> cd pbbsbench
+> git submodule init
+> git submodule update
+```
 
-Where -r 3 means run three times
+### Requirements
 
-The other options
-   [-p n] : run on n processors
-   [-x] : do not check the result
+The benchmarks have been tested on Ubuntu and MacOS.
 
-[Comparison Sort]({% link benchmarks/foo.md %})
+The software requirements are:
+
+- C++-17 compiler (tested with gcc and clang)
+
+The system requirments are
+
+- for small data (12B of RAM and 10GB of disk)
+- for large data (64GB of RAM and 90GB of disk)
+
+The following are not required, but will give better performance
+
+- jemalloc  (only gives slight performance improvement)
+- 20+ cores (the more cores the faster
+- numactl installed (if this is not installed you need to run "./runall -nonuma")
+
+### Running the benchmarks
+
+The command `./runall` will run all the benchmarks reported but will take a couple hours.
+For a faster run, try:
+
+```
+  ./runall -par -small
+```
+  
+This only runs the parallel benchmarks, which run much faster, and on
+significantly smaller input data (an order of magnitude smaller for some benchmarks).
+This runs in 12 minutes on a 20 core (40 hyperthread) machine.
+
+You can also test individual benchmarks.   For example, you can test the
+parallel comparison sort using:
+
+```
+  ./runall -only comparisonSort/sampleSort
+ ```
+  
+This will run the parallel sampleSort on the default (full sized) inputs.  
+The call
+
+```
+  ./runall -small -only comparisonSort/sampleSort
+```
+  
+will run it on the smaller inputs.  More details on arguments are
+given below.
+
+## More Details
+
+
+### Options
+
+The ./runall has the following options which can be extracted by using
+`./runall -h`.
+
+```
+  \-scale    : this runs it on a range of different thread counts up the the number of threads on the machine
+  \-small    : runs tests on smaller inputs (calls ./testInput_small instead of ./testInput).
+  \-par      : only run benchmarks that are parallel (saves time)
+  \-only <name>   : only run a particular benchmark
+  \-nonuma   : don't use numactl
+  \-nocheck  : don't check correctness of results (saves time)
+```
+  
+For the `-only` option use the path to the implementation, e.g.
+
+```
+  ./runall -only comparisonSort/sampleSort
+```
+
+### Directory Organization
+
+The benchmarks themselves are organized hierarchically.  At the top
+level are the following benchmarks:
+
+- breadthFirstSearch
+- BWDecode
+- classify
+- [Comparison Sort]({% link benchmarks/comparisonSort.md %}) 
+- convexHull
+- delaunayRefine
+- delaunayTriangulation
+- histogram
+- index
+- integerSort
+- longestRepeatedSubstring
+- maximalIndependentSet
+- maximalMatching
+- minSpanningForest
+- nBody
+- nearestNeighbors
+- rayCast
+- rangeQuery2d
+- removeDuplicates	
+- spanningForest
+- suffixArray
+- wordCounts
+
+Within each benchmarks are the implementations.   Each benchmarks also
+have some directories shared across implementations.  In particular
+each one has a directory called `bench` which contains the driver
+code, testing code, and specification of default inputs.  There is
+also a directory for generating the data.
+
+Within each implementation directory, you can run `make` to make the
+executable, and then run `./testInputs` to run the benchmarks.  These
+are run automatically by the ./runall script.  On a machine with
+multiple chips, using `numactl -i all ./testInputs` will give better
+results.  `./testInputs_small` will use the smaller inputs.
+
+The `testInputs` script has several options including:
+
+```
+  -x : do not check the output
+  -r <count>  : number of rounds to use
+  -p <count>  : number of threads to use
+  ```
+  
+The actual inputs are specified in the script and can be changed if desired.
+
+
+
