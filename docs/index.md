@@ -4,6 +4,8 @@ title: The PBBS Benchmark Suite (V2)
 
 #  The PBBS Benchmark Suite (V2)
 
+aaa
+
 This documents the Problem Based Benchmark Suite (PBBS), a collection
 of over 20 benchmarks defined in terms of their IO characteristics.
 They are designed to make it possible to compare different algorithms,
@@ -122,7 +124,7 @@ level are the following benchmarks:
 - breadthFirstSearch
 - BWDecode
 - classify
-- [Comparison Sort]({% link benchmarks/comparisonSort.md %}) 
+- [Comparison Sort]({% link pbbsbench/benchmarks/comparisonSort.md %}) 
 - convexHull
 - delaunayRefine
 - delaunayTriangulation
