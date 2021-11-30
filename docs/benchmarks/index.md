@@ -20,25 +20,20 @@ identifiers (in ascii).
 
 For example, the input string
 
-<doc this is a+String <doc and_a2 sTrIng
+    <doc this is a+String <doc and_a2 sTrIng
 
  would generate the inverted index string:
 
 ```
-  <pre>
     a 0 1
     and 1
     is 0
     this 0
     string 0 1
-  </pre>
   ```
   
 The timing must include the full cost of from parsing the input string to generating the final output string.
 
-### Input and Output File Formats
-
-The input is an ascii string containing the documents.   The output is as described above.
 
 ### Default Input Distributions
 
@@ -46,3 +41,7 @@ The test distributions are two files taken from wikipedia.
 
 - `wikisamp.xml` : these are just summaries of each entry and short documents
 - `wikipedia250M.txt` : these are full documents
+
+### Input and Output File Formats 
+
+The input is an ascii string containing the documents.   The output is as described above. 
