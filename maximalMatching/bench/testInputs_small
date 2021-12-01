@@ -4,11 +4,9 @@ bnchmrk="matching"
 benchmark="Maximal Matching"
 checkProgram="../bench/matchingCheck"
 dataDir = "../graphData/data"
-
-tests = [
-    [1, "randLocalGraph_E_5_4000000", "", ""],
-    [1, "rMatGraph_E_10_2000000", "", ""],
-    [1, "2Dgrid_E_6440000", "", ""]
+    [1, "randLocalGraph_J_10_2000000", "", ""],
+    [1, "rMatGraph_J_12_2250000", "", ""],
+    [1, "3Dgrid_J_8000000", "", ""]
     ]
 
 import sys

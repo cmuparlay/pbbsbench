@@ -119,7 +119,7 @@ For the `-only` option use the path to the implementation, e.g.
 The benchmarks themselves are organized hierarchically.  At the top
 level are the following benchmarks:
 
-- breadthFirstSearch
+- [breadthFirstSearch](https://cmuparlay.github.io/pbbsbench/benchmarks/breadthFirstSearch.html) (BFS)
 - [BWDecode](https://cmuparlay.github.io/pbbsbench/benchmarks/BWDecode.html) (BWD)
 - classify
 - [comparisonSort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html) (Sort)
@@ -131,6 +131,7 @@ level are the following benchmarks:
 - integerSort
 - longestRepeatedSubstring
 - maximalIndependentSet
+- [maximalIndependentSet](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalIndependentSet.html) (MIS)
 - maximalMatching
 - minSpanningForest
 - nBody

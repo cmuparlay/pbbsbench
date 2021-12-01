@@ -6,9 +6,9 @@ checkProgram="../bench/matchingCheck"
 dataDir = "../graphData/data"
 
 tests = [
-    [1, "randLocalGraph_E_5_40000000", "", ""],
-    [1, "rMatGraph_E_10_20000000", "", ""],
-    [1, "2Dgrid_E_64400000", "", ""]
+    [1, "randLocalGraph_E_10_20000000", "", ""],
+    [1, "rMatGraph_E_12_16000000", "", ""],
+    [1, "2Dgrid_E_64000000", "", ""]
     ]
 
 import sys
