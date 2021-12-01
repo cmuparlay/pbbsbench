@@ -6,9 +6,9 @@ checkProgram="../bench/MISCheck"
 dataDir = "../graphData/data"
 
 tests = [
-    [1, "randLocalGraph_J_5_40000000", "", ""],
-    [1, "rMatGraph_J_5_40000000", "", ""],
-    [1, "3Dgrid_J_66400000", "", ""]
+    [1, "randLocalGraph_J_10_20000000", "", ""],
+    [1, "rMatGraph_J_12_16000000", "", ""],
+    [1, "3Dgrid_J_64000000", "", ""]
     ]
 
 import sys

@@ -7,8 +7,8 @@ dataDir = "../graphData/data"
 
 tests = [
     [1, "randLocalGraph_J_10_2000000", "", ""],
-    [1, "rMatGraph_J_12_1600000", "", ""],
-    [1, "3Dgrid_J_6440000", "", ""]
+    [1, "rMatGraph_J_12_2250000", "", ""],
+    [1, "3Dgrid_J_8000000", "", ""]
     ]    
 
 import sys
