@@ -1,4 +1,4 @@
-# First Search (BFS)
+# Breadth First Search (BFS)
 
 Run a breadth first search on a directed graph starting at a specified
 source vertex and return a bfs-tree.  Duplicate input edges are

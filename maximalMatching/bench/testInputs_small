@@ -4,6 +4,8 @@ bnchmrk="matching"
 benchmark="Maximal Matching"
 checkProgram="../bench/matchingCheck"
 dataDir = "../graphData/data"
+
+tests = [
     [1, "randLocalGraph_J_10_2000000", "", ""],
     [1, "rMatGraph_J_12_2250000", "", ""],
     [1, "3Dgrid_J_8000000", "", ""]

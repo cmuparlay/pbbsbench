@@ -126,13 +126,12 @@ level are the following benchmarks:
 - convexHull
 - delaunayRefine
 - delaunayTriangulation
-- histogram
+- [histogram](https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html) (Hist)
 - [index](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html) (II)
 - integerSort
 - longestRepeatedSubstring
-- maximalIndependentSet
 - [maximalIndependentSet](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalIndependentSet.html) (MIS)
-- maximalMatching
+- [maximalMatching](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalMatching.html) (MM)
 - minSpanningForest
 - nBody
 - nearestNeighbors
