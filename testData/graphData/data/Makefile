@@ -23,13 +23,16 @@ rMatGraph_E_10_% : ../rMatGraph
 	../rMatGraph  -a .5 -b .1 -m `expr 10 \* $(subst rMatGraph_E_10_,,$@)` $(subst rMatGraph_E_10_,,$@) $@
 
 rMatGraph_E_12_% : ../rMatGraph
-	../rMatGraph -a .55 -b .125 -o -m `expr 12 \* $(subst rMatGraph_J_12_,,$@)` $(subst rMatGraph_J_12_,,$@) $@
+	../rMatGraph -a .55 -b .125 -o -m `expr 12 \* $(subst rMatGraph_E_12_,,$@)` $(subst rMatGraph_E_12_,,$@) $@
 
 rMatGraph_E_16_% : ../rMatGraph
 	../rMatGraph -a .57 -b .19 -m `expr 16 \* $(subst rMatGraph_E_16_,,$@)` $(subst rMatGraph_E_16_,,$@) $@
 
 randLocalGraph_E_5_% : ../randLocalGraph
 	../randLocalGraph -d 3 -m `expr 5 \* $(subst randLocalGraph_E_5_,,$@)` $(subst randLocalGraph_E_5_,,$@) $@
+
+randLocalGraph_E_10_% : ../randLocalGraph
+	../randLocalGraph -d 3 -m `expr 10 \* $(subst randLocalGraph_E_10_,,$@)` $(subst randLocalGraph_E_10_,,$@) $@
 
 2Dgrid_WE_% : ../addWeights
 	make -s $(subst WE,E,$@) 
@@ -44,6 +47,10 @@ rMatGraph_WE_% : ../addWeights
 	../addWeights $(subst WE,E,$@) $@
 
 randLocalGraph_WE_5_% : ../addWeights
+	make -s $(subst WE,E,$@) 
+	../addWeights $(subst WE,E,$@) $@
+
+randLocalGraph_WE_10_% : ../addWeights
 	make -s $(subst WE,E,$@) 
 	../addWeights $(subst WE,E,$@) $@
 
