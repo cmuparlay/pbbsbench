@@ -11,13 +11,16 @@ The default distributions are as follows:
 
 - n unsigned integers generated uniformly at random in the range [0:n).
   Should be generated with `randomSeq -t int <n> <filename>`.
+
 - n unsigned integers generated from the exponential distribution in the 
 range [0:n).
 Should be generated with `exptSeq -t int <n> <filename>`.
+
 - n unsigned integers generated uniformly at random in the range 
   [0:n) each tagged with data also in the range [0:n). 
- Should be generated with `exptSeq -t int <n> <tmpfile>; addDataSeq -t int 
+ Should be generated with `randomSeq -t int <n> <tmpfile>; addDataSeq -t int 
 <tmpfile> <filename>`.
+
 - n unsigned integers generated uniformly at random in the range 
   [0:256) each tagged with data in the range [0:n). 
  Should be generated with `randomSeq -t int -r 256 <n> <tmpfile>; addDataSeq -t int 

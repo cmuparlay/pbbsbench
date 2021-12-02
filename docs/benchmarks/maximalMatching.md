@@ -1,4 +1,4 @@
-Maximal Matching (MM):
+# Maximal Matching (MM):
 
 Given a undirected graph return a maximal matching for the graph.
 The input graph can be in any format (as long as it does not

@@ -132,7 +132,7 @@ level are the following benchmarks:
 - longestRepeatedSubstring
 - [maximalIndependentSet](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalIndependentSet.html) (MIS)
 - [maximalMatching](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalMatching.html) (MM)
-- [minSpanningForest](https://cmuparlay.github.io/pbbsbench/benchmarks/minSpanningForest.html) (MST)
+- [minSpanningForest](https://cmuparlay.github.io/pbbsbench/benchmarks/minSpanningForest.html) (MSF)
 - nBody
 - nearestNeighbors
 - rayCast
