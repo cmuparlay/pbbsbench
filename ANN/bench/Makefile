@@ -1,4 +1,4 @@
-include common/parallelDefs
+include common/parallelDefsANN
 BNCHMRK = neighbors
 
 CHECKFILES = $(BNCHMRK)Check.o

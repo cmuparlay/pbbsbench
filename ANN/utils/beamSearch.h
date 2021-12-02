@@ -47,7 +47,7 @@ int id_next(std::set<int> V, parlay::sequence<int> F){
 
 template<class fvec_point>
 std::pair<parlay::sequence<int>, std::set<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v, 
-	fvec_point* medoid, int beamSize){
+	fvec_point* medoid, int beamSize, unsigned d){
 	//initialize data structures
 	std::set<int> visited;
 	std::set<int> frontier; 
@@ -66,7 +66,10 @@ std::pair<parlay::sequence<int>, std::set<int>> beam_search(fvec_point* p, parla
 		for(int i=0; i<(outsize); i++){
 			if(frontier.find(outnbh[i]) == frontier.end()){
 				auto less = [&] (int a){
-					return distance(v[a], p) < distance(v[outnbh[i]], p);
+					return distance(v[a], p, d) < distance(v[outnbh[i]], p, d);
+					// float dista = distfunc2.compare<float>((v[a]->coordinates).begin(), (p->coordinates).begin(), d);
+					// float distb = distfunc2.compare<float>((v[outnbh[i]]->coordinates).begin(), (p->coordinates).begin(), d);
+					// return dista < distb; 
 				};
 				int insertion_point = parlay::internal::binary_search(parlay::make_slice(sortedFrontier), less);
 				const int to_insert = outnbh[i];

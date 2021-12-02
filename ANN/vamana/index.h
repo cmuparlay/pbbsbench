@@ -24,6 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
+// #include "../utils/WEAVESSDist.h"
 #include <random>
 #include <set>
 #include <math.h>
@@ -35,12 +36,13 @@ struct knn_index{
 	int beamSize;
 	int k; 
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
+	unsigned d;
 	fvec_point* medoid; 
 	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
 	using index_pair = std::pair<int, int>;
 	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
 
-	knn_index(int md, int bs, int kk, double a) : maxDeg(md), beamSize(bs), k(kk), r2_alpha(a) {}
+	knn_index(int md, int bs, int kk, double a, unsigned dim) : maxDeg(md), beamSize(bs), k(kk), r2_alpha(a), d(dim) {}
 
 	void clear(parlay::sequence<fvec_point*> &v){
 		size_t n = v.size();
@@ -75,7 +77,7 @@ struct knn_index{
 	}
 
 
-	parlay::sequence<float> centroid_helper(slice_fvec a, int d){
+	parlay::sequence<float> centroid_helper(slice_fvec a){
 		if(a.size() == 1){
 			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
 			for(int i=0; i<d; i++) centroid_coords[i] = (a[0]->coordinates)[i];
@@ -87,8 +89,8 @@ struct knn_index{
 			parlay::sequence<float> c1;
 			parlay::sequence<float> c2;
 			parlay::par_do_if(n>1000,
-				[&] () {c1 = centroid_helper(a.cut(0, n/2), d);},
-				[&] () {c2 = centroid_helper(a.cut(n/2, n), d);}
+				[&] () {c1 = centroid_helper(a.cut(0, n/2));},
+				[&] () {c2 = centroid_helper(a.cut(n/2, n));}
 			);
 			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
 			for(int i=0; i<d; i++){
@@ -99,7 +101,7 @@ struct knn_index{
 		}
 	}
 
-	fvec_point* medoid_helper(fvec_point* centroid, slice_fvec a, int d){
+	fvec_point* medoid_helper(fvec_point* centroid, slice_fvec a){
 		if(a.size() == 1){
 			return a[0];
 		}
@@ -108,11 +110,11 @@ struct knn_index{
 			fvec_point* a1;
 			fvec_point* a2;
 			parlay::par_do_if(n>1000,
-				[&] () {a1 = medoid_helper(centroid, a.cut(0, n/2), d);},
-				[&] () {a2 = medoid_helper(centroid, a.cut(n/2, n), d);}
+				[&] () {a1 = medoid_helper(centroid, a.cut(0, n/2));},
+				[&] () {a2 = medoid_helper(centroid, a.cut(n/2, n));}
 			);
-			float d1 = distance(centroid, a1);
-			float d2 = distance(centroid, a2);
+			float d1 = distance(centroid, a1, d);
+			float d2 = distance(centroid, a2, d);
 			if(d1<d2) return a1;
 			else return a2;
 		}
@@ -122,11 +124,10 @@ struct knn_index{
 	//closest to the centroid
 	void find_approx_medoid(parlay::sequence<fvec_point*> &v){
 		size_t n = v.size();
-		int d = ((v[0]->coordinates).size())/4;
-		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v), d);
+		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v));
 		fvec_point centroidp = typename fvec_point::fvec_point();
 		centroidp.coordinates = parlay::make_slice(centroid);
-		medoid = medoid_helper(&centroidp, parlay::make_slice(v), d); 
+		medoid = medoid_helper(&centroidp, parlay::make_slice(v)); 
 	}
 
 	//for debugging
@@ -165,7 +166,7 @@ struct knn_index{
 		} 
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (int a, int b){
-			return distance(v[a], p) > distance(v[b], p);
+			return distance(v[a], p, d) > distance(v[b], p, d);
 		};
 		auto sortedCandidates = parlay::sort(Candidates, less);
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
@@ -177,8 +178,8 @@ struct knn_index{
 			parlay::sequence<int> to_delete = parlay::sequence<int>();
 			for(int i=0; i<c-1; i++){
 				int p_prime = sortedCandidates[i];
-				float dist_starprime = distance(v[p_star], v[p_prime]);
-				float dist_pprime = distance(p, v[p_prime]);
+				float dist_starprime = distance(v[p_star], v[p_prime], d);
+				float dist_pprime = distance(p, v[p_prime], d);
 				if(alpha*dist_starprime <= dist_pprime){
 					to_delete.push_back(i);
 				}
@@ -206,7 +207,7 @@ struct knn_index{
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				robustPrune(v[i], (beam_search(v[i], v, medoid, beamSize)).second, v, 1);
+				robustPrune(v[i], (beam_search(v[i], v, medoid, beamSize, d)).second, v, 1);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
@@ -257,7 +258,7 @@ struct knn_index{
 		}
 		parlay::parallel_for(0, q.size(), [&] (size_t i){
 			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			parlay::sequence<int> beamElts = (beam_search(q[i], v, medoid, beamSize)).first;
+			parlay::sequence<int> beamElts = (beam_search(q[i], v, medoid, beamSize, d)).first;
 			//the first element of the frontier may be the point itself
 			//if this occurs, do not report it as a neighbor
 			if(beamElts[0]==i){

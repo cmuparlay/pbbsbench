@@ -27,9 +27,8 @@
 
 
 template<class fvec_point>
-float distance(fvec_point* p, fvec_point* q){
+float distance(fvec_point* p, fvec_point* q, unsigned d){
 	float dist = 0;
-	int d = (p->coordinates.size())/4;
 	for(int i=0; i<d; i++) dist += ((p->coordinates)[i] - (q->coordinates[i]))*((p->coordinates)[i] - (q->coordinates[i]));
 	return dist;
 }

@@ -25,17 +25,25 @@
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "index.h"
-#include "../utils/distance.h"  
 #include "../utils/beamSearch.h"
+#include "../utils/NSGDist.h"
+// #include "../utils/WEAVESSDist.h"
+// #include "../utils/distance.h"  
 
 bool report_stats = true;
 
 template<class fvec_point>
 void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, double alpha, parlay::sequence<fvec_point*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
-  {
+  { 
+    // weavess::Distance distfunc; 
+    unsigned d = (v[0]->coordinates).size()/4;
+    // float dist = distfunc.compare<float>((v[0]->coordinates).begin(), (v[1]->coordinates).begin(), d);
+    // std::cout << dist << std::endl;
+    // float dist2 = distance(v[0], v[1]);
+    // std::cout << dist2 << std::endl; 
     using findex = knn_index<fvec_point>;
-    findex I(maxDeg, beamSize, k, alpha);
+    findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v, true);
     t.next("Built index");
     I.searchNeighbors(q, v);
@@ -48,8 +56,14 @@ template<class fvec_point>
 void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, double alpha) {
   parlay::internal::timer t("ANN",report_stats); 
   {
+    // weavess::Distance distfunc; 
+    unsigned d = (v[0]->coordinates).size()/4;
+    // float dist = distfunc.compare<float>((v[0]->coordinates).begin(), (v[1]->coordinates).begin(), d);
+    // std::cout << dist << std::endl;
+    // float dist2 = distance(v[0], v[1]);
+    // std::cout << dist2 << std::endl; 
     using findex = knn_index<fvec_point>;
-    findex I(maxDeg, beamSize, k, alpha);
+    findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v);
     t.next("Built index");
   };
