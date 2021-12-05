@@ -194,7 +194,7 @@ def runtest(test,procs,check) :
     numactl = useNumactl and (procs > 1)
     options = "-r " + `rounds`
     if (doSmall) : testInputs = "./testInputs_small"
-    else : testinputs = "./testInputs"
+    else : testInputs = "./testInputs"
     if (procs > 0) :
         options =  options + " -p " + `procs`
     if not(check):
