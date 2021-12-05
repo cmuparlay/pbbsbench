@@ -6,9 +6,9 @@ checkProgram="../bench/MSTCheck"
 dataDir = "../graphData/data"
 
 tests = [
-    [1, "randLocalGraph_WE_5_40000000", "", ""],
-    [1, "rMatGraph_WE_10_20000000", "", ""],
-    [1, "2Dgrid_WE_64400000", "", ""]
+    [1, "randLocalGraph_WE_10_20000000", "", ""],
+    [1, "rMatGraph_WE_12_16000000", "", ""],
+    [1, "2Dgrid_WE_64000000", "", ""]
     ]
 
 import sys

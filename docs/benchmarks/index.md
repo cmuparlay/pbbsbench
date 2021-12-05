@@ -1,4 +1,4 @@
-# Index (II)
+# Inverted Index (II)
 
 Generates an inverted index from a text file.  It assumes each
 document starts with a given "start string".  In this benchmark the
@@ -40,6 +40,7 @@ The timing must include the full cost of from parsing the input string to genera
 The test distributions are two files taken from wikipedia.
 
 - `wikisamp.xml` : these are just summaries of each entry and short documents
+
 - `wikipedia250M.txt` : these are full documents
 
 ### Input and Output File Formats 

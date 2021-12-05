@@ -1,22 +1,11 @@
 # pbbsbench
-New version (2020) of pbbs benchmarks
 
-This repository uses a submodule (parlaylib).    To pull the submodule, in pbbsbench:
+The Problem Based Benchmark Suite (PBBS) is a collection
+of over 20 benchmarks defined in terms of their IO characteristics.
+They are designed to make it possible to compare different algorithms,
+or implementations in different programming languages.
 
-\> git submodule init
+Information on the organization and on how to run PBBS can be found on
+[this page](https://cmuparlay.github.io/pbbsbench).
 
-\> git submodule update
 
-To run a test, for example, try:
-
-\> cd comparisonSort/sampleSort
-
-\> make
-
-\> ./testInputs -r 3
-
-Where -r 3 means run three times
-
-The other options
-   [-p n] : run on n processors
-   [-x] : do not check the result

@@ -122,23 +122,23 @@ level are the following benchmarks:
 - [breadthFirstSearch](https://cmuparlay.github.io/pbbsbench/benchmarks/breadthFirstSearch.html) (BFS)
 - [BWDecode](https://cmuparlay.github.io/pbbsbench/benchmarks/BWDecode.html) (BWD)
 - classify
-- [comparisonSort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html) (Sort)
-- convexHull
+- [comparisonSort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html) (SORT)
+- [convexHull](https://cmuparlay.github.io/pbbsbench/benchmarks/convexHull.html) (CH)
 - delaunayRefine
 - delaunayTriangulation
-- [histogram](https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html) (Hist)
+- [histogram](https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html) (HIST)
 - [index](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html) (II)
-- integerSort
+- [integerSort](https://cmuparlay.github.io/pbbsbench/benchmarks/integerSort.html) (ISORT)
 - longestRepeatedSubstring
 - [maximalIndependentSet](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalIndependentSet.html) (MIS)
 - [maximalMatching](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalMatching.html) (MM)
-- minSpanningForest
+- [minSpanningForest](https://cmuparlay.github.io/pbbsbench/benchmarks/minSpanningForest.html) (MSF)
 - nBody
 - nearestNeighbors
 - rayCast
 - rangeQuery2d
-- removeDuplicates	
-- spanningForest
+- removeDuplicates
+- [spanningForest](https://cmuparlay.github.io/pbbsbench/benchmarks/spanningForest.html) (SF)
 - suffixArray
 - wordCounts
 

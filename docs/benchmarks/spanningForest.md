@@ -1,11 +1,12 @@
-# Maximal Matching (MM):
+# Spanning Forest (SF)
 
-Given a undirected graph return a maximal matching for the graph.
+Given a undirected graph return a spanning tree (ST), or spanning
+forest (SF) if the graph is not connected.
 The input graph can be in any format (as long as it does not
 encode the MIS somehow).  Also the code cannot reorder the graph for
 locality.  The output needs to be a sequence of integers corresponding
-to the positions of the edges in the input (zero based) in the MM.
-The output sequence need not be sorted.
+to the positions of the edges in the input (zero based) that are in
+the ST.   The output sequence need not be sorted.
 
 ###  Input Distributions
 
@@ -25,7 +26,7 @@ It should be generated using:
 `gridGraph -d 3 <n> <filename>`.
 `n` = 64 million for large instances and 8 million for small.
 
-### Input and Output File Formats 
+### Input and Output File Formats
 
-The input is a graph in the in the edge graph format.  The 
-output needs to be in the sequence format.  
+The input is a graph in the edge graph file format.  The output needs
+to be in the sequence file format.
