@@ -1,3 +1,7 @@
+---
+title: Minimum Spanning Forest
+---
+
 # Minimum Spanning Forest (MSF)
 
 Given a weighted undirected graph return the minimum spanning tree

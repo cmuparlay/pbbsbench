@@ -1,3 +1,7 @@
+---
+title: Breadth First Search
+---
+
 # Breadth First Search (BFS)
 
 Run a breadth first search on a directed graph starting at a specified

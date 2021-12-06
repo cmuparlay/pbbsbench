@@ -1,5 +1,5 @@
 ---
-title: A test 
+title: Comparison Sort
 ---
 
 # Comparison Sort (SORT):
@@ -40,6 +40,9 @@ million.
 
 ### Input and Output File Formats 
 
-The input and output data need to be in the sequence file format, both with the same element type.  The output file 
-must be in sorted order with respect to the given comparison function. 
+The input and output data need to be in the [sequence file format](../fileFormats/sequence.html),
+both with the same element type, which can be pairs
 
+The output file 
+must be in sorted order with respect to the given comparison function. 
+ 

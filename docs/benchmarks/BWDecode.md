@@ -1,3 +1,8 @@
+---
+title: Burrows Wheeler Decode
+---
+
+
 # Burrows Wheeler Decode (BWD)
 
   This benchmark does an inverse Burrows-Wheeler transform.

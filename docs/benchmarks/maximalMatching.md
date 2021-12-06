@@ -1,3 +1,7 @@
+---
+title: Maximal Matching
+---
+
 # Maximal Matching (MM):
 
 Given a undirected graph return a maximal matching for the graph.

@@ -1,3 +1,7 @@
+---
+title: Convex Hull
+---
+
 # Convex Hull (CH)
 
 Given a set of points in 2 dimensions return the set of points on the
@@ -16,7 +20,7 @@ The default distributions are the following:
 generated with `randPoints -s -d 2 <n> <filename>`.
 
 - Points chosen at random from the Kuzmin distribution.   Should be 
-generated with `randPoints -k -d 2 <n> <filename>`.   
+generated with `randPoints -k -d 2 <n> <filename>`.
 
 - Points chosen uniformly at random on the perimeter of a unit circle.   Should be 
 generated with `randPoints -S -d 2 <n> <filename>`.
@@ -25,5 +29,5 @@ The large size is n = 100 million, and the small size is n = 10 million.
 
 ### Input and Output File Formats
 
-The input needs to be in the 2dpoints file format.
-The output needs to be in the sequence file format.
+The input needs to be in the [2dpoints file format](../fileFormats/geometry.html#points).
+The output needs to be in the [sequence file format](../fileFormats/sequence.html)

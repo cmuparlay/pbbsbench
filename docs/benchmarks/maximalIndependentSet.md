@@ -1,3 +1,7 @@
+---
+title: Maximal Independent Set
+---
+
 # Maximal Independent Set (MIS)
 
 Given a undirected graph return a maximal independent set for the

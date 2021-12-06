@@ -1,3 +1,7 @@
+---
+title: Integer Sort
+---
+
 # Integer Sort (ISORT)
 
 Sort fixed-length unsigned integer keys into ascending order with the ability to carry
@@ -31,7 +35,9 @@ million.
 
 ### Input and Output File Formats
 
-The input and output should be in the sequence file format.
-The output file must be
-in sorted with respect to the integer values.   If there is auxiliary data
-it must be included in the output.
+The input and output data need to be in the [sequence file format](../fileFormats/sequence.html),
+both with the same element type. The element type is either a pair of
+integers or a single integer.
+
+The output file must be in sorted order with respect to integer
+ordering (first integer if pairs).

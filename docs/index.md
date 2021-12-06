@@ -124,10 +124,10 @@ level are the following benchmarks:
 - classify
 - [comparisonSort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html) (SORT)
 - [convexHull](https://cmuparlay.github.io/pbbsbench/benchmarks/convexHull.html) (CH)
-- delaunayRefine
-- delaunayTriangulation
+- [delaunayRefine](benchmarks/delaunayRefine.html) (CH)
+- [delaunayTriangulation](https://cmuparlay.github.io/pbbsbench/benchmarks/delaunayTriangulation.html) (CH)
 - [histogram](https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html) (HIST)
-- [index](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html) (II)
+- [index](https://cmuparlay.github.io/pbbsbench/benchmarks/invertedIndex.html) (II)
 - [integerSort](https://cmuparlay.github.io/pbbsbench/benchmarks/integerSort.html) (ISORT)
 - longestRepeatedSubstring
 - [maximalIndependentSet](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalIndependentSet.html) (MIS)

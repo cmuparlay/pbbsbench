@@ -1,3 +1,7 @@
+---
+title: Inverted Index
+---
+
 # Inverted Index (II)
 
 Generates an inverted index from a text file.  It assumes each
@@ -45,4 +49,5 @@ The test distributions are two files taken from wikipedia.
 
 ### Input and Output File Formats 
 
-The input is an ascii string containing the documents.   The output is as described above. 
+The input is an ascii string containing the documents.   The output is
+as ascii string as described above. 

@@ -1,3 +1,7 @@
+---
+title: Histogram
+---
+
 # Histogram (HIST)
 
 Given a sequence of integers and a bucket-count m, generates a
@@ -28,7 +32,5 @@ For the large inputs n = 100 million, and for the small n = 10 million.
 
 ### Input and Output File Formats
 
-The input and output files need to be in the
-sequence file format.    The number of buckets can be passed 
-as a command line argument to the timing code. 
-
+The input and output data need to be in the [sequence file format](../fileFormats/sequence.html),
+both with integer element types.

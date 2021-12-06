@@ -1,3 +1,7 @@
+---
+title: Spanning Forest
+---
+
 # Spanning Forest (SF)
 
 Given a undirected graph return a spanning tree (ST), or spanning
