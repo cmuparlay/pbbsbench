@@ -3,7 +3,7 @@ include common/parallelDefs
 COMMON = common/sequenceIO.h common/IO.h common/parse_command_line.h
 LIB = parlay/parallel.h
 SEQUENCEGEN = $(COMMON) $(LIB) 
-GENERATORS = classifyClean equalSeq randomSeq almostSortedSeq almostEqualSeq exptSeq trigramSeq addDataSeq trigramString
+GENERATORS = equalSeq randomSeq almostSortedSeq almostEqualSeq exptSeq trigramSeq addDataSeq trigramString
 
 .PHONY: all clean
 all: $(GENERATORS)

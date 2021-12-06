@@ -25,7 +25,7 @@ tests = [
     ["removeDuplicates/parlayhash", True],
 
     ["histogram/sequential",False],
-    # ["histogram/parallel",True],
+    ["histogram/parallel",True],
     
     ["wordCounts/histogram",True],
     # ["wordCounts/histogramStar",True],
@@ -92,14 +92,17 @@ doSmall = False
 forceCompile = False
 parOnly = False
 useNumactl = True
+filtered = False
 if (sys.argv.count("-only") > 0):
     filteredTests = [l for l in tests if sys.argv.count(l[0]) > 0]
     tests = filteredTests
+    filtered = True
     print("Running only: ", tests)
 if (sys.argv.count("-from") > 0):
     idx = [i for i in range(len(tests)) if sys.argv.count(tests[i][0]) > 0]
     if len(idx) > 0 :
         tests = tests[idx[0]:len(tests)]
+        filtered = True
         print("Running from: ", tests[0])
 if (sys.argv.count("-notime") > 0):
     print("Not Timing")
@@ -211,6 +214,9 @@ def runtest(test,procs,check) :
 try :
     if scale : processors = getProcessors()
     else : os.system("echo " + "\"running on " + `maxcpus` + " threads\"")
+    if not(filtered) :
+        os.system("echo " + "\"running make -j on all benchmarks\"")
+        os.system("make -j")
     for test in tests :
         isParallel = test[1]
         if (isParallel or not(parOnly)) :
