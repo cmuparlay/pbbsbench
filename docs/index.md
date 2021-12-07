@@ -119,28 +119,51 @@ For the `-only` option use the path to the implementation, e.g.
 The benchmarks themselves are organized hierarchically.  At the top
 level are the following benchmarks:
 
-- [breadthFirstSearch](https://cmuparlay.github.io/pbbsbench/benchmarks/breadthFirstSearch.html) (BFS)
-- [BWDecode](https://cmuparlay.github.io/pbbsbench/benchmarks/BWDecode.html) (BWD)
-- classify
-- [comparisonSort](https://cmuparlay.github.io/pbbsbench/benchmarks/comparisonSort.html) (SORT)
-- [convexHull](https://cmuparlay.github.io/pbbsbench/benchmarks/convexHull.html) (CH)
-- [delaunayRefine](benchmarks/delaunayRefine.html) (CH)
-- [delaunayTriangulation](https://cmuparlay.github.io/pbbsbench/benchmarks/delaunayTriangulation.html) (CH)
-- [histogram](https://cmuparlay.github.io/pbbsbench/benchmarks/histogram.html) (HIST)
-- [index](https://cmuparlay.github.io/pbbsbench/benchmarks/invertedIndex.html) (II)
-- [integerSort](https://cmuparlay.github.io/pbbsbench/benchmarks/integerSort.html) (ISORT)
-- longestRepeatedSubstring
-- [maximalIndependentSet](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalIndependentSet.html) (MIS)
-- [maximalMatching](https://cmuparlay.github.io/pbbsbench/benchmarks/maximalMatching.html) (MM)
-- [minSpanningForest](https://cmuparlay.github.io/pbbsbench/benchmarks/minSpanningForest.html) (MSF)
-- nBody
-- nearestNeighbors
-- rayCast
-- rangeQuery2d
-- removeDuplicates
-- [spanningForest](https://cmuparlay.github.io/pbbsbench/benchmarks/spanningForest.html) (SF)
-- suffixArray
-- wordCounts
+- [breadthFirstSearch](benchmarks/breadthFirstSearch.html) (BFS) --
+  Returns a breadth-first-search tree from a given vertex in a graph.
+- [BWDecode](benchmarks/BWDecode.html) (BWD) -- Decodes a string
+  encoded with the Burrows-Wheeler transform.
+- classify (CLAS) -- Predicts labels for a test set of feature vectors
+  based on a training set with attached labels.
+- [comparisonSort](benchmarks/comparisonSort.html) (SORT) --
+  Returns the sorted input based on a comparison-based sort.
+- [convexHull](benchmarks/convexHull.html) (CH) -- Returns the
+  convex hull for a set of points in 2 dimensions.
+- [delaunayRefine](benchmarks/delaunayRefine.html) (DR) -- Given a
+  Delaunay triangulation (DT) in 2d, adds points so resulting DT has no
+  small angles.
+- [delaunayTriangulation](benchmarks/delaunayTriangulation.html) (DT)
+  -- Returns the Delaunay triangulation of points in 2d.
+- [histogram](benchmarks/histogram.html) (HIST) -- Returns the
+  histogram for a sequence of integers.
+- [index](benchmarks/invertedIndex.html) (II) -- Returns an inverted
+  index given  a string of documents.
+- [integerSort](benchmarks/integerSort.html) (ISORT) -- Sorts a
+  sequence of integers, possibly with tag-along values.
+- longestRepeatedSubstring (LRS) -- Returns the longest repeated
+  substring in a string.
+- [maximalIndependentSet](benchmarks/maximalIndependentSet.html) (MIS)
+  -- Returns a maximal independent set for an undirected graph.
+- [maximalMatching](benchmarks/maximalMatching.html) (MM) -- Returns a
+  maximal matching for an undirected graph.
+- [minSpanningForest](benchmarks/minSpanningForest.html) (MSF) --
+Returns a minimum spanning forest of a weighed undirected graph.
+- [nBody](benchmarks/nBody.html) (NBODY) -- 
+Returns gravitational forces among points in 3d. 
+- [nearestNeighbors](benchmarks/nearestNeighbors.html) (KNN) --
+Returns the k nearest neighbors for points in 2d and 3d.
+- [rayCast](benchmarks/rayCast.html) (RAY) --
+For a set of rays and a set of triangles returns the first triangle
+each ray intersects.
+- rangeQuery2d (RQ) --
+For a set of points and a set of rectangles, returns a count of the number of
+points in each rectangle.
+- [removeDuplicates](benchmarks/removeDuplicates) (DDUP) --- Returns the input sequence with
+  duplicates removed.
+- [spanningForest](benchmarks/spanningForest.html) (SF) -- Returns a
+  spanning forest of an undirected graph.
+- [suffixArray](benchmarks/suffixArray.html) (SA) -- Returns the suffix array for a string.
+- [wordCounts](benchmarks/wordCounts.html) (WC) -- Counts the number of occurrences of each word in a string.
 
 Within each benchmarks are the implementations.   Each benchmarks also
 have some directories shared across implementations.  In particular

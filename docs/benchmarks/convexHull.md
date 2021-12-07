@@ -17,13 +17,16 @@ roundoff (i.e., exact arithmetic is not required).
 The default distributions are the following:
 
 - Points chosen uniformly at random within a unit circle.   Should be 
-generated with `randPoints -s -d 2 <n> <filename>`.
+generated with:  
+`randPoints -s -d 2 <n> <filename>`.
 
 - Points chosen at random from the Kuzmin distribution.   Should be 
-generated with `randPoints -k -d 2 <n> <filename>`.
+generated with:  
+`randPoints -k -d 2 <n> <filename>`.
 
 - Points chosen uniformly at random on the perimeter of a unit circle.   Should be 
-generated with `randPoints -S -d 2 <n> <filename>`.
+generated with:  
+`randPoints -S -d 2 <n> <filename>`.
 
 The large size is n = 100 million, and the small size is n = 10 million.
 

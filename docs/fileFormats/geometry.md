@@ -47,13 +47,13 @@ Therefore a file with n rays is equivalent to one with 2n points.
 
 ### Triangles
 
-The triangles format starts with a sequence of coordinates and is
-followed by a sequence of triangles.  Each coordinate is a 2d
-point as in the **points** format.  Each triangle
-is a triple consisting of the indices of the coordinates of its three
+The triangles format starts with a sequence of points and is
+followed by a sequence of triangles.  Each point is either in 2d or 3d
+and stored as in the **points** format.  Each triangle
+is a triple consisting of the indices of the points at its three
 corners.  The indices are zero based and refer to the position of the
-coordinate in the file.  The number of coordinates and triangles is
-included in the file.  In particular for 2d coordinates the format is
+point in the file.  The number of points and triangles is
+included in the file.  In particular for 2d points the format is
 as follows:
 
 ```
@@ -70,3 +70,5 @@ pbbs_triangles
 ...
 <a_(m-1)> <b_(m-1)> <c_(m-1)>
 ```
+
+For 3d points each point has an an additional `<zi>`.
