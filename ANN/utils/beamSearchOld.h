@@ -27,51 +27,62 @@
 #include <set>
 
 //returns true if F \setminus V = emptyset 
-bool intersect_nonempty(parlay::sequence<int> &V, parlay::sequence<int> &F){
+bool intersect_nonempty(std::set<int> V, parlay::sequence<int> F){
 	int Fsize = F.size();
 	for(int i=0; i<Fsize; i++){
-		if(parlay::find(V, F[i]) == V.end()) return true; 
+		if(V.find(F[i]) == V.end()) return true; 
 	}
 	return false;
 }
 
 //will only be used when there is an element in F that is not in V
 //hence the ``return 0" line will never be called
-int id_next(parlay::sequence<int> &V, parlay::sequence<int> &F){
+int id_next(std::set<int> V, parlay::sequence<int> F){
 	int fsize = F.size();
 	for(int i=0; i<fsize; i++){
-		if(parlay::find(V, F[i]) == V.end()) return F[i];
+		if(V.find(F[i]) == V.end()) return F[i];
 	}
 	return 0;
 }
 
 template<class fvec_point>
-std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v, 
+std::pair<parlay::sequence<int>, std::set<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v, 
 	fvec_point* medoid, int beamSize, unsigned d){
 	//initialize data structures
-	parlay::sequence<int> visited = parlay::sequence<int>();
-	parlay::sequence<int> frontier = parlay::sequence<int>();
+	std::set<int> visited;
+	std::set<int> frontier; 
+	parlay::sequence<int> sortedFrontier = parlay::sequence<int>();
 	//the frontier starts with the medoid
-	frontier.push_back(medoid->id);
+	sortedFrontier.push_back(medoid->id);
+	frontier.insert(medoid->id);
 	//terminate beam search when the entire frontier has been visited
-	while(intersect_nonempty(visited, frontier)){
+	while(intersect_nonempty(visited, sortedFrontier)){
 		//the next node to visit is the unvisited frontier node that is closest to p
-		int currentIndex = id_next(visited, frontier);
+		int currentIndex = id_next(visited, sortedFrontier);
 		fvec_point* current = v[currentIndex]; 
+		parlay::sequence<int> outnbh = current->out_nbh;
+		int outsize = outnbh.size();
 		//add the outneighbors of the visited node to the frontier if they are not already in it
-		for(int i=0; i<((current->out_nbh).size()); i++){
-			if(parlay::find(frontier, (current->out_nbh)[i]) == frontier.end()){
+		for(int i=0; i<(outsize); i++){
+			if(frontier.find(outnbh[i]) == frontier.end()){
 				auto less = [&] (int a){
-					return distance(v[a], p, d) < distance(v[(current->out_nbh)[i]], p, d);
+					return distance(v[a], p, d) < distance(v[outnbh[i]], p, d);
 				};
-				int insertion_point = parlay::internal::binary_search(parlay::make_slice(frontier), less);
-				const int to_insert = (current->out_nbh)[i];
-				frontier.insert(frontier.begin()+insertion_point, to_insert);
+				int insertion_point = parlay::internal::binary_search(parlay::make_slice(sortedFrontier), less);
+				const int to_insert = outnbh[i];
+				sortedFrontier.insert(sortedFrontier.begin()+insertion_point, to_insert);
+				frontier.insert(outnbh[i]); 
 			}
 		}
-		if(frontier.size() > beamSize) frontier.erase(frontier.begin()+beamSize, frontier.end());
+		if(sortedFrontier.size() > beamSize){ //beamSize is a global var taken from command line
+			for(int i=sortedFrontier.size(); i>beamSize; i--){
+				int to_del = sortedFrontier[i-1];
+				sortedFrontier.pop_back();
+				frontier.erase(to_del);
+			}
+		}
 		//add the node to the visited list
-		visited.push_back(current->id);
+		visited.insert(current->id);
 	} 
-	return std::make_pair(frontier, visited);
+	return std::make_pair(sortedFrontier, visited);
 }

@@ -24,7 +24,6 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
-// #include "../utils/WEAVESSDist.h"
 #include <random>
 #include <set>
 #include <math.h>
@@ -85,7 +84,6 @@ struct knn_index{
 		}
 		else{
 			size_t n = a.size();
-			// std::cout << n << std::endl; 
 			parlay::sequence<float> c1;
 			parlay::sequence<float> c2;
 			parlay::par_do_if(n>1000,
@@ -150,34 +148,27 @@ struct knn_index{
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
-	void robustPrune(fvec_point* p, std::set<int> candidates, parlay::sequence<fvec_point*> &v, double alpha){
+	void robustPrune(fvec_point* p, parlay::sequence<int> candidates, parlay::sequence<fvec_point*> &v, double alpha){
 		//make sure the candidate set does not include p
-		if(candidates.find(p->id) != candidates.end()){
-			candidates.erase(p->id);
-		}
+		if(parlay::find(candidates, p->id) != candidates.end()) candidates.erase(parlay::find(candidates, p->id));
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
-			candidates.insert(p->out_nbh[i]);
+			candidates.push_back(p->out_nbh[i]);
 		}
-		//transform to a sequence so that it can be sorted
-		parlay::sequence<int> Candidates = parlay::sequence<int>();
-		for (std::set<int>::iterator it=candidates.begin(); it!=candidates.end(); ++it){
-        	Candidates.push_back(*it);
-		} 
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (int a, int b){
 			return distance(v[a], p, d) > distance(v[b], p, d);
 		};
-		auto sortedCandidates = parlay::sort(Candidates, less);
+		parlay::sort_inplace(candidates, less);
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
-		while(new_nbhs.size() <= maxDeg && sortedCandidates.size() > 0){
-			int c = sortedCandidates.size();
-			int p_star = sortedCandidates[c-1];
-			sortedCandidates.pop_back();
+		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
+			int c = candidates.size();
+			int p_star = candidates[c-1];
+			candidates.pop_back();
 			new_nbhs.push_back(p_star);
 			parlay::sequence<int> to_delete = parlay::sequence<int>();
 			for(int i=0; i<c-1; i++){
-				int p_prime = sortedCandidates[i];
+				int p_prime = candidates[i];
 				float dist_starprime = distance(v[p_star], v[p_prime], d);
 				float dist_pprime = distance(p, v[p_prime], d);
 				if(alpha*dist_starprime <= dist_pprime){
@@ -186,7 +177,7 @@ struct knn_index{
 			}
 			if(to_delete.size() > 0){
 				for(int i=0; i<to_delete.size(); i++){
-					sortedCandidates.erase(sortedCandidates.begin()+to_delete[i]-i);
+					candidates.erase(candidates.begin()+to_delete[i]-i);
 				}
 			}
 		}
@@ -221,7 +212,7 @@ struct knn_index{
 				}
 				to_flatten[i-floor] = edges;
 				v[i]->out_nbh = new_nbh;
-				v[i]->new_out_nbh = parlay::sequence<int>();
+				(v[i]->new_out_nbh).clear();
 			});
 			auto new_edges = parlay::flatten(to_flatten);
 			auto grouped_by = parlay::group_by_key(new_edges);
@@ -237,14 +228,10 @@ struct knn_index{
 						(v[index]->out_nbh).push_back(candidates[i]);
 					}
 				} else{
-					std::set<int> candidateSet;
-					for(int i=0; i<candidates.size(); i++){
-						candidateSet.insert(candidates[i]);
-					}
-					robustPrune(v[index], candidateSet, v, r2_alpha);
+					robustPrune(v[index], candidates, v, r2_alpha);
 					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
 					v[index]->out_nbh = new_nbh;
-					v[index]->new_out_nbh = parlay::sequence<int>();
+					(v[index]->new_out_nbh).clear();
 				}
 			});
 			inc += 1; 
