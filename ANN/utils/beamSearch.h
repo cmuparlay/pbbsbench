@@ -26,11 +26,11 @@
 #include "common/geometry.h"
 #include <set>
 
-//returns true if F \setminus V = emptyset 
+//returns true if F \setminus V = emptyset
 bool intersect_nonempty(parlay::sequence<int> &V, parlay::sequence<int> &F){
 	int Fsize = F.size();
 	for(int i=0; i<Fsize; i++){
-		if(parlay::find(V, F[i]) == V.end()) return true; 
+		if(parlay::find(V, F[i]) == V.end()) return true;
 	}
 	return false;
 }
@@ -46,7 +46,7 @@ int id_next(parlay::sequence<int> &V, parlay::sequence<int> &F){
 }
 
 template<class fvec_point>
-std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v, 
+std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* p, parlay::sequence<fvec_point*> &v,
 	fvec_point* medoid, int beamSize, unsigned d){
 	//initialize data structures
 	parlay::sequence<int> visited = parlay::sequence<int>();
@@ -57,7 +57,7 @@ std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* 
 	while(intersect_nonempty(visited, frontier)){
 		//the next node to visit is the unvisited frontier node that is closest to p
 		int currentIndex = id_next(visited, frontier);
-		fvec_point* current = v[currentIndex]; 
+		fvec_point* current = v[currentIndex];
 		//add the outneighbors of the visited node to the frontier if they are not already in it
 		for(int i=0; i<((current->out_nbh).size()); i++){
 			if(parlay::find(frontier, (current->out_nbh)[i]) == frontier.end()){
@@ -72,6 +72,6 @@ std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* 
 		if(frontier.size() > beamSize) frontier.erase(frontier.begin()+beamSize, frontier.end());
 		//add the node to the visited list
 		visited.push_back(current->id);
-	} 
+	}
 	return std::make_pair(frontier, visited);
 }
