@@ -32,8 +32,8 @@ tests = [
 
     ["wordCounts/serial",False],
 
-    ["index/sequential", False],
-    ["index/parallel", True],
+    ["invertedIndex/sequential", False],
+    ["invertedIndex/parallel", True],
     
     #["suffixArray/serialKS",False],
     # ["suffixArray/parallelKS",True],

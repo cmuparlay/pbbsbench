@@ -7,7 +7,8 @@ dataDir = "../graphData/data"
 
 tests = [
     [1, "randLocalGraph_E_10_2000000", "", ""],
-    [1, "rMatGraph_E_12_2250000", "", ""],
+#    [1, "rMatGraph_E_12_2250000", "", ""],
+    [1, "rMatGraph_E_10_2000000", "", ""],
     [1, "3Dgrid_E_8000000", "", ""]
     ]
 

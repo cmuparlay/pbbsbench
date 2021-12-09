@@ -8,7 +8,7 @@ dataDir = "../sequenceData/data"
 tests = [
     [1, "randomSeq_10M_256_int", "-b 256", ""], 
     [1, "randomSeq_10M_100K_int", "-b 100000", ""], 
-    [1, "randomSeq_10M_int", "-b 10M", ""], 
+    [1, "randomSeq_10M_int", "-b 10000000", ""], 
     [1, "exptSeq_10M_int", "-b 10000000", ""], 
     [1, "almostEqualSeq_10M", "-b 10000000", ""], 
     ] 

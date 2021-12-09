@@ -7,7 +7,6 @@ dataDir = "../sequenceData/data"
 
 tests = [
     [3, "chr22.dna", "", ""],
-    [1, "wikisamp.xml", "", ""]
 ]
 
 import sys

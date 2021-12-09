@@ -2,7 +2,7 @@
 title: Inverted Index
 ---
 
-# Inverted Index (II)
+# Inverted Index (IIDX)
 
 Generates an inverted index from a text file.  It assumes each
 document starts with a given "start string".  In this benchmark the

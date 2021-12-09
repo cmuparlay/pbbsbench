@@ -5,9 +5,9 @@ make clean -s -C removeDuplicates/parlayhash
 make clean -s -C removeDuplicates/serial_hash
 make clean -s -C removeDuplicates/serial_sort
 
-make clean -s -C index/bench
-make clean -s -C index/sequential
-make clean -s -C index/parallel
+make clean -s -C invertedIndex/bench
+make clean -s -C invertedIndex/sequential
+make clean -s -C invertedIndex/parallel
 
 make clean -s -C wordCounts/bench
 make clean -s -C wordCounts/histogram

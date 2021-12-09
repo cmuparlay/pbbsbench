@@ -116,60 +116,17 @@ For the `-only` option use the path to the implementation, e.g.
 
 ### Directory Organization
 
-The benchmarks themselves are organized hierarchically.  At the top
-level are the following benchmarks:
+The top level directory includes a directory for each of the benchmarks.
+The [benchmarks page](benchmarks/index.html) gives a listing of all
+the benchmarks along with information about them.
 
-- [breadthFirstSearch](benchmarks/breadthFirstSearch.html) (BFS) --
-  Returns a breadth-first-search tree from a given vertex in a graph.
-- [BWDecode](benchmarks/BWDecode.html) (BWD) -- Decodes a string
-  encoded with the Burrows-Wheeler transform.
-- classify (CLAS) -- Predicts labels for a test set of feature vectors
-  based on a training set with attached labels.
-- [comparisonSort](benchmarks/comparisonSort.html) (SORT) --
-  Returns the sorted input based on a comparison-based sort.
-- [convexHull](benchmarks/convexHull.html) (CH) -- Returns the
-  convex hull for a set of points in 2 dimensions.
-- [delaunayRefine](benchmarks/delaunayRefine.html) (DR) -- Given a
-  Delaunay triangulation (DT) in 2d, adds points so resulting DT has no
-  small angles.
-- [delaunayTriangulation](benchmarks/delaunayTriangulation.html) (DT)
-  -- Returns the Delaunay triangulation of points in 2d.
-- [histogram](benchmarks/histogram.html) (HIST) -- Returns the
-  histogram for a sequence of integers.
-- [index](benchmarks/invertedIndex.html) (II) -- Returns an inverted
-  index given  a string of documents.
-- [integerSort](benchmarks/integerSort.html) (ISORT) -- Sorts a
-  sequence of integers, possibly with tag-along values.
-- longestRepeatedSubstring (LRS) -- Returns the longest repeated
-  substring in a string.
-- [maximalIndependentSet](benchmarks/maximalIndependentSet.html) (MIS)
-  -- Returns a maximal independent set for an undirected graph.
-- [maximalMatching](benchmarks/maximalMatching.html) (MM) -- Returns a
-  maximal matching for an undirected graph.
-- [minSpanningForest](benchmarks/minSpanningForest.html) (MSF) --
-Returns a minimum spanning forest of a weighed undirected graph.
-- [nBody](benchmarks/nBody.html) (NBODY) -- 
-Returns gravitational forces among points in 3d. 
-- [nearestNeighbors](benchmarks/nearestNeighbors.html) (KNN) --
-Returns the k nearest neighbors for points in 2d and 3d.
-- [rayCast](benchmarks/rayCast.html) (RAY) --
-For a set of rays and a set of triangles returns the first triangle
-each ray intersects.
-- rangeQuery2d (RQ) --
-For a set of points and a set of rectangles, returns a count of the number of
-points in each rectangle.
-- [removeDuplicates](benchmarks/removeDuplicates) (DDUP) --- Returns the input sequence with
-  duplicates removed.
-- [spanningForest](benchmarks/spanningForest.html) (SF) -- Returns a
-  spanning forest of an undirected graph.
-- [suffixArray](benchmarks/suffixArray.html) (SA) -- Returns the suffix array for a string.
-- [wordCounts](benchmarks/wordCounts.html) (WC) -- Counts the number of occurrences of each word in a string.
-
-Within each benchmarks are the implementations.   Each benchmarks also
-have some directories shared across implementations.  In particular
-each one has a directory called `bench` which contains the driver
-code, testing code, and specification of default inputs.  There is
-also a directory for generating the data.
+Within each benchmarks is a subdirectory for each of the
+implementations.  Each benchmark also has some directories shared
+across implementations.  In particular each has a directory called
+`bench` which contains the driver code, testing code, and
+specification of default inputs.  Each benchmark also has a xxxData
+page containing data generators for the benchmark (here xxx varies by
+benchmark).
 
 Within each implementation directory, you can run `make` to make the
 executable, and then run `./testInputs` to run the benchmarks.  These

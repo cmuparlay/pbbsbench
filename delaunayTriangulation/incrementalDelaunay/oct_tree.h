@@ -143,6 +143,9 @@ struct oct_tree {
     node& operator=(node const&) = delete;
     node& operator=(node&&) = delete;
 
+    static node* alloc_node();
+    static void free_node(node* T);
+
   private:
 
     size_t n;
@@ -156,13 +159,6 @@ struct oct_tree {
     void set_center() {			   
       centerv = b.first + (b.second-b.first)/2;
     }
-
-    // uses the parlay memory manager, could be replaced will alloc/free
-    static parlay::type_allocator<node> node_allocator;
-    static node* alloc_node() {
-      return node_allocator.alloc();}
-    static void free_node(node* T) {
-      node_allocator.free(T);}
 
     static void flatten_rec(node *T, slice_v R) {
       if (T->is_leaf())
@@ -299,3 +295,13 @@ private:
   }
   
 };
+
+template <typename vtx>
+parlay::type_allocator<typename oct_tree<vtx>::node> node_allocator;
+
+template <typename vtx>
+typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node() { return node_allocator<vtx>.alloc();}
+
+template <typename vtx>
+void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.free(T);}
+  
