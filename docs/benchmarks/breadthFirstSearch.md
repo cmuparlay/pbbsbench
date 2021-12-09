@@ -41,5 +41,5 @@ It should be generated using:
 
 ### Input and Output File Formats
 
-The input is a graph in the in the adjacency graph format.
-The output will be in be an integer sequence format.
+The input is a graph in the in the [adjacency graph format](../fileFormats/graph.html)
+The output will be in be an [integer sequence format](../fileFormats/sequence.html)
