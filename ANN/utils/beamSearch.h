@@ -115,4 +115,4 @@ std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* 
 		visited.push_back(current->id);
 	} 
 	return std::make_pair(frontier, visited);
-}
+

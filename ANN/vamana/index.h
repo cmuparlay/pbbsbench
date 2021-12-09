@@ -24,6 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
+#include "../utils/beamSearch.h"
 #include <random>
 #include <set>
 #include <math.h>
@@ -33,10 +34,10 @@ template<class fvec_point>
 struct knn_index{
 	int maxDeg;
 	int beamSize;
-	int k; 
+	int k;
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
-	fvec_point* medoid; 
+	fvec_point* medoid;
 	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
 	using index_pair = std::pair<int, int>;
 	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
@@ -53,11 +54,11 @@ struct knn_index{
 
 	//give each vertex maxDeg random out neighbors
 	void random_index(parlay::sequence<fvec_point*> &v){
-		size_t n = v.size(); 
+		size_t n = v.size();
 		parlay::parallel_for(0, n, [&] (size_t i){
-	    	std::random_device rd;    
-			std::mt19937 rng(rd());   
-			std::uniform_int_distribution<int> uni(0,n-1); 
+	    	std::random_device rd;
+			std::mt19937 rng(rd());
+			std::uniform_int_distribution<int> uni(0,n-1);
 
 			//use a set to make sure each out neighbor is unique
 			std::set<int> indexset;
@@ -66,10 +67,10 @@ struct knn_index{
 				//disallow self edges
 				if(j != i) indexset.insert(j);
 			}
-			
+
 			for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
         		v[i] -> out_nbh.push_back(*it);
-			} 
+			}
 
 	    }, 1
 	    );
@@ -125,25 +126,25 @@ struct knn_index{
 		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v));
 		fvec_point centroidp = typename fvec_point::fvec_point();
 		centroidp.coordinates = parlay::make_slice(centroid);
-		medoid = medoid_helper(&centroidp, parlay::make_slice(v)); 
+		medoid = medoid_helper(&centroidp, parlay::make_slice(v));
 	}
 
 	//for debugging
 	void print_seq(parlay::sequence<int> seq){
 		int fsize = seq.size();
-		std::cout << "["; 
+		std::cout << "[";
 		for(int i=0; i<fsize; i++){
 			std::cout << seq[i] << ", ";
 		}
-		std::cout << "]" << std::endl; 
+		std::cout << "]" << std::endl;
 	}
 
 	void print_set(std::set<int> myset){
-		std::cout << "["; 
+		std::cout << "[";
 		for (std::set<int>::iterator it=myset.begin(); it!=myset.end(); ++it){
 			std::cout << *it << ", ";
 		}
-		std::cout << "]" << std::endl; 
+		std::cout << "]" << std::endl;
 	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
@@ -202,7 +203,7 @@ struct knn_index{
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
-			parlay::sequence<parlay::sequence<index_pair>> to_flatten = 
+			parlay::sequence<parlay::sequence<index_pair>> to_flatten =
 				parlay::sequence<parlay::sequence<index_pair>>(ceiling-floor);
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				parlay::sequence<int> new_nbh = v[i]->new_out_nbh;
@@ -216,7 +217,7 @@ struct knn_index{
 			});
 			auto new_edges = parlay::flatten(to_flatten);
 			auto grouped_by = parlay::group_by_key(new_edges);
-			//finally, add the bidirectional edges; if they do not make 
+			//finally, add the bidirectional edges; if they do not make
 			//the vertex exceed the degree bound, just add them to out_nbhs;
 			//otherwise, use robustPrune on the vertex with user-specified alpha
 			parlay::parallel_for(0, grouped_by.size(), [&] (size_t i){
@@ -234,7 +235,7 @@ struct knn_index{
 					(v[index]->new_out_nbh).clear();
 				}
 			});
-			inc += 1; 
+			inc += 1;
 		}
 	}
 
