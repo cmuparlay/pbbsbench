@@ -28,21 +28,63 @@
 
 //returns true if F \setminus V = emptyset 
 bool intersect_nonempty(parlay::sequence<int> &V, parlay::sequence<int> &F){
-	int Fsize = F.size();
-	for(int i=0; i<Fsize; i++){
-		if(parlay::find(V, F[i]) == V.end()) return true; 
-	}
+	for(int i=0; i<F.size(); i++) if(parlay::find(V, F[i]) == V.end()) return true; 
 	return false;
 }
 
 //will only be used when there is an element in F that is not in V
 //hence the ``return 0" line will never be called
 int id_next(parlay::sequence<int> &V, parlay::sequence<int> &F){
-	int fsize = F.size();
-	for(int i=0; i<fsize; i++){
-		if(parlay::find(V, F[i]) == V.end()) return F[i];
-	}
+	for(int i=0; i<F.size(); i++) if(parlay::find(V, F[i]) == V.end()) return F[i];
 	return 0;
+}
+
+
+//takes in two sorted sequences and returns a sorted union
+parlay::sequence<int> seq_union(parlay::sequence<int> &P, parlay::sequence<int> &Q, fvec_point* p, 
+	parlay::sequence<fvec_point*> &v){
+	auto less = [&] (int a, int b){
+		return distance(v[a], p, d) < distance(v[b], p, d);
+	};
+	int* first1 = P.begin();
+	int* last1 = P.end();
+	int* first2 = Q.begin();
+	int* last2 = Q.end();
+	parlay::sequence<int> result = parlay::sequence<int>();
+	while(true){
+		if(first1 == last1){
+			while(first2 != last2){
+				result.push_back(*first2);
+				++first2;
+			}
+			return result;
+		} else if(first2 == last2){
+			while(first1 != last1){
+				result.push_back(*first1);
+				++first1;
+			}
+			return result;
+		} 
+		if(less(*first1, *first2)){
+			result.push_back(*first1);
+			++first1;
+		} else if(less(*first2, *first1)){
+			result.push_back(*first2);
+			++first2;
+		} else{
+			if(*first1 == *first2){
+				result.push_back(*first1);
+				++first1;
+				++first2; 
+			} else{
+				result.push_back(*first1);
+				result.push_back(*first2);
+				++first1;
+				++first2;
+			}
+		}
+	}
+	return result;
 }
 
 template<class fvec_point>
@@ -58,17 +100,16 @@ std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* 
 		//the next node to visit is the unvisited frontier node that is closest to p
 		int currentIndex = id_next(visited, frontier);
 		fvec_point* current = v[currentIndex]; 
-		//add the outneighbors of the visited node to the frontier if they are not already in it
-		for(int i=0; i<((current->out_nbh).size()); i++){
-			if(parlay::find(frontier, (current->out_nbh)[i]) == frontier.end()){
-				auto less = [&] (int a){
-					return distance(v[a], p, d) < distance(v[(current->out_nbh)[i]], p, d);
-				};
-				int insertion_point = parlay::internal::binary_search(parlay::make_slice(frontier), less);
-				const int to_insert = (current->out_nbh)[i];
-				frontier.insert(frontier.begin()+insertion_point, to_insert);
-			}
+		auto f = [&] (int a){
+			if(parlay::find(frontier, a) == frontier.end()) return true;
+			return false;
 		}
+		auto candidates = parlay::filter(current->out_nbh, f);
+		auto less = [&] (int a){
+			return distance(v[a], p, d) < distance(v[(current->out_nbh)[i]], p, d);
+		};
+		parlay::sort_inplace(candidates, less);
+		frontier = seq_union(frontier, candidates, p, v);
 		if(frontier.size() > beamSize) frontier.erase(frontier.begin()+beamSize, frontier.end());
 		//add the node to the visited list
 		visited.push_back(current->id);
