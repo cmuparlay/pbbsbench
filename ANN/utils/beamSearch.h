@@ -41,8 +41,9 @@ int id_next(parlay::sequence<int> &V, parlay::sequence<int> &F){
 
 
 //takes in two sorted sequences and returns a sorted union
+template<class fvec_point>
 parlay::sequence<int> seq_union(parlay::sequence<int> &P, parlay::sequence<int> &Q, fvec_point* p, 
-	parlay::sequence<fvec_point*> &v){
+	parlay::sequence<fvec_point*> &v, unsigned d){
 	auto less = [&] (int a, int b){
 		return distance(v[a], p, d) < distance(v[b], p, d);
 	};
@@ -103,16 +104,16 @@ std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* 
 		auto f = [&] (int a){
 			if(parlay::find(frontier, a) == frontier.end()) return true;
 			return false;
-		}
+		};
 		auto candidates = parlay::filter(current->out_nbh, f);
-		auto less = [&] (int a){
-			return distance(v[a], p, d) < distance(v[(current->out_nbh)[i]], p, d);
+		auto less = [&] (int a, int b){
+			return distance(v[a], p, d) < distance(v[b], p, d);
 		};
 		parlay::sort_inplace(candidates, less);
-		frontier = seq_union(frontier, candidates, p, v);
+		frontier = seq_union(frontier, candidates, p, v, d);
 		if(frontier.size() > beamSize) frontier.erase(frontier.begin()+beamSize, frontier.end());
 		//add the node to the visited list
 		visited.push_back(current->id);
 	} 
 	return std::make_pair(frontier, visited);
-
+}
