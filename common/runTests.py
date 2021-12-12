@@ -43,9 +43,7 @@ def geomean(a) :
     r = r * x
   return r**(1.0/len(a))
 
-keepData = False
-
-def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput) :
+def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, keepData) :
     random.seed()
     outFile="/tmp/ofile%d_%d" %(random.randint(0, 1000000), random.randint(0, 1000000)) 
     [weight, inputFileNames, runOptions, checkOptions] = test
@@ -84,12 +82,12 @@ def averageTime(times) :
     return sum(times)/len(times)
     
 def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOutput,
-            addToDatabase, problem) :
+            addToDatabase, problem, keepData) :
   totalTime = 0
   totalWeight = 0
   try:
     results = [runTest(runProgram, checkProgram, dataDir, test, rounds, procs,
-                       noOutput)
+                       noOutput, keepData)
                for test in tests]
     meanOfMeans = geomean([geomean(times) for (w,times) in results])
     meanOfMins = geomean([sorted(times)[0] for (w,times) in results])
@@ -133,13 +131,15 @@ def getArgs() :
   addToDatabase = getOption("-d")
   processors = int(getArg("-p", 0))
   rounds = int(getArg("-r", 1))
-  keepData = getOption("-k")
-  return (noOutput, rounds, addToDatabase, processors)
+  keep = getOption("-k")
+  return (noOutput, rounds, addToDatabase, processors, keep)
 
-def timeAllArgs(runProgram, problem, checkProgram, dataDir, tests) :
-    (noOutput, rounds, addToDatabase, procs) = getArgs()
-    name = os.path.basename(os.getcwd())
-    timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOutput, addToDatabase, problem)
+def timeAllArgs(runProgram, problem, checkProgram, dataDir, tests, keepInputData=False) :
+  keepData = keepInputData
+  (noOutput, rounds, addToDatabase, procs, keep) = getArgs()
+  keep = keepInputData or keep
+  name = os.path.basename(os.getcwd())
+  timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOutput, addToDatabase, problem, keep)
 
 #
 # Database insertions
