@@ -42,7 +42,9 @@ def geomean(a) :
   for x in a :
     r = r * x
   return r**(1.0/len(a))
-  
+
+keepData = False
+
 def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput) :
     random.seed()
     outFile="/tmp/ofile%d_%d" %(random.randint(0, 1000000), random.randint(0, 1000000)) 
@@ -67,6 +69,8 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput) :
         print("CheckOut:", checkOut)
         raise NameError(checkString+"\n"+checkOut)
       os.remove(outFile)
+    if len(dataDir)>0 and not(keepData):
+      out = shellGetOutput("rm " + longInputNames)
     ptimes = str([stripFloat(time)
                   for time in times])[1:-1]
     outputStr = ""
@@ -129,6 +133,7 @@ def getArgs() :
   addToDatabase = getOption("-d")
   processors = int(getArg("-p", 0))
   rounds = int(getArg("-r", 1))
+  keepData = getOption("-k")
   return (noOutput, rounds, addToDatabase, processors)
 
 def timeAllArgs(runProgram, problem, checkProgram, dataDir, tests) :
