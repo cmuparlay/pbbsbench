@@ -23,16 +23,18 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/random.h"
 #include "common/geometry.h"
 #include "index.h"
-#include "../utils/NSGDist.h"
+#include "../utils/beamSearch.h"
+#include "../utils/NSGDist.h"  
 
 bool report_stats = true;
 
 template<class fvec_point>
 void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, double alpha, parlay::sequence<fvec_point*> &q) {
-  parlay::internal::timer t("ANN",report_stats);
-  {
+  parlay::internal::timer t("ANN",report_stats); 
+  { 
     unsigned d = (v[0]->coordinates).size()/4;
     using findex = knn_index<fvec_point>;
     findex I(maxDeg, beamSize, k, alpha, d);
@@ -45,9 +47,9 @@ void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, doub
 
 
 template<class fvec_point>
-void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, double alpha) {
-  parlay::internal::timer t("ANN",report_stats);
-  {
+void ANN(parlay::sequence<fvec_point*> v, int k, int maxDeg, int beamSize, double alpha) {
+  parlay::internal::timer t("ANN",report_stats); 
+  { 
     unsigned d = (v[0]->coordinates).size()/4;
     using findex = knn_index<fvec_point>;
     findex I(maxDeg, beamSize, k, alpha, d);

@@ -20,6 +20,9 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#ifndef BEAMSEARCH
+#define BEAMSEARCH
+
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
@@ -37,6 +40,16 @@ bool intersect_nonempty(parlay::sequence<int> &V, parlay::sequence<int> &F){
 int id_next(parlay::sequence<int> &V, parlay::sequence<int> &F){
 	for(int i=0; i<F.size(); i++) if(parlay::find(V, F[i]) == V.end()) return F[i];
 	return 0;
+}
+
+//for debugging
+void print_seq(parlay::sequence<int> seq){
+	int fsize = seq.size();
+	std::cout << "["; 
+	for(int i=0; i<fsize; i++){
+		std::cout << seq[i] << ", ";
+	}
+	std::cout << "]" << std::endl; 
 }
 
 
@@ -101,19 +114,23 @@ std::pair<parlay::sequence<int>, parlay::sequence<int>> beam_search(fvec_point* 
 		//the next node to visit is the unvisited frontier node that is closest to p
 		int currentIndex = id_next(visited, frontier);
 		fvec_point* current = v[currentIndex]; 
-		auto f = [&] (int a){
-			if(parlay::find(frontier, a) == frontier.end()) return true;
+		auto g = [&] (int a){
+			if(parlay::find(visited, a) == visited.end()) return true;
 			return false;
 		};
-		auto candidates = parlay::filter(current->out_nbh, f);
+		auto candidates = parlay::filter(current->out_nbh, g);
+		// auto candidates2 = parlay::filter(candidates, f);
 		auto less = [&] (int a, int b){
 			return distance(v[a], p, d) < distance(v[b], p, d);
 		};
-		parlay::sort_inplace(candidates, less);
-		frontier = seq_union(frontier, candidates, p, v, d);
+		// parlay::sort_inplace(candidates, less);
+		auto sortedCandidates = parlay::sort(candidates, less);
+		frontier = seq_union(frontier, sortedCandidates, p, v, d);
 		if(frontier.size() > beamSize) frontier.erase(frontier.begin()+beamSize, frontier.end());
 		//add the node to the visited list
 		visited.push_back(current->id);
 	} 
 	return std::make_pair(frontier, visited);
 }
+
+#endif
