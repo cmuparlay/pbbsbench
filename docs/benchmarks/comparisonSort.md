@@ -15,22 +15,22 @@ comparison based.
 
 The distributions are as follows:
 
-- Double precision floating point numbers generated uniformly at
+- Double-precision floating-point numbers generated uniformly at
   random from the range [0:1].  
 Should be generated with:  
 `randomSeq -t double <n> <filename>`
 
-- Double precision floating point numbers generated at random with
+- Double-precision floating-point numbers generated at random with
 repeats appearing in an *exponential* distribution.  
 Should be generated with:  
 `exptSeq -t double <n> <filename>`
 
-- Double precision floating point numbers from an *almost-sorted*
+- Double-precision floating-point numbers from an *almost-sorted*
 distribution.  
 Should be generated with:  
 `almostSortedSeq -t double <n> <filename>`
 
-- Pairs of double precision floating point numbers each generated
+- Pairs of double-precision floating-point numbers each generated
 uniformly at random from the range [0:1].  To be sorted on just the
 first element of the pair.  
 Should be generated with:  
@@ -46,7 +46,7 @@ million.
 ### Input and Output File Formats 
 
 The input and output data need to be in the [sequence file format](../fileFormats/sequence.html),
-both with the same element type, which can be pairs
+both with the same element type, which can be pairs.
 
 The output file 
 must be in sorted order with respect to the given comparison function. 

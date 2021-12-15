@@ -62,7 +62,7 @@ target of a directed edge (arc) i.
 ### Weighted Edge Graph
 
 The weighted edge graph format is the same as the edge graph format but
-includes double precision floating point weights.
+includes double-precision floating-point weights.
 The specific format is as follows:
 
 ```
