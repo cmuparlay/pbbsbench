@@ -13,5 +13,5 @@ tests = [
 import sys
 sys.path.insert(0, 'common')
 import runTests
-runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+runTests.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests, True)
 
