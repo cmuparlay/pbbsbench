@@ -9,80 +9,79 @@ import sys
 os.system("echo HOSTNAME: `hostname`")
 
 tests = [
-    ["integerSort/parallelRadixSort",True],
-    # ["integerSort/serialRadixSort",False],
+    ["integerSort/parallelRadixSort",True,0],
+    ["integerSort/serialRadixSort",False,0],
 
-    ["comparisonSort/sampleSort",True],
-    # ["comparisonSort/quickSort",True],
-    # ["comparisonSort/mergeSort",True],
-    # ["comparisonSort/stableSampleSort",True],
-    ["comparisonSort/serialSort",False],
-    # ["comparisonSort/stlParallelSort",True],
-    # ["comparisonSort/ips4o",True],
+    ["comparisonSort/sampleSort",True,0],
+    ["comparisonSort/quickSort",True,1],
+    ["comparisonSort/mergeSort",True,1],
+    ["comparisonSort/stableSampleSort",True,1],
+    ["comparisonSort/serialSort",False,0],
+    ["comparisonSort/stlParallelSort",True,1],
+    ["comparisonSort/ips4o",True,1],
 
-    ["removeDuplicates/serial_hash", False],
-    # ["removeDuplicates/serial_sort", False],
-    ["removeDuplicates/parlayhash", True],
+    ["removeDuplicates/serial_hash", False,0],
+    ["removeDuplicates/serial_sort", False,1],
+    ["removeDuplicates/parlayhash", True,0],
 
-    ["histogram/sequential",False],
-    ["histogram/parallel",True],
+    ["histogram/sequential",False,0],
+    ["histogram/parallel",True,0],
     
-    ["wordCounts/histogram",True],
+    ["wordCounts/histogram",True,0],
     # ["wordCounts/histogramStar",True],
+    ["wordCounts/serial",False,0],
 
-    ["wordCounts/serial",False],
-
-    ["invertedIndex/sequential", False],
-    ["invertedIndex/parallel", True],
+    ["invertedIndex/sequential", False,0],
+    ["invertedIndex/parallel", True,0],
     
     #["suffixArray/serialKS",False],
-    # ["suffixArray/parallelKS",True],
-    ["suffixArray/parallelRange",True],
-    ["suffixArray/serialDivsufsort",False],
+    ["suffixArray/parallelKS",True,1],
+    ["suffixArray/parallelRange",True,0],
+    ["suffixArray/serialDivsufsort",False,0],
 
-    ["longestRepeatedSubstring/doubling",True],
+    ["longestRepeatedSubstring/doubling",True,0],
 
-    ["classify/decisionTree", True],
+    ["classify/decisionTree", True,0],
 
     # ["minSpanningForest/parallelKruskal",True],
-    ["minSpanningForest/parallelFilterKruskal",True],
-    ["minSpanningForest/serialMST",False],
+    ["minSpanningForest/parallelFilterKruskal",True,0],
+    ["minSpanningForest/serialMST",False,0],
 
-    # ["spanningForest/incrementalST",True],
-    ["spanningForest/ndST",True],
-    ["spanningForest/serialST",False],
+    ["spanningForest/incrementalST",True,1],
+    ["spanningForest/ndST",True,0],
+    ["spanningForest/serialST",False,0],
 
-    # ["breadthFirstSearch/simpleBFS",True],
-    ["breadthFirstSearch/backForwardBFS",True],
-    # ["breadthFirstSearch/deterministicBFS",True],
-    ["breadthFirstSearch/serialBFS",False],
+    ["breadthFirstSearch/simpleBFS",True,1],
+    ["breadthFirstSearch/backForwardBFS",True,0],
+    ["breadthFirstSearch/deterministicBFS",True,0],
+    ["breadthFirstSearch/serialBFS",False,0],
 
-    #["maximalMatching/ndMatching",True],
-    ["maximalMatching/serialMatching",False],
-    ["maximalMatching/incrementalMatching",True],
+    # ["maximalMatching/ndMatching",True],
+    ["maximalMatching/serialMatching",False,0],
+    ["maximalMatching/incrementalMatching",True,0],
 
-    ["maximalIndependentSet/ndMIS",True],
-    # ["maximalIndependentSet/incrementalMIS",True],
-    ["maximalIndependentSet/serialMIS",False],
+    ["maximalIndependentSet/ndMIS",True,0],
+    ["maximalIndependentSet/incrementalMIS",True,1],
+    ["maximalIndependentSet/serialMIS",False,0],
 
     #["setCover/manis",True],
     #["setCover/serialDFG",False],
     
-    ["nearestNeighbors/octTree",True],
+    ["nearestNeighbors/octTree",True,0],
 
-    ["rayCast/kdTree",True],
+    ["rayCast/kdTree",True,0],
 
-    ["convexHull/quickHull",True],
-    ["convexHull/serialHull",False],
+    ["convexHull/quickHull",True,0],
+    ["convexHull/serialHull",False,0],
 
-    ["delaunayTriangulation/incrementalDelaunay",True],
+    ["delaunayTriangulation/incrementalDelaunay",True,0],
 
-    ["delaunayRefine/incrementalRefine",True],
+    ["delaunayRefine/incrementalRefine",True,0],
     
-    ["rangeQuery2d/parallelPlaneSweep",True],
-    ["rangeQuery2d/serial",False],
+    ["rangeQuery2d/parallelPlaneSweep",True,0],
+    ["rangeQuery2d/serial",False,0],
 
-    ["nBody/parallelCK",True],
+    ["nBody/parallelCK",True,0],
 ]
 
 noTime = False
@@ -92,21 +91,23 @@ doSmall = False
 forceCompile = False
 parOnly = False
 useNumactl = True
-filtered = False
+keep_tmp_files = False
+extended = False
 if (sys.argv.count("-only") > 0):
     filteredTests = [l for l in tests if sys.argv.count(l[0]) > 0]
     tests = filteredTests
-    filtered = True
     print("Running only: ", tests)
 if (sys.argv.count("-from") > 0):
     idx = [i for i in range(len(tests)) if sys.argv.count(tests[i][0]) > 0]
     if len(idx) > 0 :
         tests = tests[idx[0]:len(tests)]
-        filtered = True
         print("Running from: ", tests[0])
 if (sys.argv.count("-notime") > 0):
     print("Not Timing")
     noTime = True
+if (sys.argv.count("-ext") > 0):
+    print("Extended Benchmarks")
+    extended = True
 if (sys.argv.count("-nocheck") > 0):
     print("Not Checking")
     noCheck = True
@@ -122,6 +123,9 @@ if (sys.argv.count("-scale") > 0):
 if (sys.argv.count("-nonuma") > 0):
     print("No numactl")
     useNumactl = False
+if (sys.argv.count("-keep") > 0):
+    print("Keeping temp data files")
+    keep_tmp_files = True
 if (sys.argv.count("-force") > 0):
     print("Forcing Compile")
     forceCompile = True
@@ -134,6 +138,8 @@ if (sys.argv.count("-h") > 0 or sys.argv.count("-help")):
     print(" -notime  : only compile")
     print(" -nocheck : do not check results")
     print(" -small   : run on small data sets")
+    print(" -keep    : keep temporary data files")
+    print(" -ext     : extended set of benchmars")
     print(" -only <bnchmrk> : only run given benchmark")
     print(" -from <bnchmrk> : only run from given benchmark")
     forceCompile = True
@@ -202,6 +208,8 @@ def runtest(test,procs,check) :
         options =  options + " -p " + `procs`
     if not(check):
         options = options + " -x"
+    if keep_tmp_files:
+        options = options + " -k"        
     if numactl:
         sc = "cd " + dir + " ; numactl -i all " + testInputs + " " + options
     else:
@@ -214,12 +222,10 @@ def runtest(test,procs,check) :
 try :
     if scale : processors = getProcessors()
     else : os.system("echo " + "\"running on " + `maxcpus` + " threads\"")
-    if not(filtered) :
-        os.system("echo " + "\"running make -j on all benchmarks\"")
-        os.system("make -j")
     for test in tests :
         isParallel = test[1]
-        if (isParallel or not(parOnly)) :
+        primary = (int(test[2]) == 0)
+        if (isParallel or not(parOnly)) and (primary or extended) :
             compiletest(test[0])
             if not(noTime) :
                 if (not(isParallel)) :
