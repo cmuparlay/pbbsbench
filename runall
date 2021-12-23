@@ -17,7 +17,7 @@ tests = [
     ["comparisonSort/mergeSort",True,1],
     ["comparisonSort/stableSampleSort",True,1],
     ["comparisonSort/serialSort",False,0],
-    ["comparisonSort/stlParallelSort",True,1],
+    # ["comparisonSort/stlParallelSort",True,1],
     ["comparisonSort/ips4o",True,1],
 
     ["removeDuplicates/serial_hash", False,0],
@@ -53,7 +53,7 @@ tests = [
 
     ["breadthFirstSearch/simpleBFS",True,1],
     ["breadthFirstSearch/backForwardBFS",True,0],
-    ["breadthFirstSearch/deterministicBFS",True,0],
+    ["breadthFirstSearch/deterministicBFS",True,1],
     ["breadthFirstSearch/serialBFS",False,0],
 
     # ["maximalMatching/ndMatching",True],
