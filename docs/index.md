@@ -127,11 +127,12 @@ For the `-only` option use the path to the implementation, e.g.
   ./runall -only comparisonSort/sampleSort
 ```
 
-### The Benchmark Directories
+### The Benchmarks Directories
 
-The top level directory includes a directory for each of the benchmarks.
-The [benchmarks page](benchmarks/index.html) gives a listing of all
-the benchmarks along with information about them.
+Within the `benchmarks` directory at toplevel is a subdirectory
+for each of the benchmarks.
+The [benchmarks page](benchmarks/index.html) gives a listing of these
+the benchmarks along with their specification.
 
 Within each benchmarks is a subdirectory for each of the
 implementations.  Each benchmark also has some directories shared

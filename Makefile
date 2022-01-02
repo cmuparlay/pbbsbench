@@ -14,7 +14,7 @@ ext : $(ALL_BENCHMARKS) $(DATA_GENERATORS)
 $(DEFAULT_BENCHMARKS) : FORCE
 	cd benchmarks/$@; make -s
 
-$(ALL_BENCHMARKS) : FORCE
+$(EXT_BENCHMARKS) : FORCE
 	cd benchmarks/$@; make -s
 
 $(DATA_GENERATORS) : FORCE
