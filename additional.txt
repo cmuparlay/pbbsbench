@@ -1,9 +1,0 @@
-Ideas:
-
-segmentIntersecrions
-input : a sequence of n horizontal and m vertical lines
-output : the total number of segments that intersect
-
-rangeQuery
-inpt : a sequence of n points, and m rectangles
-ouput : the number of points within each rectangle

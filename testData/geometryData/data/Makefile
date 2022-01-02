@@ -75,8 +75,8 @@ cubes_% : ../randPoints
 
 2DinCubeDelaunay_% : 
 	make -s $(subst Delaunay,,$@) 
-	../../../delaunayTriangulation/incrementalDelaunay/delaunay -o $@ $(subst Delaunay,,$@) 
+	../../../benchmarks/delaunayTriangulation/incrementalDelaunay/delaunay -o $@ $(subst Delaunay,,$@) 
 
 2DkuzminDelaunay_% : 
 	make -s $(subst Delaunay,,$@) 
-	../../../delaunayTriangulation/incrementalDelaunay/delaunay -o $@ $(subst Delaunay,,$@) 
+	../../../benchmarks/delaunayTriangulation/incrementalDelaunay/delaunay -o $@ $(subst Delaunay,,$@) 
