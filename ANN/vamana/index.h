@@ -38,6 +38,7 @@ struct knn_index{
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
 	fvec_point* medoid; 
+	using pid = std::pair<int, float>;
 	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
 	using index_pair = std::pair<int, int>;
 	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
@@ -139,6 +140,50 @@ struct knn_index{
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
+	void robustPrune(fvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<fvec_point*> &v, double alpha){
+		//make sure the candidate set does not include p
+		// int self = p->id;
+		// for(int i=0; i<candidates.size(); i++){
+		// 	if(candidates[i].first == self){
+		// 		candidates.erase(candidates.begin()+i);
+		// 		break;
+		// 	}    
+		// }
+		auto pred = [&] (pid a){return a.first == p->id;};
+		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
+		//add out neighbors of p to the candidate set
+		for(int i=0; i<(p->out_nbh.size()); i++){
+			candidates.push_back(std::make_pair(p->out_nbh[i], distance(v[p->out_nbh[i]], p, d)));
+		}  
+		//sort the candidate set in reverse order according to distance from p
+		auto less = [&] (pid a, pid b) {return a.second > b.second;};
+		parlay::sort_inplace(candidates, less);
+		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
+		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
+			int c = candidates.size();
+			int p_star = candidates[c-1].first;
+			candidates.pop_back();
+			new_nbhs.push_back(p_star);
+			parlay::sequence<int> to_delete = parlay::sequence<int>();
+			for(int i=0; i<c-1; i++){
+				int p_prime = candidates[i].first;
+				float dist_starprime = distance(v[p_star], v[p_prime], d);
+				float dist_pprime = distance(p, v[p_prime], d);
+				if(alpha*dist_starprime <= dist_pprime){
+					to_delete.push_back(i);
+				}
+			}
+			if(to_delete.size() > 0){
+				for(int i=0; i<to_delete.size(); i++){
+					candidates.erase(candidates.begin()+to_delete[i]-i);
+				}
+			}
+		}
+		p->new_out_nbh = new_nbhs;
+	}
+
+	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
+	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
 	void robustPrune(fvec_point* p, parlay::sequence<int> candidates, parlay::sequence<fvec_point*> &v, double alpha){
 		//make sure the candidate set does not include p
 		if(parlay::find(candidates, p->id) != candidates.end()) candidates.erase(parlay::find(candidates, p->id));
@@ -219,7 +264,7 @@ struct knn_index{
 					for(int k=0; k<candidates.size(); k++){
 						(v[index]->out_nbh).push_back(candidates[k]);
 					}
-				} else{
+				} else{ //candidates has wrong type right now
 					robustPrune(v[index], candidates, v, r2_alpha);
 					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
 					v[index]->out_nbh = new_nbh;
@@ -237,16 +282,16 @@ struct knn_index{
 		}
 		parlay::parallel_for(0, q.size(), [&] (size_t i){
 			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			parlay::sequence<int> beamElts = (beam_search(q[i], v, medoid, beamSize, d)).first;
+			parlay::sequence<pid> beamElts = (beam_search(q[i], v, medoid, beamSize, d)).first;
 			//the first element of the frontier may be the point itself
 			//if this occurs, do not report it as a neighbor
-			if(beamElts[0]==i){
+			if(beamElts[0].first==i){
 				for(int j=0; j<k; j++){
-					neighbors[j] = beamElts[j+1];
+					neighbors[j] = beamElts[j+1].first;
 				}
 			} else{
 				for(int j=0; j<k; j++){
-					neighbors[j] = beamElts[j];
+					neighbors[j] = beamElts[j].first;
 				}
 			}
 			q[i]->ngh = neighbors;
