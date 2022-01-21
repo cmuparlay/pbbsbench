@@ -45,7 +45,7 @@ using namespace benchIO;
 
 template <class point>
 void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
-  int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) 
+  int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile, bool fvecs) 
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
@@ -55,7 +55,8 @@ void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
   parlay::sequence<fvec_point*> qpts;
 
   if(qFile != NULL){
-    qpoints = parse_fvecs(qFile);
+    if(fvecs) qpoints = parse_fvecs(qFile);
+    else qpoints = parse_bvecs_to_fvecs(qFile);
     size_t q = qpoints.size();
     qpts = parlay::tabulate(q, [&] (size_t i) -> point* {
       return &qpoints[i];});
@@ -110,9 +111,16 @@ int main(int argc, char* argv[]) {
   if (k > 100 || k < 1) P.badArgument();
   double alpha = P.getOptionDoubleValue("-a", 1.5);
 
+  bool fvecs = true;
+  std::string filename = std::string(iFile);
+  std::string::size_type n = filename.size();
+  if(filename[n-5] == 'b') fvecs = false;
+
   std::cout << "Input (fvecs format): " << iFile << std::endl;
-  auto points = parse_fvecs(iFile);
+  parlay::sequence<fvec_point> points;
+  if(fvecs) points = parse_fvecs(iFile);
+  else points = parse_bvecs_to_fvecs(iFile);
   // auto qpoints = parse_fvecs(qFile);
 
-  timeNeighbors(points, qFile, k, rounds, R, L, alpha, oFile);
+  timeNeighbors(points, qFile, k, rounds, R, L, alpha, oFile, fvecs);
 }

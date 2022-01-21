@@ -51,6 +51,8 @@ void ANN(parlay::sequence<fvec_point*> v, int k, int maxDeg, int beamSize, doubl
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size()/4;
+    // std::cout << "Dimension: " << d << std::endl; 
+    std::cout << (v[0]->coordinates)[1] << std::endl; 
     using findex = knn_index<fvec_point>;
     findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v);

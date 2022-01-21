@@ -53,6 +53,8 @@ struct fvec_point {
   parlay::sequence<int> ngh = parlay::sequence<int>();
 };
 
+
+
 //for an ivec file, which contains the ground truth
 //only info needed is the coordinates of the nearest neighbors of each point
 struct ivec_point {
@@ -108,7 +110,7 @@ auto parse_fvecs(const char* filename) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  // std::cout << "Dimension = " << d << std::endl;
+  std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
@@ -155,3 +157,38 @@ auto parse_ivecs(const char* filename) {
 
   return points;
 }
+
+auto parse_bvecs_to_fvecs(const char* filename) {
+  auto [fileptr, length] = mmapStringFromFile(filename);
+  // std::cout << "Successfully mmap'd" << std::endl;
+
+  // Each vector is 4 + d bytes.
+  // * first 4 bytes encode the dimension (as an integer)
+  // * next d values are unsigned chars representing vector components
+  // See http://corpus-texmex.irisa.fr/ for more details.
+
+  int d = *((int*)fileptr);
+  std::cout << "Dimension = " << d << std::endl;
+
+  size_t vector_size = 4 + d;
+  size_t num_vectors = length / vector_size;
+  std::cout << "Num vectors = " << num_vectors << std::endl;
+
+  parlay::sequence<fvec_point> points(num_vectors);
+
+  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
+    points[i].id = i; 
+    unsigned char* start = (unsigned char*)(fileptr + offset_in_bytes);
+    parlay::sequence<float> coords = parlay::sequence<float>(d);
+    for(int j=0; j<d; j++){
+      coords[j] = static_cast<float>(*(start+j));
+    }
+    points[i].coordinates = parlay::make_slice(coords.begin(), coords.end());
+  });
+
+  return points;
+}
+
+
+

@@ -142,13 +142,6 @@ struct knn_index{
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
 	void robustPrune(fvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<fvec_point*> &v, double alpha){
 		//make sure the candidate set does not include p
-		// int self = p->id;
-		// for(int i=0; i<candidates.size(); i++){
-		// 	if(candidates[i].first == self){
-		// 		candidates.erase(candidates.begin()+i);
-		// 		break;
-		// 	}    
-		// }
 		auto pred = [&] (pid a){return a.first == p->id;};
 		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
 		//add out neighbors of p to the candidate set
