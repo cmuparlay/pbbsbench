@@ -32,6 +32,7 @@
 #include "common/parse_command_line.h"
 #include "benchUtils.h"
 
+
 using namespace benchIO;
 
 //make a set of the real neighbors
@@ -40,14 +41,14 @@ using namespace benchIO;
 int checkNeighbors(int k, parlay::sequence<ivec_point> groundTruth, parlay::sequence<long> neighbors, parlay::sequence<int> recall_types){
 	// std::cout << "Size of reported neighbors: " << neighbors.size() << std::endl; 
 	size_t n = (neighbors.size())/(k+1); 
-	// std::cout << "Number of neighbors: " << n << std::endl; 
+	// std::cout << "Number of neighbors: " << k << std::endl; 
 	// std::cout << "Size of ground truth: " << groundTruth.size() << std::endl; 
 	for(int j=0; j<recall_types.size(); j++){
 		int r = recall_types[j];
 		int numCorrect = 0;
 		for(int i=0; i<n; i++){
 			std::set<int> true_nbhs;
-			for(int l=0; l<r; l++) true_nbhs.insert((groundTruth[i].coordinates)[l]);
+			for(int l=0; l<r; l++) true_nbhs.insert((groundTruth[i].coordinates)[l]);   
 			parlay::sequence<int> reported_nbhs = parlay::sequence<int>(r);
 			for(int l=0; l<r; l++) reported_nbhs[l] = neighbors[i*(k+1)+1+l];
 			for(int l=0; l<r; l++) if(true_nbhs.find(reported_nbhs[l]) != true_nbhs.end()) numCorrect += 1;
@@ -90,9 +91,9 @@ int main(int argc, char* argv[]) {
 	// std::cout << "[";
 	// for(int i=0; i<recall_vec.size(); i++) std::cout << recall_vec[i] << ", ";
 	// std::cout << "]" << std::endl; 
-
 	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
 	auto groundTruth = parse_ivecs(iFile);
+	// std::cout << groundTruth.size() << std::endl; 
 	int k = (neighbors.size())/(groundTruth.size())-1;
 	parlay::sequence<int> recall_vec = parse_recall(recall, k);
 	return checkNeighbors(k, groundTruth, neighbors, recall_vec);

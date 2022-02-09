@@ -3,16 +3,16 @@
 bnchmrk="neighbors"
 benchmark="Nearest Neighbors"
 checkProgram="../bench/neighborsCheck"
-dataDir = "/ssd0/ANN/gist1M"
+dataDir = "/ssd1/ANN/sift"
 
 tests = [    
-    [1, "gist_base.fvecs", "gist_query.fvecs", "gist_groundtruth.ivecs", 
+    [1, "bigann_base.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
         "-a 1.2 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
-    [1, "gist_base.fvecs", "gist_query.fvecs", "gist_groundtruth.ivecs", 
+    [1, "bigann_base.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
         "-a 1.2 -R 25 -L 35 -k 30", "-k 30 -r '[1, 2, 5, 10, 20]'"],
-    [1, "gist_base.fvecs", "gist_query.fvecs", "gist_groundtruth.ivecs", 
-        "-a 1.2 -R 60 -L 71 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50]'"],
-    [1, "gist_base.fvecs", "gist_query.fvecs", "gist_groundtruth.ivecs", 
+    [1, "bigann_base.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
+        "-a 1.2 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50]'"],
+    [1, "bigann_base.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
         "-a 1.2 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
     ]
 

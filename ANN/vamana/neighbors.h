@@ -25,37 +25,64 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "common/geometry.h"
+#include "../utils/NSGDist.h"  
+#include "../utils/types.h"
 #include "index.h"
 #include "../utils/beamSearch.h"
-#include "../utils/NSGDist.h"  
 
-bool report_stats = true;
+extern bool report_stats;
 
-template<class fvec_point>
-void ANN(parlay::sequence<fvec_point*> &v, int k, int maxDeg, int beamSize, double alpha, parlay::sequence<fvec_point*> &q) {
+template<typename T>
+void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, double alpha, 
+  parlay::sequence<Tvec_point<T>*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
-  { 
+  {
     unsigned d = (v[0]->coordinates).size()/4;
-    using findex = knn_index<fvec_point>;
+    using findex = knn_index<T>;
     findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v, true);
     t.next("Built index");
     I.searchNeighbors(q, v);
     t.next("Found nearest neighbors");
+    if(report_stats){
+      //average numbers of nodes searched using beam search
+      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->cnt;});
+      size_t i = parlay::max_element(s) - s.begin();
+      size_t sum = parlay::reduce(s);
+      std::cout << "max nodes searched = " << s[i] 
+    << ", average nodes searched = " << sum/((double) v.size()) << std::endl;
+      //average out-degree of graph
+    auto od = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->out_nbh.size();});
+      size_t sum1 = parlay::reduce(od);
+      std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
+      t.next("stats");
+    }
   };
 }
 
 
-template<class fvec_point>
-void ANN(parlay::sequence<fvec_point*> v, int k, int maxDeg, int beamSize, double alpha) {
+template<typename T>
+void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, double alpha) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
+  
     unsigned d = (v[0]->coordinates).size()/4;
-    // std::cout << "Dimension: " << d << std::endl; 
-    std::cout << (v[0]->coordinates)[1] << std::endl; 
-    using findex = knn_index<fvec_point>;
+    using findex = knn_index<T>;
     findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v);
     t.next("Built index");
+    if(report_stats){
+      //average numbers of nodes searched using beam search
+      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->cnt;});
+      size_t i = parlay::max_element(s) - s.begin();
+      size_t sum = parlay::reduce(s);
+      std::cout << "max nodes searched = " << s[i] 
+    << ", average nodes searched = " << sum/((double) v.size()) << std::endl;
+      //average out-degree of graph
+    auto od = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->out_nbh.size();});
+      size_t sum1 = parlay::reduce(od);
+      std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
+      t.next("stats");
+    }
   };
 }

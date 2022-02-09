@@ -29,23 +29,27 @@
 #include <set>
 #include <math.h>
 
+extern bool report_stats;
 
-template<class fvec_point>
+
+template<typename T>
 struct knn_index{
 	int maxDeg;
 	int beamSize;
 	int k; 
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
-	fvec_point* medoid; 
+	using tvec_point = Tvec_point<T>;
+	using fvec_point = Tvec_point<float>;
+	tvec_point* medoid; 
 	using pid = std::pair<int, float>;
-	using slice_fvec = decltype(make_slice(parlay::sequence<fvec_point*>()));
+	using slice_tvec = decltype(make_slice(parlay::sequence<tvec_point*>()));
 	using index_pair = std::pair<int, int>;
 	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
 
 	knn_index(int md, int bs, int kk, double a, unsigned dim) : maxDeg(md), beamSize(bs), k(kk), r2_alpha(a), d(dim) {}
 
-	void clear(parlay::sequence<fvec_point*> &v){
+	void clear(parlay::sequence<tvec_point*> &v){
 		size_t n = v.size();
 		parlay::parallel_for(0, n, [&] (size_t i){
 			parlay::sequence<int> clear_seq = parlay::sequence<int>();
@@ -54,7 +58,9 @@ struct knn_index{
 	}
 
 	//give each vertex maxDeg random out neighbors
-	void random_index(parlay::sequence<fvec_point*> &v){
+	//note that this function as of now may have some contention when running in parallel
+	//TODO rewrite using parlay::random functions
+	void random_index(parlay::sequence<tvec_point*> &v){
 		size_t n = v.size(); 
 		parlay::parallel_for(0, n, [&] (size_t i){
 	    	std::random_device rd;    
@@ -78,10 +84,10 @@ struct knn_index{
 	}
 
 
-	parlay::sequence<float> centroid_helper(slice_fvec a){
+	parlay::sequence<float> centroid_helper(slice_tvec a){
 		if(a.size() == 1){
 			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
-			for(int i=0; i<d; i++) centroid_coords[i] = (a[0]->coordinates)[i];
+			for(int i=0; i<d; i++) centroid_coords[i] = static_cast<float>((a[0]->coordinates)[i]);
 			return centroid_coords;
 		}
 		else{
@@ -101,20 +107,20 @@ struct knn_index{
 		}
 	}
 
-	fvec_point* medoid_helper(fvec_point* centroid, slice_fvec a){
+	tvec_point* medoid_helper(fvec_point* centroid, slice_tvec a){
 		if(a.size() == 1){
 			return a[0];
 		}
 		else{
 			size_t n = a.size();
-			fvec_point* a1;
-			fvec_point* a2;
+			tvec_point* a1;
+			tvec_point* a2;
 			parlay::par_do_if(n>1000,
 				[&] () {a1 = medoid_helper(centroid, a.cut(0, n/2));},
 				[&] () {a2 = medoid_helper(centroid, a.cut(n/2, n));}
 			);
-			float d1 = distance(centroid, a1, d);
-			float d2 = distance(centroid, a2, d);
+			float d1 = distance(centroid->coordinates.begin(), a1->coordinates.begin(), d);
+			float d2 = distance(centroid->coordinates.begin(), a2->coordinates.begin(), d);
 			if(d1<d2) return a1;
 			else return a2;
 		}
@@ -122,10 +128,10 @@ struct knn_index{
 
 	//computes the centroid and then assigns the approx medoid as the point in v
 	//closest to the centroid
-	void find_approx_medoid(parlay::sequence<fvec_point*> &v){
+	void find_approx_medoid(parlay::sequence<Tvec_point<T>*> &v){
 		size_t n = v.size();
 		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v));
-		fvec_point centroidp = typename fvec_point::fvec_point();
+		fvec_point centroidp = Tvec_point<float>();
 		centroidp.coordinates = parlay::make_slice(centroid);
 		medoid = medoid_helper(&centroidp, parlay::make_slice(v)); 
 	}
@@ -140,13 +146,14 @@ struct knn_index{
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
-	void robustPrune(fvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<fvec_point*> &v, double alpha){
+	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha){
 		//make sure the candidate set does not include p
 		auto pred = [&] (pid a){return a.first == p->id;};
 		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
-			candidates.push_back(std::make_pair(p->out_nbh[i], distance(v[p->out_nbh[i]], p, d)));
+			candidates.push_back(std::make_pair(p->out_nbh[i], 
+				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
 		}  
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (pid a, pid b) {return a.second > b.second;};
@@ -160,8 +167,8 @@ struct knn_index{
 			parlay::sequence<int> to_delete = parlay::sequence<int>();
 			for(int i=0; i<c-1; i++){
 				int p_prime = candidates[i].first;
-				float dist_starprime = distance(v[p_star], v[p_prime], d);
-				float dist_pprime = distance(p, v[p_prime], d);
+				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
+				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
 				if(alpha*dist_starprime <= dist_pprime){
 					to_delete.push_back(i);
 				}
@@ -177,7 +184,7 @@ struct knn_index{
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
-	void robustPrune(fvec_point* p, parlay::sequence<int> candidates, parlay::sequence<fvec_point*> &v, double alpha){
+	void robustPrune(Tvec_point<T>* p, parlay::sequence<int> candidates, parlay::sequence<Tvec_point<T>*> &v, double alpha){
 		//make sure the candidate set does not include p
 		if(parlay::find(candidates, p->id) != candidates.end()) candidates.erase(parlay::find(candidates, p->id));
 		//add out neighbors of p to the candidate set
@@ -186,7 +193,8 @@ struct knn_index{
 		}  
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (int a, int b){
-			return distance(v[a], p, d) > distance(v[b], p, d);
+			return distance(v[a]->coordinates.begin(), p->coordinates.begin(), d) > 
+			distance(v[b]->coordinates.begin(), p->coordinates.begin(), d);
 		};
 		parlay::sort_inplace(candidates, less);
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
@@ -198,8 +206,8 @@ struct knn_index{
 			parlay::sequence<int> to_delete = parlay::sequence<int>();
 			for(int i=0; i<c-1; i++){
 				int p_prime = candidates[i];
-				float dist_starprime = distance(v[p_star], v[p_prime], d);
-				float dist_pprime = distance(p, v[p_prime], d);
+				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
+				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
 				if(alpha*dist_starprime <= dist_pprime){
 					to_delete.push_back(i);
 				}
@@ -213,7 +221,7 @@ struct knn_index{
 		p->new_out_nbh = new_nbhs;
 	}
 
-	void build_index(parlay::sequence<fvec_point*> &v, bool from_empty = false){
+	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool random_order = true){
 		clear(v);
 		//populate with random edges
 		if(not from_empty) random_index(v);
@@ -221,14 +229,18 @@ struct knn_index{
 		find_approx_medoid(v);
 		size_t n = v.size();
 		size_t inc = 0;
-		auto rperm = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+		parlay::sequence<int> rperm;
+		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+		else rperm = parlay::tabulate(v.size(), [&] (int i) {return i;});
 		while(pow(2, inc) < n){
 			size_t floor = static_cast<size_t>(pow(2, inc))-1;
 			size_t ceiling = std::min(static_cast<size_t>(pow(2, inc+1)), n)-1;
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				robustPrune(v[rperm[i]], (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second, v, 1);
+				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
+				if(report_stats) v[rperm[i]]->cnt = visited.size();
+				robustPrune(v[rperm[i]], visited, v, 1);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
@@ -254,10 +266,10 @@ struct knn_index{
 				parlay::sequence<int> candidates = grouped_by[j].second;
 				int newsize = candidates.size() + (v[index]->out_nbh).size();
 				if(newsize <= maxDeg){
-					for(int k=0; k<candidates.size(); k++){
+					for(int k=0; k<candidates.size(); k++){ //try concatenating instead of pushing back
 						(v[index]->out_nbh).push_back(candidates[k]);
 					}
-				} else{ //candidates has wrong type right now
+				} else{ 
 					robustPrune(v[index], candidates, v, r2_alpha);
 					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
 					v[index]->out_nbh = new_nbh;
@@ -268,7 +280,7 @@ struct knn_index{
 		}
 	}
 
-	void searchNeighbors(parlay::sequence<fvec_point*> &q, parlay::sequence<fvec_point*> &v){
+	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v){
 		if((k+1)>beamSize){
 			std::cout << "Error: beam search parameter L = " << beamSize << " same size or smaller than k = " << k << std::endl;
 			abort();
