@@ -158,7 +158,7 @@ auto parse_bvecs(const char* filename) {
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     uint8_t* start = (uint8_t*)(fileptr + offset_in_bytes);
-    uint8_t* end = start + d;
+    uint8_t* end = start + 4*d;
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
   });
