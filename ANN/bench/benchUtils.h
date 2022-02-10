@@ -98,7 +98,7 @@ auto parse_fvecs(const char* filename) {
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     float* start = (float*)(fileptr + offset_in_bytes);
-    float* end = start + 4*d;
+    float* end = start + d;
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
   });
@@ -118,7 +118,7 @@ auto parse_ivecs(const char* filename) {
   int d = *((int*)fileptr);
   // std::cout << "Dimension = " << d << std::endl;
 
-  size_t vector_size = 4 + 4*d;
+  size_t vector_size = 4 + d;
   size_t num_vectors = length / vector_size;
   // std::cout << "Num vectors = " << num_vectors << std::endl;
 
@@ -158,7 +158,7 @@ auto parse_bvecs(const char* filename) {
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     uint8_t* start = (uint8_t*)(fileptr + offset_in_bytes);
-    uint8_t* end = start + 4*d;
+    uint8_t* end = start + d;
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
   });

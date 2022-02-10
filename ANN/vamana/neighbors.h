@@ -37,7 +37,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, d
   parlay::sequence<Tvec_point<T>*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
   {
-    unsigned d = (v[0]->coordinates).size()/4;
+    unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v, true);
@@ -57,6 +57,9 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, d
       std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
       t.next("stats");
     }
+    // for(int i=0; i<4*d; i++) std::cout << (int) v[0]->coordinates[i] << std::endl; 
+    // std::cout << "next vector" << std::endl; 
+    // for(int i=0; i<4*d; i++) std::cout << (int) v[v.size()]->coordinates[i] << std::endl; 
   };
 }
 
@@ -66,7 +69,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, do
   parlay::internal::timer t("ANN",report_stats); 
   { 
   
-    unsigned d = (v[0]->coordinates).size()/4;
+    unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, k, alpha, d);
     I.build_index(v);
@@ -84,5 +87,19 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, do
       std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
       t.next("stats");
     }
+    // std::cout << "first vector: " << std::endl;
+    // std::cout << "[";
+    // for(int i=0; i<4*d; i++){
+    //   std::cout << (int) v[0]->coordinates[i] << ", ";
+    // } 
+    // std::cout << "]" << std::endl; 
+    // std::cout << "second vector: " << std::endl;
+    // std::cout << "[";
+    // for(int i=0; i<4*d; i++){
+    //   std::cout << (int) v[1]->coordinates[i] << ", ";
+    // } 
+    // std::cout << "]" << std::endl; 
+    // std::cout << "next vector" << std::endl; 
+    // for(int i=0; i<4*d; i++) std::cout << (int) v[v.size()-1]->coordinates[i] << std::endl; 
   };
 }
