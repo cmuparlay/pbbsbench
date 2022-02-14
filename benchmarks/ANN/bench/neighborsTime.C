@@ -59,16 +59,41 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
   [&] () {ANN<T>(v, k, maxDeg, beamSize, alpha);},
   [&] () {});  
 
+  using index_pair = std::pair<int, int>;
+
   if (outFile != NULL) {
-    int m = n * (k+1);
-    parlay::sequence<int> Pout(m);
-    parlay::parallel_for (0, n, [&] (size_t i) {
-      Pout[(k+1)*i] = v[i]->id;
-      for (int j=0; j < k; j++)
-        Pout[(k+1)*i + j+1] = (v[i]->ngh)[j];
-    });
-    writeIntSeqToFile(Pout, outFile);
-  }
+      parlay::sequence<int> udegrees(n);
+      parlay::sequence<index_pair> edges = parlay::sequence<index_pair>();
+      for(int i=0; i<n; i++){
+        udegrees[i] = 0;
+        parlay::sequence<int> out_nbh = v[i]->out_nbh;
+        // parlay::sequence<index_pair> edges = parlay::sequence<index_pair>(out_nbh.size());
+        for(int j=0; j<out_nbh.size(); j++){
+          auto pred = [&] (index_pair a) {return ((a.first == out_nbh[j] && a.second == i) 
+            || (a.first == i && a.second == out_nbh[j]));};
+          if(find_if(edges, pred) != edges.end()) continue;
+          else{
+            index_pair candidate = std::make_pair(i, out_nbh[j]);
+            edges.push_back(candidate);
+          } 
+        }
+      }
+      for(int i=0; i<edges.size(); i++){
+        index_pair edge = edges[i];
+        udegrees[edge.first] += 1;
+        udegrees[edge.second] += 1;
+      }
+      std::cout << "here" << std::endl; 
+      writeIntSeqToFile(udegrees, outFile);
+      // int m = q * (k+1);
+      // parlay::sequence<int> Pout(m);
+      // parlay::parallel_for (0, q, [&] (size_t i) {
+      //   Pout[(k+1)*i] = qpts[i]->id;
+      //   for (int j=0; j < k; j++)
+      //     Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
+      // });
+      // writeIntSeqToFile(Pout, outFile);
+    }
 
 }
 
@@ -90,14 +115,21 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_p
       [&] () {});
 
     if (outFile != NULL) {
-      int m = q * (k+1);
-      parlay::sequence<int> Pout(m);
-      parlay::parallel_for (0, q, [&] (size_t i) {
-        Pout[(k+1)*i] = qpts[i]->id;
-        for (int j=0; j < k; j++)
-          Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
+      int d = v[0]->coordinates.size();
+      int m = n*d; //total number of ints in the file
+      parlay::sequence<int> degrees(n);
+      parlay::parallel_for(0, n, [&] (size_t i){
+        degrees[i] = v[i]->out_nbh.size();
       });
-      writeIntSeqToFile(Pout, outFile);
+      writeIntSeqToFile(degrees, outFile);
+      // int m = q * (k+1);
+      // parlay::sequence<int> Pout(m);
+      // parlay::parallel_for (0, q, [&] (size_t i) {
+      //   Pout[(k+1)*i] = qpts[i]->id;
+      //   for (int j=0; j < k; j++)
+      //     Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
+      // });
+      // writeIntSeqToFile(Pout, outFile);
     }
   
 
