@@ -23,7 +23,7 @@ rMatGraph_E_10_% : ../rMatGraph
 	../rMatGraph  -a .5 -b .1 -m `expr 10 \* $(subst rMatGraph_E_10_,,$@)` $(subst rMatGraph_E_10_,,$@) $@
 
 rMatGraph_E_12_% : ../rMatGraph
-	../rMatGraph -a .55 -b .125 -o -m `expr 12 \* $(subst rMatGraph_E_12_,,$@)` $(subst rMatGraph_E_12_,,$@) $@
+	../rMatGraph -a .55 -b .125 -m `expr 12 \* $(subst rMatGraph_E_12_,,$@)` $(subst rMatGraph_E_12_,,$@) $@
 
 rMatGraph_E_16_% : ../rMatGraph
 	../rMatGraph -a .57 -b .19 -m `expr 16 \* $(subst rMatGraph_E_16_,,$@)` $(subst rMatGraph_E_16_,,$@) $@
@@ -60,11 +60,17 @@ randLocalGraph_WE_10_% : ../addWeights
 3Dgrid_J_% : ../gridGraph
 	../gridGraph -j -d 3 -o $(subst 3Dgrid_J_,,$@) $@
 
+3Dgrid_JR_% : ../gridGraph
+	../gridGraph -j -d 3 $(subst 3Dgrid_JR_,,$@) $@
+
 rMatGraph_J_5_% : ../rMatGraph
 	../rMatGraph -j -a .5 -b .1 -m `expr 5 \* $(subst rMatGraph_J_5_,,$@)` $(subst rMatGraph_J_5_,,$@) $@
 
 rMatGraph_J_12_% : ../rMatGraph
 	../rMatGraph -j -a .55 -b .125 -o -m `expr 12 \* $(subst rMatGraph_J_12_,,$@)` $(subst rMatGraph_J_12_,,$@) $@
+
+rMatGraph_JR_12_% : ../rMatGraph
+	../rMatGraph -j -a .55 -b .125 -m `expr 12 \* $(subst rMatGraph_JR_12_,,$@)` $(subst rMatGraph_JR_12_,,$@) $@
 
 rMatGraph_J_16_% : ../rMatGraph
 	../rMatGraph -j -a .57 -b .19 -m `expr 16 \* $(subst rMatGraph_J_16_,,$@)` $(subst rMatGraph_J_16_,,$@) $@
@@ -74,6 +80,9 @@ randLocalGraph_J_5_% : ../randLocalGraph
 
 randLocalGraph_J_10_% : ../randLocalGraph
 	../randLocalGraph -j -o -d 3 -m `expr 10 \* $(subst randLocalGraph_J_10_,,$@)` $(subst randLocalGraph_J_10_,,$@) $@
+
+randLocalGraph_JR_10_% : ../randLocalGraph
+	../randLocalGraph -j -d 3 -m `expr 10 \* $(subst randLocalGraph_JR_10_,,$@)` $(subst randLocalGraph_JR_10_,,$@) $@
 
 rMatGraph_J_500_% : ../rMatGraph
 	../rMatGraph -j -a .5 -b .1 -m `expr 500 \* $(subst rMatGraph_J_500_,,$@)` $(subst rMatGraph_J_500_,,$@) $@

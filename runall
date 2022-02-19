@@ -57,8 +57,8 @@ tests = [
     ["maximalMatching/serialMatching",False,0],
     ["maximalMatching/incrementalMatching",True,0],
 
-    ["maximalIndependentSet/ndMIS",True,0],
-    ["maximalIndependentSet/incrementalMIS",True,1],
+    ["maximalIndependentSet/incrementalMIS",True,0],
+    ["maximalIndependentSet/ndMIS",True,1],
     ["maximalIndependentSet/serialMIS",False,0],
 
     ["nearestNeighbors/octTree",True,0],

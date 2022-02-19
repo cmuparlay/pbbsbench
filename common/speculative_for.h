@@ -99,8 +99,8 @@ namespace pbbs {
       numberKeep = Ihold.size();
       numberDone += size - numberKeep;
 
-      std::cout << size << " : " << numberKeep << " : "
-		<< numberDone << " : " << currentRoundSize << std::endl;
+      //std::cout << size << " : " << numberKeep << " : "
+      //  << numberDone << " : " << currentRoundSize << std::endl;
 
       // adjust round size based on number of failed attempts
       if (float(numberKeep)/float(size) > .2)
