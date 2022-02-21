@@ -134,6 +134,7 @@ struct knn_index{
 		fvec_point centroidp = Tvec_point<float>();
 		centroidp.coordinates = parlay::make_slice(centroid);
 		medoid = medoid_helper(&centroidp, parlay::make_slice(v)); 
+		std::cout << "Medoid ID: " << medoid->id << std::endl; 
 	}
 
 	void print_set(std::set<int> myset){
@@ -221,12 +222,17 @@ struct knn_index{
 		p->new_out_nbh = new_nbhs;
 	}
 
-	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool random_order = true){
+	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
 		clear(v);
 		//populate with random edges
 		if(not from_empty) random_index(v);
 		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
+		build_index_inner(v);
+		if(two_pass) build_index_inner(v, r2_alpha);
+	}
+
+	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, bool random_order = false){
 		size_t n = v.size();
 		size_t inc = 0;
 		parlay::sequence<int> rperm;
@@ -240,7 +246,7 @@ struct knn_index{
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
 				if(report_stats) v[rperm[i]]->cnt = visited.size();
-				robustPrune(v[rperm[i]], visited, v, 1);
+				robustPrune(v[rperm[i]], visited, v, alpha);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
@@ -270,7 +276,7 @@ struct knn_index{
 						(v[index]->out_nbh).push_back(candidates[k]);
 					}
 				} else{ 
-					robustPrune(v[index], candidates, v, r2_alpha);
+					robustPrune(v[index], candidates, v, alpha);
 					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
 					v[index]->out_nbh = new_nbh;
 					(v[index]->new_out_nbh).clear();
@@ -280,14 +286,14 @@ struct knn_index{
 		}
 	}
 
-	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v){
-		if((k+1)>beamSize){
-			std::cout << "Error: beam search parameter L = " << beamSize << " same size or smaller than k = " << k << std::endl;
+	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ){
+		if((k+1)>beamSizeQ){
+			std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
 			abort();
 		}
 		parlay::parallel_for(0, q.size(), [&] (size_t i){
 			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			parlay::sequence<pid> beamElts = (beam_search(q[i], v, medoid, beamSize, d)).first;
+			parlay::sequence<pid> beamElts = (beam_search(q[i], v, medoid, beamSizeQ, d)).first;
 			//the first element of the frontier may be the point itself
 			//if this occurs, do not report it as a neighbor
 			if(beamElts[0].first==i){

@@ -118,16 +118,16 @@ auto parse_ivecs(const char* filename) {
   int d = *((int*)fileptr);
   // std::cout << "Dimension = " << d << std::endl;
 
-  size_t vector_size = 4 + d;
+  size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
-  // std::cout << "Num vectors = " << num_vectors << std::endl;
+  // std::cout << "Num vectors = " << num_vectors << std::endl;    
 
   parlay::sequence<ivec_point> points(num_vectors);
 
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     int* start = (int*)(fileptr + offset_in_bytes);
-    int* end = start + 4*d;
+    int* end = start + d;
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
   });

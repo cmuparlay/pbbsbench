@@ -91,8 +91,9 @@ int main(int argc, char* argv[]) {
 	// std::cout << "[";
 	// for(int i=0; i<recall_vec.size(); i++) std::cout << recall_vec[i] << ", ";
 	// std::cout << "]" << std::endl; 
-	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);
+	parlay::sequence<long> neighbors = readIntSeqFromFile<long>(oFile);    
 	auto groundTruth = parse_ivecs(iFile);
+	// std::cout << neighbors.size() << std::endl; 
 	// std::cout << groundTruth.size() << std::endl; 
 	int k = (neighbors.size())/(groundTruth.size())-1;
 	parlay::sequence<int> recall_vec = parse_recall(recall, k);

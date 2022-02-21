@@ -47,7 +47,7 @@ bool report_stats = true;
 
 template<typename T>
 void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
-  int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) 
+  int k, int rounds, int maxDeg, int beamSize, bool two_passes, double alpha, char* outFile) 
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -56,50 +56,25 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
  
   time_loop(rounds, 1.0,
   [&] () {},
-  [&] () {ANN<T>(v, k, maxDeg, beamSize, alpha);},
+  [&] () {ANN<T>(v, k, maxDeg, beamSize, two_passes, alpha);},
   [&] () {});  
 
   using index_pair = std::pair<int, int>;
 
-  if (outFile != NULL) {
-      parlay::sequence<int> udegrees(n);
-      parlay::sequence<index_pair> edges = parlay::sequence<index_pair>();
-      for(int i=0; i<n; i++){
-        udegrees[i] = 0;
-        parlay::sequence<int> out_nbh = v[i]->out_nbh;
-        // parlay::sequence<index_pair> edges = parlay::sequence<index_pair>(out_nbh.size());
-        for(int j=0; j<out_nbh.size(); j++){
-          auto pred = [&] (index_pair a) {return ((a.first == out_nbh[j] && a.second == i) 
-            || (a.first == i && a.second == out_nbh[j]));};
-          if(find_if(edges, pred) != edges.end()) continue;
-          else{
-            index_pair candidate = std::make_pair(i, out_nbh[j]);
-            edges.push_back(candidate);
-          } 
-        }
-      }
-      for(int i=0; i<edges.size(); i++){
-        index_pair edge = edges[i];
-        udegrees[edge.first] += 1;
-        udegrees[edge.second] += 1;
-      }
-      std::cout << "here" << std::endl; 
-      writeIntSeqToFile(udegrees, outFile);
-      // int m = q * (k+1);
-      // parlay::sequence<int> Pout(m);
-      // parlay::parallel_for (0, q, [&] (size_t i) {
-      //   Pout[(k+1)*i] = qpts[i]->id;
-      //   for (int j=0; j < k; j++)
-      //     Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
-      // });
-      // writeIntSeqToFile(Pout, outFile);
+  //DIRECTED DEGREES
+if (outFile != NULL) {
+      parlay::sequence<int> degrees(n);
+      parlay::parallel_for(0, n, [&] (size_t i){
+        degrees[i] = v[i]->out_nbh.size();
+      });
+      writeIntSeqToFile(degrees, outFile);
     }
 
 }
 
 template<typename T>
 void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_point<T>> &qpoints,
-  int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) 
+  int k, int rounds, int maxDeg, int beamSize, int beamSizeQ, bool two_passes, double alpha, char* outFile) 
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -111,25 +86,18 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_p
 
     time_loop(rounds, 1.0,
       [&] () {},
-      [&] () {ANN<T>(v, k, maxDeg, beamSize, alpha, qpts);},
+      [&] () {ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, two_passes, alpha, qpts);},
       [&] () {});
 
     if (outFile != NULL) {
-      int d = v[0]->coordinates.size();
-      int m = n*d; //total number of ints in the file
-      parlay::sequence<int> degrees(n);
-      parlay::parallel_for(0, n, [&] (size_t i){
-        degrees[i] = v[i]->out_nbh.size();
+      int m = q * (k+1);
+      parlay::sequence<int> Pout(m);
+      parlay::parallel_for (0, q, [&] (size_t i) {
+        Pout[(k+1)*i] = qpts[i]->id;
+        for (int j=0; j < k; j++)
+          Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
       });
-      writeIntSeqToFile(degrees, outFile);
-      // int m = q * (k+1);
-      // parlay::sequence<int> Pout(m);
-      // parlay::parallel_for (0, q, [&] (size_t i) {
-      //   Pout[(k+1)*i] = qpts[i]->id;
-      //   for (int j=0; j < k; j++)
-      //     Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
-      // });
-      // writeIntSeqToFile(Pout, outFile);
+      writeIntSeqToFile(Pout, outFile);
     }
   
 
@@ -137,7 +105,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_p
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-a <alpha>] [-R {1,...,1000}] [-L {1,...,1000}] [-k {1,...,100}] [-q <queryFile>] [-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-a <alpha>] [-R {1,...,1000}] [-L {1,...,1000}] [-Q {1,...,1000}] [-p {1,2}] [-k {1,...,100}] [-q <queryFile>] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   char* qFile = P.getOptionValue("-q");
@@ -145,6 +113,10 @@ int main(int argc, char* argv[]) {
   if (R > 1000 || R < 1) P.badArgument();
   int L = P.getOptionIntValue("-L", 10);
   if (L > 1000 || L < 1) P.badArgument();
+  int Q = P.getOptionIntValue("-Q", L);
+  if (Q > 1000 || Q < 1) P.badArgument();
+  int p = P.getOptionIntValue("-p", 1);
+  if (p > 1000 || p < 1) P.badArgument();
   int rounds = P.getOptionIntValue("-r", 1);
   int k = P.getOptionIntValue("-k", 1);
   if (k > 100 || k < 1) P.badArgument();
@@ -156,19 +128,114 @@ int main(int argc, char* argv[]) {
   if(filename[n-5] == 'b') fvecs = false;
   std::cout << "Input (Tvecs format): " << iFile << std::endl;
 
+  bool two_passes = (p==2);
+
   if(fvecs){
     parlay::sequence<Tvec_point<float>> points = parse_fvecs(iFile);
     if(qFile != NULL){
       parlay::sequence<Tvec_point<float>> qpoints = parse_fvecs(qFile);
-      timeNeighbors<float>(points, qpoints, k, rounds, R, L, alpha, oFile);
+      timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q, two_passes, alpha, oFile);
     }
-    else timeNeighbors<float>(points, k, rounds, R, L, alpha, oFile);
+    else timeNeighbors<float>(points, k, rounds, R, L, two_passes, alpha, oFile);
   } 
   else{ 
     parlay::sequence<Tvec_point<uint8_t>> points = parse_bvecs(iFile);
     if(qFile != NULL){
       parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_bvecs(qFile);
-      timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, alpha, oFile);
+      timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q, two_passes, alpha, oFile);
     }
-    else timeNeighbors<uint8_t>(points, k, rounds, R, L, alpha, oFile);}
+    else timeNeighbors<uint8_t>(points, k, rounds, R, L, two_passes, alpha, oFile);}
 }
+
+
+
+//REGULAR CORRECTNESS CHECK
+// if (outFile != NULL) {
+      // int m = q * (k+1);
+      // parlay::sequence<int> Pout(m);
+      // parlay::parallel_for (0, q, [&] (size_t i) {
+      //   Pout[(k+1)*i] = qpts[i]->id;
+      //   for (int j=0; j < k; j++)
+      //     Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
+      // });
+      // writeIntSeqToFile(Pout, outFile);
+    // }
+
+
+//DIRECTED DEGREES
+// if (outFile != NULL) {
+      // parlay::sequence<int> degrees(n);
+      // parlay::parallel_for(0, n, [&] (size_t i){
+      //   degrees[i] = v[i]->out_nbh.size();
+      // });
+      // writeIntSeqToFile(degrees, outFile);
+    // }
+
+//COORDINATES OF FILE
+// if (outFile != NULL) {
+      // int d = v[0]->coordinates.size();
+      // int m = n*d; //total number of ints in the file
+      // parlay::sequence<int> vals(m);
+      // parlay::parallel_for(0, n, [&] (size_t i){
+          // for(int j=0; j<d; j++){
+          //   vals[i*d+j] = (int) v[i]->coordinates[j];
+          // }
+      // });
+      // writeIntSeqToFile(vals, outFile);
+    // }
+
+//UNDIRECTED DEGREES (REALLY SLOW AND BAD)
+ // if (outFile != NULL) {
+ //      parlay::sequence<int> udegrees(n);
+ //      parlay::sequence<parlay::sequence<index_pair>> to_flatten = parlay::sequence<parlay::sequence<index_pair>>(n);
+ //      parlay::parallel_for(0, n, [&] (size_t i){
+ //        size_t m = v[i]->out_nbh.size();
+ //        parlay::sequence<index_pair> edges = parlay::sequence<index_pair>(2*m);
+ //        for(int j=0; j<m; j++){
+ //          edges[2*j] = std::make_pair(i, v[i]->out_nbh[j]);
+ //          edges[2*j+1] = std::make_pair(v[i]->out_nbh[j], i);
+ //        }
+ //        to_flatten[i] = edges;
+ //      });
+ //      std::cout << "here1" << std::endl; 
+ //    auto edges_unsorted = parlay::flatten(to_flatten);
+ //    std::cout << "here2" << std::endl; 
+ //    auto grouped_edges = parlay::group_by_key(edges_unsorted);
+ //    std::cout << "here3" << std::endl; 
+ //    parlay::parallel_for(0, n, [&] (size_t i){
+ //      int count = 0;
+ //      // parlay::sequence<int> edge_ids = grouped_edges[i].second;
+ //      std::cout << grouped_edges[i].second.size() << std::endl; 
+ //      for(int j=0; j<grouped_edges[i].second.size(); j++){
+ //        count+=1;
+        
+ //        if(j<grouped_edges[i].second.size()-1){
+ //          int current = grouped_edges[i].second[j];
+ //          int next = grouped_edges[i].second[j+1];
+ //          if(current == next) j+=1;
+ //        }
+        
+ //      }
+ //      udegrees[i] = count;
+ //    });
+ //    auto sortedDegrees = parlay::sort(udegrees);
+ //    writeIntSeqToFile(sortedDegrees, outFile);
+ //    }
+
+  //GRAPH FORMAT
+
+   // if (outFile != NULL) {
+   //    parlay::sequence<int> graph(n*(maxDeg+1));
+   //    parlay::parallel_for(0, n, [&] (size_t i){
+   //      graph[i*(maxDeg+1)] = (int) i; 
+   //      int degree = v[i]->out_nbh.size();
+   //      for(int j=0; j<degree; j++) graph[i*(maxDeg+1)+1+j] = v[i]->out_nbh[j]; 
+   //      int rem = maxDeg - degree;
+   //      for(int j=0; j<rem; j++) graph[i*(maxDeg+1)+1+degree+j] = -1;
+   //    });
+   //    writeIntSeqToFile(graph, outFile);
+   //  }
+
+
+
+
