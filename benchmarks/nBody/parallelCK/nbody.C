@@ -242,8 +242,8 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_siz
   auto flagsRight = parlay::delayed_map(flagsLeft, [] (bool x) {
       return !x;});
 
-  size_t nl = parlay::pack_into(particles, flagsLeft, Tmp);
-  parlay::pack_into(particles, flagsRight, Tmp.cut(nl, n));
+  size_t nl = parlay::pack_into_uninitialized(particles, flagsLeft, Tmp);
+  parlay::pack_into_uninitialized(particles, flagsRight, Tmp.cut(nl, n));
   parlay::copy(Tmp, particles);
   size_t en_child = .44 * en;
 
