@@ -148,19 +148,22 @@ cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
   // calculate cost of each possible split location, 
   // return tuple with cost, number of ends before the location, and the index
   using rtype = std::tuple<float,index_t,index_t>;
-  auto cost_f = [&] (index_t num_ends, index_t i) -> rtype {
-      index_t num_ends_before = num_ends - IS_END(E[i]); 
-      index_t inLeft = i - num_ends_before; // number of points intersecting left
-      index_t inRight = n/2 - num_ends;   // number of points intersecting right
-      float leftLength = E[i].v - r.min;
-      float leftSurfaceArea = orthogArea + orthoPerimeter * leftLength;
-      float rightLength = r.max - E[i].v;
-      float rightSurfaceArea = orthogArea + orthoPerimeter * rightLength;
-      float cost = leftSurfaceArea * inLeft + rightSurfaceArea * inRight;
-      return rtype(cost, num_ends_before, i);};
-
-  auto costs = parlay::map(parlay::zip(end_counts, parlay::iota<index_t>(n)),
-			   cost_f);
+  auto cost_f = [&] (std::pair<index_t,index_t> ni) -> rtype {
+    auto [ num_ends, i] = ni;
+    index_t num_ends_before = num_ends - IS_END(E[i]); 
+    index_t inLeft = i - num_ends_before; // number of points intersecting left
+    index_t inRight = n/2 - num_ends;   // number of points intersecting right
+    float leftLength = E[i].v - r.min;
+    float leftSurfaceArea = orthogArea + orthoPerimeter * leftLength;
+    float rightLength = r.max - E[i].v;
+    float rightSurfaceArea = orthogArea + orthoPerimeter * rightLength;
+    float cost = leftSurfaceArea * inLeft + rightSurfaceArea * inRight;
+    return rtype(cost, num_ends_before, i);};
+  auto x = parlay::tabulate(end_counts.size(), [&] (index_t i) {
+      return std::pair{end_counts[i], i};});
+  auto y = parlay::zip(end_counts, parlay::iota<index_t>(n));
+  // works with x but not y
+  auto costs = parlay::map(y, cost_f);
 
   // find minimum across all, returning the triple
   auto min_f = [&] (rtype a, rtype b) {return (std::get<0>(a) < std::get<0>(b)) ? a : b;};
