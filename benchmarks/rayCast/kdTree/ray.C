@@ -48,8 +48,8 @@
 #include "rayTriangleIntersect.h"
 using namespace std;
 
-//namespace delayed = parlay::delayed;
-namespace delayed = parlay;
+namespace delayed = parlay::delayed;
+//namespace delayed = parlay;
 using parlay::tabulate;
 using parlay::parallel_for;
 using parlay::scan_inplace;
