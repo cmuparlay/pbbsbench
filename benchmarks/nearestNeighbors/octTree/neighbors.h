@@ -20,7 +20,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = true;
+bool report_stats = false;
 int algorithm_version = 2;
 // 0=root based, 1=bit based, >2=map based
 
@@ -67,12 +67,12 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     box_delta bd = T.get_box_delta(dims);
 
     //batch-dynamic deletion
-    T.batch_delete(v2, root, bd.first, bd.second);
-    t.next("batch deletion");
+    //T.batch_delete(v2, root, bd.first, bd.second);
+    //t.next("batch deletion");
 
     //batch-dynamic insertion
-    T.batch_insert(v2, root, bd.first, bd.second);
-    t.next("batch insertion");
+    //T.batch_insert(v2, root, bd.first, bd.second);
+    //t.next("batch insertion");
 
 
 

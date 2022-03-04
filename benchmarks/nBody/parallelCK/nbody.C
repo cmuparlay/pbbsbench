@@ -72,26 +72,26 @@ using vect3d = vect;
 // Following for 1e-3 accuracy
 //#define ALPHA 2.2
 //#define terms 7
-//#define BOXSIZE 125
+//#define BOXSIZE 150
 
 // Following for 1e-6 accuracy (2.5x slower than above)
-#define ALPHA 2.7 
+#define ALPHA 2.65
 #define terms 12  
-#define BOXSIZE 200
+#define BOXSIZE 270
 
 // Following for 1e-9 accuracy (2.2x slower than above)
 // #define ALPHA 3.0
 // #define terms 17
-// #define BOXSIZE 500
+// #define BOXSIZE 550
 
 // Following for 1e-12 accuracy (1.8x slower than above)
 //#define ALPHA 3.2
 //#define terms 22
-//#define BOXSIZE 650
+//#define BOXSIZE 700
 
 double check(sequence<particle*> const &p) {
   size_t n = p.size();
-  size_t nCheck = min<size_t>(n,200);
+  size_t nCheck = min<size_t>(n, 200);
   sequence<double> Err(nCheck);
   
   parlay::parallel_for (0, nCheck, [&] (size_t i) {
@@ -195,6 +195,7 @@ struct node {
   node* left;
   node* right;
   sequence<particle*> particles;
+  sequence<particle> particles_d;
   size_t n;
   box b;
   innerExpansion* InExp;
@@ -222,6 +223,7 @@ struct node {
   node(parlay::sequence<particle*> P, box b) 
     : left(NULL), right(NULL), particles(std::move(P)), b(b) {
     n = particles.size();
+    particles_d = parlay::map(particles, [] (auto p) {return *p;});
     allocateExpansions();
   }
 };
@@ -408,23 +410,23 @@ size_t getLeaves(node* tr, node** Leaves) {
 // updating it.
 // *************************************************************
 auto direct(node* Left, node* ngh) {
-  particle** LP = (Left->particles).data();
-  particle** RP = (ngh->particles).data();
+  auto LP = (Left->particles).data();
+  auto R = (ngh->particles_d).data();
   size_t nl = Left->n;
   size_t nr = ngh->n;
   parlay::sequence<vect3d> hold(nr, vect3d(0.,0.,0.));
   for (size_t i=0; i < nl; i++) {
     vect3d frc(0.,0.,0.);
-    particle* pa = LP[i];
+    particle pa = *LP[i];
     for (size_t j=0; j < nr; j++) {
-      particle* pb = RP[j];
-      vect3d v = (pb->pt) - (pa->pt);
+      particle& pb = R[j];
+      vect3d v = pb.pt - pa.pt;
       double r2 = v.dot(v);
-      vect3d force = (v * (pa->mass * pb->mass / (r2*sqrt(r2))));;
+      vect3d force = (v * (pa.mass * pb.mass / (r2*sqrt(r2))));;
       hold[j] = hold[j] - force;
       frc = frc + force;
     }
-    pa->force = pa->force + frc;
+    LP[i]->force = LP[i]->force + frc;
   }
   return hold;
 }
@@ -433,7 +435,7 @@ auto direct(node* Left, node* ngh) {
 // Calculates local forces within a leaf
 // *************************************************************
 void self(node* Tr) {
-  particle** PP = (Tr->particles).data();
+  auto PP = (Tr->particles).data();
   for (size_t i=0; i < Tr->n; i++) {
     particle* pa = PP[i];
     for (size_t j=i+1; j < Tr->n; j++) {
@@ -463,8 +465,9 @@ void doDirect(node* a) {
 
   // calculates interactions and put neighbor's results in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
-    Leaves[i]->hold = parlay::tabulate(Leaves[i]->rightNeighbors.size(), [&] (size_t j) {
-	return direct(Leaves[i], Leaves[i]->rightNeighbors[j].first);});}, 1);
+      size_t rn = Leaves[i]->rightNeighbors.size();
+      Leaves[i]->hold = parlay::tabulate(rn, [&] (size_t j) {
+	  return direct(Leaves[i], Leaves[i]->rightNeighbors[j].first);}, rn);}, 1);
 
   // picks up results from neighbors that were left in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
@@ -473,7 +476,7 @@ void doDirect(node* a) {
       auto [u, v] = L->leftNeighbors[j];
       for (size_t k=0; k < Leaves[i]->n; k++) 
 	L->particles[k]->force = L->particles[k]->force + u->hold[v][k];
-    }});
+    }}, 1);
 
   // calculate forces within a node
   parlay::parallel_for (0, nleaves, [&] (size_t i) {self(Leaves[i]);});

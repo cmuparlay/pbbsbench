@@ -40,7 +40,7 @@
 #include <limits>
 #include <algorithm>
 #include "parlay/primitives.h"
-#include "parlay/internal/block_delayed.h"
+#include "parlay/delayed.h"
 #include "parlay/internal/get_time.h"
 #include "common/geometry.h"
 #include "ray.h"
@@ -48,6 +48,8 @@
 #include "rayTriangleIntersect.h"
 using namespace std;
 
+namespace delayed = parlay::delayed;
+//namespace delayed = parlay;
 using parlay::tabulate;
 using parlay::parallel_for;
 using parlay::scan_inplace;
@@ -56,7 +58,6 @@ using parlay::par_do;
 using parlay::pack;
 using parlay::sort_inplace;
 using parlay::to_sequence;
-using parlay::delayed_tabulate;
 
 int CHECK = 0;  // if set checks 10 rays against brute force method
 int STATS = 0;  // if set prints out some tree statistics
@@ -141,14 +142,14 @@ cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
   float orthoPerimeter = 2 * ((r1.max-r1.min) + (r2.max-r2.min));
 
   // count number that end before i
-  auto is_end = delayed_tabulate(n, [&] (index_t i) -> index_t {return IS_END(E[i]);});
-  auto end_counts = parlay::block_delayed::scan_inclusive(is_end, parlay::addm<index_t>());
+  auto is_end = delayed::tabulate(n, [&] (index_t i) -> index_t {return IS_END(E[i]);});
+  auto end_counts = delayed::scan_inclusive(is_end);
   
   // calculate cost of each possible split location, 
   // return tuple with cost, number of ends before the location, and the index
   using rtype = std::tuple<float,index_t,index_t>;
-  auto costs = parlay::block_delayed::zip_with(end_counts, parlay::iota(n),
-        [&] (index_t num_ends, index_t i) -> rtype {
+  auto cost_f = [&] (std::tuple<index_t,index_t> ni) -> rtype {
+    auto [ num_ends, i] = ni;
     index_t num_ends_before = num_ends - IS_END(E[i]); 
     index_t inLeft = i - num_ends_before; // number of points intersecting left
     index_t inRight = n/2 - num_ends;   // number of points intersecting right
@@ -157,13 +158,14 @@ cutInfo bestCut(sequence<event> const &E, range r, range r1, range r2) {
     float rightLength = r.max - E[i].v;
     float rightSurfaceArea = orthogArea + orthoPerimeter * rightLength;
     float cost = leftSurfaceArea * inLeft + rightSurfaceArea * inRight;
-    return rtype(cost, num_ends_before, i);});
+    return rtype(cost, num_ends_before, i);};
+  auto costs = delayed::map(delayed::zip(end_counts, parlay::iota<index_t>(n)), cost_f);
 
   // find minimum across all, returning the triple
   auto min_f = [&] (rtype a, rtype b) {return (std::get<0>(a) < std::get<0>(b)) ? a : b;};
   rtype identity(std::numeric_limits<float>::max(), 0, 0);
   auto [cost, num_ends_before, i] =
-    parlay::block_delayed::reduce(costs, parlay::make_monoid(min_f, identity));
+    delayed::reduce(costs, parlay::make_monoid(min_f, identity));
  
   index_t ln = i - num_ends_before;
   index_t rn = n/2 - (num_ends_before + IS_END(E[i]));
@@ -178,15 +180,15 @@ auto two_pack(Seq const &S, BSeq1 const &Fl1, BSeq2 const &Fl2) {
     using T = typename Seq::value_type;
   size_t n = S.size();
   auto twoAdd = pair_monoid(addm<size_t>(),addm<size_t>());
-  auto twoFlags = delayed_tabulate(n, [&] (size_t i) {
+  auto twoFlags = delayed::tabulate(n, [&] (size_t i) {
        return pair<size_t,size_t>((bool) Fl1[i], (bool) Fl2[i]);});
-  auto [offsets, totals] = block_delayed::scan(twoFlags, twoAdd);
+  auto [offsets, totals] = delayed::scan(twoFlags, twoAdd);
   auto result1 = sequence<T>::uninitialized(totals.first);
   auto result2 = sequence<T>::uninitialized(totals.second);
-  auto f = [&] (auto offset, auto i) {
+  auto f = [&] (auto offset, auto i) -> void {
   	     if (Fl1[i]) result1[offset.first] = S[i];
   	     if (Fl2[i]) result2[offset.second] = S[i];};
-  block_delayed::zip_apply(offsets, iota(n), f);
+  delayed::for_each(delayed::zip(offsets, iota(n)), f);
   return std::pair(std::move(result1), std::move(result2));
 }
 }
@@ -204,8 +206,8 @@ eventsPair splitEvents(sequence<range> const &boxes,
     upper[i] = boxes[b].max > cutOff;
   });
 
-  return parlay::two_pack(events, lower, upper);
-  //return eventsPair(pack(events, lower), pack(events, upper));
+  //return parlay::two_pack(events, lower, upper);
+  return eventsPair(pack(events, lower), pack(events, upper));
 }
 
 // n is the number of events (i.e. twice the number of triangles)

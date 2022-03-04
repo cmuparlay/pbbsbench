@@ -41,7 +41,7 @@ void timeNBody(parlay::sequence<point> const &pts, int rounds, char* outFile) {
   parlay::sequence<particle*> p = parlay::tabulate(pts.size(), [&] (size_t i) -> particle* {
       return &pp[i];});
 
-  time_loop(rounds, 1.0,
+  time_loop(rounds, 0.0, //1.0,
 	    [&] () {},
 	    [&] () {nbody(p);},
 	    [&] () {});
