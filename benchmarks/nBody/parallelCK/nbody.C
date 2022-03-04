@@ -30,12 +30,12 @@
 // 
 // It uses similar ideas to the Greengard-Rothkin FMM method but is
 // more flexible for umbalanced trees.  As with FMM it uses
-// "Multipole" and "Local" expansion and translations between them.
-// For the expansions it uses a modified version of the multipole
-// translation code from the PETFMM library using spherical
-// harmonics.  The translations are implemented in spherical.h and can
-// be changed for any other routines that support the public interface
-// of the transform structure.
+// "Multipole" (or "inner") and "Local" (or "outer") expansion and
+// translations between them.  For the expansions it uses a modified
+// version of the multipole translation code from the PETFMM library
+// using spherical harmonics.  The translations are implemented in
+// spherical.h and can be changed for any other routines that support
+// the public interface of the transform structure.
 //
 // Similarly to most FMM-based codes it works in the following steps
 //   1) build the CK tree recursively (similar to a k-d tree)
@@ -51,7 +51,9 @@
 //            It is the min ratio of the larger of two interacting 
 //            boxes to the distance between them
 //   terms -- Number of terms in the expansions
+// The performance can be adjusted with
 //   BOXSIZE -- The max number of particles in each leaf of the tree
+//      this also slightly affects accuracy (smaller is better)
 
 #include <iostream>
 #include <vector>
@@ -65,28 +67,27 @@ using namespace std;
 using parlay::sequence;
 using vect3d = vect;
 
-#define CHECK 0
+#define CHECK 1
 
-// Following for 1e-1 accuracy (1.05 seconds for 1million 8 cores)
-//#define ALPHA 1.9
-//#define terms 3
-//#define BOXSIZE 25
-
-// Following for 1e-3 accuracy (4 seconds for 1million 8 cores)
+// Following for 1e-3 accuracy
 //#define ALPHA 2.2
 //#define terms 7
-//#define BOXSIZE 60
+//#define BOXSIZE 125
 
-// Following for 1e-6 accuracy (12.5 seconds for 1million insphere 8 cores)
-#define ALPHA 2.65
-#define terms 12
-#define BOXSIZE 250 // 130
+// Following for 1e-6 accuracy (2.5x slower than above)
+#define ALPHA 2.7 
+#define terms 12  
+#define BOXSIZE 200
 
-// Following for 1e-9 accuracy (40 seconds for 1million 8 cores)
-//#define ALPHA 3.0
-//#define terms 17
-//#define BOXSIZE 250
+// Following for 1e-9 accuracy (2.2x slower than above)
+// #define ALPHA 3.0
+// #define terms 17
+// #define BOXSIZE 500
 
+// Following for 1e-12 accuracy (1.8x slower than above)
+//#define ALPHA 3.2
+//#define terms 22
+//#define BOXSIZE 650
 
 double check(sequence<particle*> const &p) {
   size_t n = p.size();
@@ -115,6 +116,11 @@ double check(sequence<particle*> const &p) {
 //    FORCE CALCULATIONS
 // *************************************************************
 
+// *************************************************************
+//  Inner expansions (also called multipole expansion)
+//  The spherical harmonic expansion of a set of nearby points around
+//  a center for estimating forces at a distance.
+// *************************************************************
 struct innerExpansion {
   Transform<terms>* TR;
   complex<double> coefficients[terms*terms];
@@ -138,6 +144,13 @@ struct innerExpansion {
   innerExpansion() {}
 };
 
+parlay::type_allocator<innerExpansion> inner_pool;
+
+// *************************************************************
+//  Outer expansions (also called local)
+//  The inverse spherical harmonic expansion of a set of distant
+//  points around a center for estimating forces for nearby points.
+// *************************************************************
 struct outerExpansion {
   Transform<terms>* TR;
   complex<double> coefficients[terms*terms];
@@ -160,11 +173,23 @@ struct outerExpansion {
   outerExpansion() {}
 };
 
+parlay::type_allocator<outerExpansion> outer_pool;
+
+// Set global constants for spherical harmonics
 Transform<terms>* TRglobal = new Transform<terms>();
 
 using box = pair<point,point>;
 using vect3d = typename point::vector;
 
+// *************************************************************
+//  A node in the CK tree
+//  Either a leaf (if children are null) or internal node.
+//  If a leaf contains a set of points
+//  If an internal node contains a left and right child as is
+//  augmented with first inner than outer expansions.
+//  The leftNeighbors and rightNeighbors contain edges in the CK
+//  well separated decomposition.
+// *************************************************************
 struct node {
   using edge = pair<node*, size_t>;
   node* left;
@@ -177,7 +202,7 @@ struct node {
   vector<node*> indirectNeighbors;
   vector<edge> leftNeighbors;
   vector<edge> rightNeighbors;
-  sequence<vect3d*> hold;
+  sequence<sequence<vect3d>> hold;
   bool leaf() {return left == NULL;}
   node() {}
   point center() { return b.first + (b.second-b.first)/2.0;}
@@ -187,10 +212,8 @@ struct node {
     return max(d.x,max(d.y,d.z));
   }
   void allocateExpansions() {
-    InExp = (innerExpansion*) parlay::p_malloc(sizeof(innerExpansion));
-    OutExp = (outerExpansion*) parlay::p_malloc(sizeof(outerExpansion));
-    new (InExp) innerExpansion(TRglobal, center());
-    new (OutExp) outerExpansion(TRglobal, center());
+    InExp = inner_pool.allocate(TRglobal, center());
+    OutExp = outer_pool.allocate(TRglobal, center());
   }
   node(node* L, node* R, size_t n, box b)
     : left(L), right(R), n(n), b(b) {
@@ -203,13 +226,23 @@ struct node {
   }
 };
 
+size_t numLeaves(node* tr) {
+  if (tr->leaf()) return 1;
+  else return(numLeaves(tr->left)+numLeaves(tr->right));
+}
+
+parlay::type_allocator<node> node_pool;
 
 using edge = pair<node*, size_t>;
 
-template <typename ParticleSlice>
-node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_size) {
+// *************************************************************
+//  Build the CK tree
+//  Similar to a kd-tree but always split along widest dimension
+//  of the points instead of the next round-robin dimension.
+// *************************************************************
+template <typename Particles>
+node* buildTree(Particles& particles, size_t effective_size) {
   
-  //if (depth > 100) abort();
   size_t n = particles.size();
   size_t en = std::max(effective_size, n);
 
@@ -220,11 +253,8 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_siz
       return box(p->pt, p->pt);});
   box b = parlay::reduce(pairs, parlay::make_monoid(minmax,pairs[0]));
 										      
-  if (en < BOXSIZE || n < 10) { 
-    node* r = (node*) parlay::p_malloc(sizeof(node));
-    new (r) node(parlay::to_sequence(particles), b);
-    return r;
-  }
+  if (en < BOXSIZE || n < 10) 
+    return node_pool.allocate(parlay::to_sequence(particles), b);
 
   size_t d = 0;
   double Delta = 0.0;
@@ -236,56 +266,56 @@ node* buildTree(ParticleSlice particles, ParticleSlice Tmp, size_t effective_siz
   }
   
   double splitpoint = (b.first[d] + b.second[d])/2.0;
-  
-  auto flagsLeft = parlay::map(particles, [&] (particle* p) -> bool {
-      return p->pt[d] < splitpoint;});
-  auto flagsRight = parlay::delayed_map(flagsLeft, [] (bool x) {
-      return !x;});
 
-  size_t nl = parlay::pack_into(particles, flagsLeft, Tmp);
-  parlay::pack_into(particles, flagsRight, Tmp.cut(nl, n));
-  parlay::copy(Tmp, particles);
-  size_t en_child = .44 * en;
+  auto isLeft = parlay::delayed_map(particles, [&] (particle* p) {
+      return std::pair(p->pt[d] < splitpoint, p);});
+  auto foo = parlay::group_by_index(isLeft, 2);
+  particles.clear();
 
-  node* L;
-  node* R;
-  parlay::par_do(
-    [&] () {L = buildTree(particles.cut(0,nl), Tmp.cut(0,nl), en_child);},
-    [&] () {R = buildTree(particles.cut(nl,n), Tmp.cut(nl,n), en_child);});
-
-  return new node(L, R, n, b);
+  auto r = parlay::map(foo, [&] (auto& x) {
+      return buildTree(x, .35 * en);}, 1);
+  return node_pool.allocate(r[0], r[1], n, b);
 }
 
+// *************************************************************
+//  Determine if a point is far enough to use approximation.
+// *************************************************************
 bool far(node* a, node* b) {
   double rmax = max(a->radius(), b->radius());
   double r = (a->center() - b->center()).Length();
   return r >= (ALPHA * rmax);
 }
 
-// used to count the number of interactions
-struct ipair {
+// *************************************************************
+// Used to count the number of interactions, just for performance
+// statistics not needed for correctness.
+// *************************************************************
+struct interactions_count {
   long direct;
   long indirect;
-  ipair() {}
-  ipair(long a, long b) : direct(a), indirect(b) {}
-  ipair operator+ (ipair b) {
-    return ipair(direct + b.direct, indirect + b.indirect);}
+  interactions_count() {}
+  interactions_count(long a, long b) : direct(a), indirect(b) {}
+  interactions_count operator+ (interactions_count b) {
+    return interactions_count(direct + b.direct, indirect + b.indirect);}
 };
 
-
-ipair interactions(node* Left, node* Right) {
+// *************************************************************
+// The following two functions are the core of the CK method.
+// They calculate the "well separated decomposition" of the points.
+// *************************************************************
+interactions_count interactions(node* Left, node* Right) {
   if (far(Left,Right)) {
     Left->indirectNeighbors.push_back(Right); 
     Right->indirectNeighbors.push_back(Left); 
-    return ipair(0,2);
+    return interactions_count(0,2);
   } else {
     if (!Left->leaf() && (Left->lmax() >= Right->lmax() || Right->leaf())) {
-      ipair x = interactions(Left->left, Right);
-      ipair y = interactions(Left->right, Right);
+      interactions_count x = interactions(Left->left, Right);
+      interactions_count y = interactions(Left->right, Right);
       return x + y;
     } else if (!Right->leaf()) {
-      ipair x = interactions(Left, Right->left);
-      ipair y = interactions(Left, Right->right);
+      interactions_count x = interactions(Left, Right->left);
+      interactions_count y = interactions(Left, Right->right);
       return x + y;
     } else { // both are leaves
       if (Right->n > Left->n) swap(Right,Left);
@@ -293,31 +323,28 @@ ipair interactions(node* Left, node* Right) {
       size_t ln = Left->rightNeighbors.size();
       Right->leftNeighbors.push_back(edge(Left,ln)); 
       Left->rightNeighbors.push_back(edge(Right,rn));
-      return ipair(Right->n*Left->n,0);
+      return interactions_count(Right->n*Left->n,0);
     }
   }
 }
 
-// could be parallelized, but so fast it does not help
-ipair interactions(node* tr) {
+// Could be parallelized but would require avoiding push_back.
+// Currently not a bottleneck so left serial.
+interactions_count interactions(node* tr) {
   if (!tr->leaf()) {
-    ipair x, y, z; 
+    interactions_count x, y, z; 
     x = interactions(tr->left);
     y = interactions(tr->right);
     z = interactions(tr->left,tr->right);
     return x + y + z;
-  } else return ipair(0,0);
+  } else return interactions_count(0,0);
 }
 
-size_t numLeaves(node* tr) {
-  if (tr->leaf()) return 1;
-  else return(numLeaves(tr->left)+numLeaves(tr->right));
-}
-
-// Translate from multipole to local expansion along all far-field
-// interactions.
+// *************************************************************
+// Translate from inner (multipole) expansion to outer (local)
+// expansion along all far-field interactions.
+// *************************************************************
 void doIndirect(node* tr) {
-  //tr->OutExp = new outerExpansion(TRglobal, tr->center());
   for (size_t i = 0; i < tr->indirectNeighbors.size(); i++) 
     tr->OutExp->addTo(tr->indirectNeighbors[i]->InExp);
   if (!tr->leaf()) {
@@ -326,10 +353,11 @@ void doIndirect(node* tr) {
   }
 }
 
-// Translate and accumulate multipole expansions up the tree,
+// *************************************************************
+// Translate and accumulate inner (multipole) expansions up the tree,
 // including translating particles to expansions at the leaves.
+// *************************************************************
 void upSweep(node* tr) {
-  //tr->InExp = new innerExpansion(TRglobal, tr->center());
   if (tr->leaf()) {
     for (size_t i=0; i < tr->n; i++) {
       particle* P = tr->particles[i];
@@ -343,8 +371,10 @@ void upSweep(node* tr) {
   }
 }
 
-// Translate and accumulate local expansions down the tree,
+// *************************************************************
+// Translate and accumulate outer (local) expansions down the tree,
 // including applying them to all particles at the leaves.
+// *************************************************************
 void downSweep(node* tr) {
   if (tr->leaf()) {
     for (size_t i=0; i < tr->n; i++) {
@@ -371,18 +401,18 @@ size_t getLeaves(node* tr, node** Leaves) {
   }
 }
 
+// *************************************************************
 // Calculates the direct forces between all pairs of particles in two nodes.
 // Directly updates forces in Left, and places forces for ngh in hold
 // This avoid a race condition on modifying ngh while someone else is
 // updating it.
-void direct(node* Left, node* ngh, vect3d* hold) {
+// *************************************************************
+auto direct(node* Left, node* ngh) {
   particle** LP = (Left->particles).data();
   particle** RP = (ngh->particles).data();
   size_t nl = Left->n;
   size_t nr = ngh->n;
-  vect3d holdLeft[nr];
-  for (size_t j=0; j < nr; j++) 
-    holdLeft[j] = vect3d(0.,0.,0.);
+  parlay::sequence<vect3d> hold(nr, vect3d(0.,0.,0.));
   for (size_t i=0; i < nl; i++) {
     vect3d frc(0.,0.,0.);
     particle* pa = LP[i];
@@ -391,15 +421,17 @@ void direct(node* Left, node* ngh, vect3d* hold) {
       vect3d v = (pb->pt) - (pa->pt);
       double r2 = v.dot(v);
       vect3d force = (v * (pa->mass * pb->mass / (r2*sqrt(r2))));;
-      holdLeft[j] = holdLeft[j] - force;
+      hold[j] = hold[j] - force;
       frc = frc + force;
     }
     pa->force = pa->force + frc;
   }
-  for (size_t j=0; j < nr; j++) 
-    hold[j] = holdLeft[j];
+  return hold;
 }
 
+// *************************************************************
+// Calculates local forces within a leaf
+// *************************************************************
 void self(node* Tr) {
   particle** PP = (Tr->particles).data();
   for (size_t i=0; i < Tr->n; i++) {
@@ -415,6 +447,7 @@ void self(node* Tr) {
   }
 }
 
+// *************************************************************
 // Calculates the direct interactions between and within leaves.
 // Since the forces are symmetric, this calculates the force on one
 // side (rightNeighbors) while storing them away (in hold).
@@ -422,59 +455,34 @@ void self(node* Tr) {
 // the precalculated results (from hold).
 // It does not update both sides immediately since that would 
 // generate a race condition.
+// *************************************************************
 void doDirect(node* a) {
   size_t nleaves = numLeaves(a);
   sequence <node*> Leaves(nleaves);
   getLeaves(a, Leaves.data());
 
-  sequence<size_t> counts(nleaves+1);
-  
-  // For node i in Leaves, counts[i] will contain the total number 
-  // of its direct interactions.
+  // calculates interactions and put neighbor's results in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
-    counts[i] = 0;
-    for (size_t j = 0; j < Leaves[i]->rightNeighbors.size(); j++)
-      counts[i] += Leaves[i]->rightNeighbors[j].first->n;
-    });
+    Leaves[i]->hold = parlay::tabulate(Leaves[i]->rightNeighbors.size(), [&] (size_t j) {
+	return direct(Leaves[i], Leaves[i]->rightNeighbors[j].first);});}, 1);
 
-  // The following allocates space for "hold" avoiding a malloc.
-  counts[nleaves] = 0;
-  size_t total = parlay::scan_inplace(counts);
-  sequence<vect3d> hold(total);
-  
-  // calculates interactions and neighbors results in hold
-  parlay::parallel_for (0, nleaves, [&] (size_t i) {
-    vect3d* lhold = hold.begin() + counts[i];
-    size_t num_ngh = Leaves[i]->rightNeighbors.size();
-    Leaves[i]->hold = sequence<vect3d*>(num_ngh);
-    for (size_t j =0; j < num_ngh; j++) {
-      Leaves[i]->hold[j] = lhold;
-      node* ngh = Leaves[i]->rightNeighbors[j].first;
-      direct(Leaves[i], ngh, lhold);
-      lhold += ngh->n;
-    }
-  }, 1); // 1 indicates granularity of 1
-  
   // picks up results from neighbors that were left in hold
   parlay::parallel_for (0, nleaves, [&] (size_t i) {
     for (size_t j = 0; j < Leaves[i]->leftNeighbors.size(); j++) {
       node* L = Leaves[i];
-      edge e = L->leftNeighbors[j];
-      vect3d* hold = e.first->hold[e.second];
+      auto [u, v] = L->leftNeighbors[j];
       for (size_t k=0; k < Leaves[i]->n; k++) 
-	L->particles[k]->force = L->particles[k]->force + hold[k];
-    }
-    });
+	L->particles[k]->force = L->particles[k]->force + u->hold[v][k];
+    }});
 
   // calculate forces within a node
   parlay::parallel_for (0, nleaves, [&] (size_t i) {self(Leaves[i]);});
 }
 
 // *************************************************************
-//   STEP
-// *************************************************************
-
+// STEP
 // takes one step and places forces in particles[i]->force
+// *************************************************************
 void stepBH(sequence<particle*> &particles, double alpha) {
   timer t("CK nbody");
   size_t n = particles.size();
@@ -483,11 +491,10 @@ void stepBH(sequence<particle*> &particles, double alpha) {
   parlay::parallel_for (0, n, [&] (size_t i) {
       particles[i]->force = vect3d(0.,0.,0.);});
 
-  sequence<particle*> Tmp(n);
   sequence<particle*> part_copy = particles;
 
   // build the CK tree
-  node* a = buildTree(parlay::make_slice(part_copy), parlay::make_slice(Tmp), 0);
+  node* a = buildTree(part_copy, 0);
   t.next("build tree");
 
   // Sweep up the tree calculating multipole expansions for each node
@@ -495,7 +502,7 @@ void stepBH(sequence<particle*> &particles, double alpha) {
   t.next("up sweep");
 
   // Determine all far-field interactions using the CK method
-  ipair z = interactions(a);
+  interactions_count z = interactions(a);
   t.next("interactions");
 
   // Translate multipole to local expansions along the far-field
@@ -510,6 +517,7 @@ void stepBH(sequence<particle*> &particles, double alpha) {
   // Add in all the direct (near-field) interactions
   doDirect(a);
   t.next("do Direct");
+
   cout << "Direct = " << (long) z.direct << " Indirect = " << z.indirect
        << " Boxes = " << numLeaves(a) << endl;
   if (CHECK) {
