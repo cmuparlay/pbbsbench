@@ -30,6 +30,7 @@
 #include "common/time_loop.h"
 #include "benchUtils.h"
 
+
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -38,31 +39,54 @@
 
 using namespace benchIO;
 
+bool report_stats = true;
 
 // *************************************************************
 //  TIMING
 // *************************************************************
 
-template <class point>
-void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
+template<typename T>
+void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
   int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) 
 {
   size_t n = pts.size();
-  auto v = parlay::tabulate(n, [&] (size_t i) -> point* {
+  auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
       return &pts[i];});
 
-  parlay::sequence<fvec_point> qpoints;
-  parlay::sequence<fvec_point*> qpts;
+ 
+  time_loop(rounds, 1.0,
+  [&] () {},
+  [&] () {ANN<T>(v, k, maxDeg, beamSize, alpha);},
+  [&] () {});  
 
-  if(qFile != NULL){
-    qpoints = parse_fvecs(qFile);
-    size_t q = qpoints.size();
-    qpts = parlay::tabulate(q, [&] (size_t i) -> point* {
+  if (outFile != NULL) {
+    int m = n * (k+1);
+    parlay::sequence<int> Pout(m);
+    parlay::parallel_for (0, n, [&] (size_t i) {
+      Pout[(k+1)*i] = v[i]->id;
+      for (int j=0; j < k; j++)
+        Pout[(k+1)*i + j+1] = (v[i]->ngh)[j];
+    });
+    writeIntSeqToFile(Pout, outFile);
+  }
+
+}
+
+template<typename T>
+void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_point<T>> &qpoints,
+  int k, int rounds, int maxDeg, int beamSize, double alpha, char* outFile) 
+{
+  size_t n = pts.size();
+  auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
+      return &pts[i];});
+
+  size_t q = qpoints.size();
+  auto qpts =  parlay::tabulate(q, [&] (size_t i) -> Tvec_point<T>* {   
       return &qpoints[i];});
 
     time_loop(rounds, 1.0,
       [&] () {},
-      [&] () {ANN(v, k, maxDeg, beamSize, alpha, qpts);},
+      [&] () {ANN<T>(v, k, maxDeg, beamSize, alpha, qpts);},
       [&] () {});
 
     if (outFile != NULL) {
@@ -75,23 +99,7 @@ void timeNeighbors(parlay::sequence<point> &pts, char* qFile,
       });
       writeIntSeqToFile(Pout, outFile);
     }
-  } else{
-      time_loop(rounds, 1.0,
-      [&] () {},
-      [&] () {ANN(v, k, maxDeg, beamSize, alpha);},
-      [&] () {});  
-
-      if (outFile != NULL) {
-        int m = n * (k+1);
-        parlay::sequence<int> Pout(m);
-        parlay::parallel_for (0, n, [&] (size_t i) {
-          Pout[(k+1)*i] = v[i]->id;
-          for (int j=0; j < k; j++)
-            Pout[(k+1)*i + j+1] = (v[i]->ngh)[j];
-        });
-        writeIntSeqToFile(Pout, outFile);
-      }
-  }
+  
 
 }
 
@@ -110,9 +118,25 @@ int main(int argc, char* argv[]) {
   if (k > 100 || k < 1) P.badArgument();
   double alpha = P.getOptionDoubleValue("-a", 1.5);
 
-  std::cout << "Input (fvecs format): " << iFile << std::endl;
-  auto points = parse_fvecs(iFile);
-  // auto qpoints = parse_fvecs(qFile);
+  bool fvecs = true;
+  std::string filename = std::string(iFile);
+  std::string::size_type n = filename.size();
+  if(filename[n-5] == 'b') fvecs = false;
+  std::cout << "Input (Tvecs format): " << iFile << std::endl;
 
-  timeNeighbors(points, qFile, k, rounds, R, L, alpha, oFile);
+  if(fvecs){
+    parlay::sequence<Tvec_point<float>> points = parse_fvecs(iFile);
+    if(qFile != NULL){
+      parlay::sequence<Tvec_point<float>> qpoints = parse_fvecs(qFile);
+      timeNeighbors<float>(points, qpoints, k, rounds, R, L, alpha, oFile);
+    }
+    else timeNeighbors<float>(points, k, rounds, R, L, alpha, oFile);
+  } 
+  else{ 
+    parlay::sequence<Tvec_point<uint8_t>> points = parse_bvecs(iFile);
+    if(qFile != NULL){
+      parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_bvecs(qFile);
+      timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, alpha, oFile);
+    }
+    else timeNeighbors<uint8_t>(points, k, rounds, R, L, alpha, oFile);}
 }

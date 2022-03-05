@@ -10,7 +10,7 @@ tests = [
         "-a 1.2 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
     [1, "sift_base.fvecs", "sift_query.fvecs", "sift_groundtruth.ivecs", 
         "-a 1.2 -R 25 -L 35 -k 30", "-k 30 -r '[1, 2, 5, 10, 20]'"],
-    [1, "sift_base.fvecs", "sift_query.fvecs", "sift_groundtruth.ivecs", 
+    [1, "sift_base.fvecs", "sift_query.fvecs", "sift_groundtruth.ivecs",  
         "-a 1.2 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50]'"],
     [1, "sift_base.fvecs", "sift_query.fvecs", "sift_groundtruth.ivecs", 
         "-a 1.2 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
