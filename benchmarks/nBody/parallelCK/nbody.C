@@ -75,9 +75,9 @@ using vect3d = vect;
 //#define BOXSIZE 150
 
 // Following for 1e-6 accuracy (2.5x slower than above)
-#define ALPHA 2.65
+#define ALPHA 2.6
 #define terms 12  
-#define BOXSIZE 270
+#define BOXSIZE 250
 
 // Following for 1e-9 accuracy (2.2x slower than above)
 // #define ALPHA 3.0
@@ -275,9 +275,10 @@ node* buildTree(Particles& particles, size_t effective_size) {
   particles.clear();
 
   auto r = parlay::map(foo, [&] (auto& x) {
-      return buildTree(x, .35 * en);}, 1);
+      return buildTree(x, .4 * en);}, 1);
   return node_pool.allocate(r[0], r[1], n, b);
 }
+
 
 // *************************************************************
 //  Determine if a point is far enough to use approximation.
