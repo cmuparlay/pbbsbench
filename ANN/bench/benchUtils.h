@@ -22,6 +22,8 @@
 
 #include <iostream>
 #include <algorithm>
+#include <iterator>
+#include <type_traits>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
@@ -37,6 +39,75 @@
 #include <unistd.h>
 
 using namespace benchIO;
+
+enum class ptr_mapped_src{
+  MEM, DISK
+};
+
+namespace detail{
+
+template<typename T, ptr_mapped_src Src>
+class ptr_mapped_impl
+{
+  T *ptr_raw;
+public:
+  ptr_mapped_impl(){
+  }
+
+  ptr_mapped_impl(T *p) : ptr_raw(p){
+  }
+
+  template<typename U, ptr_mapped_src SrcOther>
+  ptr_mapped_impl(const ptr_mapped_impl<U,SrcOther> &ptr) :
+    ptr_raw(ptr.get()){
+    static_assert(std::is_convertible_v<U*,T*>);
+  }
+
+  ptr_mapped_impl& operator=(T *p){
+    ptr_raw = p;
+    return *this;
+  }
+
+  template<typename U, ptr_mapped_src SrcOther>
+  ptr_mapped_impl& operator=(const ptr_mapped_impl<U,SrcOther> &ptr){
+    static_assert(std::is_convertible_v<U*,T*>);
+    ptr_raw = ptr.get();
+  }
+
+  T* get() const{
+    return ptr_raw;
+  }
+
+  operator T*() const{
+    return get();
+  }
+
+  // For simplicity, we only keep the least methods to satisfy the requirements of LegacyIterator
+
+  T& operator*() const{
+    return *get();
+  }
+
+  ptr_mapped_impl& operator++(){
+    ++ptr_raw;
+    return *this;
+  }
+};
+
+} // namespace detail
+
+template<typename T, ptr_mapped_src Src>
+using ptr_mapped = std::conditional_t<Src==ptr_mapped_src::MEM, T*, detail::ptr_mapped_impl<T,Src>>;
+
+template<typename T, ptr_mapped_src Src>
+struct std::iterator_traits<detail::ptr_mapped_impl<T,Src>>
+{
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::remove_cv_t<T>;
+  using pointer = T*;
+  using reference = T&;
+  using iterator_category = void;
+};
 
 // *************************************************************
 //  SOME DEFINITIONS
@@ -77,6 +148,62 @@ std::pair<char*, size_t> mmapStringFromFile(const char* filename) {
   return std::make_pair(p, n);
 }
 
+template<typename T, typename Conv>
+auto parse_vecs(const char* filename, Conv converter)
+{
+  const auto [fileptr, length] = mmapStringFromFile(filename);
+
+  // Each vector is 4 + sizeof(T)*d bytes.
+  // * first 4 bytes encode the dimension (as an uint32_t)
+  // * next d values are T-type variables representing vector components
+  // See http://corpus-texmex.irisa.fr/ for more details.
+
+  const uint32_t d = *((const uint32_t*)fileptr);
+  std::cout << "Dimension = " << d << std::endl;
+
+  const size_t vector_size = sizeof(d) + sizeof(T)*d;
+  const size_t num_vectors = length / vector_size;
+  // std::cout << "Num vectors = " << num_vectors << std::endl;
+
+  typedef ptr_mapped<T,ptr_mapped_src::DISK> type_ptr;
+  parlay::sequence<decltype(converter(0,type_ptr(nullptr),type_ptr(nullptr)))> points(num_vectors);
+
+  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    const size_t offset_in_bytes = vector_size*i + sizeof(d);  // skip dimension
+    const T* begin = (const T*)(fileptr + offset_in_bytes);
+    const T* end = begin + d;
+    points[i] = converter(i, type_ptr(const_cast<T*>(begin)), type_ptr(const_cast<T*>(end)));
+  });
+
+  return points;
+}
+/*
+auto parse_fvecs(const char* filename)
+{
+  return parse_vecs<float>(filename, [](size_t id, auto begin, auto end){
+    typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
+    static_assert(std::is_same_v<decltype(begin),ptr_mapped<type_elem,ptr_mapped_src::DISK>>);
+
+    Tvec_point<type_elem> point;
+    point.id = id;
+    point.coordinates = parlay::make_slice(begin.get(), end.get());
+    return point;
+  });
+}
+
+auto parse_ivecs(const char* filename)
+{
+  return parse_vecs<float>(filename, [](size_t id, auto begin, auto end){
+    typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
+    static_assert(std::is_same_v<decltype(begin),ptr_mapped<type_elem,ptr_mapped_src::DISK>>);
+
+    ivec_point point;
+    point.id = id;
+    point.coordinates = parlay::make_slice(begin.get(), end.get());
+    return point;
+  });
+}
+*/
 auto parse_fvecs(const char* filename) {
   auto [fileptr, length] = mmapStringFromFile(filename);
   // std::cout << "Successfully mmap'd" << std::endl;
