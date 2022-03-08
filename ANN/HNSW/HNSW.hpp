@@ -28,10 +28,10 @@ struct point{
 template<typename U, template<typename> class Allocator=std::allocator>
 class HNSW
 {
-	using T = typename U::type_points;
+	using T = typename U::type_point;
 public:
 	template<typename Iter>
-	HNSW(Iter begin, Iter end);
+	HNSW(uint32_t dim, Iter begin, Iter end);
 	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
 private:
 	typedef uint32_t type_index;
@@ -79,10 +79,11 @@ private:
 	// std::vector<uint32_t> cnt_neighbor;
 	node *entrance; // To init
 	// auto m, max_m0, m_L; // To init
+	uint32_t dim;
 	uint32_t m_l = 15;
-	uint32_t m = 1000;
+	uint32_t m = 100;
 	// uint32_t level_max = 30; // To init
-	uint32_t ef_construction = 120;
+	uint32_t ef_construction = 50;
 	uint32_t n = 0;
 	Allocator<node> allocator;
 	std::vector<node*> node_pool;
@@ -174,7 +175,8 @@ private:
 
 template<typename T, template<typename> class Allocator>
 template<typename Iter>
-HNSW<T,Allocator>::HNSW(Iter begin, Iter end)
+HNSW<T,Allocator>::HNSW(uint32_t dim_, Iter begin, Iter end)
+	: dim(dim_)
 {
 	static_assert(std::is_same_v<typename std::iterator_traits<Iter>::value_type, T>);
 	static_assert(std::is_base_of_v<
@@ -250,12 +252,12 @@ typename HNSW<U,Allocator>::node* HNSW<U,Allocator>::insert(const T &q, uint32_t
 				/*
 				std::priority_queue<dist,std::vector<dist>,farthest> dist_v;
 				for(const auto *pw : vConn)
-					dist_v.emplace(U::distance(pw->data,pv->data),*pw);
+					dist_v.emplace(U::distance(pw->data,pv->data),*pw,dim);
 				auto vNewConn = select_neighbors(pv->data, dist_v, m, l_c);
 				set_neighbourhood(*pv, l_c, vNewConn);
 				*/
 				std::sort(vConn.begin(), vConn.end(), [=](const node *lhs, const node *rhs){
-					return U::distance(lhs->data,pv->data)<U::distance(rhs->data,pv->data);
+					return U::distance(lhs->data,pv->data,dim)<U::distance(rhs->data,pv->data,dim);
 				});
 				vConn.resize(m);
 			}
@@ -288,7 +290,7 @@ auto HNSW<U,Allocator>::search_layer(const node &u, const std::vector<node*> &ep
 	for(auto *ep : eps)
 	{
 		visited[ep->id] = true;
-		const auto d = U::distance(u.data,ep->data);
+		const auto d = U::distance(u.data,ep->data,dim);
 		C.push({d,ep});
 		W.push({d,ep});
 	}
@@ -297,16 +299,16 @@ auto HNSW<U,Allocator>::search_layer(const node &u, const std::vector<node*> &ep
 	{
 		const auto &c = *C.top().u; C.pop();
 		const auto &f = *W.top().u;
-		if(U::distance(c.data,u.data)>U::distance(f.data,u.data))
+		if(U::distance(c.data,u.data,dim)>U::distance(f.data,u.data,dim))
 			break;
 		for(auto *pv: neighbourhood(c, l_c))
 		{
 			if(visited[pv->id]) continue;
 			visited[pv->id] = true;
 			const auto &f = *W.top().u;
-			if(U::distance(pv->data,u.data)<U::distance(f.data,u.data)||W.size()<ef)
+			if(U::distance(pv->data,u.data,dim)<U::distance(f.data,u.data,dim)||W.size()<ef)
 			{
-				const auto d = U::distance(u.data,pv->data);
+				const auto d = U::distance(u.data,pv->data,dim);
 				C.push({d,pv});
 				W.push({d,pv});
 				if(W.size()>ef) W.pop();

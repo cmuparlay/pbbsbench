@@ -175,7 +175,7 @@ auto parse_vecs(const char* filename, Conv converter)
     points[i] = converter(i, type_ptr(const_cast<T*>(begin)), type_ptr(const_cast<T*>(end)));
   });
 
-  return points;
+  return std::make_pair(points,d);
 }
 /*
 auto parse_fvecs(const char* filename)
@@ -188,7 +188,7 @@ auto parse_fvecs(const char* filename)
     point.id = id;
     point.coordinates = parlay::make_slice(begin.get(), end.get());
     return point;
-  });
+  }).first;
 }
 
 auto parse_ivecs(const char* filename)
@@ -201,7 +201,7 @@ auto parse_ivecs(const char* filename)
     point.id = id;
     point.coordinates = parlay::make_slice(begin.get(), end.get());
     return point;
-  });
+  }).first;
 }
 */
 auto parse_fvecs(const char* filename) {
