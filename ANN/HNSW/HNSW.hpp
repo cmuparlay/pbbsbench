@@ -31,7 +31,7 @@ class HNSW
 	using T = typename U::type_point;
 public:
 	template<typename Iter>
-	HNSW(uint32_t dim, Iter begin, Iter end);
+	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50);
 	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
 private:
 	typedef uint32_t type_index;
@@ -80,11 +80,11 @@ private:
 	node *entrance; // To init
 	// auto m, max_m0, m_L; // To init
 	uint32_t dim;
-	uint32_t m_l = 15;
-	uint32_t m = 100;
+	float m_l;
+	uint32_t m;
 	// uint32_t level_max = 30; // To init
-	uint32_t ef_construction = 50;
-	uint32_t n = 0;
+	uint32_t ef_construction;
+	uint32_t n;
 	Allocator<node> allocator;
 	std::vector<node*> node_pool;
 /*
@@ -175,14 +175,14 @@ private:
 
 template<typename T, template<typename> class Allocator>
 template<typename Iter>
-HNSW<T,Allocator>::HNSW(uint32_t dim_, Iter begin, Iter end)
-	: dim(dim_)
+HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_t m_, uint32_t ef_construction_)
+	: dim(dim_), m_l(m_l_), m(m_), ef_construction(ef_construction_), n(std::distance(begin,end))
 {
 	static_assert(std::is_same_v<typename std::iterator_traits<Iter>::value_type, T>);
 	static_assert(std::is_base_of_v<
 		std::random_access_iterator_tag, typename std::iterator_traits<Iter>::iterator_category>);
 
-	if(begin==end) return;
+	if(n==0) return;
 
 	const auto level_ep = get_level_random();
 	entrance = allocator.allocate(1);
@@ -191,8 +191,7 @@ HNSW<T,Allocator>::HNSW(uint32_t dim_, Iter begin, Iter end)
 		fprintf(stderr, "[%u] at lv.%u (%.2f,%.2f)**\n", 0, level_ep, begin->x, begin->y);
 	#endif
 	node_pool.push_back(entrance);
-	
-	n = std::distance(begin, end);
+
 	for(uint32_t i=1; i<n; ++i)
 	{
 		auto *p = insert(*(begin+i), i);
@@ -256,9 +255,17 @@ typename HNSW<U,Allocator>::node* HNSW<U,Allocator>::insert(const T &q, uint32_t
 				auto vNewConn = select_neighbors(pv->data, dist_v, m, l_c);
 				set_neighbourhood(*pv, l_c, vNewConn);
 				*/
+				std::vector<dist> dist_nbh(vConn.size());
+				for(size_t i=0; i<vConn.size(); ++i)
+					dist_nbh[i] = dist{U::distance(vConn[i]->data,pv->data,dim), vConn[i]};
+				/*
 				std::sort(vConn.begin(), vConn.end(), [=](const node *lhs, const node *rhs){
 					return U::distance(lhs->data,pv->data,dim)<U::distance(rhs->data,pv->data,dim);
 				});
+				*/
+				std::sort(dist_nbh.begin(), dist_nbh.end(), nearest());
+				for(size_t i=0; i<vConn.size(); ++i)
+					vConn[i] = dist_nbh[i].u;
 				vConn.resize(m);
 			}
 		}

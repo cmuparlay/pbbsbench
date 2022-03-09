@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
+#include <algorithm>
 // #include <memory>
 #include "HNSW.hpp"
 #include "benchUtils.h"
@@ -31,10 +32,21 @@ public:
 
 int main(int argc, char **argv)
 {
-	commandLine parameter(argc, argv, "[-q <queryFile>] [-o <outFile>] <inFile>");
+	commandLine parameter(argc, argv, 
+		"-n <numInput> -k <numQuery> -ml <m_l> -m <m> "
+		"-efc <ef_construction> -ef <ef_query> -r <recall@R> "
+		"[-q <queryFile>] [-g <groundtruthFile>] <inFile>"
+	);
 	const char* file_in = parameter.getArgument(0);
-	const char* file_out = parameter.getOptionValue("-o");
 	const char* file_query = parameter.getOptionValue("-q");
+	const char* file_groundtruth = parameter.getOptionValue("-g");
+	const char* cnt_pts_input = parameter.getOptionValue("-n");
+	const char* cnt_pts_query = parameter.getOptionValue("-k");
+	const char* m_l = parameter.getOptionValue("-ml");
+	const char* m = parameter.getOptionValue("-m");
+	const char* efc = parameter.getOptionValue("-efc");
+	const char* ef = parameter.getOptionValue("-ef");
+	const char* cnt_rank_cmp = parameter.getOptionValue("-r");
 
 	auto to_fvec = [](size_t id, auto begin, auto end){
 		typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
@@ -59,39 +71,63 @@ int main(int argc, char **argv)
 	parlay::internal::timer t("HNSW", true);
 	auto [ps,dim] = parse_vecs<float>(file_in, to_fvec);
 	t.next("Read inFile");
+
+	fputs("Start building HNSW\n", stderr);
+	HNSW<descr_fvec> g(
+		ps.begin(), ps.begin()+atoi(cnt_pts_input),
+		dim, atof(m_l), atoi(m), atoi(efc)
+	);
+	t.next("Build index");
+
+	if(!file_query) return 0;
+
 	auto [q,_] = parse_vecs<float>(file_query, to_fvec);
 	t.next("Read queryFile");
 
-	fputs("Start building HNSW\n", stderr);
-	HNSW<descr_fvec> g(dim, ps.begin(), ps.end());
-	t.next("Build index");
-
-	// q.size()
-	// parlay::parallel_for();
-	std::vector<std::vector<fvec*>> res(10);
-	parlay::parallel_for(0, 10, [&](size_t  i){
-		res[i] = g.search(q[i],10,50);
+	const uint32_t cnt_pts_query_val = atoi(cnt_pts_query);
+	uint32_t cnt_rank_cmp_val = atoi(cnt_rank_cmp);
+	std::vector<std::vector<fvec*>> res(cnt_pts_query_val);
+	parlay::parallel_for(0, cnt_pts_query_val, [&](size_t i){
+		res[i] = g.search(q[i], cnt_rank_cmp_val, atoi(ef));
 	});
 	t.next("Find neighbors");
 
+	if(!file_groundtruth) return 0;
+
+	auto [gt,rank_max] = parse_vecs<int>(file_groundtruth, [](size_t, auto begin, auto end){
+		typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
+		if constexpr(std::is_same_v<decltype(begin),ptr_mapped<type_elem,ptr_mapped_src::DISK>>)
+		{
+			const auto *begin_raw=begin.get(), *end_raw=end.get();
+			const auto n = std::distance(begin_raw, end_raw);
+
+			type_elem *id = new type_elem[n];
+			parlay::parallel_for(0, n, [&](size_t i){
+				id[i] = *(begin_raw+i);
+			});
+			return id;
+		}
+	});
+
+	if(rank_max<cnt_rank_cmp_val)
+		cnt_rank_cmp_val = rank_max;
+	printf("measure recall@%u\n", cnt_rank_cmp_val);
+	for(uint32_t i=0; i<cnt_pts_query_val; ++i)
+	{
+		uint32_t cnt_shot = 0;
+		for(uint32_t j=0; j<cnt_rank_cmp_val; ++j)
+			if(std::find_if(res[i].begin(),res[i].end(),[&](fvec *p){
+				return p->id==gt[i][j];}) != res[i].end())
+			{
+				cnt_shot++;
+			}
+		printf("#%u:\t%u (%.2f)\n", i, cnt_shot, float(cnt_shot)/cnt_rank_cmp_val);
+	}
+/*
 	for(uint32_t i=0; i<10; ++i)
 	{
 		for(uint32_t j=res.size(); j>0; --j)
 			printf("%u\t", res[i][j-1]->id);
-		putchar('\n');
-	}
-/*
-	std::vector<std::vector<double>> v;
-	v.push_back(std::vector<double>{1,1});
-	v.push_back(std::vector<double>{2,3});
-	v.push_back(std::vector<double>{4,5});
-	HNSW<fvec> g(v.begin(), v.end());
-	const auto res = g.search(std::vector<double>{4,4.5}, 10, 50);
-	for(const auto &v : res)
-	{
-		// printf("%f %f\n", v->x, v->y);
-		for(const auto c : *v)
-			printf("%f ", c);
 		putchar('\n');
 	}
 */
