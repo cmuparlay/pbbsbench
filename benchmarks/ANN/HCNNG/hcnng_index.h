@@ -99,14 +99,6 @@ struct hcnng_index{
 
 	hcnng_index(int md, unsigned dim) : maxDeg(md), d(dim) {}
 
-	void clear(parlay::sequence<tvec_point*> &v){
-		size_t n = v.size();
-		parlay::parallel_for(0, n, [&] (size_t i){
-			parlay::sequence<int> clear_seq = parlay::sequence<int>();
-			v[i]->out_nbh = clear_seq;
-		});
-	}
-
 	int generate_index(int N, int i){
 		return (N*(N-1) - (N-i)*(N-i-1))/2;
 	}
@@ -238,40 +230,6 @@ struct hcnng_index{
 			edge_union(v, edge_wrapped);
 			// t.next("added edges to graph");
 		// };
-	}
-
-	//search each element from a random starting point
-	void search_index_random(parlay::sequence<tvec_point*> &q, parlay::sequence<tvec_point*> &v,  int beamSizeQ, int k){
-		if((k+1)>beamSizeQ){
-			std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
-			abort();
-		}
-		//use a random shuffle to generate random starting points for each query
-		size_t n = v.size();
-		auto indices = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
-		parlay::parallel_for(0, q.size(), [&] (size_t i){
-			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			tvec_point* start = v[indices[i]];
-			parlay::sequence<pid> beamElts;
-			parlay::sequence<pid> visitedElts; 
-			std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-			pairElts = beam_search(q[i], v, start, beamSizeQ, d);
-			beamElts = pairElts.first;
-			visitedElts = pairElts.second; 
-			//the first element of the frontier may be the point itself
-			//if this occurs, do not report it as a neighbor
-			if(beamElts[0].first==i){
-				for(int j=0; j<k; j++){
-					neighbors[j] = beamElts[j+1].first;
-				}
-			} else{
-				for(int j=0; j<k; j++){
-					neighbors[j] = beamElts[j].first;
-				}
-			}
-			q[i]->ngh = neighbors;
-			if(report_stats) q[i]->cnt = visitedElts.size(); 
-		});
 	}
 	
 };

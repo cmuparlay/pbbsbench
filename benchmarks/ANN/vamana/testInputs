@@ -3,15 +3,25 @@
 bnchmrk="neighbors"
 benchmark="Nearest Neighbors"
 checkProgram="../bench/neighborsCheck"
-dataDir = "/ssd1/ANN/sift"
+dataDir = "/ssd0/ANN/sift10k"
 oFile = "100M_test.txt"
 
 
 tests = [    
+    [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
+        "-k 5", "-r '[1]'"],
     # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-    #     "-a 1.2 -R 5 -L 10 -k 5", "-r '[1]'"],
-    [1, "sift50M.bvecs", "bigann_query.bvecs", "idx_50M.ivecs", 
-        "-a 1.2 -R 20 -L 25 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
+    #     "-R 3 -L 20 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
+    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
+    #     "-R 3 -L 30 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
+    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
+    #     "-R 3 -L 70 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
+    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
+    #     "-R 4 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
+    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
+    #     "-R 5 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
+    # [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
+    #     "-R 20 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
     # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
     #     "-a 1.4 -R 50 -L 75 -Q 250 -k 200", " -r '[1, 2, 10, 50, 100, 200]'"],
     # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 

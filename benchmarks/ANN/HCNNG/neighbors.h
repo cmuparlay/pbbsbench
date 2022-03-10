@@ -29,6 +29,8 @@
 #include "../utils/NSGDist.h"  
 #include "../utils/types.h"
 #include "../utils/beamSearch.h"
+#include "../utils/indexTools.h"
+#include "../utils/stats.h"
 #include "hcnng_index.h"
 
 extern bool report_stats;
@@ -47,20 +49,8 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
     beamSearchRandom(q, v, beamSizeQ, k, d);
     t.next("Found nearest neighbors");
     if(report_stats){
-      //average numbers of nodes searched using beam search
-      auto s = parlay::delayed_seq<size_t>(q.size(), [&] (size_t i) {return q[i]->cnt;});
-      size_t i = parlay::max_element(s) - s.begin();
-      size_t sum = parlay::reduce(s);
-      std::cout << "Max nodes searched = " << s[i] 
-    << ", Average nodes searched = " << sum/((double) q.size()) << std::endl;
-      //average out-degree of graph
-    auto od = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->out_nbh.size();});
-      size_t j = parlay::max_element(od) - od.begin();
-      int maxDegree = od[j];
-      size_t k = parlay::min_element(od) - od.begin();
-      size_t sum1 = parlay::reduce(od);
-      std::cout << "Max out degree: " << maxDegree << ", Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
-      std::cout << "Min out degree: " << od[k] << std::endl;  
+      graph_stats(v);
+      query_stats(q);
       t.next("stats");
     }
   };
@@ -77,12 +67,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, bo
     I.build_index(v, 20, sqrt(v.size()));
     t.next("Built index");
     if(report_stats){
-      //average out-degree of graph
-    auto od = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->out_nbh.size();});
-       size_t j = parlay::max_element(od) - od.begin();
-      int maxDegree = od[j];
-      size_t sum1 = parlay::reduce(od);
-      std::cout << "Max out degree: " << maxDegree << " Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
+      graph_stats(v);
       t.next("stats");
     }
   };

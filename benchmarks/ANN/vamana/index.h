@@ -49,41 +49,6 @@ struct knn_index{
 
 	knn_index(int md, int bs, double a, unsigned dim) : maxDeg(md), beamSize(bs), r2_alpha(a), d(dim) {}
 
-	void clear(parlay::sequence<tvec_point*> &v){
-		size_t n = v.size();
-		parlay::parallel_for(0, n, [&] (size_t i){
-			parlay::sequence<int> clear_seq = parlay::sequence<int>();
-			v[i]->out_nbh = clear_seq;
-		});
-	}
-
-	//give each vertex maxDeg random out neighbors
-	//note that this function as of now may have some contention when running in parallel
-	//TODO rewrite using parlay::random functions
-	void random_index(parlay::sequence<tvec_point*> &v){
-		size_t n = v.size(); 
-		parlay::parallel_for(0, n, [&] (size_t i){
-	    	std::random_device rd;    
-			std::mt19937 rng(rd());   
-			std::uniform_int_distribution<int> uni(0,n-1); 
-
-			//use a set to make sure each out neighbor is unique
-			std::set<int> indexset;
-			while(indexset.size() < maxDeg){
-				int j = uni(rng);
-				//disallow self edges
-				if(j != i) indexset.insert(j);
-			}
-			
-			for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
-        		v[i] -> out_nbh.push_back(*it);
-			} 
-
-	    }, 1
-	    );
-	}
-
-
 	parlay::sequence<float> centroid_helper(slice_tvec a){
 		if(a.size() == 1){
 			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
@@ -225,7 +190,7 @@ struct knn_index{
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
 		clear(v);
 		//populate with random edges
-		if(not from_empty) random_index(v);
+		if(not from_empty) random_index(v, maxDeg);
 		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
 		build_index_inner(v);
@@ -287,25 +252,6 @@ struct knn_index{
 	}
 
 	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k){
-		if((k+1)>beamSizeQ){
-			std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
-			abort();
-		}
-		parlay::parallel_for(0, q.size(), [&] (size_t i){
-			parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-			parlay::sequence<pid> beamElts = (beam_search(q[i], v, medoid, beamSizeQ, d)).first;
-			//the first element of the frontier may be the point itself
-			//if this occurs, do not report it as a neighbor
-			if(beamElts[0].first==i){
-				for(int j=0; j<k; j++){
-					neighbors[j] = beamElts[j+1].first;
-				}
-			} else{
-				for(int j=0; j<k; j++){
-					neighbors[j] = beamElts[j].first;
-				}
-			}
-			q[i]->ngh = neighbors;
-		});
+		searchFromSingle(q, v, beamSizeQ, k, d, medoid);
 	}
 };

@@ -180,7 +180,7 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*> &q,
 
 template<typename T>
 void searchFromSingle(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, 
-	int beamSizeQ, int k, unsigned d, Tvec_point<T> medoid){
+	int beamSizeQ, int k, unsigned d, Tvec_point<T>* medoid){
 
 	if((k+1)>beamSizeQ){
 		std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
@@ -188,7 +188,12 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec
 	}
 	parlay::parallel_for(0, q.size(), [&] (size_t i){
 		parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-		parlay::sequence<pid> beamElts = (beam_search(q[i], v, medoid, beamSizeQ, d)).first;
+		parlay::sequence<pid> beamElts;
+		parlay::sequence<pid> visitedElts; 
+		std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
+		pairElts = beam_search(q[i], v, medoid, beamSizeQ, d);
+		beamElts = pairElts.first;
+		visitedElts = pairElts.second; 
 		//the first element of the frontier may be the point itself
 		//if this occurs, do not report it as a neighbor
 		if(beamElts[0].first==i){
@@ -201,6 +206,7 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec
 			}
 		}
 		q[i]->ngh = neighbors;
+		if(report_stats) q[i]->cnt = visitedElts.size(); 
 	});
 }
 

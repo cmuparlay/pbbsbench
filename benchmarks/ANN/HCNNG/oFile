@@ -78,3 +78,129 @@ Recall 50@50: 0.99929
 Recall 100@100: 0.998611
 Recall 200@200: 0.99783
 1 : -R 3 -L 70 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile127765_955552 : '536.858'
+ANN: Built index: 0.2308
+ANN: Found nearest neighbors: 0.0009
+Max nodes searched = 32, Average nodes searched = 17.09
+Max out degree: 78, Average graph out-degree = 23.3
+Min out degree: 2
+ANN: stats: 0.0002
+ANN: Built index: 0.0784
+ANN: Found nearest neighbors: 0.0007
+Max nodes searched = 28, Average nodes searched = 16.74
+Max out degree: 74, Average graph out-degree = 23.66
+Min out degree: 2
+ANN: stats: 0.0001
+ANN: Built index: 0.1086
+ANN: Found nearest neighbors: 0.0007
+Max nodes searched = 37, Average nodes searched = 16.79
+Max out degree: 74, Average graph out-degree = 23.6
+Min out degree: 4
+ANN: stats: 0.0001
+ANN: Built index: 0.0888
+ANN: Found nearest neighbors: 0.0007
+Max nodes searched = 31, Average nodes searched = 16.4
+Max out degree: 78, Average graph out-degree = 23.67
+Min out degree: 2
+ANN: stats: 0.0001
+ANN: Built index: 0.1309
+ANN: Found nearest neighbors: 0.0007
+Max nodes searched = 29, Average nodes searched = 16.53
+Max out degree: 78, Average graph out-degree = 23.71
+Min out degree: 2
+ANN: stats: 0.0001
+ANN: Built index: 0.1091
+ANN: Found nearest neighbors: 0.0006
+Max nodes searched = 28, Average nodes searched = 16.61
+Max out degree: 72, Average graph out-degree = 23.58
+Min out degree: 2
+ANN: stats: 0.0001
+ANN: Built index: 0.1146
+ANN: Found nearest neighbors: 0.0007
+Max nodes searched = 25, Average nodes searched = 16.81
+Max out degree: 70, Average graph out-degree = 23.57
+Min out degree: 2
+ANN: stats: 0.0001
+ANN: Built index: 0.1140
+ANN: Found nearest neighbors: 0.0028
+Max nodes searched = 26, Average nodes searched = 16.43
+Max out degree: 72, Average graph out-degree = 23.51
+Min out degree: 4
+ANN: stats: 0.0001
+ANN: Built index: 0.0680
+ANN: Found nearest neighbors: 0.0068
+Max nodes searched = 28, Average nodes searched = 16.62
+Max out degree: 78, Average graph out-degree = 23.63
+Min out degree: 2
+ANN: stats: 0.0007
+ANN: Built index: 0.1330
+ANN: Found nearest neighbors: 0.0009
+Max nodes searched = 33, Average nodes searched = 17.07
+Max out degree: 72, Average graph out-degree = 23.54
+Min out degree: 2
+ANN: stats: 0.0001
+Parlay time: 0.1340
+Recall 1@1: 0.93
+1 : -k 5 -q /ssd0/ANN/sift10k/siftsmall_query.fvecs -r 1 -o /tmp/ofile322009_561312 : '0.134'
+ANN: Built index: 0.2363
+ANN: Found nearest neighbors: 0.0008
+Average graph out-degree = 23.79
+Max out-degree: 70, Min out-degree: 2
+Max nodes searched = 27, Average nodes searched = 16.89
+ANN: stats: 0.0001
+ANN: Built index: 0.0908
+ANN: Found nearest neighbors: 0.0008
+Average graph out-degree = 23.58
+Max out-degree: 76, Min out-degree: 2
+Max nodes searched = 35, Average nodes searched = 17.17
+ANN: stats: 0.0001
+ANN: Built index: 0.0995
+ANN: Found nearest neighbors: 0.0007
+Average graph out-degree = 23.57
+Max out-degree: 74, Min out-degree: 2
+Max nodes searched = 26, Average nodes searched = 16.73
+ANN: stats: 0.0001
+ANN: Built index: 0.1323
+ANN: Found nearest neighbors: 0.0046
+Average graph out-degree = 23.56
+Max out-degree: 72, Min out-degree: 2
+Max nodes searched = 30, Average nodes searched = 16.84
+ANN: stats: 0.0007
+ANN: Built index: 0.0623
+ANN: Found nearest neighbors: 0.0012
+Average graph out-degree = 23.43
+Max out-degree: 76, Min out-degree: 2
+Max nodes searched = 28, Average nodes searched = 16.76
+ANN: stats: 0.0012
+ANN: Built index: 0.0857
+ANN: Found nearest neighbors: 0.0006
+Average graph out-degree = 23.66
+Max out-degree: 80, Min out-degree: 2
+Max nodes searched = 33, Average nodes searched = 16.64
+ANN: stats: 0.0001
+ANN: Built index: 0.1377
+ANN: Found nearest neighbors: 0.0019
+Average graph out-degree = 23.52
+Max out-degree: 70, Min out-degree: 2
+Max nodes searched = 31, Average nodes searched = 16.67
+ANN: stats: 0.0023
+ANN: Built index: 0.0953
+ANN: Found nearest neighbors: 0.0019
+Average graph out-degree = 23.48
+Max out-degree: 80, Min out-degree: 2
+Max nodes searched = 34, Average nodes searched = 16.97
+ANN: stats: 0.0012
+ANN: Built index: 0.0950
+ANN: Found nearest neighbors: 0.0024
+Average graph out-degree = 23.45
+Max out-degree: 78, Min out-degree: 2
+Max nodes searched = 32, Average nodes searched = 16.44
+ANN: stats: 0.0012
+ANN: Built index: 0.0850
+ANN: Found nearest neighbors: 0.0111
+Average graph out-degree = 23.52
+Max out-degree: 74, Min out-degree: 2
+Max nodes searched = 28, Average nodes searched = 16.71
+ANN: stats: 0.0012
+Parlay time: 0.0973
+Recall 1@1: 0.97
+1 : -k 5 -q /ssd0/ANN/sift10k/siftsmall_query.fvecs -r 1 -o /tmp/ofile121297_639609 : '0.097'
