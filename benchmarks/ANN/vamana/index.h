@@ -36,7 +36,7 @@ template<typename T>
 struct knn_index{
 	int maxDeg;
 	int beamSize;
-	int k; 
+	// int k; 
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
 	using tvec_point = Tvec_point<T>;
@@ -47,7 +47,7 @@ struct knn_index{
 	using index_pair = std::pair<int, int>;
 	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
 
-	knn_index(int md, int bs, int kk, double a, unsigned dim) : maxDeg(md), beamSize(bs), k(kk), r2_alpha(a), d(dim) {}
+	knn_index(int md, int bs, double a, unsigned dim) : maxDeg(md), beamSize(bs), r2_alpha(a), d(dim) {}
 
 	void clear(parlay::sequence<tvec_point*> &v){
 		size_t n = v.size();
@@ -100,7 +100,7 @@ struct knn_index{
 			);
 			parlay::sequence<float> centroid_coords = parlay::sequence<float>(d);
 			for(int i=0; i<d; i++){
-				float result = c1[i] + c2[i];
+				float result = (c1[i] + c2[i])/2;
 				centroid_coords[i] = result;
 			}
 			return centroid_coords;
@@ -286,7 +286,7 @@ struct knn_index{
 		}
 	}
 
-	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ){
+	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k){
 		if((k+1)>beamSizeQ){
 			std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
 			abort();

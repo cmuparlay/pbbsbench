@@ -87,7 +87,7 @@ auto parse_fvecs(const char* filename) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  std::cout << "Dimension = " << d << std::endl;
+  // std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
@@ -146,12 +146,12 @@ auto parse_bvecs(const char* filename) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  std::cout << "Dimension = " << d << std::endl;
+  // std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + d;
   size_t num_vectors = length / vector_size;
   // size_t num_vectors = 1000000;
-  std::cout << "Num vectors = " << num_vectors << std::endl;   
+  // std::cout << "Num vectors = " << num_vectors << std::endl;   
 
   parlay::sequence<Tvec_point<uint8_t>> points(num_vectors);
 

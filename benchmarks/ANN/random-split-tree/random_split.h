@@ -43,9 +43,6 @@ struct random_split_tree {
     size_t second_index_unshifted = rnd.ith_rand(1) % (active_indices.size()-1);
     size_t second_index = (second_index_unshifted < first_index) ?
       second_index_unshifted : (second_index_unshifted + 1);
-//    std::cout << "Active indices size = " << active_indices.size() <<
-//      " fst = " << first_index << " snd = " << second_index <<
-//      std::endl;
 
     return {active_indices[first_index], active_indices[second_index]};
   }
@@ -55,16 +52,12 @@ struct random_split_tree {
       parlay::sequence<size_t>& active_indices, parlay::random& rnd) {
 
     if (active_indices.size() < 20) {
-//      std::cout << "Done, stopping at size = " << active_indices.size() << std::endl;
       return 1;
     }
 
-//    std::cout << "Cluster size = " << active_indices.size() << std::endl;
-    // select two random points
     auto [u, v] = select_two_random(points, active_indices, rnd);
     fvec_point* first = points[u];
     fvec_point* second = points[v];
-//    std::cout << "u = " << u << " v = " << v << std::endl;
 
     // Split points based on which of the two points are closer.
     auto closer_first = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
@@ -101,8 +94,6 @@ struct random_split_tree {
     std::random_device rd;    
   	std::mt19937 rng(rd());   
   	std::uniform_int_distribution<int> uni(0,v.size()); 
-
-
     parlay::random rnd(uni(rng));
     auto active_indices = parlay::tabulate(v.size(), [&] (size_t i) { return i; });
 		size_t max_depth = random_topdown_cluster(v, active_indices, rnd);

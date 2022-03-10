@@ -1,0 +1,60 @@
+ANN: Built index: 67.0853
+ANN: Found nearest neighbors: 1.6089
+Max nodes searched = 547, Average nodes searched = 318.1
+Max out degree: 58, Average graph out-degree = 25.69
+Min out degree: 4
+ANN: stats: 0.0029
+ANN: Built index: 62.7826
+ANN: Found nearest neighbors: 1.5932
+Max nodes searched = 516, Average nodes searched = 318.8
+Max out degree: 58, Average graph out-degree = 25.64
+Min out degree: 4
+ANN: stats: 0.0022
+Parlay time: 64.3780
+Recall 1@1: 0.0072
+Recall 2@2: 0.00765
+Recall 10@10: 0.00899
+Recall 50@50: 0.008866
+Recall 100@100: 0.008782
+Recall 200@200: 0.008871
+1 : -R 3 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile893085_179723 : '64.378'
+ANN: Built index: 65.9968
+ANN: Found nearest neighbors: 1.8315
+Max nodes searched = 546, Average nodes searched = 315.9
+Max out degree: 114, Average graph out-degree = 51.17
+Min out degree: 10
+ANN: stats: 0.0023
+ANN: Built index: 59.9290
+ANN: Found nearest neighbors: 1.8326
+Max nodes searched = 583, Average nodes searched = 317.4
+Max out degree: 112, Average graph out-degree = 51.23
+Min out degree: 4
+ANN: stats: 0.0019
+Parlay time: 61.7635
+Recall 1@1: 0.0079
+Recall 2@2: 0.0087
+Recall 10@10: 0.0086
+Recall 50@50: 0.008662
+Recall 100@100: 0.008645
+Recall 200@200: 0.0087225
+1 : -R 3 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile633179_725276 : '61.763'
+ANN: Built index: 65.2355
+ANN: Found nearest neighbors: 1.4953
+Max nodes searched = 283, Average nodes searched = 252.9
+Max out degree: 114, Average graph out-degree = 51.17
+Min out degree: 6
+ANN: stats: 0.0020
+ANN: Built index: 61.7701
+ANN: Found nearest neighbors: 1.4811
+Max nodes searched = 285, Average nodes searched = 252.9
+Max out degree: 112, Average graph out-degree = 51.22
+Min out degree: 8
+ANN: stats: 0.0022
+Parlay time: 63.2535
+Recall 1@1: 0.9988
+Recall 2@2: 0.9985
+Recall 10@10: 0.99715
+Recall 50@50: 0.990816
+Recall 100@100: 0.983765
+Recall 200@200: 0.972185
+1 : -R 3 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile887793_43017 : '63.253'

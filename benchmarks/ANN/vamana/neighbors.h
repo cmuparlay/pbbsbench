@@ -39,10 +39,10 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
   {
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
-    findex I(maxDeg, beamSize, k, alpha, d);
+    findex I(maxDeg, beamSize, alpha, d);
     I.build_index(v, true);
     t.next("Built index");
-    I.searchNeighbors(q, v, beamSizeQ);
+    I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
     if(report_stats){
       //average numbers of nodes searched using beam search
@@ -70,7 +70,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, bo
   { 
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
-    findex I(maxDeg, beamSize, k, alpha, d);
+    findex I(maxDeg, beamSize, alpha, d);
     I.build_index(v);
     t.next("Built index");
     if(report_stats){

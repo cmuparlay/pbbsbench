@@ -61,13 +61,20 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
 
   using index_pair = std::pair<int, int>;
 
-  //DIRECTED DEGREES
-if (outFile != NULL) {
-      parlay::sequence<int> degrees(n);
+    auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->out_nbh.size();});
+    size_t i = parlay::max_element(s) - s.begin();
+    int maxDegree = s[i];
+
+     if (outFile != NULL) {
+      parlay::sequence<int> graph(n*(maxDegree+1));
       parlay::parallel_for(0, n, [&] (size_t i){
-        degrees[i] = v[i]->out_nbh.size();
+        graph[i*(maxDegree+1)] = (int) i; 
+        int degree = v[i]->out_nbh.size();
+        for(int j=0; j<degree; j++) graph[i*(maxDegree+1)+1+j] = v[i]->out_nbh[j]; 
+        int rem = maxDegree - degree;
+        for(int j=0; j<rem; j++) graph[i*(maxDegree+1)+1+degree+j] = -1;
       });
-      writeIntSeqToFile(degrees, outFile);
+      writeIntSeqToFile(graph, outFile);
     }
 
 }
@@ -105,7 +112,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_p
 
 // Infile is a file in .fvecs format
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-a <alpha>] [-R {1,...,1000}] [-L {1,...,1000}] [-Q {1,...,1000}] [-p {1,2}] [-k {1,...,100}] [-q <queryFile>] [-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-a <alpha>] [-R {1,...,1000}] [-L {1,...,1000}] [-Q {1,...,1000}] [-p {1,2}] [-k {1,...,1000}] [-q <queryFile>] [-o <outFile>] [-r <rounds>] <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   char* qFile = P.getOptionValue("-q");
@@ -119,14 +126,14 @@ int main(int argc, char* argv[]) {
   if (p > 1000 || p < 1) P.badArgument();
   int rounds = P.getOptionIntValue("-r", 1);
   int k = P.getOptionIntValue("-k", 1);
-  if (k > 100 || k < 1) P.badArgument();
+  if (k > 1000 || k < 1) P.badArgument();
   double alpha = P.getOptionDoubleValue("-a", 1.5);
 
   bool fvecs = true;
   std::string filename = std::string(iFile);
   std::string::size_type n = filename.size();
   if(filename[n-5] == 'b') fvecs = false;
-  std::cout << "Input (Tvecs format): " << iFile << std::endl;
+  // std::cout << "Input (Tvecs format): " << iFile << std::endl;
 
   bool two_passes = (p==2);
 

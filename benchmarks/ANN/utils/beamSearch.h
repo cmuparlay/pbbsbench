@@ -29,6 +29,8 @@
 #include "common/geometry.h"
 #include <set>
 
+extern bool report_stats; 
+
 using pid = std::pair<int, float>;
 
 //returns true if F \setminus V = emptyset 
@@ -61,9 +63,7 @@ void print_seq(parlay::sequence<int> seq){
 }
 
 //takes in two sorted sequences and returns a sorted union
-template<typename T>
-parlay::sequence<pid> seq_union(parlay::sequence<pid> &P, parlay::sequence<pid> &Q, Tvec_point<T>* p, 
-	parlay::sequence<Tvec_point<T>*> &v, unsigned d){
+parlay::sequence<pid> seq_union(parlay::sequence<pid> &P, parlay::sequence<pid> &Q){
 	auto less = [&] (pid a, pid b){
 		return a.second < b.second;
 	};
@@ -134,14 +134,75 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(Tvec_point<T
 		for(int i=0; i<candidates.size(); i++) pairCandidates[i] = 
 			std::make_pair(candidates[i], distance(v[candidates[i]]->coordinates.begin(), p->coordinates.begin(), d));
 		auto sortedCandidates = parlay::sort(pairCandidates, less);
-		frontier = seq_union<T>(frontier, sortedCandidates, p, v, d);
+		frontier = seq_union(frontier, sortedCandidates);
 		if(frontier.size() > beamSize) frontier.erase(frontier.begin()+beamSize, frontier.end());
 		//add the node to the visited list
 		visited.push_back(currentPid);
 	} 
-	// parlay::sequence<int> frontier = parlay::sequence<int>(pairFrontier.size());
-	// for(int i=0; i<pairFrontier.size(); i++) frontier[i] = (pairFrontier[i]).first;
 	return std::make_pair(frontier, visited);
 }
+
+//searches every element in q starting from a randomly selected point
+template<typename T>
+void beamSearchRandom(parlay::sequence<Tvec_point<T>*> &q, 
+	parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k, unsigned d){
+	if((k+1)>beamSizeQ){
+		std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
+		abort();
+	}
+	//use a random shuffle to generate random starting points for each query
+	size_t n = v.size();
+	auto indices = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+	parlay::parallel_for(0, q.size(), [&] (size_t i){
+		parlay::sequence<int> neighbors = parlay::sequence<int>(k);
+		Tvec_point<T>* start = v[indices[i]];
+		parlay::sequence<pid> beamElts;
+		parlay::sequence<pid> visitedElts; 
+		std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
+		pairElts = beam_search(q[i], v, start, beamSizeQ, d);
+		beamElts = pairElts.first;
+		visitedElts = pairElts.second; 
+		//the first element of the frontier may be the point itself
+		//if this occurs, do not report it as a neighbor
+		if(beamElts[0].first==i){
+			for(int j=0; j<k; j++){
+				neighbors[j] = beamElts[j+1].first;
+			}
+		} else{
+			for(int j=0; j<k; j++){
+				neighbors[j] = beamElts[j].first;
+			}
+		}
+		q[i]->ngh = neighbors;
+		if(report_stats) q[i]->cnt = visitedElts.size(); 
+	});
+}
+
+template<typename T>
+void searchFromSingle(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, 
+	int beamSizeQ, int k, unsigned d, Tvec_point<T> medoid){
+
+	if((k+1)>beamSizeQ){
+		std::cout << "Error: beam search parameter Q = " << beamSizeQ << " same size or smaller than k = " << k << std::endl;
+		abort();
+	}
+	parlay::parallel_for(0, q.size(), [&] (size_t i){
+		parlay::sequence<int> neighbors = parlay::sequence<int>(k);
+		parlay::sequence<pid> beamElts = (beam_search(q[i], v, medoid, beamSizeQ, d)).first;
+		//the first element of the frontier may be the point itself
+		//if this occurs, do not report it as a neighbor
+		if(beamElts[0].first==i){
+			for(int j=0; j<k; j++){
+				neighbors[j] = beamElts[j+1].first;
+			}
+		} else{
+			for(int j=0; j<k; j++){
+				neighbors[j] = beamElts[j].first;
+			}
+		}
+		q[i]->ngh = neighbors;
+	});
+}
+
 
 #endif
