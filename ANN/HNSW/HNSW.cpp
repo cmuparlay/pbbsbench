@@ -28,13 +28,18 @@ public:
 		}
 		return sum;
 	}
+
+	static auto get_id(const type_point &u)
+	{
+		return u.id;
+	}
 };
 
 int main(int argc, char **argv)
 {
 	commandLine parameter(argc, argv, 
 		"-n <numInput> -k <numQuery> -ml <m_l> -m <m> "
-		"-efc <ef_construction> -ef <ef_query> -r <recall@R> "
+		"-efc <ef_construction> -ef <ef_query> -r <recall@R> [-b <batchBase>]"
 		"[-q <queryFile>] [-g <groundtruthFile>] <inFile>"
 	);
 	const char* file_in = parameter.getArgument(0);
@@ -47,6 +52,7 @@ int main(int argc, char **argv)
 	const char* efc = parameter.getOptionValue("-efc");
 	const char* ef = parameter.getOptionValue("-ef");
 	const char* cnt_rank_cmp = parameter.getOptionValue("-r");
+	const char* batch_base = parameter.getOptionValue("-b");
 
 	auto to_fvec = [](size_t id, auto begin, auto end){
 		typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
@@ -75,7 +81,7 @@ int main(int argc, char **argv)
 	fputs("Start building HNSW\n", stderr);
 	HNSW<descr_fvec> g(
 		ps.begin(), ps.begin()+atoi(cnt_pts_input),
-		dim, atof(m_l), atoi(m), atoi(efc)
+		dim, atof(m_l), atoi(m), atoi(efc), atof(batch_base)
 	);
 	t.next("Build index");
 
@@ -111,6 +117,7 @@ int main(int argc, char **argv)
 
 	if(rank_max<cnt_rank_cmp_val)
 		cnt_rank_cmp_val = rank_max;
+	uint32_t cnt_all_shot = 0;
 	printf("measure recall@%u\n", cnt_rank_cmp_val);
 	for(uint32_t i=0; i<cnt_pts_query_val; ++i)
 	{
@@ -122,7 +129,9 @@ int main(int argc, char **argv)
 				cnt_shot++;
 			}
 		printf("#%u:\t%u (%.2f)\n", i, cnt_shot, float(cnt_shot)/cnt_rank_cmp_val);
+		if(cnt_shot==cnt_rank_cmp_val) cnt_all_shot++;
 	}
+	printf("#all shot: %u (%.2f)\n", cnt_all_shot, float(cnt_all_shot)/cnt_pts_query_val);
 /*
 	for(uint32_t i=0; i<10; ++i)
 	{
