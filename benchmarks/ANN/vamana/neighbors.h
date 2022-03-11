@@ -25,7 +25,7 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "common/geometry.h"
-#include "../utils/NSGDist.h"  
+#include "../utils/NSGDist.h"
 #include "../utils/types.h"
 #include "index.h"
 #include "../utils/beamSearch.h"
@@ -37,7 +37,7 @@ extern bool report_stats;
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, double alpha, double dummy,
   parlay::sequence<Tvec_point<T>*> &q) {
-  parlay::internal::timer t("ANN",report_stats); 
+  parlay::internal::timer t("ANN",report_stats);
   {
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
@@ -58,8 +58,8 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy) {
-  parlay::internal::timer t("ANN",report_stats); 
-  { 
+  parlay::internal::timer t("ANN",report_stats);
+  {
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
