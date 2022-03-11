@@ -36,16 +36,15 @@
 extern bool report_stats;
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, bool two_passes, double alpha, 
+void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int MSTdeg, int num_clusters, int beamSizeQ, double dummy1, double dummy2,
   parlay::sequence<Tvec_point<T>*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
   {
     unsigned d = (v[0]->coordinates).size();
     using findex = hcnng_index<T>;
-    findex I(maxDeg, d);
-    I.build_index(v, beamSize, sqrt(v.size()));
+    findex I(MSTdeg, d);
+    I.build_index(v, num_clusters, sqrt(v.size()));
     t.next("Built index");
-    // I.search_index_random(q, v, beamSizeQ, k);
     beamSearchRandom(q, v, beamSizeQ, k, d);
     t.next("Found nearest neighbors");
     if(report_stats){
@@ -58,13 +57,13 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, bool two_passes, double alpha) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int MSTdeg, int num_clusters, double dummy1, double dummy2) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
     using findex = hcnng_index<T>;
-    findex I(maxDeg, d);
-    I.build_index(v, 20, sqrt(v.size()));
+    findex I(MSTdeg, d);
+    I.build_index(v, num_clusters, sqrt(v.size()));
     t.next("Built index");
     if(report_stats){
       graph_stats(v);

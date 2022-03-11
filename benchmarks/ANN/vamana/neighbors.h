@@ -35,7 +35,7 @@
 extern bool report_stats;
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, bool two_passes, double alpha, 
+void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, double alpha, double dummy,
   parlay::sequence<Tvec_point<T>*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
   {
@@ -52,15 +52,12 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
       query_stats(q);
       t.next("stats");
     }
-    // for(int i=0; i<4*d; i++) std::cout << (int) v[0]->coordinates[i] << std::endl; 
-    // std::cout << "next vector" << std::endl; 
-    // for(int i=0; i<4*d; i++) std::cout << (int) v[v.size()]->coordinates[i] << std::endl; 
   };
 }
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int k, int maxDeg, int beamSize, bool two_passes, double alpha) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
