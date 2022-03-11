@@ -33,7 +33,7 @@ extern bool report_stats;
 
 
 template<typename T>
-struct knn_index{
+struct knn_index {
 	int maxDeg;
 	int beamSize;
 	// int k;
