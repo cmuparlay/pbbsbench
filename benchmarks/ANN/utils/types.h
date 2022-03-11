@@ -32,7 +32,7 @@
 template<typename T>
 struct Tvec_point {
   int id;
-  int cnt; 
+  int cnt;
   parlay::slice<T*, T*> coordinates;
   Tvec_point() :
     coordinates(parlay::make_slice<T*, T*>(nullptr, nullptr)) {}

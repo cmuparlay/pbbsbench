@@ -30,7 +30,7 @@
 #include "index.h"
 #include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
-#include "../utils/stats.h"
+//#include "../utils/stats.h"
 
 extern bool report_stats;
 
@@ -46,12 +46,12 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
     t.next("Built index");
     I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
-    if(report_stats){
-      //average numbers of nodes searched using beam search
-      graph_stats(v);
-      query_stats(q);
-      t.next("stats");
-    }
+//    if(report_stats){
+//      //average numbers of nodes searched using beam search
+//      graph_stats(v);
+//      query_stats(q);
+//      t.next("stats");
+//    }
   };
 }
 
@@ -65,9 +65,9 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
     findex I(maxDeg, beamSize, alpha, d);
     I.build_index(v);
     t.next("Built index");
-    if(report_stats){
-      graph_stats(v);
-      t.next("stats");
-    }
+//    if(report_stats){
+//      graph_stats(v);
+//      t.next("stats");
+//    }
   };
 }
