@@ -20,6 +20,6 @@ tests = [
 import sys
 sys.path.insert(0, 'common')
 import runTestsANN
-runTestsANN.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests)
+runTestsANN.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests, "out.txt")
 
 #-R 125 -L 150 -k 100

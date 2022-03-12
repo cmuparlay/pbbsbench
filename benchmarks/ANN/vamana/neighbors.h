@@ -25,19 +25,19 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "common/geometry.h"
-#include "../utils/NSGDist.h"  
+#include "../utils/NSGDist.h"
 #include "../utils/types.h"
 #include "index.h"
 #include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
-#include "../utils/stats.h"
+//#include "../utils/stats.h"
 
 extern bool report_stats;
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, double alpha, double dummy,
   parlay::sequence<Tvec_point<T>*> &q) {
-  parlay::internal::timer t("ANN",report_stats); 
+  parlay::internal::timer t("ANN",report_stats);
   {
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
@@ -46,28 +46,28 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
     t.next("Built index");
     I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
-    if(report_stats){
-      //average numbers of nodes searched using beam search
-      graph_stats(v);
-      query_stats(q);
-      t.next("stats");
-    }
+//    if(report_stats){
+//      //average numbers of nodes searched using beam search
+//      graph_stats(v);
+//      query_stats(q);
+//      t.next("stats");
+//    }
   };
 }
 
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy) {
-  parlay::internal::timer t("ANN",report_stats); 
-  { 
+  parlay::internal::timer t("ANN",report_stats);
+  {
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
     I.build_index(v);
     t.next("Built index");
-    if(report_stats){
-      graph_stats(v);
-      t.next("stats");
-    }
+//    if(report_stats){
+//      graph_stats(v);
+//      t.next("stats");
+//    }
   };
 }

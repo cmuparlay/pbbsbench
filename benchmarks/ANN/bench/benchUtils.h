@@ -20,14 +20,14 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <iostream>
 #include <algorithm>
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
+#include <iostream>
+#include "../utils/types.h"
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
-#include "../utils/types.h"
+#include "parlay/parallel.h"
+#include "parlay/primitives.h"
 // #include "common/time_loop.h"
 
 #include <fcntl.h>
@@ -41,7 +41,6 @@ using namespace benchIO;
 // *************************************************************
 //  SOME DEFINITIONS
 // *************************************************************
-
 
 // *************************************************************
 // Parsing code (should move to common?)
@@ -78,7 +77,7 @@ std::pair<char*, size_t> mmapStringFromFile(const char* filename) {
 }
 
 auto parse_fvecs(const char* filename) {
-  auto [fileptr, length] = mmapStringFromFile(filename);
+  auto[fileptr, length] = mmapStringFromFile(filename);
   // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + 4*d bytes.
@@ -89,17 +88,17 @@ auto parse_fvecs(const char* filename) {
   int d = *((int*)fileptr);
   // std::cout << "Dimension = " << d << std::endl;
 
-  size_t vector_size = 4 + 4*d;
+  size_t vector_size = 4 + 4 * d;
   size_t num_vectors = length / vector_size;
   // std::cout << "Num vectors = " << num_vectors << std::endl;
 
   parlay::sequence<Tvec_point<float>> points(num_vectors);
 
-  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+  parlay::parallel_for(0, num_vectors, [&](size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     float* start = (float*)(fileptr + offset_in_bytes);
     float* end = start + d;
-    points[i].id = i; 
+    points[i].id = i;
     points[i].coordinates = parlay::make_slice(start, end);
   });
 
@@ -107,7 +106,7 @@ auto parse_fvecs(const char* filename) {
 }
 
 auto parse_ivecs(const char* filename) {
-  auto [fileptr, length] = mmapStringFromFile(filename);
+  auto[fileptr, length] = mmapStringFromFile(filename);
   // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + 4*d bytes.
@@ -118,17 +117,17 @@ auto parse_ivecs(const char* filename) {
   int d = *((int*)fileptr);
   // std::cout << "Dimension = " << d << std::endl;
 
-  size_t vector_size = 4 + 4*d;
+  size_t vector_size = 4 + 4 * d;
   size_t num_vectors = length / vector_size;
-  // std::cout << "Num vectors = " << num_vectors << std::endl;    
+  // std::cout << "Num vectors = " << num_vectors << std::endl;
 
   parlay::sequence<ivec_point> points(num_vectors);
 
-  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+  parlay::parallel_for(0, num_vectors, [&](size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     int* start = (int*)(fileptr + offset_in_bytes);
     int* end = start + d;
-    points[i].id = i; 
+    points[i].id = i;
     points[i].coordinates = parlay::make_slice(start, end);
   });
 
@@ -136,8 +135,7 @@ auto parse_ivecs(const char* filename) {
 }
 
 auto parse_bvecs(const char* filename) {
-
-  auto [fileptr, length] = mmapStringFromFile(filename);
+  auto[fileptr, length] = mmapStringFromFile(filename);
   // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + d bytes.
@@ -151,15 +149,15 @@ auto parse_bvecs(const char* filename) {
   size_t vector_size = 4 + d;
   size_t num_vectors = length / vector_size;
   // size_t num_vectors = 1000000;
-  // std::cout << "Num vectors = " << num_vectors << std::endl;   
+  // std::cout << "Num vectors = " << num_vectors << std::endl;
 
   parlay::sequence<Tvec_point<uint8_t>> points(num_vectors);
 
-  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+  parlay::parallel_for(0, num_vectors, [&](size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
     uint8_t* start = (uint8_t*)(fileptr + offset_in_bytes);
     uint8_t* end = start + d;
-    points[i].id = i; 
+    points[i].id = i;
     points[i].coordinates = parlay::make_slice(start, end);
   });
 
@@ -190,30 +188,25 @@ auto parse_bvecs(const char* filename) {
 //   //   size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
 //   //   float* start = (float*)(fileptr + offset_in_bytes);
 //   //   float* end = start + d;
-//   //   points[i].id = i; 
+//   //   points[i].id = i;
 //   //   points[i].coordinates = parlay::make_slice(start, end);
 //   // });
 
 //   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
 //     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
-//     points[i].id = i; 
+//     points[i].id = i;
 //     unsigned char* start = (unsigned char*)(fileptr + offset_in_bytes);
 //     parlay::sequence<float> coords = *new parlay::sequence<float>(d);
 //     for(int j=0; j<d; j++){
 //       float elt = *new float;
 //       elt = static_cast<float>(*(start+j));
 //       coords[j] = elt;
-//       // std::cout << coords[j] << std::endl; 
+//       // std::cout << coords[j] << std::endl;
 //     }
 //     slice_f slicecoords = *new slice_f(coords.begin(), coords.end());
 //     // slicecoords =  parlay::make_slice(coords.begin(), coords.end());
 //     points[i].coordinates = slicecoords;
 //   });
 
-
-
 //   return points;
 // }
-
-
-
