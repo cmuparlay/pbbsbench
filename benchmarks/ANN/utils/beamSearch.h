@@ -28,6 +28,8 @@
 #include "common/geometry.h"
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/random.h"
+#include "../utils/types.h"
 
 extern bool report_stats;
 

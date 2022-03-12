@@ -34,7 +34,7 @@ void graph_stats(parlay::sequence<Tvec_point<T>*> &v){
   	size_t k = parlay::min_element(od) - od.begin();
   	size_t sum1 = parlay::reduce(od);
   	std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
-  	std::cout << "Max out-degree: " << maxDegree << ", Min out-degree: " << od[k] << std::endl;  
+  	std::cout << "Max out-degree: " << maxDegree << ", Min out-degree: " << od[k] << std::endl;
 }
 
 template<typename T>
@@ -42,6 +42,6 @@ void query_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto s = parlay::delayed_seq<size_t>(q.size(), [&] (size_t i) {return q[i]->cnt;});
     size_t i = parlay::max_element(s) - s.begin();
     size_t sum = parlay::reduce(s);
-    std::cout << "Max nodes searched = " << s[i] 
+    std::cout << "Max nodes searched = " << s[i]
     	<< ", Average nodes searched = " << sum/((double) q.size()) << std::endl;
 }
