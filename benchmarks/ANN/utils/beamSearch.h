@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <set>
+#include <unordered_set>
 #include "common/geometry.h"
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
@@ -109,6 +110,71 @@ parlay::sequence<pid> seq_union(parlay::sequence<pid>& P,
   return result;
 }
 
+// Uses a std::set for the frontier and beam, and unordered_set for
+// visited elements.
+template <typename T>
+parlay::sequence<pid> beam_search_2(Tvec_point<T>* p,
+                                    parlay::sequence<Tvec_point<T>*>& v,
+                                    Tvec_point<T>* medoid, int beamSize,
+                                    unsigned d) {
+  // initialize data structures
+  std::unordered_set<int> visited;
+  auto q_comp = [] (const pid& l, const pid& r) {
+    if (l.second < r.second) return true;
+    if (l.second == r.second) return l.first < r.first;
+    return false;
+  };
+  std::set<pid, decltype(q_comp)> frontier(q_comp);
+  std::set<pid, decltype(q_comp)> beam(q_comp);
+
+  auto ret = parlay::sequence<pid>();
+  ret.reserve(beamSize);
+
+  // the frontier starts with the medoid
+  auto medoid_pair = std::make_pair(
+      medoid->id,
+      distance(medoid->coordinates.begin(), p->coordinates.begin(), d));
+  frontier.insert(medoid_pair);
+  beam.insert(medoid_pair);
+
+  // terminate beam search when the entire frontier has been visited
+  while (!frontier.empty()) {
+    // the next node to visit is the unvisited frontier node that is closest to
+    // p
+    pid currentPid = *(frontier.begin());
+    frontier.erase(frontier.begin());
+
+    ret.push_back(currentPid);
+    visited.insert(currentPid.first);
+
+    Tvec_point<T>* current = v[currentPid.first];
+    auto g = [&] (int ngh) {
+      if (visited.find(ngh) != visited.end()) return false;
+      return true;
+    };
+
+    for (const int& ngh : current->out_nbh) {
+      if (visited.find(ngh) == visited.end()) {
+        float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
+        // insert it into the beam
+        beam.insert(std::make_pair(ngh, dist));
+        frontier.insert(std::make_pair(ngh, dist));
+        visited.insert(ngh);
+      }
+    }
+    while (beam.size() > beamSize) {
+      auto it = std::prev(beam.end());
+      pid point = *it;
+      beam.erase(it);
+      auto f_it = frontier.find(point);
+      if (f_it != frontier.end()) {
+        frontier.erase(f_it);
+      }
+    }
+  }
+  return ret;
+}
+
 template <typename T>
 std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
@@ -135,10 +201,11 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     auto candidates = parlay::filter(current->out_nbh, g);
     parlay::sequence<pid> pairCandidates =
         parlay::sequence<pid>(candidates.size());
-    for (int i = 0; i < candidates.size(); i++)
+    for (int i = 0; i < candidates.size(); i++) {
       pairCandidates[i] = std::make_pair(
           candidates[i], distance(v[candidates[i]]->coordinates.begin(),
                                   p->coordinates.begin(), d));
+    }
     auto sortedCandidates = parlay::sort(pairCandidates, less);
     frontier = seq_union(frontier, sortedCandidates);
     if (frontier.size() > beamSize)

@@ -212,6 +212,7 @@ struct knn_index {
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
+//				parlay::sequence<pid> visited = beam_search_2(v[rperm[i]], v, medoid, beamSize, d);
 				if(report_stats) v[rperm[i]]->cnt = visited.size();
 				robustPrune(v[rperm[i]], visited, v, alpha);
 			});
