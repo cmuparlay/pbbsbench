@@ -127,7 +127,7 @@ struct knn_index{
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
     new_nbhs.reserve(maxDeg);
 
-    size_t candidate_idx = 0:
+    size_t candidate_idx = 0;
 		while (new_nbhs.size() <= maxDeg && candidate_idx < candidates.size()) {
       // Don't need to do modifications.
       int p_star = candidates[candidate_idx].first;
