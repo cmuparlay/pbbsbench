@@ -121,7 +121,7 @@ struct knn_index{
 		}
 
 		// Sort the candidate set in reverse order according to distance from p.
-		auto less = [&] (pid a, pid b) {return a.second > b.second;};
+		auto less = [&] (pid a, pid b) {return a.second < b.second;};
 		parlay::sort_inplace(candidates, less);
 
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
@@ -151,6 +151,39 @@ struct knn_index{
 		}
 		p->new_out_nbh = std::move(new_nbhs);
 	}
+
+//	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
+//	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
+//	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha){
+//		//make sure the candidate set does not include p
+//		auto pred = [&] (pid a){return a.first == p->id;};
+//		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
+//		//add out neighbors of p to the candidate set
+//		for(int i=0; i<(p->out_nbh.size()); i++){
+//			candidates.push_back(std::make_pair(p->out_nbh[i],
+//				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
+//		}
+//		//sort the candidate set in reverse order according to distance from p
+//		auto less = [&] (pid a, pid b) {return a.second > b.second;};
+//		parlay::sort_inplace(candidates, less);
+//		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
+//		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
+//			int c = candidates.size();
+//			parlay::sequence<bool> deleteFlags = parlay::tabulate(c, [&] (size_t i) {return true;});
+//			int p_star = candidates[c-1].first;
+//			deleteFlags[c-1] = false;
+//			new_nbhs.push_back(p_star);
+//			for(int i=0; i<c-1; i++){
+//				int p_prime = candidates[i].first;
+//				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
+//				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
+//				if(alpha*dist_starprime <= dist_pprime) deleteFlags[i] = false;
+//			}
+//			auto new_candidates = parlay::pack(candidates, deleteFlags);
+//			candidates = new_candidates;
+//		}
+//		p->new_out_nbh = new_nbhs;
+//	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
