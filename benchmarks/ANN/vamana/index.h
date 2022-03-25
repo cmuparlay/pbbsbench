@@ -36,12 +36,12 @@ template<typename T>
 struct knn_index{
 	int maxDeg;
 	int beamSize;
-	// int k; 
+	// int k;
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
 	using tvec_point = Tvec_point<T>;
 	using fvec_point = Tvec_point<float>;
-	tvec_point* medoid; 
+	tvec_point* medoid;
 	using pid = std::pair<int, float>;
 	using slice_tvec = decltype(make_slice(parlay::sequence<tvec_point*>()));
 	using index_pair = std::pair<int, int>;
@@ -98,16 +98,16 @@ struct knn_index{
 		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v));
 		fvec_point centroidp = Tvec_point<float>();
 		centroidp.coordinates = parlay::make_slice(centroid);
-		medoid = medoid_helper(&centroidp, parlay::make_slice(v)); 
-		std::cout << "Medoid ID: " << medoid->id << std::endl; 
+		medoid = medoid_helper(&centroidp, parlay::make_slice(v));
+		std::cout << "Medoid ID: " << medoid->id << std::endl;
 	}
 
 	void print_set(std::set<int> myset){
-		std::cout << "["; 
+		std::cout << "[";
 		for (std::set<int>::iterator it=myset.begin(); it!=myset.end(); ++it){
 			std::cout << *it << ", ";
 		}
-		std::cout << "]" << std::endl; 
+		std::cout << "]" << std::endl;
 	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
@@ -118,9 +118,9 @@ struct knn_index{
 		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
-			candidates.push_back(std::make_pair(p->out_nbh[i], 
+			candidates.push_back(std::make_pair(p->out_nbh[i],
 				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
-		}  
+		}
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (pid a, pid b) {return a.second > b.second;};
 		parlay::sort_inplace(candidates, less);
@@ -151,10 +151,10 @@ struct knn_index{
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
 			candidates.push_back(p->out_nbh[i]);
-		}  
+		}
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (int a, int b){
-			return distance(v[a]->coordinates.begin(), p->coordinates.begin(), d) > 
+			return distance(v[a]->coordinates.begin(), p->coordinates.begin(), d) >
 			distance(v[b]->coordinates.begin(), p->coordinates.begin(), d);
 		};
 		parlay::sort_inplace(candidates, less);
@@ -184,7 +184,7 @@ struct knn_index{
 		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
 		build_index_inner(v, 1.0, 2, .1);
-		if(two_pass) build_index_inner(v, r2_alpha, 2, .1);  
+		if(two_pass) build_index_inner(v, r2_alpha, 2, .1);
 	}
 
 	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, double base = 2,
@@ -216,7 +216,7 @@ struct knn_index{
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
-			parlay::sequence<parlay::sequence<index_pair>> to_flatten = 
+			parlay::sequence<parlay::sequence<index_pair>> to_flatten =
 				parlay::sequence<parlay::sequence<index_pair>>(ceiling-floor);
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				parlay::sequence<int> new_nbh = v[rperm[i]]->new_out_nbh;
@@ -230,7 +230,7 @@ struct knn_index{
 			});
 			auto new_edges = parlay::flatten(to_flatten);
 			auto grouped_by = parlay::group_by_key(new_edges);
-			//finally, add the bidirectional edges; if they do not make 
+			//finally, add the bidirectional edges; if they do not make
 			//the vertex exceed the degree bound, just add them to out_nbhs;
 			//otherwise, use robustPrune on the vertex with user-specified alpha
 			parlay::parallel_for(0, grouped_by.size(), [&] (size_t j){
@@ -241,14 +241,14 @@ struct knn_index{
 					for(int k=0; k<candidates.size(); k++){ //try concatenating instead of pushing back
 						(v[index]->out_nbh).push_back(candidates[k]);
 					}
-				} else{ 
+				} else{
 					robustPrune(v[index], candidates, v, alpha);
 					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
 					v[index]->out_nbh = new_nbh;
 					(v[index]->new_out_nbh).clear();
 				}
 			});
-			inc += 1; 
+			inc += 1;
 		}
 	}
 
