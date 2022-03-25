@@ -112,69 +112,55 @@ struct knn_index{
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
-	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha){
-		//make sure the candidate set does not include p
-		auto pred = [&] (pid a){return a.first == p->id;};
-		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
-		//add out neighbors of p to the candidate set
-		for(int i=0; i<(p->out_nbh.size()); i++){
+	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha) {
+    // Make sure the candidate set does not include p (done later) add
+    // out neighbors of p to the candidate set.
+		for (size_t i=0; i<(p->out_nbh.size()); i++) {
 			candidates.push_back(std::make_pair(p->out_nbh[i],
 				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
 		}
-		//sort the candidate set in reverse order according to distance from p
+
+		// Sort the candidate set in reverse order according to distance from p.
 		auto less = [&] (pid a, pid b) {return a.second > b.second;};
 		parlay::sort_inplace(candidates, less);
+
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
-		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
-			int c = candidates.size();
-			parlay::sequence<bool> deleteFlags = parlay::tabulate(c, [&] (size_t i) {return true;});
-			int p_star = candidates[c-1].first;
-			deleteFlags[c-1] = false;
-			new_nbhs.push_back(p_star);
-			for(int i=0; i<c-1; i++){
-				int p_prime = candidates[i].first;
-				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-				if(alpha*dist_starprime <= dist_pprime) deleteFlags[i] = false;
-			}
-			auto new_candidates = parlay::pack(candidates, deleteFlags);
-			candidates = new_candidates;
+    new_nbhs.reserve(maxDeg);
+
+    size_t candidate_idx = 0:
+		while (new_nbhs.size() <= maxDeg && candidate_idx < candidates.size()) {
+      // Don't need to do modifications.
+      int p_star = candidates[candidate_idx].first;
+      candidate_idx++;
+      if (p_star == p->id || p_star == -1) {
+        continue;
+      }
+
+      new_nbhs.push_back(p_star);
+
+      for (size_t i = candidate_idx; i < candidates.size(); i++) {
+        int p_prime = candidates[i].first;
+        if (p_prime != -1) {
+          float dist_starprime = distance(&v[p_star], &v[p_prime], d);
+          float dist_pprime = candidates[i].second;
+          if (alpha * dist_starprime <= dist_pprime) {
+            candidates[i].first = -1;
+          }
+        }
+      }
 		}
-		p->new_out_nbh = new_nbhs;
+		p->new_out_nbh = std::move(new_nbhs);
 	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
 	void robustPrune(Tvec_point<T>* p, parlay::sequence<int> candidates, parlay::sequence<Tvec_point<T>*> &v, double alpha){
-		//make sure the candidate set does not include p
-		if(parlay::find(candidates, p->id) != candidates.end()) candidates.erase(parlay::find(candidates, p->id));
-		//add out neighbors of p to the candidate set
-		for(int i=0; i<(p->out_nbh.size()); i++){
-			candidates.push_back(p->out_nbh[i]);
-		}
-		//sort the candidate set in reverse order according to distance from p
-		auto less = [&] (int a, int b){
-			return distance(v[a]->coordinates.begin(), p->coordinates.begin(), d) >
-			distance(v[b]->coordinates.begin(), p->coordinates.begin(), d);
-		};
-		parlay::sort_inplace(candidates, less);
-		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
-		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
-			int c = candidates.size();
-			parlay::sequence<bool> deleteFlags = parlay::tabulate(c, [&] (size_t i) {return true;});
-			int p_star = candidates[c-1];
-			deleteFlags[c-1] = false;
-			new_nbhs.push_back(p_star);
-			for(int i=0; i<c-1; i++){
-				int p_prime = candidates[i];
-				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-				if(alpha*dist_starprime <= dist_pprime) deleteFlags[i] = false;
-			}
-			auto new_candidates = parlay::pack(candidates, deleteFlags);
-			candidates = new_candidates;
-		}
-		p->new_out_nbh = new_nbhs;
+    parlay::sequence<pid> cc;
+    cc.reserve(candidates.size() + p->out_nbh.size());
+    for (size_t i=0; i<candidates.size(); ++i) {
+      cc.push_back(std::make_pair(candidates[i], distance(&v[candidates[i]], p, d)));
+    }
+    return robustPrune(p, std::move(cc), alpha);
 	}
 
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
