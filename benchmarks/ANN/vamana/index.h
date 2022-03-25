@@ -24,6 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/random.h"
+#include "parlay/alloc.h"
 #include "common/geometry.h"
 #include <random>
 #include <set>
@@ -177,7 +178,13 @@ struct knn_index{
 		p->new_out_nbh = new_nbhs;
 	}
 
+	using seq_allocator = parlay::type_allocator<parlay::sequence<int>>;
+
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
+		parlay::sequence<int> *foo = seq_allocator::alloc();
+
+		(*foo).reserve(maxDeg);
+		(*foo)[0] = 0;
 		clear(v);
 		//populate with random edges
 		if(not from_empty) random_index(v, maxDeg);
