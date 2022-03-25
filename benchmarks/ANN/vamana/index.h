@@ -141,7 +141,7 @@ struct knn_index{
       for (size_t i = candidate_idx; i < candidates.size(); i++) {
         int p_prime = candidates[i].first;
         if (p_prime != -1) {
-          float dist_starprime = distance(&v[p_star], &v[p_prime], d);
+          float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
           float dist_pprime = candidates[i].second;
           if (alpha * dist_starprime <= dist_pprime) {
             candidates[i].first = -1;
@@ -158,9 +158,9 @@ struct knn_index{
     parlay::sequence<pid> cc;
     cc.reserve(candidates.size() + p->out_nbh.size());
     for (size_t i=0; i<candidates.size(); ++i) {
-      cc.push_back(std::make_pair(candidates[i], distance(&v[candidates[i]], p, d)));
+      cc.push_back(std::make_pair(candidates[i], distance(v[candidates[i]]->coordinates.begin(), p->coordinates.begin(), d)));
     }
-    return robustPrune(p, std::move(cc), alpha);
+    return robustPrune(p, std::move(cc), v, alpha);
 	}
 
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
