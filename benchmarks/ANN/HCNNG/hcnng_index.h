@@ -226,7 +226,6 @@ struct hcnng_index{
 			parlay::parallel_for(0, cluster_rounds, [&] (size_t i){
 				edge_wrapped[i] = random_clustering_wrapper(v, cluster_size);
 			});
-			// t.next("computed clusterings");
 			edge_union(v, edge_wrapped);
 			// t.next("added edges to graph");
 		// };

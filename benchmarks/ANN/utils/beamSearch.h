@@ -31,6 +31,7 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "../utils/types.h"
+#include "../utils/clustertree.h"
 
 extern bool report_stats;
 
@@ -270,6 +271,55 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
     parlay::sequence<pid> visitedElts;
     std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
     pairElts = beam_search(q[i], v, medoid, beamSizeQ, d);
+    beamElts = pairElts.first;
+    visitedElts = pairElts.second;
+    // the first element of the frontier may be the point itself
+    // if this occurs, do not report it as a neighbor
+    if (beamElts[0].first == i) {
+      for (int j = 0; j < k; j++) {
+        neighbors[j] = beamElts[j + 1].first;
+      }
+    } else {
+      for (int j = 0; j < k; j++) {
+        neighbors[j] = beamElts[j].first;
+      }
+    }
+    q[i]->ngh = neighbors;
+    if (report_stats) q[i]->cnt = visitedElts.size();
+  });
+}
+
+template<typename T>
+void warmStartSearch(parlay::sequence<Tvec_point<T>*>& q,
+                      parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
+                      int cluster_size, int num_clusterings, int cluster_size_inner, unsigned d){
+  if(cluster_size_inner < 1){
+    std::cout << "Error: cluster size must be larger than 1" << std::endl; abort(); 
+  }
+  if(num_clusterings*cluster_size > v.size()){
+    std::cout << "Error: cannot have more points in cluster tree than contained in dataset" << std::endl;
+    abort();
+  }
+  using ctree = cluster_tree<T>;
+  using node = typename ctree::node;
+  parlay::sequence<node*> clusters(num_clusterings);
+  auto indices = parlay::random_permutation<int>(static_cast<int>(v.size()), time(NULL));
+  parlay::parallel_for(0, num_clusterings, [&] (size_t i){
+    auto tree_members = parlay::tabulate(cluster_size, [&] (size_t j) {return v[indices[cluster_size*i+j]];});
+    clusters[i] = ctree::random_clustering_wrapper(tree_members, cluster_size_inner, d);
+  });
+  parlay::parallel_for(0, q.size(), [&] (size_t i){
+    auto candidate_starts = parlay::tabulate(num_clusterings, [&] (size_t j) {
+      return ctree::search(clusters[j], q[i], v, d);
+    });
+    auto comp = [&] (std::pair<size_t, float> a, std::pair<size_t, float> b) {return a.second < b.second;};
+    size_t start =  (*(parlay::min_element(candidate_starts, comp))).first;
+    for(const std::pair<size_t, float> i : candidate_starts) std::cout << i.first << std::endl; 
+    parlay::sequence<int> neighbors = parlay::sequence<int>(k);
+    parlay::sequence<pid> beamElts;
+    parlay::sequence<pid> visitedElts;
+    std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
+    pairElts = beam_search(q[i], v, v[start], beamSizeQ, d);
     beamElts = pairElts.first;
     visitedElts = pairElts.second;
     // the first element of the frontier may be the point itself

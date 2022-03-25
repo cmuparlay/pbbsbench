@@ -45,7 +45,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int MSTdeg, int num_cluster
     findex I(MSTdeg, d);
     I.build_index(v, num_clusters, sqrt(v.size()));
     t.next("Built index");
-    beamSearchRandom(q, v, beamSizeQ, k, d);
+    warmStartSearch(q, v, beamSizeQ, k, 1000, 1, 20, d);
     t.next("Found nearest neighbors");
     if(report_stats){
       graph_stats(v);

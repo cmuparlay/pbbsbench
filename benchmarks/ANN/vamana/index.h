@@ -20,8 +20,6 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#pragma once
-
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
@@ -35,15 +33,15 @@ extern bool report_stats;
 
 
 template<typename T>
-struct knn_index {
+struct knn_index{
 	int maxDeg;
 	int beamSize;
-	// int k;
+	// int k; 
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
 	using tvec_point = Tvec_point<T>;
 	using fvec_point = Tvec_point<float>;
-	tvec_point* medoid;
+	tvec_point* medoid; 
 	using pid = std::pair<int, float>;
 	using slice_tvec = decltype(make_slice(parlay::sequence<tvec_point*>()));
 	using index_pair = std::pair<int, int>;
@@ -100,16 +98,16 @@ struct knn_index {
 		parlay::sequence<float> centroid = centroid_helper(parlay::make_slice(v));
 		fvec_point centroidp = Tvec_point<float>();
 		centroidp.coordinates = parlay::make_slice(centroid);
-		medoid = medoid_helper(&centroidp, parlay::make_slice(v));
-		std::cout << "Medoid ID: " << medoid->id << std::endl;
+		medoid = medoid_helper(&centroidp, parlay::make_slice(v)); 
+		std::cout << "Medoid ID: " << medoid->id << std::endl; 
 	}
 
 	void print_set(std::set<int> myset){
-		std::cout << "[";
+		std::cout << "["; 
 		for (std::set<int>::iterator it=myset.begin(); it!=myset.end(); ++it){
 			std::cout << *it << ", ";
 		}
-		std::cout << "]" << std::endl;
+		std::cout << "]" << std::endl; 
 	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
@@ -120,32 +118,27 @@ struct knn_index {
 		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
-			candidates.push_back(std::make_pair(p->out_nbh[i],
+			candidates.push_back(std::make_pair(p->out_nbh[i], 
 				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
-		}
+		}  
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (pid a, pid b) {return a.second > b.second;};
 		parlay::sort_inplace(candidates, less);
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
 		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
 			int c = candidates.size();
+			parlay::sequence<bool> deleteFlags = parlay::tabulate(c, [&] (size_t i) {return true;});
 			int p_star = candidates[c-1].first;
-			candidates.pop_back();
+			deleteFlags[c-1] = false;
 			new_nbhs.push_back(p_star);
-			parlay::sequence<int> to_delete = parlay::sequence<int>();
 			for(int i=0; i<c-1; i++){
 				int p_prime = candidates[i].first;
 				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
 				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-				if(alpha*dist_starprime <= dist_pprime){
-					to_delete.push_back(i);
-				}
+				if(alpha*dist_starprime <= dist_pprime) deleteFlags[i] = false;
 			}
-			if(to_delete.size() > 0){
-				for(int i=0; i<to_delete.size(); i++){
-					candidates.erase(candidates.begin()+to_delete[i]-i);
-				}
-			}
+			auto new_candidates = parlay::pack(candidates, deleteFlags);
+			candidates = new_candidates;
 		}
 		p->new_out_nbh = new_nbhs;
 	}
@@ -158,33 +151,28 @@ struct knn_index {
 		//add out neighbors of p to the candidate set
 		for(int i=0; i<(p->out_nbh.size()); i++){
 			candidates.push_back(p->out_nbh[i]);
-		}
+		}  
 		//sort the candidate set in reverse order according to distance from p
 		auto less = [&] (int a, int b){
-			return distance(v[a]->coordinates.begin(), p->coordinates.begin(), d) >
+			return distance(v[a]->coordinates.begin(), p->coordinates.begin(), d) > 
 			distance(v[b]->coordinates.begin(), p->coordinates.begin(), d);
 		};
 		parlay::sort_inplace(candidates, less);
 		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
 		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
 			int c = candidates.size();
+			parlay::sequence<bool> deleteFlags = parlay::tabulate(c, [&] (size_t i) {return true;});
 			int p_star = candidates[c-1];
-			candidates.pop_back();
+			deleteFlags[c-1] = false;
 			new_nbhs.push_back(p_star);
-			parlay::sequence<int> to_delete = parlay::sequence<int>();
 			for(int i=0; i<c-1; i++){
 				int p_prime = candidates[i];
 				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
 				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-				if(alpha*dist_starprime <= dist_pprime){
-					to_delete.push_back(i);
-				}
+				if(alpha*dist_starprime <= dist_pprime) deleteFlags[i] = false;
 			}
-			if(to_delete.size() > 0){
-				for(int i=0; i<to_delete.size(); i++){
-					candidates.erase(candidates.begin()+to_delete[i]-i);
-				}
-			}
+			auto new_candidates = parlay::pack(candidates, deleteFlags);
+			candidates = new_candidates;
 		}
 		p->new_out_nbh = new_nbhs;
 	}
@@ -195,30 +183,40 @@ struct knn_index {
 		if(not from_empty) random_index(v, maxDeg);
 		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
-		build_index_inner(v);
-		if(two_pass) build_index_inner(v, r2_alpha);
+		build_index_inner(v, 1.0, 2, .1);
+		if(two_pass) build_index_inner(v, r2_alpha, 2, .1);  
 	}
 
-	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, bool random_order = false){
+	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, double base = 2,
+	double max_fraction = 1.0, bool random_order = false){
 		size_t n = v.size();
 		size_t inc = 0;
 		parlay::sequence<int> rperm;
 		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
 		else rperm = parlay::tabulate(v.size(), [&] (int i) {return i;});
-		while(pow(2, inc) < n){
-			size_t floor = static_cast<size_t>(pow(2, inc))-1;
-			size_t ceiling = std::min(static_cast<size_t>(pow(2, inc+1)), n)-1;
+		size_t count = 0;
+		while(count < n){
+			size_t floor;
+			size_t ceiling;
+			if(pow(base,inc) <= n*max_fraction){
+				floor = static_cast<size_t>(pow(base, inc))-1;
+				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
+				count = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
+			} else{
+				floor = count;
+				ceiling = std::min(count + static_cast<size_t>(n*max_fraction), n)-1;
+				count += static_cast<size_t>(n*max_fraction);
+			}
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
-//				parlay::sequence<pid> visited = beam_search_2(v[rperm[i]], v, medoid, beamSize, d);
 				if(report_stats) v[rperm[i]]->cnt = visited.size();
 				robustPrune(v[rperm[i]], visited, v, alpha);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
-			parlay::sequence<parlay::sequence<index_pair>> to_flatten =
+			parlay::sequence<parlay::sequence<index_pair>> to_flatten = 
 				parlay::sequence<parlay::sequence<index_pair>>(ceiling-floor);
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				parlay::sequence<int> new_nbh = v[rperm[i]]->new_out_nbh;
@@ -232,7 +230,7 @@ struct knn_index {
 			});
 			auto new_edges = parlay::flatten(to_flatten);
 			auto grouped_by = parlay::group_by_key(new_edges);
-			//finally, add the bidirectional edges; if they do not make
+			//finally, add the bidirectional edges; if they do not make 
 			//the vertex exceed the degree bound, just add them to out_nbhs;
 			//otherwise, use robustPrune on the vertex with user-specified alpha
 			parlay::parallel_for(0, grouped_by.size(), [&] (size_t j){
@@ -243,14 +241,14 @@ struct knn_index {
 					for(int k=0; k<candidates.size(); k++){ //try concatenating instead of pushing back
 						(v[index]->out_nbh).push_back(candidates[k]);
 					}
-				} else{
+				} else{ 
 					robustPrune(v[index], candidates, v, alpha);
 					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
 					v[index]->out_nbh = new_nbh;
 					(v[index]->new_out_nbh).clear();
 				}
 			});
-			inc += 1;
+			inc += 1; 
 		}
 	}
 
