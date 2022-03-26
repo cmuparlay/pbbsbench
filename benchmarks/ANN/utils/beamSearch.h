@@ -139,6 +139,7 @@ parlay::sequence<pid> beam_search_2(Tvec_point<T>* p,
   beam.insert(medoid_pair);
 
   // terminate beam search when the entire frontier has been visited
+  float last_dist = std::numeric_limits<float>::max();
   while (!frontier.empty()) {
     // the next node to visit is the unvisited frontier node that is closest to
     // p
@@ -149,28 +150,31 @@ parlay::sequence<pid> beam_search_2(Tvec_point<T>* p,
     visited.insert(currentPid.first);
 
     Tvec_point<T>* current = v[currentPid.first];
-    auto g = [&] (int ngh) {
-      if (visited.find(ngh) != visited.end()) return false;
-      return true;
-    };
 
     for (const int& ngh : current->out_nbh) {
       if (visited.find(ngh) == visited.end()) {
         float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
         // insert it into the beam
-        beam.insert(std::make_pair(ngh, dist));
-        frontier.insert(std::make_pair(ngh, dist));
-        visited.insert(ngh);
+        if (dist < last_dist) {
+          beam.insert(std::make_pair(ngh, dist));
+          frontier.insert(std::make_pair(ngh, dist));
+          visited.insert(ngh);
+        }
       }
     }
-    while (beam.size() > beamSize) {
+    if (beam.size() > beamSize) {
+      while (beam.size() > beamSize) {
+        auto it = std::prev(beam.end());
+        pid point = *it;
+        beam.erase(it);
+        auto f_it = frontier.find(point);
+        if (f_it != frontier.end()) {
+          frontier.erase(f_it);
+        }
+      }
       auto it = std::prev(beam.end());
       pid point = *it;
-      beam.erase(it);
-      auto f_it = frontier.find(point);
-      if (f_it != frontier.end()) {
-        frontier.erase(f_it);
-      }
+      last_dist = it->second;
     }
   }
   return ret;
