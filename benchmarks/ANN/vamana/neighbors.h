@@ -32,7 +32,12 @@
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
 
+#include "../utils/seq_allocator.h"
+
 extern bool report_stats;
+
+template <class T>
+using fine_sequence = parlay::sequence<T, fine_allocator<T>>;
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, double alpha, double dummy,

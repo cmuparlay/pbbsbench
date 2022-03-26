@@ -32,10 +32,14 @@ inline std::vector<size_t> default_sizes() {
   // size_t log_max_size = parlay::log2_up(getMemorySize()/64);
 
   std::vector<size_t> sizes;
-  size_t current_size = 4;
-  while(current_size < 300){
-  	current_size = (size_t) current_size*1.2;
-  	sizes.push_back(current_size);
+  size_t rounded_current_size = 4;
+  double current_size = 4;
+  while(rounded_current_size < 300) {
+    if (((size_t)current_size) > rounded_current_size) {
+      rounded_current_size = current_size;
+      sizes.push_back(rounded_current_size);
+    }
+  	current_size = current_size*1.1;
   }
   return sizes;
 }
