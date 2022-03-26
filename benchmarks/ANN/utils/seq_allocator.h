@@ -42,6 +42,7 @@ inline std::vector<size_t> default_sizes() {
 
 
 namespace fine{
+
 	extern inline parlay::pool_allocator& get_fine_default_allocator() {
 	  static parlay::pool_allocator fine_default_allocator(default_sizes());
 	  return fine_default_allocator;
@@ -77,7 +78,7 @@ struct fine_allocator {
   }
 
   constexpr fine_allocator() = default;
-  template <class U> constexpr fine_allocator(const allocator<U>&) noexcept { }
+  template <class U> constexpr fine_allocator(const fine_allocator<U>&) noexcept { }
 };
 
 template <class T, class U>
