@@ -47,7 +47,6 @@ namespace fine{
 	  return fine_default_allocator;
 	}
 
-
 	// pair of total currently used space, and total unused space the allocator has in reserve
 	extern inline std::pair<size_t,size_t> memory_usage() {
 	  return get_fine_default_allocator().stats();
@@ -58,7 +57,7 @@ namespace fine{
 	  return get_fine_default_allocator().clear();
 	}
 } //namespace fine
-  
+
 
 // ****************************************
 // Following Matches the c++ Allocator specification (minimally)
