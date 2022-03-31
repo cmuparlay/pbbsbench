@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
 	commandLine parameter(argc, argv, 
 		"-n <numInput> -k <numQuery> -ml <m_l> -m <m> "
-		"-efc <ef_construction> -ef <ef_query> -r <recall@R> [-b <batchBase>]"
+		"-efc <ef_construction> -alpha <alpha> -ef <ef_query> -r <recall@R> [-b <batchBase>]"
 		"[-q <queryFile>] [-g <groundtruthFile>] <inFile>"
 	);
 	const char* file_in = parameter.getArgument(0);
@@ -50,6 +50,7 @@ int main(int argc, char **argv)
 	const char* m_l = parameter.getOptionValue("-ml");
 	const char* m = parameter.getOptionValue("-m");
 	const char* efc = parameter.getOptionValue("-efc");
+	const char* alpha = parameter.getOptionValue("-alpha");
 	const char* ef = parameter.getOptionValue("-ef");
 	const char* cnt_rank_cmp = parameter.getOptionValue("-r");
 	const char* batch_base = parameter.getOptionValue("-b");
@@ -80,8 +81,8 @@ int main(int argc, char **argv)
 
 	fputs("Start building HNSW\n", stderr);
 	HNSW<descr_fvec> g(
-		ps.begin(), ps.begin()+atoi(cnt_pts_input),
-		dim, atof(m_l), atoi(m), atoi(efc), atof(batch_base)
+		ps.begin(), ps.begin()+atoi(cnt_pts_input), dim,
+		atof(m_l), atoi(m), atoi(efc), atof(alpha), atof(batch_base)
 	);
 	t.next("Build index");
 
@@ -100,7 +101,7 @@ int main(int argc, char **argv)
 
 	if(!file_groundtruth) return 0;
 
-	auto [gt,rank_max] = parse_vecs<int>(file_groundtruth, [](size_t, auto begin, auto end){
+	auto [gt,rank_max] = parse_vecs<uint32_t>(file_groundtruth, [](size_t, auto begin, auto end){
 		typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
 		if constexpr(std::is_same_v<decltype(begin),ptr_mapped<type_elem,ptr_mapped_src::DISK>>)
 		{
@@ -109,7 +110,7 @@ int main(int argc, char **argv)
 
 			type_elem *id = new type_elem[n];
 			parlay::parallel_for(0, n, [&](size_t i){
-				id[i] = *(begin_raw+i);
+				id[i] = static_cast<type_elem>(*(begin_raw+i));
 			});
 			return id;
 		}

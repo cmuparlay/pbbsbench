@@ -34,7 +34,7 @@ class HNSW
 	using T = typename U::type_point;
 public:
 	template<typename Iter>
-	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50, float batch_base=2);
+	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50, float alpha=5, float batch_base=2);
 	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
 private:
 	typedef uint32_t type_index;
@@ -87,6 +87,7 @@ private:
 	uint32_t m;
 	// uint32_t level_max = 30; // To init
 	uint32_t ef_construction;
+	float alpha;
 	uint32_t n;
 	Allocator<node> allocator;
 	std::vector<node*> node_pool;
@@ -155,12 +156,81 @@ private:
 	}
 
 	// To optimize
+	auto select_neighbors_heuristic(const T &u, 
+		const std::priority_queue<dist,std::vector<dist>,farthest> &C, uint32_t M,
+		uint32_t level, bool extendCandidate, bool keepPrunedConnections)
+	{
+		(void)level, (void)extendCandidate;
+
+		std::priority_queue<dist,std::vector<dist>,farthest> C_cp=C, W_d;
+		/*
+		if(extendCandidate)
+		{
+			while(C_cp.size())
+			{
+				const auto e = C_cp.top();
+				C_cp.pop();
+				for(const auto &e_adj : neighbourhood(e.u,level))
+				{
+					if(!W.find(e_adj))
+						W.push(e_adj);
+				}
+		}
+		*/
+		std::vector<node*> R;
+		std::priority_queue<dist,std::vector<dist>,nearest> W;
+		while(C_cp.size())
+		{
+			W.push(C_cp.top());
+			C_cp.pop();
+		}
+		//auto &W = C_cp;
+
+		while(W.size()>0 && R.size()<M)
+		{
+			const auto e = W.top();
+			W.pop();
+			const auto d_q = e.d;
+
+			bool is_good = true;
+			for(const auto &r : R)
+			{
+				const auto d_r = U::distance(e.u->data, r->data, dim);
+				if(d_r>d_q*alpha)
+				{
+					is_good = false;
+					break;
+				}
+			}
+
+			if(is_good)
+				R.push_back(e.u);
+			else
+				W_d.push(e);
+		}
+
+		std::priority_queue<dist,std::vector<dist>,farthest> res;
+		for(const auto &r : R)
+		{
+			res.push({U::distance(u,r->data,dim), r});
+		}
+		if(keepPrunedConnections)
+		{
+			while(W_d.size()>0 && res.size()<M)
+				res.push(W_d.top()), W_d.pop();
+		}
+		return res;
+	}
+
 	auto select_neighbors(const T &u, 
 		const std::priority_queue<dist,std::vector<dist>,farthest> &C, uint32_t M,
 		uint32_t level, bool extendCandidate=false, bool keepPrunedConnections=false)
 	{
+		/*
 		(void)level, (void)extendCandidate, (void)keepPrunedConnections;
 		return select_neighbors_simple(u,C,M);
+		*/
+		return select_neighbors_heuristic(u, C, M, level, extendCandidate, keepPrunedConnections);
 	}
 
 	uint32_t get_level_random()
@@ -175,13 +245,16 @@ private:
 	}
 
 	auto search_layer(const node &u, const std::vector<node*> &eps, uint32_t ef, uint32_t l_c) const; // To static
+	auto get_threshold_m(uint32_t level){
+		return level==0? m*2: m;
+	}
 };
 
 
 template<typename T, template<typename> class Allocator>
 template<typename Iter>
-HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_t m_, uint32_t ef_construction_, float batch_base)
-	: dim(dim_), m_l(m_l_), m(m_), ef_construction(ef_construction_), n(std::distance(begin,end))
+HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_t m_, uint32_t ef_construction_, float alpha_, float batch_base)
+	: dim(dim_), m_l(m_l_), m(m_), ef_construction(ef_construction_), alpha(alpha_), n(std::distance(begin,end))
 {
 	static_assert(std::is_same_v<typename std::iterator_traits<Iter>::value_type, T>);
 	static_assert(std::is_base_of_v<
@@ -267,7 +340,7 @@ void HNSW<U,Allocator>::insert(Iter begin, Iter end)
 
 		parlay::parallel_for(0, size_batch, [&](uint32_t i){
 			auto &u = *node_new[i];
-			if(l_c>u.level) return;
+			if((uint32_t)l_c>u.level) return;
 
 			auto &eps_u = eps[i];
 			auto res = search_layer(u, eps_u, ef_construction, l_c);
@@ -303,7 +376,7 @@ void HNSW<U,Allocator>::insert(Iter begin, Iter end)
 			auto &nbh_v = neighbourhood(*pv,l_c);
 			const uint32_t size_nbh_total = nbh_v.size()+nbh_v_add.size();
 
-			if(size_nbh_total>m)
+			if(size_nbh_total>get_threshold_m(l_c))
 			{
 				auto dist_nbh = std::make_unique<dist[]>(size_nbh_total);
 				for(size_t k=0; k<nbh_v.size(); ++k)
@@ -388,7 +461,7 @@ std::vector<typename HNSW<U,Allocator>::T*> HNSW<U,Allocator>::search(const T &q
 		ep = W.top().u;
 	}
 	W = search_layer(u, std::vector{ep}, ef, 0);
-	W = select_neighbors(q, W, k, 0);
+	W = select_neighbors_simple(q, W, k);
 	std::vector<T*> res;
 	while(W.size()>0)
 	{
