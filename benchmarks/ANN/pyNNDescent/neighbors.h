@@ -57,12 +57,12 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double alpha, double dummy) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double num_clusters, double delta) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
     using findex = pyNN_index<T>;
-    findex I(K, d);
+    findex I(K, d, delta);
     I.build_index(v, cluster_size);
     t.next("Built index");
     if(report_stats){
