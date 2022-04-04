@@ -24,6 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/random.h"
+#include "../utils/seq_allocator.h"
 #include "common/geometry.h"
 #include <random>
 #include <set>
@@ -46,6 +47,7 @@ struct knn_index{
 	using slice_tvec = decltype(make_slice(parlay::sequence<tvec_point*>()));
 	using index_pair = std::pair<int, int>;
 	using slice_idx = decltype(make_slice(parlay::sequence<index_pair>()));
+	using fine_sequence = parlay::sequence<int>;
 
 	knn_index(int md, int bs, double a, unsigned dim) : maxDeg(md), beamSize(bs), r2_alpha(a), d(dim) {}
 
@@ -124,8 +126,8 @@ struct knn_index{
 		auto less = [&] (pid a, pid b) {return a.second < b.second;};
 		parlay::sort_inplace(candidates, less);
 
-		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
-    new_nbhs.reserve(maxDeg);
+		fine_sequence new_nbhs = fine_sequence();
+    // new_nbhs.reserve(maxDeg);
 
     size_t candidate_idx = 0;
 		while (new_nbhs.size() <= maxDeg && candidate_idx < candidates.size()) {
@@ -152,38 +154,6 @@ struct knn_index{
 		p->new_out_nbh = std::move(new_nbhs);
 	}
 
-//	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
-//	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
-//	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha){
-//		//make sure the candidate set does not include p
-//		auto pred = [&] (pid a){return a.first == p->id;};
-//		if(find_if(candidates, pred) != candidates.end()) candidates.erase(find_if(candidates, pred));
-//		//add out neighbors of p to the candidate set
-//		for(int i=0; i<(p->out_nbh.size()); i++){
-//			candidates.push_back(std::make_pair(p->out_nbh[i],
-//				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
-//		}
-//		//sort the candidate set in reverse order according to distance from p
-//		auto less = [&] (pid a, pid b) {return a.second > b.second;};
-//		parlay::sort_inplace(candidates, less);
-//		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
-//		while(new_nbhs.size() <= maxDeg && candidates.size() > 0){
-//			int c = candidates.size();
-//			parlay::sequence<bool> deleteFlags = parlay::tabulate(c, [&] (size_t i) {return true;});
-//			int p_star = candidates[c-1].first;
-//			deleteFlags[c-1] = false;
-//			new_nbhs.push_back(p_star);
-//			for(int i=0; i<c-1; i++){
-//				int p_prime = candidates[i].first;
-//				float dist_starprime = distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-//				float dist_pprime = distance(p->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
-//				if(alpha*dist_starprime <= dist_pprime) deleteFlags[i] = false;
-//			}
-//			auto new_candidates = parlay::pack(candidates, deleteFlags);
-//			candidates = new_candidates;
-//		}
-//		p->new_out_nbh = new_nbhs;
-//	}
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
@@ -229,7 +199,7 @@ struct knn_index{
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				parlay::sequence<pid> visited = (beam_search_2(v[rperm[i]], v, medoid, beamSize, d));
+				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
 				if(report_stats) v[rperm[i]]->cnt = visited.size();
 				robustPrune(v[rperm[i]], visited, v, alpha);
 			});
@@ -238,13 +208,13 @@ struct knn_index{
 			parlay::sequence<parlay::sequence<index_pair>> to_flatten =
 				parlay::sequence<parlay::sequence<index_pair>>(ceiling-floor);
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				parlay::sequence<int> new_nbh = v[rperm[i]]->new_out_nbh;
+				fine_sequence new_nbh = v[rperm[i]]->new_out_nbh;
 				parlay::sequence<index_pair> edges = parlay::sequence<index_pair>(new_nbh.size());
 				for(int j=0; j<new_nbh.size(); j++){
 					edges[j] = std::make_pair(new_nbh[j], rperm[i]);
 				}
 				to_flatten[i-floor] = edges;
-				v[rperm[i]]->out_nbh = new_nbh;
+				v[rperm[i]]->out_nbh = std::move(new_nbh);
 				(v[rperm[i]]->new_out_nbh).clear();
 			});
 			auto new_edges = parlay::flatten(to_flatten);
@@ -262,8 +232,8 @@ struct knn_index{
 					}
 				} else{
 					robustPrune(v[index], candidates, v, alpha);
-					parlay::sequence<int> new_nbh = v[index]->new_out_nbh;
-					v[index]->out_nbh = new_nbh;
+					fine_sequence new_nbh = v[index]->new_out_nbh;
+					v[index]->out_nbh = std::move(new_nbh);
 					(v[index]->new_out_nbh).clear();
 				}
 			});

@@ -20,48 +20,44 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#pragma once
-
 #include <algorithm>
-#include <random>
-#include "common/geometry.h"
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/random.h"
+#include "common/geometry.h"
+#include <random>
 
-template <typename T>
-void clear(parlay::sequence<Tvec_point<T>*>& v) {
-  size_t n = v.size();
-  parlay::parallel_for(0, n, [&](size_t i) {
-    parlay::sequence<int> clear_seq = parlay::sequence<int>();
-    v[i]->out_nbh = clear_seq;
-  });
-}
 
-template <typename T>
-void random_index(parlay::sequence<Tvec_point<T>*>& v, int maxDeg) {
-  size_t n = v.size();
-  parlay::parallel_for(0, n,
-                       [&](size_t i) {
-                         // std::cout << "here1" << std::endl;
-                         std::random_device rd;
-                         std::mt19937 rng(rd());
-                         std::uniform_int_distribution<int> uni(0, n - 1);
-                         // std::cout << "here2" << std::endl;
-                         // use a set to make sure each out neighbor is unique
-                         std::set<int> indexset;
-                         while (indexset.size() < maxDeg) {
-                           int j = uni(rng);
-                           ;
-                           // disallow self edges
-                           if (j != i) indexset.insert(j);
-                         }
-                         // std::cout << "here3" << std::endl;
-                         for (std::set<int>::iterator it = indexset.begin();
-                              it != indexset.end(); ++it) {
-                           v[i]->out_nbh.push_back(*it);
-                         }
+template<typename T>
+void clear(parlay::sequence<Tvec_point<T>*> &v){
+	size_t n = v.size();
+	parlay::parallel_for(0, n, [&] (size_t i){
+		v[i]->out_nbh.clear();
+	});
+}   
 
-                       },
-                       1);
+//TODO fix to use custom allocator
+template<typename T>
+void random_index(parlay::sequence<Tvec_point<T>*> &v, int maxDeg){
+	size_t n = v.size(); 
+	parlay::parallel_for(0, n, [&] (size_t i){
+		// std::cout << "here1" << std::endl; 
+    	std::random_device rd;    
+		std::mt19937 rng(rd());   
+		std::uniform_int_distribution<int> uni(0,n-1); 
+    	// std::cout << "here2" << std::endl; 
+		//use a set to make sure each out neighbor is unique
+		std::set<int> indexset;
+		while(indexset.size() < maxDeg){
+			int j = uni(rng);;
+			//disallow self edges
+			if(j != i) indexset.insert(j);
+		}
+		// std::cout << "here3" << std::endl; 
+		for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
+    		v[i] -> out_nbh.push_back(*it);
+		} 
+
+    }, 1
+    );
 }

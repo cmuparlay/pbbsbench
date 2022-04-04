@@ -26,18 +26,20 @@
 #include <algorithm>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "seq_allocator.h"
 
 
 //for a file in .fvecs or .bvecs format, but extendible to other types
 template<typename T>
 struct Tvec_point {
+  using fine_sequence = parlay::sequence<int>;
   int id;
-  int cnt;
+  int cnt; 
   parlay::slice<T*, T*> coordinates;
   Tvec_point() :
     coordinates(parlay::make_slice<T*, T*>(nullptr, nullptr)) {}
-  parlay::sequence<int> out_nbh = parlay::sequence<int>();
-  parlay::sequence<int> new_out_nbh = parlay::sequence<int>();
+  fine_sequence out_nbh = fine_sequence();
+  fine_sequence new_out_nbh = fine_sequence();
   parlay::sequence<int> ngh = parlay::sequence<int>();
 };
 
