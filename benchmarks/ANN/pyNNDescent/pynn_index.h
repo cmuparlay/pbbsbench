@@ -70,7 +70,8 @@ struct pyNN_index{
 		return edges;
 	}
 
-	parlay::sequence<int> nn_descent(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &prev_changed){
+	parlay::sequence<int> nn_descent(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &edges_considered){
+		size_t n = v.size();
 		auto changed = parlay::tabulate(v.size(), [&] (size_t i) {return 0;});
 		//find the edges in the reverse graph
 		auto reverse_graph = reverse_edges(v);
@@ -78,30 +79,32 @@ struct pyNN_index{
 		parlay::sequence<parlay::sequence<special_edge>> grouped_labelled(v.size());
 		parlay::parallel_for(0, reverse_graph.size(), [&] (size_t i){
 			size_t index = reverse_graph[i].first;
-			//only add edges if the index was changed on a previous round
-			if(prev_changed[index] == 1){
-				parlay::sequence<special_edge> edges;
-				for(const int& j : v[index]->out_nbh) reverse_graph[i].second.push_back(j);
-				for(const int& j : reverse_graph[i].second){
-					for(const int& k : reverse_graph[i].second){
-						if(j != k){
-							float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
-							edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
-							edges.push_back(std::make_pair(k, std::make_pair(j, dist)));
-						}
+			//only add edges if the edge hasn't been considered before
+			parlay::sequence<special_edge> edges;
+			for(const int& j : v[index]->out_nbh) reverse_graph[i].second.push_back(j);
+			for(const int& j : reverse_graph[i].second){
+				for(const int& k : reverse_graph[i].second){
+					if(j != k && edges_considered[(n-1)*j+k] == 0){
+						float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
+						edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
+						edges.push_back(std::make_pair(k, std::make_pair(j, dist)));
+						edges_considered[(n-1)*j+k] = 1;
+						edges_considered[(n-1)*k+j] = 1;
 					}
 				}
 				grouped_labelled[index] = edges;
 			}
 		});
 		parlay::parallel_for(0, v.size(), [&] (size_t i){
-			if(grouped_labelled[i].size() == 0 && prev_changed[i] == 1){ 
+			if(grouped_labelled[i].size() == 0){ 
 				for(const int& j : v[i]->out_nbh){
 					for(const int& k : v[i]->out_nbh){
-						if(j != k){
+						if(j != k && edges_considered[(n-1)*j+k] == 0){
 							float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
 							grouped_labelled[i].push_back(std::make_pair(j, std::make_pair(k, dist)));
 							grouped_labelled[i].push_back(std::make_pair(k, std::make_pair(j, dist)));
+							edges_considered[(n-1)*j+k] = 1;
+							edges_considered[(n-1)*k+j] = 1;
 						}
 					}
 				}
@@ -148,15 +151,16 @@ struct pyNN_index{
 	}
 
 	int nn_descent_wrapper(parlay::sequence<tvec_point*> &v){
-		auto changed = parlay::tabulate(v.size(), [&] (size_t i) {return 1;});
+		size_t n = v.size();
+		auto changed = parlay::tabulate(n, [&] (size_t i) {return 1;});
+		auto edges_considered = parlay::tabulate(n*(n-1), [&] (size_t i) {return 0;});
 		int rounds = 0;
-		while(parlay::reduce(changed) >= delta*v.size()){
+		while(parlay::reduce(changed) >= delta*n){
 			std::cout << "Round " << rounds << std::endl; 
-			parlay::sequence<int> new_changed = nn_descent(v, changed);
-			// std::cout << "here1" << std::endl; 
-			changed = new_changed;
+			changed = nn_descent(v, edges_considered);
 			rounds ++;
 			std::cout << parlay::reduce(changed) << " elements changed" << std::endl; 
+			std::cout << parlay::reduce(edges_considered) << " total edges considered up to this point" << std::endl; 
 		}
 		std::cout << "descent converged in " << rounds << " rounds" << std::endl; 
 		return rounds;
