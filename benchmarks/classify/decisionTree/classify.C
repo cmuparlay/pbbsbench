@@ -29,6 +29,7 @@
 #include <iostream>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/delayed.h"
 #include "parlay/io.h"
 #include "parlay/internal/get_time.h"
 #include "classify.h"
@@ -55,7 +56,7 @@ struct tree {
   sequence<tree*> children;
   tree(int i, int c, int best, sequence<tree*> children)
     : is_leaf(false), best(best), feature_index(i), feature_cut(c), children(children) {
-    size = reduce(map(children, [] (tree* t) {return t->size;}));}
+    size = reduce(delayed_map(children, [] (tree* t) {return t->size;}));}
   tree(int best) : is_leaf(true), best(best), size(1) {}
 };
 
@@ -92,7 +93,7 @@ auto majority(S1 const &a, size_t m) {
 template <typename Seq>
 double entropy(Seq a, int total) {
   double ecost = encode_node_factor * log2(float(1 + total)); // to prevent overfitting
-  return ecost + reduce(map(a, [=] (int l) {
+  return ecost + reduce(delayed_map(a, [=] (int l) {
       return (l > 0) ? -(l * log2(float(l)/total)) : 0.0;}));
 }
 
