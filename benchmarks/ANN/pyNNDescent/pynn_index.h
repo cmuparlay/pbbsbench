@@ -70,7 +70,12 @@ struct pyNN_index{
 		return edges;
 	}
 
-	parlay::sequence<int> nn_descent(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &edges_considered){
+	int generate_index(int N, int i){
+		return (N*(N-1) - (N-i)*(N-i-1))/2;
+	}
+
+	parlay::sequence<int> nn_descent(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &edges_considered, 
+		parlay::sequence<float> &distances_lookup){
 		size_t n = v.size();
 		auto changed = parlay::tabulate(v.size(), [&] (size_t i) {return 0;});
 		//find the edges in the reverse graph
@@ -84,12 +89,15 @@ struct pyNN_index{
 			for(const int& j : v[index]->out_nbh) reverse_graph[i].second.push_back(j);
 			for(const int& j : reverse_graph[i].second){
 				for(const int& k : reverse_graph[i].second){
-					if(j != k && edges_considered[(n-1)*j+k] == 0){
-						float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
-						edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
-						edges.push_back(std::make_pair(k, std::make_pair(j, dist)));
-						edges_considered[(n-1)*j+k] = 1;
-						edges_considered[(n-1)*k+j] = 1;
+					if(j < k){
+						size_t start = generate_index(n, j);
+						if(edges_considered[start+k] == 0){
+							float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
+							edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
+							edges.push_back(std::make_pair(k, std::make_pair(j, dist)));
+							edges_considered[start+k] = 1;
+							distances_lookup[start+k] = dist;
+						}
 					}
 				}
 				grouped_labelled[index] = edges;
@@ -99,12 +107,15 @@ struct pyNN_index{
 			if(grouped_labelled[i].size() == 0){ 
 				for(const int& j : v[i]->out_nbh){
 					for(const int& k : v[i]->out_nbh){
-						if(j != k && edges_considered[(n-1)*j+k] == 0){
-							float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
-							grouped_labelled[i].push_back(std::make_pair(j, std::make_pair(k, dist)));
-							grouped_labelled[i].push_back(std::make_pair(k, std::make_pair(j, dist)));
-							edges_considered[(n-1)*j+k] = 1;
-							edges_considered[(n-1)*k+j] = 1;
+						if(j < k){
+							size_t start = generate_index(n, j);
+							if(edges_considered[start+k] == 0){
+								float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
+								grouped_labelled[i].push_back(std::make_pair(j, std::make_pair(k, dist)));
+								grouped_labelled[i].push_back(std::make_pair(k, std::make_pair(j, dist)));
+								edges_considered[start+k] = 1;
+								distances_lookup[start+k] = dist;
+							}
 						}
 					}
 				}
@@ -117,7 +128,16 @@ struct pyNN_index{
 			size_t index = grouped_by[i].first;
 			fine_sequence new_out(K);
 			for(const int& j : v[index]->out_nbh) {
-				float dist = distance(v[index]->coordinates.begin(), v[j]->coordinates.begin(), d);
+				float dist;
+				if(index < j){
+					size_t start = generate_index(n, index);
+					if(edges_considered[start+j]==1) dist = distances_lookup[start+j];
+				}
+				else if(index > j){
+					size_t start = generate_index(n, j);
+					if(edges_considered[start+index]==1) dist = distances_lookup[start+index];
+				}
+				else dist = distance(v[index]->coordinates.begin(), v[j]->coordinates.begin(), d);
 				grouped_by[i].second.push_back(std::make_pair(j, dist));
 			}
 			auto less = [&] (pid a, pid b) {return a.second < b.second;};
@@ -153,11 +173,12 @@ struct pyNN_index{
 	int nn_descent_wrapper(parlay::sequence<tvec_point*> &v){
 		size_t n = v.size();
 		auto changed = parlay::tabulate(n, [&] (size_t i) {return 1;});
-		auto edges_considered = parlay::tabulate(n*(n-1), [&] (size_t i) {return 0;});
+		auto edges_considered = parlay::tabulate(n*(n-1)/2, [&] (size_t i) {return 0;});
+		parlay::sequence<float> distances_lookup(n*(n-1)/2);
 		int rounds = 0;
 		while(parlay::reduce(changed) >= delta*n){
 			std::cout << "Round " << rounds << std::endl; 
-			changed = nn_descent(v, edges_considered);
+			changed = nn_descent(v, edges_considered, distances_lookup);
 			rounds ++;
 			std::cout << parlay::reduce(changed) << " elements changed" << std::endl; 
 			std::cout << parlay::reduce(edges_considered) << " total edges considered up to this point" << std::endl; 
@@ -165,6 +186,28 @@ struct pyNN_index{
 		std::cout << "descent converged in " << rounds << " rounds" << std::endl; 
 		return rounds;
 	}
+
+	// parlay::sequence<std::pair<int, parlay::sequence<special_edge>>> filtered_uedges(parlay::sequence<tvec_point*> &v, 
+	// 	parlay::sequence<int> &edges_considered){
+	// 	int n = v.size();
+	// 	parlay::sequence<parlay::sequence<special_edge>> grouped_edges(n);
+	// 	parlay::parallel_for(0, n, [&] (size_t i){
+	// 		parlay::sequence<special_edge> uedges = parlay::sequence<special_edge>();
+	// 		for(const int& j: v[i]->out_nbh){
+	// 			if(i<j && edges_considered[(n-1)*i+j] == 0){
+	// 				float dist = distance(v[i]->coordinates.begin(), v[j]->coordinates.begin(), d);
+	// 				uedges.push_back(std::make_pair(i, std::make_pair(j, dist)));
+	// 				uedges.push_back(std::make_pair(j, std::make_pair(i, dist)));
+	// 				edges_considered[(n-1)*i+j] = 1;
+	// 				edges_considered[(n-1)*j+i] = 1;
+	// 			}
+	// 		}
+	// 		grouped_edges[i] = uedges;
+	// 	}
+	// 	auto flat_edges = parlay::flatten(grouped_edges);
+	// 	auto grouped_edges = parlay::group_by_key(flat_edges);
+
+	// }
 
 	parlay::sequence<std::pair<int, parlay::sequence<int>>> reverse_edges(parlay::sequence<tvec_point*> &v){
 		// parlay::sequence<std::pair<int, parlay::sequence<int>>> reverse_graph(v.size());
@@ -197,8 +240,9 @@ struct pyNN_index{
 	void build_index(parlay::sequence<tvec_point*> &v, size_t cluster_size){
 		clear(v);
 		cluster<T> C(d);
-		C.multiple_clustertrees(v, cluster_size, 20, &naive_neighbors, d, K);
+		C.multiple_clustertrees(v, cluster_size, 10, &naive_neighbors, d, K);
 		truncate_graph(v);
+		// random_index(v, K);
 		nn_descent_wrapper(v);
 	}
 
