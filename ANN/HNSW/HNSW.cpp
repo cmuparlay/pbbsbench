@@ -37,6 +37,10 @@ public:
 
 int main(int argc, char **argv)
 {
+	for(int i=0; i<argc; ++i)
+		printf("%s ", argv[i]);
+	putchar('\n');
+
 	commandLine parameter(argc, argv, 
 		"-n <numInput> -k <numQuery> -ml <m_l> -m <m> "
 		"-efc <ef_construction> -alpha <alpha> -ef <ef_query> -r <recall@R> [-b <batchBase>]"
@@ -54,6 +58,7 @@ int main(int argc, char **argv)
 	const char* ef = parameter.getOptionValue("-ef");
 	const char* cnt_rank_cmp = parameter.getOptionValue("-r");
 	const char* batch_base = parameter.getOptionValue("-b");
+	const char* do_fixing = parameter.getOptionValue("-f");
 
 	auto to_fvec = [](size_t id, auto begin, auto end){
 		typedef typename std::iterator_traits<decltype(begin)>::value_type type_elem;
@@ -82,7 +87,7 @@ int main(int argc, char **argv)
 	fputs("Start building HNSW\n", stderr);
 	HNSW<descr_fvec> g(
 		ps.begin(), ps.begin()+atoi(cnt_pts_input), dim,
-		atof(m_l), atoi(m), atoi(efc), atof(alpha), atof(batch_base)
+		atof(m_l), atoi(m), atoi(efc), atof(alpha), atof(batch_base), !!atoi(do_fixing)
 	);
 	t.next("Build index");
 
@@ -129,8 +134,19 @@ int main(int argc, char **argv)
 			{
 				cnt_shot++;
 			}
-		printf("#%u:\t%u (%.2f)\n", i, cnt_shot, float(cnt_shot)/cnt_rank_cmp_val);
-		if(cnt_shot==cnt_rank_cmp_val) cnt_all_shot++;
+		//if(cnt_rank_cmp_val==1&&fabs(descr_fvec::distance(q[i],ps[gt[i][0]],dim)-descr_fvec::distance(q[i],ps[res[i][0]->id],dim))<1e-6) cnt_shot=1;
+		printf("#%u:\t%u (%.2f)[%lu]", i, cnt_shot, float(cnt_shot)/cnt_rank_cmp_val, res[i].size());
+		if(cnt_shot==cnt_rank_cmp_val)
+		{
+			cnt_all_shot++;
+		}
+		/*
+		for(const auto *r : res[i])
+		{
+			printf(" %u", r->id);
+		}
+		*/
+		putchar('\n');
 	}
 	printf("#all shot: %u (%.2f)\n", cnt_all_shot, float(cnt_all_shot)/cnt_pts_query_val);
 /*

@@ -13,9 +13,12 @@
 #include <iterator>
 #include <type_traits>
 #include <limits>
+#include <thread>
 // #include "parallelize.h"
-#include "parlay/parallel.h"
-#include "parlay/primitives.h"
+#include <parlay/parallel.h>
+#include <parlay/primitives.h>
+#include <parlay/delayed_sequence.h>
+#include <parlay/random.h>
 #define DEBUG_OUTPUT 0
 
 namespace ANN{
@@ -34,7 +37,7 @@ class HNSW
 	using T = typename U::type_point;
 public:
 	template<typename Iter>
-	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50, float alpha=5, float batch_base=2);
+	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50, float alpha=5, float batch_base=2, bool do_fixing=false);
 	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
 private:
 	typedef uint32_t type_index;
@@ -80,7 +83,7 @@ private:
 	// uint32_t cnt_level;
 	// std::vector<double> probability; // To purge
 	// std::vector<uint32_t> cnt_neighbor;
-	node *entrance; // To init
+	std::vector<node*> entrance; // To init
 	// auto m, max_m0, m_L; // To init
 	uint32_t dim;
 	float m_l;
@@ -144,7 +147,26 @@ private:
 		return res;
 		*/
 		(void)u;
-		while(C.size()>M) C.pop();
+		std::vector<node*> tie;
+		double dist_tie = 1e20;
+		while(C.size()>M)
+		{
+			const auto &t = C.top();
+			if(t.d+1e-6<dist_tie) // t.d<dist_tie
+			{
+				dist_tie = t.d;
+				tie.clear();
+			}
+			if(fabs(dist_tie-t.d)<1e-6) // t.d==dist_tie
+				tie.push_back(t.u);
+			C.pop();
+		}
+		if(fabs(dist_tie-C.top().d)<1e-6) // C.top().d==dist_tie
+			while(!tie.empty())
+			{
+				C.push({dist_tie,tie.back()});
+				tie.pop_back();
+			}
 	}
 
 	auto select_neighbors_simple(const T &u, 
@@ -236,10 +258,11 @@ private:
 
 	uint32_t get_level_random()
 	{
-		static thread_local int32_t anchor;
+		// static thread_local int32_t anchor;
 		// uint32_t esp;
 		// asm volatile("movl %0, %%esp":"=a"(esp));
-		static thread_local std::mt19937 gen{anchor};
+		static thread_local std::hash<std::thread::id> h;
+		static thread_local std::mt19937 gen{h(std::this_thread::get_id())};
 		static thread_local std::uniform_real_distribution<> dis(std::numeric_limits<double>::min(), 1.0);
 		const uint32_t res = uint32_t(-log(dis(gen))*m_l);
 		return res;
@@ -249,12 +272,49 @@ private:
 	auto get_threshold_m(uint32_t level){
 		return level==0? m*2: m;
 	}
+
+	void fix_edge()
+	{
+		fprintf(stderr, "Start fixing edges...\n");
+
+		for(int32_t l_c=entrance[0]->level; l_c>=0; --l_c)
+		{
+			parlay::sequence<parlay::sequence<std::pair<node*,node*>>> edge_add(n);
+
+			parlay::parallel_for(0, n, [&](uint32_t i){
+				auto &u = *node_pool[i];
+				if(l_c>u.level) return;
+
+				auto &edge_v = edge_add[i];
+				edge_v.clear();
+				for(auto *pv : neighbourhood(u,l_c))
+				{
+					const auto &nbh_v = neighbourhood(*pv,l_c);
+					if(std::find_if(nbh_v.begin(),nbh_v.end(),[&](const node *pu_extant){
+						return pu_extant==&u;
+					})==nbh_v.end())
+						edge_v.emplace_back(pv, &u);
+				}
+			});
+
+			auto edge_add_flatten = parlay::flatten(edge_add);
+			auto edge_add_grouped = parlay::group_by_key(edge_add_flatten);
+
+			parlay::parallel_for(0, edge_add_grouped.size(), [&](size_t j){
+				node *pv = edge_add_grouped[j].first;
+				auto &nbh_v = neighbourhood(*pv,l_c);
+				auto &nbh_v_add = edge_add_grouped[j].second;
+
+				nbh_v.insert(nbh_v.end(),nbh_v_add.begin(), nbh_v_add.end());
+			});
+		}
+	}
 };
 
 
 template<typename T, template<typename> class Allocator>
 template<typename Iter>
-HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_t m_, uint32_t ef_construction_, float alpha_, float batch_base)
+HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_t m_, uint32_t ef_construction_, float alpha_, float batch_base, bool do_fixing)
 	: dim(dim_), m_l(m_l_), m(m_), ef_construction(ef_construction_), alpha(alpha_), n(std::distance(begin,end))
 {
 	static_assert(std::is_same_v<typename std::iterator_traits<Iter>::value_type, T>);
@@ -263,13 +323,19 @@ HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_
 
 	if(n==0) return;
 
+	auto perm = parlay::random_permutation<uint32_t>(n, 1206);
+	auto rand_seq = parlay::delayed_seq<T>(n, [&](uint32_t i){
+		return *(begin+perm[i]);
+	});
+
 	const auto level_ep = get_level_random();
-	entrance = allocator.allocate(1);
-	new(entrance) node{level_ep, *begin, new std::vector<node*>[level_ep+1]/*anything else*/};
+	node *entrance_init = allocator.allocate(1);
+	new(entrance_init) node{level_ep, *rand_seq.begin(), new std::vector<node*>[level_ep+1]/*anything else*/};
 	#if DEBUG_OUTPUT
-		fprintf(stderr, "[%u] at lv.%u (%.2f,%.2f)**\n", 0, level_ep, begin->x, begin->y);
+		fprintf(stderr, "[%u] at lv.%u (%.2f,%.2f)**\n", 0, level_ep, rand_seq.begin()->x, rand_seq.begin()->y);
 	#endif
-	node_pool.push_back(entrance);
+	node_pool.push_back(entrance_init);
+	entrance.push_back(entrance_init);
 
 	uint32_t batch_begin=0, batch_end=1;
 	float progress = 0.0;
@@ -283,8 +349,8 @@ HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_
 		*/
 		// batch_end = batch_begin+1;
 
-		insert(begin+batch_begin, begin+batch_end, true);
-		insert(begin+batch_begin, begin+batch_end, false);
+		insert(rand_seq.begin()+batch_begin, rand_seq.begin()+batch_end, true);
+		insert(rand_seq.begin()+batch_begin, rand_seq.begin()+batch_end, false);
 
 		if(batch_end>n*(progress+0.1))
 		{
@@ -292,6 +358,8 @@ HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_
 			fprintf(stderr, "Done: %.2f\n", progress);
 		}
 	}
+
+	if(do_fixing) fix_edge();
 /*
 	for(uint32_t i=1; i<n; ++i)
 	{
@@ -319,7 +387,7 @@ template<typename U, template<typename> class Allocator>
 template<typename Iter>
 void HNSW<U,Allocator>::insert(Iter begin, Iter end, bool from_blank)
 {
-	const auto level_ep = entrance->level;
+	const auto level_ep = entrance[0]->level;
 	const auto size_batch = std::distance(begin,end);
 	auto node_new = std::make_unique<node*[]>(size_batch);
 	auto nbh_new = std::make_unique<std::vector<node*>[]>(size_batch);
@@ -354,11 +422,13 @@ void HNSW<U,Allocator>::insert(Iter begin, Iter end, bool from_blank)
 		auto &u = *node_new[i];
 		const auto level_u = u.level;
 		auto &eps_u = eps[i]; 
-		eps_u.push_back(entrance);
+		// eps_u.push_back(entrance);
+		eps_u = entrance;
 		for(uint32_t l=level_ep; l>level_u; --l)
 		{
 			const auto res = search_layer(u, eps_u, 1, l); // TODO: optimize
-			eps_u[0] = res.top().u;
+			eps_u.clear();
+			eps_u.push_back(res.top().u);
 		}
 	});
 
@@ -453,11 +523,14 @@ void HNSW<U,Allocator>::insert(Iter begin, Iter end, bool from_blank)
 	});
 	if(node_highest->level>level_ep)
 	{
-		entrance = node_highest;
+		entrance.clear();
+		entrance.push_back(node_highest);
 	#if DEBUG_OUTPUT
 		fprintf(stderr, "[%u]** at lev %u\n", U::get_id(entrance->data), entrance->level);
 	#endif
 	}
+	else if(node_highest->level==level_ep)
+		entrance.push_back(node_highest);
 
 	// and add new nodes to the pool
 	if(from_blank)
@@ -507,13 +580,21 @@ std::vector<typename HNSW<U,Allocator>::T*> HNSW<U,Allocator>::search(const T &q
 {
 	node u{0, q, nullptr}; // To optimize
 	std::priority_queue<dist,std::vector<dist>,farthest> W;
-	auto *ep = entrance;
-	for(int l_c=entrance->level; l_c>0; --l_c) // TODO: fix the type
+	auto eps = entrance;
+	for(int l_c=entrance[0]->level; l_c>0; --l_c) // TODO: fix the type
 	{
-		W = search_layer(u, std::vector{ep}, 1, l_c);
-		ep = W.top().u;
+		W = search_layer(u, eps, 1, l_c);
+		eps.clear();
+		eps.push_back(W.top().u);
+		/*
+		while(!W.empty())
+		{
+			eps.push_back(W.top().u);
+			W.pop();
+		}
+		*/
 	}
-	W = search_layer(u, std::vector{ep}, ef, 0);
+	W = search_layer(u, eps, ef, 0);
 	W = select_neighbors_simple(q, W, k);
 	std::vector<T*> res;
 	while(W.size()>0)
