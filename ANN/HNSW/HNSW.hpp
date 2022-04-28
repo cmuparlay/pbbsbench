@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <random>
 #include <memory>
+#include <string>
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -36,6 +37,16 @@ class HNSW
 {
 	using T = typename U::type_point;
 public:
+	/*
+		Construct from the vectors [begin, end).
+		std::iterator_trait<Iter>::value_type ought to be convertible to T
+		dim: 				vector dimension
+		m_l: 				control the # of levels (larger m_l leads to more layer)
+		m: 					max degree
+		ef_construction:	beam size during the construction
+		alpha:				parameter of the heuristic (similar to the one in vamana)
+		batch_base: 		growth rate of the batch size (discarded because of two passes)
+	*/
 	template<typename Iter>
 	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50, float alpha=5, float batch_base=2, bool do_fixing=false);
 	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
@@ -52,19 +63,6 @@ private:
 	struct dist{
 		double d;
 		node *u;
-	/*
-		dist(double d_, node<point> *u_) :
-			d(d_), u(u_)
-		{
-		}
-
-		dist& operator=(const dist &other)	// To rvalue
-		{
-			d = other.d;
-			u = other.u;
-			return *this;
-		}
-	*/
 	};
 
 	struct nearest{
@@ -80,9 +78,6 @@ private:
 	};
 
 
-	// uint32_t cnt_level;
-	// std::vector<double> probability; // To purge
-	// std::vector<uint32_t> cnt_neighbor;
 	std::vector<node*> entrance; // To init
 	// auto m, max_m0, m_L; // To init
 	uint32_t dim;
@@ -94,21 +89,7 @@ private:
 	uint32_t n;
 	Allocator<node> allocator;
 	std::vector<node*> node_pool;
-/*
-	void set_probability(uint32_t step, double multiplier_level, double eps_prob)
-	{
-		uint32_t n = 0;
-		// traverse the levels
-		for(uint32_t i=0;; ++i)
-		{
-			const auto p = exp(-i/multiplier_level)*(1-exp(-1/multiplier_level));
-			if(p<esp) break;
-			probability.push_back(p);
-			n += step;
-			cnt_neighbor.push_back(n);
-		}
-	}
-*/
+
 	static auto neighbourhood(const node &u, uint32_t level)
 		-> std::vector<node*>&
 	{
@@ -360,17 +341,11 @@ HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_
 	}
 
 	if(do_fixing) fix_edge();
-/*
-	for(uint32_t i=1; i<n; ++i)
-	{
-		auto *p = insert(*(begin+i), i);
-		node_pool.push_back(p);
-	}
-*/
+
 	#if DEBUG_OUTPUT
 		for(const auto *pu : node_pool)
 		{
-			fprintf(stderr, "[%u] (%.2f,%.2f)\n", U::get_id(pu->data), pu->data.x, pu->data.y);
+			fprintf(stderr, "[%u] (%.2f,%.2f)\n", U::get_id(pu->data), pu->data[0], pu->data[1]);
 			for(int32_t l=pu->level; l>=0; --l)
 			{
 				fprintf(stderr, "\tlv. %d:", l);
@@ -383,7 +358,6 @@ HNSW<T,Allocator>::HNSW(Iter begin, Iter end, uint32_t dim_, float m_l_, uint32_
 }
 
 template<typename U, template<typename> class Allocator>
-// typename HNSW<U,Allocator>::node* HNSW<U,Allocator>::insert(const T &q, uint32_t id)
 template<typename Iter>
 void HNSW<U,Allocator>::insert(Iter begin, Iter end, bool from_blank)
 {
@@ -445,11 +419,8 @@ void HNSW<U,Allocator>::insert(Iter begin, Iter end, bool from_blank)
 			auto res = search_layer(u, eps_u, ef_construction, l_c);
 			auto neighbors_queue = select_neighbors(u.data, res, get_threshold_m(l_c)*factor_m, l_c);
 			// move the content from `neighbors_queue` to `u.neighbors[l_c]`
-			// auto &nbh_u = neighbourhood(u, l_c);
 			auto &nbh_u = nbh_new[i];
 			auto &edge_u = edge_add[i];
-			// nbh_u.resize(neighbors_queue.size());
-			// edge_u.resize(neighbors_queue.size());
 			nbh_u.clear();
 			edge_u.clear();
 			nbh_u.reserve(neighbors_queue.size());
