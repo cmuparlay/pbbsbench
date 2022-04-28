@@ -1,0 +1,16 @@
+TEST TERMINATED ABNORMALLY:
+[cd /ssd1/ANN/sift; make sift1000M.bvecs
+make: *** No rule to make target 'sift1000M.bvecs'.  Stop.
+]
+TEST TERMINATED ABNORMALLY:
+[./neighbors -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile653271_787075 /ssd1/ANN/sift/bigann_base.bvecs
+Medoid ID: 308304276
+ANN: Built index: 122217.5667
+ANN: Found nearest neighbors: 1.6996
+Average graph out-degree = 44.77
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 336, Average nodes searched = 235.6
+ANN: stats: 6.8529
+Medoid ID: 308304276
+Terminated
+]

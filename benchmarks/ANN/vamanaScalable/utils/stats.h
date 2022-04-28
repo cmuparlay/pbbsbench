@@ -21,53 +21,28 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <algorithm>
-#include <cmath>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
-#include "parlay/random.h"
 #include "common/geometry.h"
-#include "../utils/NSGDist.h"  
-#include "../utils/types.h"
-#include "../utils/beamSearch.h"
-#include "../utils/indexTools.h"
-#include "../utils/stats.h"
-#include "hcnng_index.h"
-
-extern bool report_stats;
+#include "indexTools.h"
+#include <set>
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int MSTdeg, int num_clusters, int beamSizeQ, double dummy1, double dummy2,
-  parlay::sequence<Tvec_point<T>*> &q) {
-  parlay::internal::timer t("ANN",report_stats); 
-  {
-    unsigned d = (v[0]->coordinates).size();
-    using findex = hcnng_index<T>;
-    findex I(MSTdeg, d);
-    I.build_index(v, num_clusters, sqrt(v.size()));
-    t.next("Built index");
-    beamSearchRandom(q, v, beamSizeQ, k, d);
-    t.next("Found nearest neighbors");
-    if(report_stats){
-      graph_stats(v);
-      query_stats(q);
-      t.next("stats");
-    }
-  };
+void graph_stats(parlay::sequence<Tvec_point<T>*> &v){
+	auto od = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return size_of(v[i]->out_nbh);});
+  	size_t j = parlay::max_element(od) - od.begin();
+  	int maxDegree = od[j];
+  	size_t k = parlay::min_element(od) - od.begin();
+  	size_t sum1 = parlay::reduce(od);
+  	std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
+  	std::cout << "Max out-degree: " << maxDegree << ", Min out-degree: " << od[k] << std::endl;  
 }
 
-
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int MSTdeg, int num_clusters, double dummy1, double dummy2) {
-  parlay::internal::timer t("ANN",report_stats); 
-  { 
-    unsigned d = (v[0]->coordinates).size();
-    using findex = hcnng_index<T>;
-    findex I(MSTdeg, d);
-    I.build_index(v, num_clusters, sqrt(v.size()));
-    t.next("Built index");
-    if(report_stats){
-      graph_stats(v);
-      t.next("stats");
-    }
-  };
+void query_stats(parlay::sequence<Tvec_point<T>*> &q){
+	auto s = parlay::delayed_seq<size_t>(q.size(), [&] (size_t i) {return q[i]->cnt;});
+    size_t i = parlay::max_element(s) - s.begin();
+    size_t sum = parlay::reduce(s);
+    std::cout << "Max nodes searched = " << s[i] 
+    	<< ", Average nodes searched = " << sum/((double) q.size()) << std::endl;
 }

@@ -1,0 +1,22 @@
+Medoid ID: 89028
+ANN: Built index: 37.5764
+ANN: Found nearest neighbors: 1.1480
+Average graph out-degree = 40.42
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 255, Average nodes searched = 206.9
+ANN: stats: 0.0077
+Medoid ID: 89028
+ANN: Built index: 36.6844
+ANN: Found nearest neighbors: 1.1267
+Average graph out-degree = 40.42
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 255, Average nodes searched = 206.9
+ANN: stats: 0.0077
+Parlay time: 37.8188
+Recall 1@1: 0.9997
+Recall 2@2: 0.9995
+Recall 10@10: 0.99933
+Recall 50@50: 0.999124
+Recall 100@100: 0.999059
+Recall 200@200: 0.998694
+1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile438432_747231 : '37.818'

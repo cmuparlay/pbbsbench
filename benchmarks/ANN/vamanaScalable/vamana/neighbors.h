@@ -27,7 +27,7 @@
 #include "common/geometry.h"
 #include "../utils/NSGDist.h"  
 #include "../utils/types.h"
-#include "pynn_index2.h"
+#include "index.h"
 #include "../utils/beamSearch.h"  
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
@@ -35,18 +35,16 @@
 extern bool report_stats;
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, int beamSizeQ, double num_clusters, double delta,
+void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, int beamSizeQ, double alpha, double dummy,
   parlay::sequence<Tvec_point<T>*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
   {
-    std::cout << "here" << std::endl; 
     unsigned d = (v[0]->coordinates).size();
-    using findex = pyNN_index<T>;
-    std::cout << "here2" << std::endl;
-    findex I(K, d, delta);
-    I.build_index(v, cluster_size);
+    using findex = knn_index<T>;
+    findex I(maxDeg, beamSize, alpha, d);
+    I.build_index(v, true);
     t.next("Built index");
-    beamSearchRandom(q, v, beamSizeQ, k, d);
+    I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
     if(report_stats){
       //average numbers of nodes searched using beam search
@@ -59,14 +57,29 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double num_clusters, double delta) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
-    using findex = pyNN_index<T>;
-    findex I(K, d, delta);
-    I.build_index(v, cluster_size);
-    t.next("Built index");
+    // parlay::sequence<int> test(maxDeg);
+    // for(int i=0; i<maxDeg; i++){
+    //   test[i] = 2;
+    // }
+    // std::cout << size_of(v[0]->out_nbh) << std::endl; 
+    // add_new_nbh(test, v[0]);
+    // std::cout << size_of(v[0]->out_nbh) << std::endl;
+    // std::cout << size_of(v[0]->new_nbh) << std::endl;
+    // std::cout << std::endl;
+    // for(int i=0; i< maxDeg; i++) std::cout << v[0]->out_nbh[i] << std::endl;
+    // std::cout << std::endl; 
+    // synchronize(v[0]);
+    // std::cout << size_of(v[0]->out_nbh) << std::endl;
+    // std::cout << size_of(v[0]->new_nbh) << std::endl;
+    // abort();
+    using findex = knn_index<T>;
+    findex I(maxDeg, beamSize, alpha, d);
+    I.build_index(v);
+    t.next("Built index");  
     if(report_stats){
       graph_stats(v);
       t.next("stats");
