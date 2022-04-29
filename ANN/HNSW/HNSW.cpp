@@ -85,11 +85,17 @@ int main(int argc, char **argv)
 	t.next("Read inFile");
 
 	fputs("Start building HNSW\n", stderr);
+	HNSW<descr_fvec> g("model.bin", [&](uint32_t i){
+		return ps[i];
+	});
+	/*
 	HNSW<descr_fvec> g(
 		ps.begin(), ps.begin()+atoi(cnt_pts_input), dim,
 		atof(m_l), atoi(m), atoi(efc), atof(alpha), atof(batch_base), !!atoi(do_fixing)
 	);
+	*/
 	t.next("Build index");
+	// g.save("model.bin");
 
 	if(!file_query) return 0;
 

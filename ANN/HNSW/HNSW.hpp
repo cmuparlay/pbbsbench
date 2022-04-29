@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <random>
 #include <memory>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -49,7 +50,18 @@ public:
 	*/
 	template<typename Iter>
 	HNSW(Iter begin, Iter end, uint32_t dim, float m_l=1, uint32_t m=100, uint32_t ef_construction=50, float alpha=5, float batch_base=2, bool do_fixing=false);
+
+	/*
+		Construct from the saved model
+		getter(i) returns the actual data (convertible to type T) of the vector with id i
+	*/
+	template<typename G>
+	HNSW(const std::string &filename_model, G getter);
+
 	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
+
+	// save the current model to a file
+	void save(const std::string &filename_model) const;
 private:
 	typedef uint32_t type_index;
 
@@ -292,6 +304,116 @@ private:
 	}
 };
 
+
+template<typename U, template<typename> class Allocator>
+template<typename G>
+HNSW<U,Allocator>::HNSW(const std::string &filename_model, G getter)
+{
+	std::ifstream model(filename_model, std::ios::binary);
+	if(!model.is_open())
+		throw std::runtime_error("Failed to open the model");
+
+	auto read = [&](auto &data, auto ...args){
+		auto read_impl = [&](auto &f, auto &data, auto ...args){
+			using T = std::remove_reference_t<decltype(data)>;
+			if constexpr(std::is_pointer_v<std::decay_t<T>>)
+			{
+				auto read_array = [&](auto &data, size_t size, auto ...args){
+					for(size_t i=0; i<size; ++i)
+						f(f, data[i], args...);
+				};
+				// use the array extent as the size
+				if constexpr(sizeof...(args)==0 && std::is_array_v<T>)
+				{
+					read_array(data, std::extent_v<T>);
+				}
+				else
+				{
+					static_assert(sizeof...(args), "size was not provided");
+					read_array(data, args...);
+				}
+			}
+			else 
+			{
+				static_assert(std::is_standard_layout_v<T>);
+				model.read((char*)&data, sizeof(data));
+			}
+		};
+		read_impl(read_impl, data, args...);
+	};
+
+	char model_type[5] = {'\000'};
+	read(model_type, 4);
+	if(strcmp(model_type,"HNSW"))
+		throw std::runtime_error("Wrong type of model");
+	uint32_t version;
+	read(version);
+	if(version>1)
+		throw std::runtime_error("Unsupported version");
+
+	size_t code_U, size_node;
+	read(code_U);
+	read(size_node);
+	if((typeid(U).hash_code()^sizeof(U))!=code_U)
+		throw std::runtime_error("Inconsistent type `U`");
+	if(sizeof(node)!=size_node)
+		throw std::runtime_error("Inconsistent type `node`");
+
+	// read parameter configuration
+	read(dim);
+	read(m_l);
+	read(m);
+	read(ef_construction);
+	read(alpha);
+	read(n);
+	puts("Configuration loaded");
+	printf("dim = %u\n", dim);
+	printf("m_l = %f\n", m_l);
+	printf("m = %u\n", m);
+	printf("efc = %u\n", ef_construction);
+	printf("alpha = %f\n", alpha);
+	printf("n = %u\n", n);
+	// read indices
+	std::unordered_map<uint32_t,node*> addr;
+	node_pool.reserve(n);
+	for(uint32_t i=0; i<n; ++i)
+	{
+		auto *u = new node;
+		read(u->level);
+		uint32_t id_u;
+		read(id_u);
+		u->data = getter(id_u);
+		addr[id_u] = u;
+		node_pool.push_back(u);
+	}
+	for(node *u : node_pool)
+	{
+		u->neighbors = new std::vector<node*>[u->level+1];
+		for(uint32_t l=0; l<=u->level; ++l)
+		{
+			size_t size;
+			read(size);
+			auto &nbh_u = u->neighbors[l];
+			nbh_u.reserve(size);
+			for(size_t i=0; i<size; ++i)
+			{
+				uint32_t id_v;
+				read(id_v);
+				nbh_u.push_back(addr.at(id_v));
+			}
+		}
+	}
+	// read entrances
+	size_t size;
+	read(size);
+	entrance.reserve(size);
+	for(size_t i=0; i<size; ++i)
+	{
+		uint32_t id_u;
+		read(id_u);
+		entrance.push_back(addr.at(id_u));
+	}
+}
 
 template<typename T, template<typename> class Allocator>
 template<typename Iter>
@@ -574,6 +696,74 @@ std::vector<typename HNSW<U,Allocator>::T*> HNSW<U,Allocator>::search(const T &q
 		W.pop();
 	}
 	return res;
+}
+
+template<typename U, template<typename> class Allocator>
+void HNSW<U,Allocator>::save(const std::string &filename_model) const
+{
+	std::ofstream model(filename_model, std::ios::binary);
+	if(!model.is_open())
+		throw std::runtime_error("Failed to create the model");
+
+	const auto write = [&](const auto &data, auto ...args){
+		auto write_impl = [&](auto &f, const auto &data, auto ...args){
+			using T = std::remove_reference_t<decltype(data)>;
+			if constexpr(std::is_pointer_v<std::decay_t<T>>)
+			{
+				auto write_array = [&](const auto &data, size_t size, auto ...args){
+					for(size_t i=0; i<size; ++i)
+						f(f, data[i], args...);
+				};
+				// use the array extent as the size
+				if constexpr(sizeof...(args)==0 && std::is_array_v<T>)
+				{
+					write_array(data, std::extent_v<T>);
+				}
+				else
+				{
+					static_assert(sizeof...(args), "size was not provided");
+					write_array(data, args...);
+				}
+			}
+			else 
+			{
+				static_assert(std::is_standard_layout_v<T>);
+				model.write((const char*)&data, sizeof(data));
+			}
+		};
+		write_impl(write_impl, data, args...);
+	};
+	// write header (version number, type info, etc)
+	write("HNSW", 4);
+	write(uint32_t(1));
+	write(typeid(U).hash_code()^sizeof(U));
+	write(sizeof(node));
+	// write parameter configuration
+	write(dim);
+	write(m_l);
+	write(m);
+	write(ef_construction);
+	write(alpha);
+	write(n);
+	// write indices
+	for(const auto *u : node_pool)
+	{
+		write(u->level);
+		write(U::get_id(u->data));
+	}
+	for(const auto *u : node_pool)
+	{
+		for(uint32_t l=0; l<=u->level; ++l)
+		{
+			write(u->neighbors[l].size());
+			for(const auto *v : u->neighbors[l])
+				write(U::get_id(v->data));
+		}
+	}
+	// write entrances
+	write(entrance.size());
+	for(const auto *u : entrance)
+		write(U::get_id(u->data));
 }
 
 } // namespace HNSW
