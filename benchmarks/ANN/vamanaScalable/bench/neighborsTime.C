@@ -74,7 +74,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
       return &pts[i];});
  
-  time_loop(0, 1.0,
+  time_loop(rounds, 0, 
   [&] () {},
   [&] () {
     ANN<T>(v, maxDeg, beamSize, alpha, delta);
@@ -95,7 +95,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_p
   auto qpts =  parlay::tabulate(q, [&] (size_t i) -> Tvec_point<T>* {   
       return &qpoints[i];});
 
-    time_loop(0, 1.0,
+    time_loop(rounds, 0, 
       [&] () {},
       [&] () {
         ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, alpha, delta, qpts); 

@@ -192,14 +192,14 @@ struct knn_index{
 		while(count < n){
 			size_t floor;
 			size_t ceiling;
-			if(pow(base,inc) <= 1000000){
+			if(pow(base,inc) <= max_fraction*n){
 				floor = static_cast<size_t>(pow(base, inc))-1;
 				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
 				count = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
 			} else{
 				floor = count;
-				ceiling = std::min(count + static_cast<size_t>(1000000), n)-1;
-				count += static_cast<size_t>(1000000);
+				ceiling = std::min(count + static_cast<size_t>(max_fraction*n), n)-1;
+				count += static_cast<size_t>(max_fraction*n);
 			}
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set

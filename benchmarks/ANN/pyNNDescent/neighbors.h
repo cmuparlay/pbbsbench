@@ -39,10 +39,8 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
   parlay::sequence<Tvec_point<T>*> &q) {
   parlay::internal::timer t("ANN",report_stats); 
   {
-    std::cout << "here" << std::endl; 
     unsigned d = (v[0]->coordinates).size();
     using findex = pyNN_index<T>;
-    std::cout << "here2" << std::endl;
     findex I(K, d, delta);
     I.build_index(v, cluster_size);
     t.next("Built index");

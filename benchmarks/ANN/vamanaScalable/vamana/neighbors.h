@@ -40,6 +40,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
   parlay::internal::timer t("ANN",report_stats); 
   {
     unsigned d = (v[0]->coordinates).size();
+    std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
     I.build_index(v, true);
@@ -61,21 +62,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
-    // parlay::sequence<int> test(maxDeg);
-    // for(int i=0; i<maxDeg; i++){
-    //   test[i] = 2;
-    // }
-    // std::cout << size_of(v[0]->out_nbh) << std::endl; 
-    // add_new_nbh(test, v[0]);
-    // std::cout << size_of(v[0]->out_nbh) << std::endl;
-    // std::cout << size_of(v[0]->new_nbh) << std::endl;
-    // std::cout << std::endl;
-    // for(int i=0; i< maxDeg; i++) std::cout << v[0]->out_nbh[i] << std::endl;
-    // std::cout << std::endl; 
-    // synchronize(v[0]);
-    // std::cout << size_of(v[0]->out_nbh) << std::endl;
-    // std::cout << size_of(v[0]->new_nbh) << std::endl;
-    // abort();
+    std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
     I.build_index(v);
