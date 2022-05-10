@@ -96,9 +96,9 @@ auto parse_fvecs(const char* filename, int maxDeg) {
   parlay::sequence<Tvec_point<float>> points(num_vectors);
 
   parlay::sequence<int> &out_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
-  parlay::sequence<int> &new_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
+  // parlay::sequence<int> &new_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
 
-  parlay::parallel_for(0, num_vectors*maxDeg, [&] (size_t i){out_nbh[i] = -1; new_nbh[i] = -1;});
+  parlay::parallel_for(0, num_vectors*maxDeg, [&] (size_t i){out_nbh[i] = -1; });
 
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
@@ -107,7 +107,7 @@ auto parse_fvecs(const char* filename, int maxDeg) {
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
     points[i].out_nbh = parlay::make_slice(out_nbh.begin()+maxDeg*i, out_nbh.begin()+maxDeg*(i+1));
-    points[i].new_nbh = parlay::make_slice(out_nbh.begin()+maxDeg*i, out_nbh.begin()+maxDeg*(i+1));  
+    // points[i].new_nbh = parlay::make_slice(out_nbh.begin()+maxDeg*i, out_nbh.begin()+maxDeg*(i+1));  
   });
 
   return points;
@@ -163,9 +163,9 @@ auto parse_bvecs(const char* filename, int maxDeg) {
   parlay::sequence<Tvec_point<uint8_t>> points(num_vectors);
 
   parlay::sequence<int> &out_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
-  parlay::sequence<int> &new_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
+  // parlay::sequence<int> &new_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
 
-  parlay::parallel_for(0, num_vectors*maxDeg, [&] (size_t i){out_nbh[i] = -1; new_nbh[i] = -1;});
+  parlay::parallel_for(0, num_vectors*maxDeg, [&] (size_t i){out_nbh[i] = -1;});
 
   parlay::parallel_for(0, num_vectors, [&] (size_t i) {
     size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
@@ -174,7 +174,7 @@ auto parse_bvecs(const char* filename, int maxDeg) {
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
     points[i].out_nbh = parlay::make_slice(out_nbh.begin()+maxDeg*i, out_nbh.begin()+maxDeg*(i+1));
-    points[i].new_nbh = parlay::make_slice(new_nbh.begin()+maxDeg*i, new_nbh.begin()+maxDeg*(i+1));     
+    // points[i].new_nbh = parlay::make_slice(new_nbh.begin()+maxDeg*i, new_nbh.begin()+maxDeg*(i+1));     
   });
 
   return points;

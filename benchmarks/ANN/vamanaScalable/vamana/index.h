@@ -116,9 +116,7 @@ struct knn_index{
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
 	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha) {
-    // Make sure the candidate set does not include p (done later) add
-    // out neighbors of p to the candidate set.
-    // std::cout << "here1" << std::endl; 
+    // add out neighbors of p to the candidate set.
 		for (size_t i=0; i<size_of(p->out_nbh); i++) {
 			candidates.push_back(std::make_pair(p->out_nbh[i],
 				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
@@ -153,15 +151,12 @@ struct knn_index{
         }
       }
 		}
-		// std::cout << "here2" << std::endl;
-		// std::cout << new_nbhs.size() << std::endl;  
 		add_new_nbh(new_nbhs, p);
-		// std::cout << "here3" << std::endl; 
 	}
 
 
-	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
-	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
+	//wrapper to allow calling robustPrune on a sequence of candidates 
+	//that do not come with precomputed distances
 	void robustPrune(Tvec_point<T>* p, parlay::sequence<int> candidates, parlay::sequence<Tvec_point<T>*> &v, double alpha){
     parlay::sequence<pid> cc;
     cc.reserve(candidates.size() + size_of(p->out_nbh));
@@ -181,8 +176,13 @@ struct knn_index{
 		if(two_pass) build_index_inner(v, r2_alpha, 2, .1);
 	}
 
+	//executes the index build routine from the DiskANN paper 
+	//uses batches and synchronization to avoid locks
+	//alpha is the alpha value for the RobustPrune routine
+	//base is the exponent base for the batch doubling
+	//max_fraction is the max fraction of the input that can be used for a batch
 	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, double base = 2,
-	double max_fraction = 1.0, bool random_order = false){
+		double max_fraction = 1.0, bool random_order = true){
 		size_t n = v.size();
 		size_t inc = 0;
 		parlay::sequence<int> rperm;
@@ -201,9 +201,12 @@ struct knn_index{
 				ceiling = std::min(count + static_cast<size_t>(max_fraction*n), n)-1;
 				count += static_cast<size_t>(max_fraction*n);
 			}
+			parlay::sequence<int> &new_out = *new parlay::sequence<int>(maxDeg*(ceiling-floor));
+			parlay::parallel_for(0, maxDeg*(ceiling-floor), [&] (size_t i) {new_out[i] = -1;});
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
+				v[rperm[i]]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
 				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
 				if(report_stats) v[rperm[i]]->cnt = visited.size();
 				robustPrune(v[rperm[i]], visited, v, alpha);
@@ -220,13 +223,15 @@ struct knn_index{
 				to_flatten[i-floor] = edges;
 				synchronize(v[rperm[i]]);
 			});
-			// std::cout << "here3" << std::endl; 
+			parlay::parallel_for(floor, ceiling, [&] (size_t i) {
+				v[rperm[i]]->new_nbh = parlay::make_slice<int*, int*>(nullptr, nullptr);});
+			delete &new_out;
 			auto new_edges = parlay::flatten(to_flatten);
 			auto grouped_by = parlay::group_by_key(new_edges);
 			//finally, add the bidirectional edges; if they do not make
 			//the vertex exceed the degree bound, just add them to out_nbhs;
 			//otherwise, use robustPrune on the vertex with user-specified alpha
-			// std::cout << grouped_by.size() << std::endl; 
+			auto overflow = parlay::tabulate(grouped_by.size(), [&] (size_t j) {return false;});
 			parlay::parallel_for(0, grouped_by.size(), [&] (size_t j){
 				size_t index = grouped_by[j].first;
 				parlay::sequence<int> candidates = grouped_by[j].second;
@@ -234,10 +239,27 @@ struct knn_index{
 				if(newsize <= maxDeg){
 					for(const int& k : candidates) add_nbh(k, v[index]);
 				} else{
-					robustPrune(v[index], candidates, v, alpha);
-					synchronize(v[index]);
+					overflow[j] = true;
 				}
 			});
+			//the nodes which overflow are dealt with separately to minimize memory usage
+			auto indices = parlay::tabulate(grouped_by.size(), [&] (size_t j) {return j;});
+			auto overflow_indices = parlay::pack(indices, overflow);
+			int num_over = overflow_indices.size();
+			parlay::sequence<int> &new_out_2 = *new parlay::sequence<int>(num_over*maxDeg);
+			parlay::parallel_for(0, maxDeg*(num_over), [&] (size_t i) {new_out_2[i] = -1;});
+			parlay::parallel_for(0, num_over, [&] (size_t j){
+				int index = grouped_by[overflow_indices[j]].first;
+				parlay::sequence<int> candidates = grouped_by[overflow_indices[j]].second;
+				v[index]->new_nbh=parlay::make_slice(new_out_2.begin()+maxDeg*j, new_out_2.begin()+maxDeg*(j+1));
+				robustPrune(v[index], candidates, v, alpha);
+				synchronize(v[index]);
+			});
+			parlay::parallel_for(0, num_over, [&] (size_t i) {
+				int index = grouped_by[overflow_indices[i]].first;
+				v[index]->new_nbh = parlay::make_slice<int*, int*>(nullptr, nullptr);
+			});
+			delete &new_out_2;
 			inc += 1;
 		}
 	}

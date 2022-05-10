@@ -75,6 +75,7 @@ parlay::sequence<pid> seq_union(parlay::sequence<pid>& P,
   pid* first2 = Q.begin();
   pid* last2 = Q.end();
   parlay::sequence<pid> result = parlay::sequence<pid>();
+  result.reserve(P.size()+Q.size());
   while (true) {
     if (first1 == last1) {
       while (first2 != last2) {
@@ -111,90 +112,15 @@ parlay::sequence<pid> seq_union(parlay::sequence<pid>& P,
   return result;
 }
 
-// Uses a std::set for the frontier and beam, and unordered_set for
-// visited elements.
-template <typename T>
-parlay::sequence<pid> beam_search_2(Tvec_point<T>* p,
-                                    parlay::sequence<Tvec_point<T>*>& v,
-                                    Tvec_point<T>* medoid, int beamSize,
-                                    unsigned d) {
-  // initialize data structures
-  std::unordered_set<int> visited;
-  auto q_comp = [] (const pid& l, const pid& r) {
-    if (l.second < r.second) return true;
-    if (l.second == r.second) return l.first < r.first;
-    return false;
-  };
-  std::set<pid, decltype(q_comp)> frontier(q_comp);
-  std::set<pid, decltype(q_comp)> beam(q_comp);
-
-  auto ret = parlay::sequence<pid>();
-  ret.reserve(beamSize);
-
-  // the frontier starts with the medoid
-  auto medoid_pair = std::make_pair(
-      medoid->id,
-      distance(medoid->coordinates.begin(), p->coordinates.begin(), d));
-  frontier.insert(medoid_pair);
-  beam.insert(medoid_pair);
-
-  // terminate beam search when the entire frontier has been visited
-  while (!frontier.empty()) {
-    // the next node to visit is the unvisited frontier node that is closest to
-    // p
-    pid currentPid = *(frontier.begin());
-    frontier.erase(frontier.begin());
-
-    ret.push_back(currentPid);
-    visited.insert(currentPid.first);
-
-    Tvec_point<T>* current = v[currentPid.first];
-    auto g = [&] (int ngh) {
-      if (visited.find(ngh) != visited.end()) return false;
-      return true;
-    };
-
-    // for (const int& ngh : current->out_nbh) {
-    //   if (visited.find(ngh) == visited.end()) {
-    //     float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
-    //     // insert it into the beam
-    //     beam.insert(std::make_pair(ngh, dist));
-    //     frontier.insert(std::make_pair(ngh, dist));
-    //     visited.insert(ngh);
-    //   }
-    // }
-
-    for(int i=0; i<size_of(current->out_nbh); i++){
-      int ngh = current->out_nbh[i];
-      if (visited.find(ngh) == visited.end()) {
-        float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
-        // insert it into the beam
-        beam.insert(std::make_pair(ngh, dist));
-        frontier.insert(std::make_pair(ngh, dist));
-        visited.insert(ngh);
-      }
-    }
-
-    while (beam.size() > beamSize) {
-      auto it = std::prev(beam.end());
-      pid point = *it;
-      beam.erase(it);
-      auto f_it = frontier.find(point);
-      if (f_it != frontier.end()) {
-        frontier.erase(f_it);
-      }
-    }
-  }
-  return ret;
-}
-
 template <typename T>
 std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
     Tvec_point<T>* medoid, int beamSize, unsigned d) {
   // initialize data structures
   parlay::sequence<pid> visited = parlay::sequence<pid>();
+  visited.reserve(5*beamSize);
   parlay::sequence<pid> frontier = parlay::sequence<pid>();
+  frontier.reserve(2*beamSize);
   auto less = [&](pid a, pid b) { return a.second < b.second; };  
   // the frontier starts with the medoid
   frontier.push_back(std::make_pair(
@@ -211,11 +137,8 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
       if (parlay::find_if(visited, pred) == visited.end()) return true;
       return false;
     };
-    // std::cout << "bhere3" << std::endl; 
-    // std::cout << size_of(current->out_nbh) << std::endl; 
     parlay::sequence<int> candidatesTemp = parlay::tabulate(size_of(current->out_nbh), [&] (size_t i) {
       return current->out_nbh[i];});
-    // std::cout << "bhere4" << std::endl; 
     auto candidates = parlay::filter(candidatesTemp, g);
     parlay::sequence<pid> pairCandidates =
         parlay::sequence<pid>(candidates.size());
@@ -225,12 +148,12 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
                                   p->coordinates.begin(), d));
     }
     auto sortedCandidates = parlay::sort(pairCandidates, less);
-    // std::cout << "bhere5" << std::endl; 
     frontier = seq_union(frontier, sortedCandidates);
     if (frontier.size() > beamSize)
       frontier.erase(frontier.begin() + beamSize, frontier.end());
     // add the node to the visited list
     visited.push_back(currentPid);
+
   }
   return std::make_pair(frontier, visited);
 }
@@ -307,6 +230,7 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
   });
 }
 
+//UNDER CONSTRUCTION
 template<typename T>
 void warmStartSearch(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
@@ -357,3 +281,81 @@ void warmStartSearch(parlay::sequence<Tvec_point<T>*>& q,
 }
 
 #endif
+
+// // Uses a std::set for the frontier and beam, and unordered_set for
+// // visited elements.
+// // NOT CURRENTLY USED ANYWHERE
+// template <typename T>
+// parlay::sequence<pid> beam_search_2(Tvec_point<T>* p,
+//                                     parlay::sequence<Tvec_point<T>*>& v,
+//                                     Tvec_point<T>* medoid, int beamSize,
+//                                     unsigned d) {
+//   // initialize data structures
+//   std::unordered_set<int> visited;
+//   auto q_comp = [] (const pid& l, const pid& r) {
+//     if (l.second < r.second) return true;
+//     if (l.second == r.second) return l.first < r.first;
+//     return false;
+//   };
+//   std::set<pid, decltype(q_comp)> frontier(q_comp);
+//   std::set<pid, decltype(q_comp)> beam(q_comp);
+
+//   auto ret = parlay::sequence<pid>();
+//   ret.reserve(beamSize);
+
+//   // the frontier starts with the medoid
+//   auto medoid_pair = std::make_pair(
+//       medoid->id,
+//       distance(medoid->coordinates.begin(), p->coordinates.begin(), d));
+//   frontier.insert(medoid_pair);
+//   beam.insert(medoid_pair);
+
+//   // terminate beam search when the entire frontier has been visited
+//   while (!frontier.empty()) {
+//     // the next node to visit is the unvisited frontier node that is closest to
+//     // p
+//     pid currentPid = *(frontier.begin());
+//     frontier.erase(frontier.begin());
+
+//     ret.push_back(currentPid);
+//     visited.insert(currentPid.first);
+
+//     Tvec_point<T>* current = v[currentPid.first];
+//     auto g = [&] (int ngh) {
+//       if (visited.find(ngh) != visited.end()) return false;
+//       return true;
+//     };
+
+//     // for (const int& ngh : current->out_nbh) {
+//     //   if (visited.find(ngh) == visited.end()) {
+//     //     float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
+//     //     // insert it into the beam
+//     //     beam.insert(std::make_pair(ngh, dist));
+//     //     frontier.insert(std::make_pair(ngh, dist));
+//     //     visited.insert(ngh);
+//     //   }
+//     // }
+
+//     for(int i=0; i<size_of(current->out_nbh); i++){
+//       int ngh = current->out_nbh[i];
+//       if (visited.find(ngh) == visited.end()) {
+//         float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
+//         // insert it into the beam
+//         beam.insert(std::make_pair(ngh, dist));
+//         frontier.insert(std::make_pair(ngh, dist));
+//         visited.insert(ngh);
+//       }
+//     }
+
+//     while (beam.size() > beamSize) {
+//       auto it = std::prev(beam.end());
+//       pid point = *it;
+//       beam.erase(it);
+//       auto f_it = frontier.find(point);
+//       if (f_it != frontier.end()) {
+//         frontier.erase(f_it);
+//       }
+//     }
+//   }
+//   return ret;
+// }
