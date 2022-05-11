@@ -66,11 +66,9 @@ void synchronize(Tvec_point<T> *p){
 		container.push_back(p->new_nbh[j]); 
 	}
 	for(int j=0; j<p->new_nbh.size(); j++){
-		p->new_nbh[j] = -1;
-	}
-	for(int j=0; j<p->new_nbh.size(); j++){
 		p->out_nbh[j] = container[j];
 	}
+	p->new_nbh = parlay::make_slice<int*, int*>(nullptr, nullptr);
 }
 
 //synchronization function

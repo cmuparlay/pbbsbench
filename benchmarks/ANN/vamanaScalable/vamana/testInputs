@@ -9,7 +9,7 @@ oFile = "100M_test.txt"
 
 tests = [    
 	
-     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
+     [1, "bigann_base.bvecs", "bigann_query.bvecs", "idx_1000M.ivecs", 
          "-R 50 -L 75 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"]    ]
 
 

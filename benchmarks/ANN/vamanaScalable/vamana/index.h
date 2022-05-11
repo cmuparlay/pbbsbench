@@ -201,8 +201,7 @@ struct knn_index{
 				ceiling = std::min(count + static_cast<size_t>(max_fraction*n), n)-1;
 				count += static_cast<size_t>(max_fraction*n);
 			}
-			parlay::sequence<int> &new_out = *new parlay::sequence<int>(maxDeg*(ceiling-floor));
-			parlay::parallel_for(0, maxDeg*(ceiling-floor), [&] (size_t i) {new_out[i] = -1;});
+			parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
@@ -213,53 +212,29 @@ struct knn_index{
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
-			parlay::sequence<parlay::sequence<index_pair>> to_flatten =
-				parlay::sequence<parlay::sequence<index_pair>>(ceiling-floor);
-			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				parlay::sequence<index_pair> edges = parlay::sequence<index_pair>(size_of(v[rperm[i]]->new_nbh));
-				for(int j=0; j<size_of(v[rperm[i]]->new_nbh); j++){
-					edges[j] = std::make_pair((v[rperm[i]]->new_nbh)[j], rperm[i]);  
-				}
-				to_flatten[i-floor] = edges;
-				synchronize(v[rperm[i]]);
+			auto to_flatten = parlay::tabulate(ceiling-floor, [&] (size_t i){
+				auto edges = parlay::tabulate(size_of(v[rperm[i+floor]]->new_nbh), [&] (size_t j){
+					return std::make_pair((v[rperm[i+floor]]->new_nbh)[j], rperm[i+floor]);
+				});
+				return edges;
 			});
-			parlay::parallel_for(floor, ceiling, [&] (size_t i) {
-				v[rperm[i]]->new_nbh = parlay::make_slice<int*, int*>(nullptr, nullptr);});
-			delete &new_out;
-			auto new_edges = parlay::flatten(to_flatten);
-			auto grouped_by = parlay::group_by_key(new_edges);
+			parlay::parallel_for(floor, ceiling, [&] (size_t i) {synchronize(v[rperm[i]]);} );
+			auto grouped_by = parlay::group_by_key(parlay::flatten(to_flatten));
 			//finally, add the bidirectional edges; if they do not make
 			//the vertex exceed the degree bound, just add them to out_nbhs;
 			//otherwise, use robustPrune on the vertex with user-specified alpha
-			auto overflow = parlay::tabulate(grouped_by.size(), [&] (size_t j) {return false;});
 			parlay::parallel_for(0, grouped_by.size(), [&] (size_t j){
-				size_t index = grouped_by[j].first;
-				parlay::sequence<int> candidates = grouped_by[j].second;
+				auto [index, candidates] = grouped_by[j];
 				int newsize = candidates.size() + size_of(v[index]->out_nbh);
 				if(newsize <= maxDeg){
 					for(const int& k : candidates) add_nbh(k, v[index]);
 				} else{
-					overflow[j] = true;
+					parlay::sequence<int> new_out_2(maxDeg, -1);
+					v[index]->new_nbh=parlay::make_slice(new_out_2.begin(), new_out_2.begin()+maxDeg);
+					robustPrune(v[index], candidates, v, alpha);
+					synchronize(v[index]);
 				}
 			});
-			//the nodes which overflow are dealt with separately to minimize memory usage
-			auto indices = parlay::tabulate(grouped_by.size(), [&] (size_t j) {return j;});
-			auto overflow_indices = parlay::pack(indices, overflow);
-			int num_over = overflow_indices.size();
-			parlay::sequence<int> &new_out_2 = *new parlay::sequence<int>(num_over*maxDeg);
-			parlay::parallel_for(0, maxDeg*(num_over), [&] (size_t i) {new_out_2[i] = -1;});
-			parlay::parallel_for(0, num_over, [&] (size_t j){
-				int index = grouped_by[overflow_indices[j]].first;
-				parlay::sequence<int> candidates = grouped_by[overflow_indices[j]].second;
-				v[index]->new_nbh=parlay::make_slice(new_out_2.begin()+maxDeg*j, new_out_2.begin()+maxDeg*(j+1));
-				robustPrune(v[index], candidates, v, alpha);
-				synchronize(v[index]);
-			});
-			parlay::parallel_for(0, num_over, [&] (size_t i) {
-				int index = grouped_by[overflow_indices[i]].first;
-				v[index]->new_nbh = parlay::make_slice<int*, int*>(nullptr, nullptr);
-			});
-			delete &new_out_2;
 			inc += 1;
 		}
 	}

@@ -206,3 +206,83 @@ Recall 50@50: 0.999492
 Recall 100@100: 0.999492
 Recall 200@200: 0.999328
 1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile57683_644255 : '41.301'
+Size of dataset: 1000000
+Medoid ID: 89028
+ANN: Built index: 39.9763
+ANN: Found nearest neighbors: 1.0240
+Average graph out-degree = 41.51
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 259, Average nodes searched = 203.5
+ANN: stats: 0.0087
+Parlay time: 41.0091
+Recall 1@1: 0.9999
+Recall 2@2: 0.9996
+Recall 10@10: 0.99943
+Recall 50@50: 0.999478
+Recall 100@100: 0.999446
+Recall 200@200: 0.999338
+1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile56870_665944 : '41.009'
+Size of dataset: 1000000
+Medoid ID: 89028
+ANN: Built index: 40.3451
+ANN: Found nearest neighbors: 1.0261
+Average graph out-degree = 41.52
+Max out-degree: 50, Min out-degree: 1
+Max nodes searched = 254, Average nodes searched = 203.6
+ANN: stats: 0.0076
+Parlay time: 41.3788
+Recall 1@1: 0.9998
+Recall 2@2: 0.99965
+Recall 10@10: 0.99957
+Recall 50@50: 0.999452
+Recall 100@100: 0.999492
+Recall 200@200: 0.999331
+1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile60112_828345 : '41.378'
+Size of dataset: 1000000
+Medoid ID: 89028
+ANN: Built index: 39.8513
+ANN: Found nearest neighbors: 1.0206
+Average graph out-degree = 41.52
+Max out-degree: 50, Min out-degree: 1
+Max nodes searched = 255, Average nodes searched = 203.7
+ANN: stats: 0.0144
+Parlay time: 40.8863
+Recall 1@1: 0.9999
+Recall 2@2: 0.99955
+Recall 10@10: 0.99969
+Recall 50@50: 0.99948
+Recall 100@100: 0.999444
+Recall 200@200: 0.999305
+1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile466185_167158 : '40.886'
+Size of dataset: 1000000
+Medoid ID: 89028
+ANN: Built index: 39.9988
+ANN: Found nearest neighbors: 1.0169
+Average graph out-degree = 41.53
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 253, Average nodes searched = 203.7
+ANN: stats: 0.0092
+Parlay time: 41.0248
+Recall 1@1: 0.9999
+Recall 2@2: 0.9998
+Recall 10@10: 0.9995
+Recall 50@50: 0.999486
+Recall 100@100: 0.999504
+Recall 200@200: 0.999385
+1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile717271_66611 : '41.024'
+Size of dataset: 1000000
+Medoid ID: 89028
+ANN: Built index: 39.6811
+ANN: Found nearest neighbors: 1.0402
+Average graph out-degree = 41.52
+Max out-degree: 50, Min out-degree: 1
+Max nodes searched = 254, Average nodes searched = 203.7
+ANN: stats: 0.0081
+Parlay time: 40.7295
+Recall 1@1: 0.9997
+Recall 2@2: 0.99975
+Recall 10@10: 0.99951
+Recall 50@50: 0.99946
+Recall 100@100: 0.999488
+Recall 200@200: 0.999337
+1 : -R 50 -L 75 -Q 250 -k 200 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile6700_78217 : '40.729'
