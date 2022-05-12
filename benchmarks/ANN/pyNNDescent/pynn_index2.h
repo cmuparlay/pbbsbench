@@ -70,6 +70,7 @@ struct pyNN_index{
 		return edges;
 	}
 
+	//just a sanity check, only works for small n
 	void check_nearest_neighbors(parlay::sequence<tvec_point*> &v){
 		size_t n = v.size();
 		parlay::sequence<float> recall(n);
@@ -108,17 +109,12 @@ struct pyNN_index{
 
 	parlay::sequence<int> nn_descent(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &changed){
 		size_t n = v.size();
-		auto new_changed = parlay::tabulate(v.size(), [&] (size_t i) {return 0;});
+		auto new_changed = parlay::sequence<int>(v.size(), 0);
 		//find the edges in the undirected graph
-		// std::cout << "here" << std::endl; 
 		auto ugraph = truncated_uedges(v, changed);
 		std::cout << "generated candidate edges" << std::endl;
-		//tabulate all-pairs distances (possibly including duplicates) for the directed graph
-		// std::cout << "here1" << std::endl; 
-		parlay::sequence<parlay::sequence<special_edge>> grouped_labelled(ugraph.size());
-		parlay::parallel_for(0, ugraph.size(), [&] (size_t i){
-			//what if there's only one element here?????????
-			// if(ugraph[i].second.size()==1) std::cout << "SIZE OF SEQUENCE = 1" << std::endl; 
+		//tabulate all-pairs distances for the directed graph 
+		auto grouped_labelled = parlay::tabulate(ugraph.size(), [&] (size_t i){
 			parlay::sequence<special_edge> edges = parlay::sequence<special_edge>();
 			for(const int& j: ugraph[i].second){
 				for(const int& k: ugraph[i].second){
@@ -129,50 +125,29 @@ struct pyNN_index{
 					}
 				}
 			}
-			grouped_labelled[i] = edges;
+			return edges;
 		});
-		// std::cout << "here2" << std::endl; 
-		auto flat_labelled = parlay::flatten(grouped_labelled);
-		auto grouped_by = parlay::group_by_key(flat_labelled);
-		// std::cout << "here3" << std::endl; 
+		auto grouped_by = parlay::group_by_key(parlay::flatten(grouped_labelled));
 		// update edges of each vertex based on the candidates in grouped_by
 		parlay::parallel_for(0, grouped_by.size(), [&] (size_t i){
-			size_t index = grouped_by[i].first;
+			auto [index, candidates] = grouped_by[i];
+			// size_t index = grouped_by[i].first;
 			for(const int& j : v[index]->out_nbh) {
-				// if(j>=v.size()){
-				// 	std::cout << "ERROR, neighbor id larger than dataset size" << std::endl;
-				// 	abort();
-				// }
 				float dist = distance(v[index]->coordinates.begin(), v[j]->coordinates.begin(), d);
-				grouped_by[i].second.push_back(std::make_pair(j, dist));
+				candidates.push_back(std::make_pair(j, dist));
 			}
-			// auto equal = [&] (pid a, pid b) {return (a.first==b.first) && (a.second==b.second);};
-			
 			auto less = [&] (pid a, pid b) {return a.second < b.second;};
-			auto sorted_candidates = parlay::remove_duplicates_ordered(grouped_by[i].second, less);
-			// auto sorted_candidates = parlay::sort(candidates);
-			// for(const pid& j: sorted_candidates){
-			// 	if(j.first>=v.size()){
-			// 		std::cout << "ERROR, neighbor id larger than dataset size (second loop)" << std::endl;
-			// 		abort();
-			// 	}
-			// }
+			auto sorted_candidates = parlay::remove_duplicates_ordered(candidates, less);
 			int k = std::min(K, (int) sorted_candidates.size());
 			auto new_nbh = parlay::tabulate(k, [&] (size_t j) {return sorted_candidates[j].first;});
 			for(const int& j: new_nbh){
-				// std::cout << j << std::endl;
 				if(parlay::find(v[index]->out_nbh, j) == v[index]->out_nbh.end()){
 					new_changed[index] = 1;
 					v[index]->new_out_nbh = new_nbh;
 					break;
 				} 
 			}
-			// std::cout << std::endl;
-			// for(const int& j : v[index]->out_nbh) std::cout << j << std::endl; 
-
 		});
-		// std::cout << "here4" << std::endl;
-		// std::cout << parlay::reduce(new_changed) << std::endl;  
 		//finally, synchronize the new out-neighbors
 		parlay::parallel_for(0, v.size(), [&] (size_t i){
 			if(new_changed[i] == 1){
@@ -200,52 +175,33 @@ struct pyNN_index{
 
 	parlay::sequence<std::pair<int, parlay::sequence<int>>> truncated_uedges(parlay::sequence<tvec_point*> &v, 
 		parlay::sequence<int> &changed){
-		// std::cout << "there1" << std::endl; 
-		auto indices = parlay::tabulate(v.size(), [&] (size_t i) {return i;});
-		auto w = parlay::pack(indices, changed);
-		// std::cout << "there2" << std::endl; 
-		parlay::sequence<parlay::sequence<edge>> grouped_edges(w.size());
-		parlay::parallel_for(0, w.size(), [&] (size_t i){
+		auto w = parlay::pack_index(changed);
+		
+		auto grouped_edges = parlay::tabulate(w.size(), [&] (size_t i){
 			size_t index = w[i];
 			size_t m = v[index]->out_nbh.size();
 			parlay::sequence<edge> undirected_edges(2*m);
 			for(int j=0; j<m; j++){
-				// if(v[index]->out_nbh[j] >= v.size()){
-				// 	std::cout << "ERROR: edge value greater than size of dataset" << std::endl;
-				// 	abort();
-				// }
 				undirected_edges[2*j] = std::make_pair(v[index]->out_nbh[j], (int) index);
 				undirected_edges[2*j+1] = std::make_pair((int) index, v[index]->out_nbh[j]);
 			}
-			grouped_edges[i] = undirected_edges;
+			return undirected_edges;
 		});
-		// std::cout << "there3" << std::endl; 
-		auto uedges = parlay::flatten(grouped_edges);
-		auto ugraph = parlay::group_by_key(uedges);
-		// std::cout << "there4" << std::endl; 
+		auto ugraph = parlay::group_by_key(parlay::flatten(grouped_edges));
 		//trim the undirected edges of each graph
 		parlay::parallel_for(0, ugraph.size(), [&] (size_t i){
-			size_t m = ugraph[i].second.size();
-			size_t index = ugraph[i].first;
-			// std::cout << "there5" << std::endl; 
-			// for(const int& j : ugraph[i].second){
-			// 	std::cout << j << std::endl; 
-			// 	std::cout << v[j]->id << std::endl;
-			// }
-			auto clean_edges = parlay::remove_duplicates(ugraph[i].second);
+			auto [index, candidates] = ugraph[i];
+			size_t m = candidates.size();
+			auto clean_edges = parlay::remove_duplicates(candidates);
 			auto labeled_edges = parlay::tabulate(clean_edges.size(), [&] (size_t j){
 				auto dist = distance(v[index]->coordinates.begin(), v[clean_edges[j]]->coordinates.begin(), d);
 				return std::make_pair(clean_edges[j], dist);
 			});
-			// std::cout << "there6" << std::endl; 
 			auto less = [&] (pid a, pid b) {return a.second < b.second;};
 			parlay::sort_inplace(labeled_edges, less);
-			// std::cout << "there7" << std::endl; 
 			int k = std::min((int) labeled_edges.size(), K*2);
 			ugraph[i].second = parlay::tabulate(k, [&] (size_t j) {return labeled_edges[j].first;});
-			// std::cout << "there8" << std::endl; 
-		});
-		// std::cout << "there9" << std::endl; 
+		}); 
 		return ugraph;
 	}
 
@@ -266,23 +222,20 @@ struct pyNN_index{
 	}
 
 	parlay::sequence<std::pair<int, parlay::sequence<int>>> reverse_graph_edges(parlay::sequence<tvec_point*> &v){
-		// parlay::sequence<std::pair<int, parlay::sequence<int>>> reverse_graph(v.size());
-		parlay::sequence<parlay::sequence<edge>> grouped_edges(v.size());
-		parlay::parallel_for(0, v.size(), [&] (size_t i){
-			parlay::sequence<edge> uedges = parlay::tabulate((v[i]->out_nbh).size(), [&] (size_t j) {
+		auto grouped_edges = parlay::tabulate(v.size(), [&] (size_t i){
+			auto uedges = parlay::tabulate((v[i]->out_nbh).size(), [&] (size_t j) {
 				return std::make_pair(v[i]->out_nbh[j], (int) i);});
-			grouped_edges[i] = uedges;
+			return uedges;
 		});
-		auto edges = parlay::flatten(grouped_edges);
-		auto reverse_graph = parlay::group_by_key(edges);
+		auto reverse_graph = parlay::group_by_key(parlay::flatten(grouped_edges));
 		return reverse_graph;
 	}
 
 	void undirect_graph(parlay::sequence<tvec_point*> &v){
 		auto reverse_edges = reverse_graph_edges(v);
 		parlay::parallel_for(0, reverse_edges.size(), [&] (size_t i){
-			size_t index = reverse_edges[i].first;
-			for(const int& j : reverse_edges[i].second) v[index]->out_nbh.push_back(j);
+			auto [index, candidates] = reverse_edges[i];
+			for(const int& j : candidates) v[index]->out_nbh.push_back(j);
 		});
 	}
 
@@ -323,7 +276,6 @@ struct pyNN_index{
 		std::cout << "finished clustering" << std::endl; 
 		truncate_graph(v, K);
 		nn_descent_wrapper(v);
-		// check_nearest_neighbors(v);
 		undirect_graph(v);
 		prune_triangles(v);
 		truncate_graph(v, (int) 2*K);
