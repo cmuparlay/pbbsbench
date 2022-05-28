@@ -19,7 +19,6 @@ tests = [
 
 
 import sys
-sys.path.insert(0, 'common')
 import runTestsANN
 runTestsANN.timeAllArgs(bnchmrk, benchmark, checkProgram, dataDir, tests, oFile)
 
