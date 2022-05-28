@@ -47,11 +47,11 @@ int checkNeighbors(int k, parlay::sequence<ivec_point> groundTruth, parlay::sequ
 		int r = recall_types[j];
 		int numCorrect = 0;
 		for(int i=0; i<n; i++){
-			std::set<int> true_nbhs;
-			for(int l=0; l<r; l++) true_nbhs.insert((groundTruth[i].coordinates)[l]);   
-			parlay::sequence<int> reported_nbhs = parlay::sequence<int>(r);
-			for(int l=0; l<r; l++) reported_nbhs[l] = neighbors[i*(k+1)+1+l];
-			for(int l=0; l<r; l++) if(true_nbhs.find(reported_nbhs[l]) != true_nbhs.end()) numCorrect += 1;
+			std::set<int> reported_nbhs;
+			for(int l=0; l<r; l++) reported_nbhs.insert(neighbors[i*(k+1)+1+l]);
+			for(int l=0; l<r; l++)
+			  if (reported_nbhs.find((groundTruth[i].coordinates)[l]) != reported_nbhs.end())
+			    numCorrect += 1;
 		}
 		// std::cout << "here" << std::endl;
 		float recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);

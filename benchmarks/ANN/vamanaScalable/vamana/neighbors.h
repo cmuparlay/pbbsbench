@@ -47,6 +47,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
     t.next("Built index");
     I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
+    std::cout << "num queries = " << q.size() << std::endl;
     if(report_stats){
       //average numbers of nodes searched using beam search
       graph_stats(v);
