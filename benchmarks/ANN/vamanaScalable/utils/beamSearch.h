@@ -134,20 +134,20 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
   std::vector<pid> unvisited_frontier(beamSize);
   parlay::sequence<pid> new_frontier(2*beamSize);
   unvisited_frontier[0] = frontier[0];
-  bool not_done = true;
+  int remain = 1;
 
   // terminate beam search when the entire frontier has been visited
-  while (not_done) {
+  while (remain > 0) {
     // the next node to visit is the unvisited frontier node that is closest to p
     pid currentPid = unvisited_frontier[0];
     Tvec_point<T>* current = v[currentPid.first];
-    auto g = [&] (int a) {
-	       int loc = parlay::hash64_2(a) & ((1 << bits) - 1);
-	       if (hash_table[loc] == a) return false;
-	       hash_table[loc] = a;
-	       return true;};
-    auto candidates = parlay::filter(current->out_nbh.cut(0,size_of(current->out_nbh)), g);
-    auto pairCandidates = parlay::map(candidates, [&] (long c) {return make_pid(c);});
+    auto nbh = current->out_nbh.cut(0,size_of(current->out_nbh));
+    auto candidates = parlay::filter(nbh,  [&] (int a) {
+	     int loc = parlay::hash64_2(a) & ((1 << bits) - 1);
+	     if (a == p->id || hash_table[loc] == a) return false;
+	     hash_table[loc] = a;
+	     return true;});
+    auto pairCandidates = parlay::map(candidates, [&] (long c) {return make_pid(c);}, 1000);
     auto sortedCandidates = parlay::unique(parlay::sort(pairCandidates, less));
     auto f_iter = std::set_union(frontier.begin(), frontier.end(),
 				 sortedCandidates.begin(), sortedCandidates.end(),
@@ -158,7 +158,7 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     auto uf_iter = std::set_difference(frontier.begin(), frontier.end(),
 				 visited.begin(), visited.end(),
 				 unvisited_frontier.begin(), less);
-    not_done = uf_iter > unvisited_frontier.begin();
+    remain = uf_iter - unvisited_frontier.begin();
   }
   return std::make_pair(frontier, parlay::to_sequence(visited));
 }

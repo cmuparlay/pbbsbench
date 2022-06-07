@@ -459,3 +459,2068 @@ Recall 10@10: 0.99186
 Recall 20@20: 0.987495
 Recall 50@50: 0.97557
 1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile971579_536832 : '21.968'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.9608
+ANN: Found nearest neighbors: 0.0195
+num queries = 10000
+Average graph out-degree = 9.455
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 64, Average nodes searched = 28.94
+ANN: stats: 0.0031
+Parlay time: 3.9833
+Recall 1@1: 0.5004
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile933570_513200 : '3.983'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.4804
+ANN: Found nearest neighbors: 0.0467
+num queries = 10000
+Average graph out-degree = 22.05
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 76, Average nodes searched = 42.39
+ANN: stats: 0.0045
+Parlay time: 8.5317
+Recall 1@1: 0.9252
+Recall 2@2: 0.926
+Recall 5@5: 0.91548
+Recall 10@10: 0.90066
+Recall 20@20: 0.87413
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile896133_486935 : '8.531'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.6777
+ANN: Found nearest neighbors: 0.1412
+num queries = 10000
+Average graph out-degree = 39.56
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 94, Average nodes searched = 79.57
+ANN: stats: 0.0073
+Parlay time: 21.8262
+Recall 1@1: 0.9874
+Recall 2@2: 0.99265
+Recall 5@5: 0.99312
+Recall 10@10: 0.99161
+Recall 20@20: 0.987435
+Recall 50@50: 0.97537
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile570592_482611 : '21.826'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.9012
+ANN: Found nearest neighbors: 0.3082
+num queries = 10000
+Average graph out-degree = 60.4
+Max out-degree: 100, Min out-degree: 4
+Max nodes searched = 135, Average nodes searched = 128.6
+ANN: stats: 0.0134
+Parlay time: 43.2228
+Recall 1@1: 0.9911
+Recall 2@2: 0.99655
+Recall 5@5: 0.99818
+Recall 10@10: 0.99875
+Recall 20@20: 0.99855
+Recall 50@50: 0.997282
+Recall 75@75: 0.995609
+Recall 100@100: 0.993621
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile46817_907021 : '43.222'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.3335
+ANN: Found nearest neighbors: 0.0138
+num queries = 10000
+Average graph out-degree = 7.884
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 62, Average nodes searched = 28.17
+ANN: stats: 0.0029
+Parlay time: 3.3502
+Recall 1@1: 0.5287
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile401694_640852 : '3.35'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 6.9071
+ANN: Found nearest neighbors: 0.0371
+num queries = 10000
+Average graph out-degree = 15.38
+Max out-degree: 25, Min out-degree: 1
+Max nodes searched = 76, Average nodes searched = 43.31
+ANN: stats: 0.0046
+Parlay time: 6.9488
+Recall 1@1: 0.896
+Recall 2@2: 0.8909
+Recall 5@5: 0.87318
+Recall 10@10: 0.84995
+Recall 20@20: 0.812565
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile496989_412758 : '6.948'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 17.0008
+ANN: Found nearest neighbors: 0.0928
+num queries = 10000
+Average graph out-degree = 22.53
+Max out-degree: 50, Min out-degree: 1
+Max nodes searched = 121, Average nodes searched = 80.53
+ANN: stats: 0.0073
+Parlay time: 17.1008
+Recall 1@1: 0.9778
+Recall 2@2: 0.9816
+Recall 5@5: 0.97794
+Recall 10@10: 0.97012
+Recall 20@20: 0.95805
+Recall 50@50: 0.926738
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile207159_280790 : '17.1'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 33.6357
+ANN: Found nearest neighbors: 0.1699
+num queries = 10000
+Average graph out-degree = 26.93
+Max out-degree: 100, Min out-degree: 1
+Max nodes searched = 151, Average nodes searched = 129.3
+ANN: stats: 0.0130
+Parlay time: 33.8186
+Recall 1@1: 0.9892
+Recall 2@2: 0.9943
+Recall 5@5: 0.99398
+Recall 10@10: 0.99249
+Recall 20@20: 0.989285
+Recall 50@50: 0.978868
+Recall 75@75: 0.969583
+Recall 100@100: 0.960403
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile219547_164772 : '33.818'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 24.2001
+ANN: Found nearest neighbors: 0.1470
+num queries = 10000
+Average graph out-degree = 43.83
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 94, Average nodes searched = 79.51
+ANN: stats: 0.0082
+Parlay time: 24.3554
+Recall 1@1: 0.9877
+Recall 2@2: 0.9926
+Recall 5@5: 0.99294
+Recall 10@10: 0.99131
+Recall 20@20: 0.987225
+Recall 50@50: 0.976732
+1 : -a 1.3 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile687724_112150 : '24.355'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 19.6139
+ANN: Found nearest neighbors: 0.1224
+num queries = 10000
+Average graph out-degree = 32.83
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 99, Average nodes searched = 79.8
+ANN: stats: 0.0075
+Parlay time: 19.7438
+Recall 1@1: 0.9873
+Recall 2@2: 0.99245
+Recall 5@5: 0.9906
+Recall 10@10: 0.9877
+Recall 20@20: 0.9816
+Recall 50@50: 0.964406
+1 : -a 1.1 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile381712_603495 : '19.743'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 23.2103
+ANN: Found nearest neighbors: 0.1458
+num queries = 10000
+Average graph out-degree = 41.96
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 95, Average nodes searched = 79.58
+ANN: stats: 0.0073
+Parlay time: 23.3635
+Recall 1@1: 0.9879
+Recall 2@2: 0.9928
+Recall 5@5: 0.99316
+Recall 10@10: 0.99171
+Recall 20@20: 0.98814
+Recall 50@50: 0.976908
+1 : -a 1.25 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile613763_72944 : '23.363'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 28.3836
+ANN: Found nearest neighbors: 0.1704
+num queries = 10000
+Average graph out-degree = 48.52
+Max out-degree: 70, Min out-degree: 4
+Max nodes searched = 90, Average nodes searched = 79.12
+ANN: stats: 0.0094
+Parlay time: 28.5635
+Recall 1@1: 0.99
+Recall 2@2: 0.9954
+Recall 5@5: 0.99598
+Recall 10@10: 0.99526
+Recall 20@20: 0.99234
+Recall 50@50: 0.983878
+1 : -a 1.2 -Q 75 -R 70 -L 90 -k 50 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile575924_130508 : '28.563'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 26.5497
+ANN: Found nearest neighbors: 0.1516
+num queries = 10000
+Average graph out-degree = 41.13
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 92, Average nodes searched = 79.54
+ANN: stats: 0.0075
+Parlay time: 26.7088
+Recall 1@1: 0.9878
+Recall 2@2: 0.9932
+Recall 5@5: 0.99376
+Recall 10@10: 0.99257
+Recall 20@20: 0.988535
+Recall 50@50: 0.9776
+1 : -a 1.2 -Q 75 -R 50 -L 90 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile633349_996719 : '26.708'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 32.3662
+ANN: Found nearest neighbors: 0.1712
+num queries = 10000
+Average graph out-degree = 49.91
+Max out-degree: 70, Min out-degree: 3
+Max nodes searched = 88, Average nodes searched = 79.09
+ANN: stats: 0.0103
+Parlay time: 32.5478
+Recall 1@1: 0.9896
+Recall 2@2: 0.99515
+Recall 5@5: 0.99578
+Recall 10@10: 0.99517
+Recall 20@20: 0.99291
+Recall 50@50: 0.985182
+1 : -a 1.2 -Q 75 -R 70 -L 100 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile921047_369529 : '32.547'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 24.8846
+ANN: Found nearest neighbors: 0.1517
+num queries = 10000
+Average graph out-degree = 46.86
+Max out-degree: 70, Min out-degree: 3
+Max nodes searched = 83, Average nodes searched = 74.19
+ANN: stats: 0.0098
+Parlay time: 25.0461
+Recall 1@1: 0.9889
+Recall 2@2: 0.9941
+Recall 5@5: 0.99436
+Recall 10@10: 0.99323
+Recall 20@20: 0.989745
+Recall 50@50: 0.979112
+1 : -a 1.2 -Q 70 -R 70 -L 80 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile926958_293606 : '25.046'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 28.3252
+ANN: Found nearest neighbors: 0.1747
+num queries = 10000
+Average graph out-degree = 48.52
+Max out-degree: 70, Min out-degree: 3
+Max nodes searched = 90, Average nodes searched = 79.11
+ANN: stats: 0.0097
+Parlay time: 28.5096
+Recall 1@1: 0.9901
+Recall 2@2: 0.99525
+Recall 5@5: 0.99594
+Recall 10@10: 0.99522
+Recall 20@20: 0.992315
+Recall 50@50: 0.98387
+1 : -a 1.2 -Q 75 -R 70 -L 90 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile586435_777288 : '28.509'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 32.7234
+ANN: Found nearest neighbors: 0.2254
+num queries = 10000
+Average graph out-degree = 51.36
+Max out-degree: 75, Min out-degree: 3
+Max nodes searched = 110, Average nodes searched = 103.9
+ANN: stats: 0.0102
+Parlay time: 32.9590
+Recall 1@1: 0.9908
+Recall 2@2: 0.99635
+Recall 5@5: 0.99756
+Recall 10@10: 0.9977
+Recall 20@20: 0.99667
+Recall 50@50: 0.992868
+1 : -a 1.2 -R 75 -L 100 -k 80 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile663393_993633 : '32.959'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 28.4964
+ANN: Found nearest neighbors: 0.1990
+num queries = 10000
+Average graph out-degree = 48.53
+Max out-degree: 70, Min out-degree: 4
+Max nodes searched = 106, Average nodes searched = 93.98
+ANN: stats: 0.0100
+Parlay time: 28.7054
+Recall 1@1: 0.9903
+Recall 2@2: 0.9959
+Recall 5@5: 0.99686
+Recall 10@10: 0.9966
+Recall 20@20: 0.99493
+Recall 50@50: 0.98936
+1 : -a 1.2 -R 70 -L 90 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile679187_12108 : '28.705'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 28.1906
+ANN: Found nearest neighbors: 0.1906
+num queries = 10000
+Average graph out-degree = 47.01
+Max out-degree: 65, Min out-degree: 3
+Max nodes searched = 104, Average nodes searched = 94.1
+ANN: stats: 0.0095
+Parlay time: 28.3907
+Recall 1@1: 0.9896
+Recall 2@2: 0.9951
+Recall 5@5: 0.99618
+Recall 10@10: 0.99603
+Recall 20@20: 0.99438
+Recall 50@50: 0.98861
+1 : -a 1.2 -R 65 -L 90 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile965146_996725 : '28.39'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 24.7501
+ANN: Found nearest neighbors: 0.1684
+num queries = 10000
+Average graph out-degree = 45.54
+Max out-degree: 65, Min out-degree: 2
+Max nodes searched = 95, Average nodes searched = 84.2
+ANN: stats: 0.0094
+Parlay time: 24.9280
+Recall 1@1: 0.9895
+Recall 2@2: 0.99495
+Recall 5@5: 0.99556
+Recall 10@10: 0.99482
+Recall 20@20: 0.99202
+Recall 50@50: 0.98363
+1 : -a 1.2 -R 65 -L 80 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile184804_314250 : '24.928'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 26.6357
+ANN: Found nearest neighbors: 0.1801
+num queries = 10000
+Average graph out-degree = 46.32
+Max out-degree: 65, Min out-degree: 4
+Max nodes searched = 98, Average nodes searched = 89.1
+ANN: stats: 0.0095
+Parlay time: 26.8253
+Recall 1@1: 0.9896
+Recall 2@2: 0.9951
+Recall 5@5: 0.99608
+Recall 10@10: 0.99545
+Recall 20@20: 0.99324
+Recall 50@50: 0.986282
+1 : -a 1.2 -R 65 -L 85 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile446639_952734 : '26.825'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 33.5464
+ANN: Found nearest neighbors: 0.1763
+num queries = 10000
+Average graph out-degree = 54.58
+Max out-degree: 90, Min out-degree: 4
+Max nodes searched = 82, Average nodes searched = 73.9
+ANN: stats: 0.0120
+Parlay time: 33.7348
+Recall 1@1: 0.9897
+Recall 2@2: 0.99505
+Recall 5@5: 0.99602
+Recall 10@10: 0.99529
+Recall 20@20: 0.99292
+Recall 50@50: 0.984782
+1 : -a 1.2 -Q 70 -R 90 -L 100 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile120042_501565 : '33.734'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.6494
+ANN: Found nearest neighbors: 0.1961
+num queries = 10000
+Average graph out-degree = 60.39
+Max out-degree: 100, Min out-degree: 5
+Max nodes searched = 81, Average nodes searched = 73.78
+ANN: stats: 0.0134
+Parlay time: 42.8589
+Recall 1@1: 0.9904
+Recall 2@2: 0.99595
+Recall 5@5: 0.99666
+Recall 10@10: 0.99649
+Recall 20@20: 0.994615
+Recall 50@50: 0.98825
+1 : -a 1.2 -Q 70 -R 100 -L 125 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile90684_29843 : '42.858'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 43.2513
+ANN: Found nearest neighbors: 0.2026
+num queries = 10000
+Average graph out-degree = 60.39
+Max out-degree: 100, Min out-degree: 5
+Max nodes searched = 90, Average nodes searched = 78.81
+ANN: stats: 0.0129
+Parlay time: 43.4668
+Recall 1@1: 0.9905
+Recall 2@2: 0.9959
+Recall 5@5: 0.99728
+Recall 10@10: 0.99701
+Recall 20@20: 0.9955
+Recall 50@50: 0.990232
+1 : -a 1.2 -Q 75 -R 100 -L 125 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile874044_976517 : '43.466'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.9077
+ANN: Found nearest neighbors: 0.2342
+num queries = 10000
+Average graph out-degree = 60.4
+Max out-degree: 100, Min out-degree: 5
+Max nodes searched = 98, Average nodes searched = 93.65
+ANN: stats: 0.0134
+Parlay time: 43.1553
+Recall 1@1: 0.9908
+Recall 2@2: 0.99635
+Recall 5@5: 0.99776
+Recall 10@10: 0.99807
+Recall 20@20: 0.997075
+Recall 50@50: 0.993758
+1 : -a 1.2 -Q 90 -R 100 -L 125 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile89550_853705 : '43.155'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.9444
+ANN: Found nearest neighbors: 0.1403
+num queries = 10000
+Average graph out-degree = 39.57
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 95, Average nodes searched = 79.61
+ANN: stats: 0.0077
+Parlay time: 22.0924
+Recall 1@1: 0.988
+Recall 2@2: 0.99335
+Recall 5@5: 0.99376
+Recall 10@10: 0.99189
+Recall 20@20: 0.987625
+Recall 50@50: 0.975224
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile918423_364439 : '22.092'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 26.3851
+ANN: Found nearest neighbors: 0.1452
+num queries = 10000
+Average graph out-degree = 47.83
+Max out-degree: 50, Min out-degree: 6
+Max nodes searched = 109, Average nodes searched = 79.73
+ANN: stats: 0.0076
+Parlay time: 26.5380
+Recall 1@1: 0.9809
+Recall 2@2: 0.98625
+Recall 5@5: 0.98654
+Recall 10@10: 0.98454
+Recall 20@20: 0.97988
+Recall 50@50: 0.968224
+1 : -a 1.5 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile547080_321256 : '26.538'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 29.9046
+ANN: Found nearest neighbors: 0.1491
+num queries = 10000
+Average graph out-degree = 41.75
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 109, Average nodes searched = 79.5
+ANN: stats: 0.0074
+Parlay time: 30.0611
+Recall 1@1: 0.9884
+Recall 2@2: 0.9936
+Recall 5@5: 0.99382
+Recall 10@10: 0.99234
+Recall 20@20: 0.98835
+Recall 50@50: 0.97741
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile778109_933163 : '30.061'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 38.8038
+ANN: Found nearest neighbors: 0.1416
+num queries = 10000
+Average graph out-degree = 40.67
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 94, Average nodes searched = 79.49
+ANN: stats: 0.0074
+Parlay time: 38.9528
+Recall 1@1: 0.9877
+Recall 2@2: 0.9931
+Recall 5@5: 0.99376
+Recall 10@10: 0.99199
+Recall 20@20: 0.98822
+Recall 50@50: 0.976776
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile227612_737488 : '38.952'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 52.6925
+ANN: Found nearest neighbors: 0.1495
+num queries = 10000
+Average graph out-degree = 44.45
+Max out-degree: 50, Min out-degree: 5
+Max nodes searched = 92, Average nodes searched = 79.49
+ANN: stats: 0.0076
+Parlay time: 52.8497
+Recall 1@1: 0.9875
+Recall 2@2: 0.9928
+Recall 5@5: 0.99348
+Recall 10@10: 0.99164
+Recall 20@20: 0.9882
+Recall 50@50: 0.977806
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile167462_819077 : '52.849'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 47.9527
+ANN: Found nearest neighbors: 0.1467
+num queries = 10000
+Average graph out-degree = 42.19
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 108, Average nodes searched = 79.49
+ANN: stats: 0.0077
+Parlay time: 48.1071
+Recall 1@1: 0.9877
+Recall 2@2: 0.99335
+Recall 5@5: 0.99376
+Recall 10@10: 0.99249
+Recall 20@20: 0.98869
+Recall 50@50: 0.97777
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile169192_972370 : '48.107'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.3757
+ANN: Found nearest neighbors: 0.1418
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 91, Average nodes searched = 79.56
+ANN: stats: 0.0075
+Parlay time: 22.5250
+Recall 1@1: 0.9882
+Recall 2@2: 0.9932
+Recall 5@5: 0.99358
+Recall 10@10: 0.9918
+Recall 20@20: 0.987535
+Recall 50@50: 0.975606
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile171818_48919 : '22.525'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4729
+ANN: Found nearest neighbors: 0.1433
+num queries = 10000
+Average graph out-degree = 39.71
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 103, Average nodes searched = 79.65
+ANN: stats: 0.0228
+Parlay time: 22.6390
+Recall 1@1: 0.9877
+Recall 2@2: 0.99275
+Recall 5@5: 0.99334
+Recall 10@10: 0.99169
+Recall 20@20: 0.98732
+Recall 50@50: 0.975438
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile858471_165802 : '22.639'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.3950
+ANN: Found nearest neighbors: 0.1461
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 93, Average nodes searched = 79.52
+ANN: stats: 0.0074
+Parlay time: 22.5486
+Recall 1@1: 0.9877
+Recall 2@2: 0.9929
+Recall 5@5: 0.99322
+Recall 10@10: 0.99188
+Recall 20@20: 0.98763
+Recall 50@50: 0.975556
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile619650_944595 : '22.548'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4619
+ANN: Found nearest neighbors: 0.1412
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 95, Average nodes searched = 79.59
+ANN: stats: 0.0077
+Parlay time: 22.6109
+Recall 1@1: 0.9879
+Recall 2@2: 0.99325
+Recall 5@5: 0.9936
+Recall 10@10: 0.99197
+Recall 20@20: 0.98773
+Recall 50@50: 0.97571
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile420955_62185 : '22.61'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4534
+ANN: Found nearest neighbors: 0.1425
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 98, Average nodes searched = 79.57
+ANN: stats: 0.0078
+Parlay time: 22.6037
+Recall 1@1: 0.9887
+Recall 2@2: 0.99365
+Recall 5@5: 0.99366
+Recall 10@10: 0.99177
+Recall 20@20: 0.98768
+Recall 50@50: 0.97577
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile279244_220442 : '22.603'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4271
+ANN: Found nearest neighbors: 0.1423
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 95, Average nodes searched = 79.54
+ANN: stats: 0.0077
+Parlay time: 22.5772
+Recall 1@1: 0.9877
+Recall 2@2: 0.9933
+Recall 5@5: 0.99318
+Recall 10@10: 0.99158
+Recall 20@20: 0.987725
+Recall 50@50: 0.975786
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile731914_197227 : '22.577'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4630
+ANN: Found nearest neighbors: 0.1423
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 92, Average nodes searched = 79.58
+ANN: stats: 0.0077
+Parlay time: 22.6129
+Recall 1@1: 0.9882
+Recall 2@2: 0.9931
+Recall 5@5: 0.99366
+Recall 10@10: 0.99182
+Recall 20@20: 0.987415
+Recall 50@50: 0.975566
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile175762_340232 : '22.612'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4922
+ANN: Found nearest neighbors: 0.1413
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 102, Average nodes searched = 79.57
+ANN: stats: 0.0079
+Parlay time: 22.6414
+Recall 1@1: 0.9886
+Recall 2@2: 0.99325
+Recall 5@5: 0.99346
+Recall 10@10: 0.99184
+Recall 20@20: 0.987535
+Recall 50@50: 0.975526
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile573986_982909 : '22.641'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.5612
+ANN: Found nearest neighbors: 0.1450
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 97, Average nodes searched = 79.56
+ANN: stats: 0.0081
+Parlay time: 22.7143
+Recall 1@1: 0.9875
+Recall 2@2: 0.99265
+Recall 5@5: 0.99326
+Recall 10@10: 0.9917
+Recall 20@20: 0.987735
+Recall 50@50: 0.975744
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile218315_625694 : '22.714'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.2758
+ANN: Found nearest neighbors: 0.1420
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 91, Average nodes searched = 79.55
+ANN: stats: 0.0074
+Parlay time: 22.4253
+Recall 1@1: 0.9874
+Recall 2@2: 0.99275
+Recall 5@5: 0.9934
+Recall 10@10: 0.99159
+Recall 20@20: 0.987385
+Recall 50@50: 0.97558
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile347052_305877 : '22.425'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4444
+ANN: Found nearest neighbors: 0.1414
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 95, Average nodes searched = 79.52
+ANN: stats: 0.0073
+Parlay time: 22.5931
+Recall 1@1: 0.987
+Recall 2@2: 0.9922
+Recall 5@5: 0.9931
+Recall 10@10: 0.99166
+Recall 20@20: 0.98737
+Recall 50@50: 0.975556
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile682508_852246 : '22.593'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.5555
+ANN: Found nearest neighbors: 0.1429
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 96, Average nodes searched = 79.55
+ANN: stats: 0.0074
+Parlay time: 22.7057
+Recall 1@1: 0.9871
+Recall 2@2: 0.99245
+Recall 5@5: 0.99326
+Recall 10@10: 0.99183
+Recall 20@20: 0.98774
+Recall 50@50: 0.975692
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile348737_92411 : '22.705'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4940
+ANN: Found nearest neighbors: 0.1418
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 97, Average nodes searched = 79.57
+ANN: stats: 0.0076
+Parlay time: 22.6434
+Recall 1@1: 0.9872
+Recall 2@2: 0.993
+Recall 5@5: 0.99342
+Recall 10@10: 0.99178
+Recall 20@20: 0.987435
+Recall 50@50: 0.975614
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile19600_795692 : '22.643'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4400
+ANN: Found nearest neighbors: 0.1510
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 105, Average nodes searched = 79.58
+ANN: stats: 0.0088
+Parlay time: 22.5999
+Recall 1@1: 0.9885
+Recall 2@2: 0.99315
+Recall 5@5: 0.99382
+Recall 10@10: 0.99182
+Recall 20@20: 0.98765
+Recall 50@50: 0.975812
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile442692_772649 : '22.599'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.2671
+ANN: Found nearest neighbors: 0.1424
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 98, Average nodes searched = 79.53
+ANN: stats: 0.0080
+Parlay time: 22.4176
+Recall 1@1: 0.9877
+Recall 2@2: 0.9928
+Recall 5@5: 0.99332
+Recall 10@10: 0.99179
+Recall 20@20: 0.98774
+Recall 50@50: 0.975558
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile945671_489237 : '22.417'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4784
+ANN: Found nearest neighbors: 0.1435
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 97, Average nodes searched = 79.58
+ANN: stats: 0.0074
+Parlay time: 22.6293
+Recall 1@1: 0.9885
+Recall 2@2: 0.9936
+Recall 5@5: 0.99376
+Recall 10@10: 0.99208
+Recall 20@20: 0.98749
+Recall 50@50: 0.975684
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile991014_642038 : '22.629'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 33.8376
+ANN: Found nearest neighbors: 0.1457
+num queries = 10000
+Average graph out-degree = 39.93
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 100, Average nodes searched = 79.93
+ANN: stats: 0.0077
+Parlay time: 33.9910
+Recall 1@1: 0.9879
+Recall 2@2: 0.99335
+Recall 5@5: 0.99344
+Recall 10@10: 0.99172
+Recall 20@20: 0.987535
+Recall 50@50: 0.975516
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile914210_829231 : '33.991'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 35.1992
+ANN: Found nearest neighbors: 0.1580
+num queries = 10000
+Average graph out-degree = 40.05
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 97, Average nodes searched = 80.58
+ANN: stats: 0.0073
+Parlay time: 35.3646
+Recall 1@1: 0.9874
+Recall 2@2: 0.9925
+Recall 5@5: 0.9931
+Recall 10@10: 0.99175
+Recall 20@20: 0.987735
+Recall 50@50: 0.976076
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile689263_995673 : '35.364'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.8921
+ANN: Found nearest neighbors: 0.1926
+num queries = 10000
+Average graph out-degree = 40.47
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 104, Average nodes searched = 82.26
+ANN: stats: 0.0073
+Parlay time: 43.0921
+Recall 1@1: 0.9883
+Recall 2@2: 0.99375
+Recall 5@5: 0.99408
+Recall 10@10: 0.99241
+Recall 20@20: 0.988335
+Recall 50@50: 0.97714
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile722501_746843 : '43.092'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4707
+ANN: Found nearest neighbors: 0.1416
+num queries = 10000
+Average graph out-degree = 39.72
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 98, Average nodes searched = 79.61
+ANN: stats: 0.0074
+Parlay time: 22.6198
+Recall 1@1: 0.9882
+Recall 2@2: 0.99335
+Recall 5@5: 0.99334
+Recall 10@10: 0.99181
+Recall 20@20: 0.98737
+Recall 50@50: 0.975398
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile515249_938211 : '22.619'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.5637
+ANN: Found nearest neighbors: 0.1428
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 95, Average nodes searched = 79.58
+ANN: stats: 0.0074
+Parlay time: 22.7141
+Recall 1@1: 0.9884
+Recall 2@2: 0.9935
+Recall 5@5: 0.9937
+Recall 10@10: 0.99206
+Recall 20@20: 0.987655
+Recall 50@50: 0.975712
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile355697_518995 : '22.714'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.3816
+ANN: Found nearest neighbors: 0.1431
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 99, Average nodes searched = 79.59
+ANN: stats: 0.0076
+Parlay time: 22.5324
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.7497
+ANN: Found nearest neighbors: 0.1475
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 94, Average nodes searched = 79.6
+ANN: stats: 0.0078
+Parlay time: 21.9050
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.6932
+ANN: Found nearest neighbors: 0.1447
+num queries = 10000
+Average graph out-degree = 39.74
+Max out-degree: 50, Min out-degree: 4
+Max nodes searched = 95, Average nodes searched = 79.55
+ANN: stats: 0.0074
+Parlay time: 21.8453
+Recall 1@1: 0.9885
+Recall 2@2: 0.9935
+Recall 5@5: 0.99346
+Recall 10@10: 0.99177
+Recall 20@20: 0.98768
+Recall 50@50: 0.975668
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 3 -o /tmp/ofile670568_122898 : '22.532', '21.905', '21.845'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.6910
+ANN: Found nearest neighbors: 0.0145
+num queries = 10000
+Average graph out-degree = 9.441
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 67, Average nodes searched = 28.98
+ANN: stats: 0.0029
+Parlay time: 3.7084
+Recall 1@1: 0.4983
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile957786_218085 : '3.708'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.6831
+ANN: Found nearest neighbors: 0.0471
+num queries = 10000
+Average graph out-degree = 22.23
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 68, Average nodes searched = 42.35
+ANN: stats: 0.0046
+Parlay time: 8.7349
+Recall 1@1: 0.9238
+Recall 2@2: 0.9246
+Recall 5@5: 0.91582
+Recall 10@10: 0.89992
+Recall 20@20: 0.874105
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile444422_197279 : '8.734'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.0670
+ANN: Found nearest neighbors: 0.1416
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 94, Average nodes searched = 79.61
+ANN: stats: 0.0076
+Parlay time: 22.2163
+Recall 1@1: 0.9878
+Recall 2@2: 0.99315
+Recall 5@5: 0.99348
+Recall 10@10: 0.99179
+Recall 20@20: 0.98753
+Recall 50@50: 0.975768
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile396301_80940 : '22.216'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.6981
+ANN: Found nearest neighbors: 0.3074
+num queries = 10000
+Average graph out-degree = 60.58
+Max out-degree: 100, Min out-degree: 4
+Max nodes searched = 133, Average nodes searched = 128.5
+ANN: stats: 0.0131
+Parlay time: 43.0186
+Recall 1@1: 0.9912
+Recall 2@2: 0.99675
+Recall 5@5: 0.99818
+Recall 10@10: 0.99882
+Recall 20@20: 0.998635
+Recall 50@50: 0.997422
+Recall 75@75: 0.995736
+Recall 100@100: 0.993729
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile603212_974105 : '43.018'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.6005
+ANN: Found nearest neighbors: 0.0135
+num queries = 10000
+Average graph out-degree = 9.443
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 62, Average nodes searched = 28.9
+ANN: stats: 0.0030
+Parlay time: 3.6169
+Recall 1@1: 0.4945
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile930419_943270 : '3.616'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.6144
+ANN: Found nearest neighbors: 0.0499
+num queries = 10000
+Average graph out-degree = 22.22
+Max out-degree: 25, Min out-degree: 3
+Max nodes searched = 72, Average nodes searched = 42.37
+ANN: stats: 0.0047
+Parlay time: 8.6691
+Recall 1@1: 0.9269
+Recall 2@2: 0.9249
+Recall 5@5: 0.91534
+Recall 10@10: 0.89893
+Recall 20@20: 0.873435
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile329866_389467 : '8.669'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.0391
+ANN: Found nearest neighbors: 0.1437
+num queries = 10000
+Average graph out-degree = 39.73
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 91, Average nodes searched = 79.52
+ANN: stats: 0.0075
+Parlay time: 22.1903
+Recall 1@1: 0.9872
+Recall 2@2: 0.9922
+Recall 5@5: 0.99242
+Recall 10@10: 0.99088
+Recall 20@20: 0.98679
+Recall 50@50: 0.975054
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile40502_68215 : '22.19'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.9019
+ANN: Found nearest neighbors: 0.3052
+num queries = 10000
+Average graph out-degree = 60.6
+Max out-degree: 100, Min out-degree: 3
+Max nodes searched = 135, Average nodes searched = 128.6
+ANN: stats: 0.0133
+Parlay time: 43.2205
+Recall 1@1: 0.9913
+Recall 2@2: 0.99585
+Recall 5@5: 0.99672
+Recall 10@10: 0.99706
+Recall 20@20: 0.997005
+Recall 50@50: 0.995936
+Recall 75@75: 0.994581
+Recall 100@100: 0.99281
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile484519_584648 : '43.22'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.6370
+ANN: Found nearest neighbors: 0.0148
+num queries = 10000
+Average graph out-degree = 9.448
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 64, Average nodes searched = 29.02
+ANN: stats: 0.0030
+Parlay time: 3.6548
+Recall 1@1: 0.5028
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile510207_923522 : '3.654'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.7278
+ANN: Found nearest neighbors: 0.0465
+num queries = 10000
+Average graph out-degree = 22.22
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 76, Average nodes searched = 42.4
+ANN: stats: 0.0046
+Parlay time: 8.7789
+Recall 1@1: 0.9249
+Recall 2@2: 0.926
+Recall 5@5: 0.9166
+Recall 10@10: 0.90036
+Recall 20@20: 0.874265
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile119546_403318 : '8.778'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.7406
+ANN: Found nearest neighbors: 0.0139
+num queries = 10000
+Average graph out-degree = 9.221
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 76, Average nodes searched = 28.98
+ANN: stats: 0.0031
+Parlay time: 3.7576
+Recall 1@1: 0.491
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile950674_287285 : '3.757'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.6734
+ANN: Found nearest neighbors: 0.0464
+num queries = 10000
+Average graph out-degree = 20.12
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 72, Average nodes searched = 42.45
+ANN: stats: 0.0046
+Parlay time: 8.7244
+Recall 1@1: 0.9222
+Recall 2@2: 0.921
+Recall 5@5: 0.91114
+Recall 10@10: 0.89598
+Recall 20@20: 0.868655
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile668499_153172 : '8.724'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.1235
+ANN: Found nearest neighbors: 0.1342
+num queries = 10000
+Average graph out-degree = 32.66
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 92, Average nodes searched = 79.63
+ANN: stats: 0.0076
+Parlay time: 20.2653
+Recall 1@1: 0.9869
+Recall 2@2: 0.99205
+Recall 5@5: 0.9926
+Recall 10@10: 0.99047
+Recall 20@20: 0.98567
+Recall 50@50: 0.971646
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile720063_493086 : '20.265'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 36.0416
+ANN: Found nearest neighbors: 0.2756
+num queries = 10000
+Average graph out-degree = 42.86
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 136, Average nodes searched = 128.7
+ANN: stats: 0.0130
+Parlay time: 36.3303
+Recall 1@1: 0.9912
+Recall 2@2: 0.99675
+Recall 5@5: 0.99804
+Recall 10@10: 0.99868
+Recall 20@20: 0.998155
+Recall 50@50: 0.99614
+Recall 75@75: 0.993689
+Recall 100@100: 0.990692
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile672473_563881 : '36.33'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.5899
+ANN: Found nearest neighbors: 0.0137
+num queries = 10000
+Average graph out-degree = 9.316
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 73, Average nodes searched = 29
+ANN: stats: 0.0029
+Parlay time: 3.6065
+Recall 1@1: 0.4915
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile133444_107153 : '3.606'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.6131
+ANN: Found nearest neighbors: 0.0471
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.39
+ANN: stats: 0.0048
+Parlay time: 8.6650
+Recall 1@1: 0.9218
+Recall 2@2: 0.92285
+Recall 5@5: 0.91494
+Recall 10@10: 0.90029
+Recall 20@20: 0.874175
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile864025_857416 : '8.665'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.6931
+ANN: Found nearest neighbors: 0.1525
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0074
+Parlay time: 21.8530
+Recall 1@1: 0.9879
+Recall 2@2: 0.99335
+Recall 5@5: 0.99372
+Recall 10@10: 0.99232
+Recall 20@20: 0.987925
+Recall 50@50: 0.975962
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile384918_160773 : '21.853'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 41.6455
+ANN: Found nearest neighbors: 0.3160
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0130
+Parlay time: 41.9745
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile202161_143115 : '41.974'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.7377
+ANN: Found nearest neighbors: 0.0147
+num queries = 10000
+Average graph out-degree = 9.32
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 60, Average nodes searched = 28.98
+ANN: stats: 0.0030
+Parlay time: 3.7554
+Recall 1@1: 0.4929
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile376922_522445 : '3.755'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.6967
+ANN: Found nearest neighbors: 0.0483
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.4
+ANN: stats: 0.0047
+Parlay time: 8.7498
+Recall 1@1: 0.9222
+Recall 2@2: 0.92345
+Recall 5@5: 0.91518
+Recall 10@10: 0.90046
+Recall 20@20: 0.8742
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile662289_496883 : '8.749'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.7662
+ANN: Found nearest neighbors: 0.1447
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0072
+Parlay time: 21.9182
+Recall 1@1: 0.9879
+Recall 2@2: 0.99335
+Recall 5@5: 0.9937
+Recall 10@10: 0.99231
+Recall 20@20: 0.98792
+Recall 50@50: 0.975956
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile490614_803313 : '21.918'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.6687
+ANN: Found nearest neighbors: 0.0139
+num queries = 10000
+Average graph out-degree = 9.318
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 69, Average nodes searched = 29.11
+ANN: stats: 0.0032
+Parlay time: 3.6858
+Recall 1@1: 0.493
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile436826_480672 : '3.685'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.7329
+ANN: Found nearest neighbors: 0.0464
+num queries = 10000
+Average graph out-degree = 21.1
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.39
+ANN: stats: 0.0045
+Parlay time: 8.7839
+Recall 1@1: 0.9215
+Recall 2@2: 0.9226
+Recall 5@5: 0.91486
+Recall 10@10: 0.90031
+Recall 20@20: 0.874215
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile562597_24849 : '8.783'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.7370
+ANN: Found nearest neighbors: 0.1437
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0075
+Parlay time: 21.8882
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.99368
+Recall 10@10: 0.99232
+Recall 20@20: 0.987905
+Recall 50@50: 0.975952
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile202894_725511 : '21.888'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.3139
+ANN: Found nearest neighbors: 0.3163
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0130
+Parlay time: 42.6432
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile117952_859077 : '42.643'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4379
+ANN: Found nearest neighbors: 0.0126
+num queries = 10000
+Average graph out-degree = 9.34
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 67, Average nodes searched = 28.93
+ANN: stats: 0.0030
+Parlay time: 3.4535
+Recall 1@1: 0.4931
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile385011_62804 : '3.453'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1609
+ANN: Found nearest neighbors: 0.0432
+num queries = 10000
+Average graph out-degree = 21.27
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 76, Average nodes searched = 42.28
+ANN: stats: 0.0047
+Parlay time: 8.2088
+Recall 1@1: 0.9245
+Recall 2@2: 0.9262
+Recall 5@5: 0.91658
+Recall 10@10: 0.90058
+Recall 20@20: 0.874725
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile558085_436711 : '8.208'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.7950
+ANN: Found nearest neighbors: 0.1324
+num queries = 10000
+Average graph out-degree = 36.61
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 95, Average nodes searched = 79.53
+ANN: stats: 0.0075
+Parlay time: 20.9349
+Recall 1@1: 0.9873
+Recall 2@2: 0.993
+Recall 5@5: 0.99346
+Recall 10@10: 0.99202
+Recall 20@20: 0.988025
+Recall 50@50: 0.976538
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile762656_186071 : '20.934'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 40.7396
+ANN: Found nearest neighbors: 0.2944
+num queries = 10000
+Average graph out-degree = 51.72
+Max out-degree: 100, Min out-degree: 4
+Max nodes searched = 135, Average nodes searched = 128.5
+ANN: stats: 0.0129
+Parlay time: 41.0469
+Recall 1@1: 0.9912
+Recall 2@2: 0.99675
+Recall 5@5: 0.99818
+Recall 10@10: 0.99882
+Recall 20@20: 0.998555
+Recall 50@50: 0.997488
+Recall 75@75: 0.995945
+Recall 100@100: 0.994071
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile649016_72863 : '41.046'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4517
+ANN: Found nearest neighbors: 0.0124
+num queries = 10000
+Average graph out-degree = 9.357
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 69, Average nodes searched = 29
+ANN: stats: 0.0030
+Parlay time: 3.4672
+Recall 1@1: 0.497
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile341566_401093 : '3.467'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1544
+ANN: Found nearest neighbors: 0.0436
+num queries = 10000
+Average graph out-degree = 21.27
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 73, Average nodes searched = 42.4
+ANN: stats: 0.0046
+Parlay time: 8.2026
+Recall 1@1: 0.927
+Recall 2@2: 0.92815
+Recall 5@5: 0.9167
+Recall 10@10: 0.90115
+Recall 20@20: 0.875915
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile890008_410400 : '8.202'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.8295
+ANN: Found nearest neighbors: 0.1335
+num queries = 10000
+Average graph out-degree = 36.61
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 94, Average nodes searched = 79.55
+ANN: stats: 0.0078
+Parlay time: 20.9708
+Recall 1@1: 0.9877
+Recall 2@2: 0.993
+Recall 5@5: 0.99348
+Recall 10@10: 0.99193
+Recall 20@20: 0.987895
+Recall 50@50: 0.976368
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile855966_121608 : '20.97'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 40.3985
+ANN: Found nearest neighbors: 0.2918
+num queries = 10000
+Average graph out-degree = 51.74
+Max out-degree: 100, Min out-degree: 4
+Max nodes searched = 134, Average nodes searched = 128.5
+ANN: stats: 0.0131
+Parlay time: 40.7034
+Recall 1@1: 0.9912
+Recall 2@2: 0.9968
+Recall 5@5: 0.99822
+Recall 10@10: 0.9988
+Recall 20@20: 0.9986
+Recall 50@50: 0.997452
+Recall 75@75: 0.995952
+Recall 100@100: 0.994094
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile254897_593888 : '40.703'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.5325
+ANN: Found nearest neighbors: 0.0126
+num queries = 10000
+Average graph out-degree = 9.343
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 64, Average nodes searched = 28.91
+ANN: stats: 0.0030
+Parlay time: 3.5480
+Recall 1@1: 0.4993
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile609604_945582 : '3.548'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.2984
+ANN: Found nearest neighbors: 0.0442
+num queries = 10000
+Average graph out-degree = 21.25
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 92, Average nodes searched = 42.38
+ANN: stats: 0.0047
+Parlay time: 8.3473
+Recall 1@1: 0.922
+Recall 2@2: 0.9229
+Recall 5@5: 0.91696
+Recall 10@10: 0.90124
+Recall 20@20: 0.87609
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile869266_217424 : '8.347'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.1842
+ANN: Found nearest neighbors: 0.1354
+num queries = 10000
+Average graph out-degree = 36.6
+Max out-degree: 50, Min out-degree: 2
+Max nodes searched = 90, Average nodes searched = 79.54
+ANN: stats: 0.0074
+Parlay time: 21.3270
+Recall 1@1: 0.9876
+Recall 2@2: 0.99325
+Recall 5@5: 0.99352
+Recall 10@10: 0.99204
+Recall 20@20: 0.98813
+Recall 50@50: 0.976288
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile482771_615744 : '21.327'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 42.1856
+ANN: Found nearest neighbors: 0.2992
+num queries = 10000
+Average graph out-degree = 51.73
+Max out-degree: 100, Min out-degree: 4
+Max nodes searched = 142, Average nodes searched = 128.5
+ANN: stats: 0.0132
+Parlay time: 42.4980
+Recall 1@1: 0.9911
+Recall 2@2: 0.9967
+Recall 5@5: 0.99826
+Recall 10@10: 0.99882
+Recall 20@20: 0.998615
+Recall 50@50: 0.9975
+Recall 75@75: 0.996001
+Recall 100@100: 0.994191
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile931282_944143 : '42.498'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.5234
+ANN: Found nearest neighbors: 0.0129
+num queries = 10000
+Average graph out-degree = 9.315
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 70, Average nodes searched = 28.93
+ANN: stats: 0.0030
+Parlay time: 3.5393
+Recall 1@1: 0.4945
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile243081_551466 : '3.539'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1707
+ANN: Found nearest neighbors: 0.0437
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.4
+ANN: stats: 0.0045
+Parlay time: 8.2189
+Recall 1@1: 0.9218
+Recall 2@2: 0.92285
+Recall 5@5: 0.91472
+Recall 10@10: 0.90026
+Recall 20@20: 0.874335
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile709329_60286 : '8.218'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.5949
+ANN: Found nearest neighbors: 0.1351
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0069
+Parlay time: 20.7368
+Recall 1@1: 0.9879
+Recall 2@2: 0.99335
+Recall 5@5: 0.99372
+Recall 10@10: 0.99232
+Recall 20@20: 0.987925
+Recall 50@50: 0.975962
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile290961_559931 : '20.736'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 39.9199
+ANN: Found nearest neighbors: 0.2914
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0126
+Parlay time: 40.2239
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile48911_566707 : '40.223'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4572
+ANN: Found nearest neighbors: 0.0129
+num queries = 10000
+Average graph out-degree = 9.32
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 63, Average nodes searched = 29.02
+ANN: stats: 0.0029
+Parlay time: 3.4730
+Recall 1@1: 0.4955
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile239382_936387 : '3.473'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1841
+ANN: Found nearest neighbors: 0.0435
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.4
+ANN: stats: 0.0048
+Parlay time: 8.2325
+Recall 1@1: 0.9219
+Recall 2@2: 0.923
+Recall 5@5: 0.915
+Recall 10@10: 0.90045
+Recall 20@20: 0.87432
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile247164_609357 : '8.232'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.5397
+ANN: Found nearest neighbors: 0.1342
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0073
+Parlay time: 20.6812
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.99233
+Recall 20@20: 0.98793
+Recall 50@50: 0.975966
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile210356_310627 : '20.681'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 39.9395
+ANN: Found nearest neighbors: 0.2899
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0125
+Parlay time: 40.2419
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile863817_350075 : '40.241'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.5041
+ANN: Found nearest neighbors: 0.0126
+num queries = 10000
+Average graph out-degree = 9.315
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 65, Average nodes searched = 29
+ANN: stats: 0.0030
+Parlay time: 3.5197
+Recall 1@1: 0.4972
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile72454_224084 : '3.519'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4314
+ANN: Found nearest neighbors: 0.0126
+num queries = 10000
+Average graph out-degree = 9.314
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 61, Average nodes searched = 29.03
+ANN: stats: 0.0030
+Parlay time: 3.4471
+Recall 1@1: 0.4877
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile982111_406998 : '3.447'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1548
+ANN: Found nearest neighbors: 0.0434
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.4
+ANN: stats: 0.0047
+Parlay time: 8.2029
+Recall 1@1: 0.9215
+Recall 2@2: 0.92245
+Recall 5@5: 0.91478
+Recall 10@10: 0.90015
+Recall 20@20: 0.874285
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile746813_202005 : '8.202'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.5660
+ANN: Found nearest neighbors: 0.1327
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0072
+Parlay time: 20.7059
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.99232
+Recall 20@20: 0.987925
+Recall 50@50: 0.975962
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile441979_254634 : '20.705'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 39.9245
+ANN: Found nearest neighbors: 0.2922
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0124
+Parlay time: 40.2291
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile689991_357896 : '40.229'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4770
+ANN: Found nearest neighbors: 0.0126
+num queries = 10000
+Average graph out-degree = 9.308
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 72, Average nodes searched = 28.78
+ANN: stats: 0.0031
+Parlay time: 3.4927
+Recall 1@1: 0.494
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile932059_892386 : '3.492'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.2151
+ANN: Found nearest neighbors: 0.0438
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.39
+ANN: stats: 0.0048
+Parlay time: 8.2638
+Recall 1@1: 0.9218
+Recall 2@2: 0.92285
+Recall 5@5: 0.91488
+Recall 10@10: 0.90046
+Recall 20@20: 0.874315
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile63682_448046 : '8.263'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.6811
+ANN: Found nearest neighbors: 0.0407
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 21, Average nodes searched = 21
+ANN: stats: 0.0072
+Parlay time: 20.7290
+Recall 1@1: 0.926
+Recall 2@2: 0.92385
+Recall 5@5: 0.90996
+Recall 10@10: 0.88852
+Recall 20@20: 0.8503
+Recall 50@50: 0.762968
+1 : -a 1.2 -Q 70 -R 50 -L 75 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile475454_365462 : '20.729'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.6498
+ANN: Found nearest neighbors: 0.1326
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0080
+Parlay time: 20.7904
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.99233
+Recall 20@20: 0.987935
+Recall 50@50: 0.975966
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile99712_162432 : '20.79'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4011
+ANN: Found nearest neighbors: 0.0131
+num queries = 10000
+Average graph out-degree = 9.314
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 63, Average nodes searched = 28.87
+ANN: stats: 0.0030
+Parlay time: 3.4172
+Recall 1@1: 0.4914
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile875627_270118 : '3.417'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1431
+ANN: Found nearest neighbors: 0.0435
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.4
+ANN: stats: 0.0046
+Parlay time: 8.1913
+Recall 1@1: 0.9219
+Recall 2@2: 0.9232
+Recall 5@5: 0.91516
+Recall 10@10: 0.90046
+Recall 20@20: 0.874385
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile150809_465476 : '8.191'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.5914
+ANN: Found nearest neighbors: 0.0731
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 41, Average nodes searched = 41
+ANN: stats: 0.0075
+Parlay time: 20.6721
+Recall 1@1: 0.9725
+Recall 2@2: 0.978
+Recall 5@5: 0.97492
+Recall 10@10: 0.96765
+Recall 20@20: 0.95312
+Recall 50@50: 0.914622
+1 : -a 1.2 -Q 70 -R 50 -L 75 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile532433_539989 : '20.672'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.7082
+ANN: Found nearest neighbors: 0.1317
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0074
+Parlay time: 20.8473
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.99232
+Recall 20@20: 0.987915
+Recall 50@50: 0.975956
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile65354_49738 : '20.847'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.5609
+ANN: Found nearest neighbors: 0.0129
+num queries = 10000
+Average graph out-degree = 9.315
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 65, Average nodes searched = 29.1
+ANN: stats: 0.0030
+Parlay time: 3.5769
+Recall 1@1: 0.4985
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile206750_245776 : '3.576'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.2916
+ANN: Found nearest neighbors: 0.0448
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.39
+ANN: stats: 0.0047
+Parlay time: 8.3411
+Recall 1@1: 0.9214
+Recall 2@2: 0.92235
+Recall 5@5: 0.9147
+Recall 10@10: 0.9003
+Recall 20@20: 0.87426
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile758222_804185 : '8.341'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 12.7536
+ANN: Found nearest neighbors: 0.0750
+num queries = 10000
+Average graph out-degree = 27.61
+Max out-degree: 35, Min out-degree: 0
+Max nodes searched = 76, Average nodes searched = 55.67
+ANN: stats: 0.0059
+Parlay time: 12.8345
+Recall 1@1: 0.9719
+Recall 2@2: 0.97605
+Recall 5@5: 0.97246
+Recall 10@10: 0.96497
+Recall 20@20: 0.951825
+1 : -a 1.2 -R 35 -L 50 -k 40 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile412227_409910 : '12.834'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 21.0484
+ANN: Found nearest neighbors: 0.0756
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 41, Average nodes searched = 41
+ANN: stats: 0.0076
+Parlay time: 21.1315
+Recall 1@1: 0.9725
+Recall 2@2: 0.97805
+Recall 5@5: 0.97496
+Recall 10@10: 0.96766
+Recall 20@20: 0.953095
+Recall 50@50: 0.914618
+1 : -a 1.2 -Q 70 -R 50 -L 75 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile401193_90503 : '21.131'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.8751
+ANN: Found nearest neighbors: 0.1347
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0074
+Parlay time: 21.0171
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.9923
+Recall 20@20: 0.987915
+Recall 50@50: 0.975968
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile637800_546076 : '21.017'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 40.9396
+ANN: Found nearest neighbors: 0.2920
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0136
+Parlay time: 41.2452
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile502341_331414 : '41.245'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4352
+ANN: Found nearest neighbors: 0.0125
+num queries = 10000
+Average graph out-degree = 9.315
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 69, Average nodes searched = 28.93
+ANN: stats: 0.0033
+Parlay time: 3.4510
+Recall 1@1: 0.4961
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile661035_334086 : '3.451'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1711
+ANN: Found nearest neighbors: 0.0434
+num queries = 10000
+Average graph out-degree = 21.1
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.39
+ANN: stats: 0.0046
+Parlay time: 8.2191
+Recall 1@1: 0.9221
+Recall 2@2: 0.92315
+Recall 5@5: 0.9151
+Recall 10@10: 0.90043
+Recall 20@20: 0.87432
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile106102_417574 : '8.219'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 12.4910
+ANN: Found nearest neighbors: 0.0730
+num queries = 10000
+Average graph out-degree = 27.61
+Max out-degree: 35, Min out-degree: 0
+Max nodes searched = 76, Average nodes searched = 55.66
+ANN: stats: 0.0072
+Parlay time: 12.5712
+Recall 1@1: 0.9715
+Recall 2@2: 0.97575
+Recall 5@5: 0.97226
+Recall 10@10: 0.96479
+Recall 20@20: 0.951775
+1 : -a 1.2 -R 35 -L 50 -k 40 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile707213_250265 : '12.571'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.5771
+ANN: Found nearest neighbors: 0.1255
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 89, Average nodes searched = 74.58
+ANN: stats: 0.0075
+Parlay time: 20.7102
+Recall 1@1: 0.9872
+Recall 2@2: 0.9928
+Recall 5@5: 0.99294
+Recall 10@10: 0.9913
+Recall 20@20: 0.986205
+Recall 50@50: 0.972668
+1 : -a 1.2 -Q 70 -R 50 -L 75 -k 60 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile649241_801741 : '20.71'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 20.5903
+ANN: Found nearest neighbors: 0.1333
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0077
+Parlay time: 20.7313
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.99231
+Recall 20@20: 0.987925
+Recall 50@50: 0.975966
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile310156_365017 : '20.731'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 39.9831
+ANN: Found nearest neighbors: 0.2900
+num queries = 10000
+Average graph out-degree = 51.22
+Max out-degree: 100, Min out-degree: 0
+Max nodes searched = 134, Average nodes searched = 128.6
+ANN: stats: 0.0129
+Parlay time: 40.2860
+Recall 1@1: 0.9912
+Recall 2@2: 0.9967
+Recall 5@5: 0.99812
+Recall 10@10: 0.99876
+Recall 20@20: 0.99848
+Recall 50@50: 0.997422
+Recall 75@75: 0.995861
+Recall 100@100: 0.993942
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile691355_17264 : '40.286'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.4535
+ANN: Found nearest neighbors: 0.0135
+num queries = 10000
+Average graph out-degree = 9.314
+Max out-degree: 10, Min out-degree: 0
+Max nodes searched = 60, Average nodes searched = 28.93
+ANN: stats: 0.0031
+Parlay time: 3.4701
+Recall 1@1: 0.4939
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile121497_614678 : '3.47'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.1596
+ANN: Found nearest neighbors: 0.0433
+num queries = 10000
+Average graph out-degree = 21.11
+Max out-degree: 25, Min out-degree: 0
+Max nodes searched = 83, Average nodes searched = 42.39
+ANN: stats: 0.0046
+Parlay time: 8.2075
+Recall 1@1: 0.922
+Recall 2@2: 0.9233
+Recall 5@5: 0.91514
+Recall 10@10: 0.90052
+Recall 20@20: 0.874405
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile23498_731825 : '8.207'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 25.4158
+ANN: Found nearest neighbors: 0.1340
+num queries = 10000
+Average graph out-degree = 36.24
+Max out-degree: 50, Min out-degree: 0
+Max nodes searched = 93, Average nodes searched = 79.54
+ANN: stats: 0.0075
+Parlay time: 25.5572
+Recall 1@1: 0.9879
+Recall 2@2: 0.9933
+Recall 5@5: 0.9937
+Recall 10@10: 0.99234
+Recall 20@20: 0.987935
+Recall 50@50: 0.975964
+1 : -a 1.2 -R 50 -L 75 -k 50 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile379212_783751 : '25.557'
