@@ -42,11 +42,14 @@ int size_of(parlay::slice<T*, T*> nbh){
 //adding more neighbors
 template<typename T>
 void add_nbh(int nbh, Tvec_point<T> *p){
-	if(size_of(p->out_nbh) >= p->out_nbh.size()){
-		std::cout << "error: tried to exceed degree bound" << std::endl;
-		abort();
-	}
-	p->out_nbh[size_of(p->out_nbh)] = nbh;
+  int n = size_of(p->out_nbh);
+  if(n >= p->out_nbh.size()){
+    std::cout << "error: tried to exceed degree bound" << std::endl;
+    abort();
+  }
+  for (int i=0; i < n; i++)
+    if (nbh == p->out_nbh[i]) return;
+  p->out_nbh[n] = nbh;
 }
 
 template<typename T>

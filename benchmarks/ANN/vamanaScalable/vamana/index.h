@@ -186,7 +186,7 @@ struct knn_index{
 		size_t n = v.size();
 		size_t inc = 0;
 		parlay::sequence<int> rperm;
-		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n)); //, time(NULL));
 		else rperm = parlay::tabulate(v.size(), [&] (int i) {return i;});
 		size_t count = 0;
 		while(count < n){
