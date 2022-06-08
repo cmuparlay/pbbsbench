@@ -459,3 +459,67 @@ Recall 10@10: 0.99186
 Recall 20@20: 0.987495
 Recall 50@50: 0.97557
 1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile971579_536832 : '21.968'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 3.9694
+ANN: Found nearest neighbors: 0.0168
+num queries = 10000
+Average graph out-degree = 9.448
+Max out-degree: 10, Min out-degree: 1
+Max nodes searched = 78, Average nodes searched = 28.95
+ANN: stats: 0.0034
+Parlay time: 3.9895
+Recall 1@1: 0.505
+1 : -a 1.2 -R 10 -L 15 -k 10 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile607348_779107 : '3.989'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 8.8924
+ANN: Found nearest neighbors: 0.0546
+num queries = 10000
+Average graph out-degree = 22.06
+Max out-degree: 25, Min out-degree: 2
+Max nodes searched = 73, Average nodes searched = 42.45
+ANN: stats: 0.0050
+Parlay time: 8.9520
+Recall 1@1: 0.9233
+Recall 2@2: 0.9244
+Recall 5@5: 0.9162
+Recall 10@10: 0.89997
+Recall 20@20: 0.87332
+1 : -a 1.2 -R 25 -L 35 -k 30 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile298987_941804 : '8.952'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 22.4895
+ANN: Found nearest neighbors: 0.1585
+num queries = 10000
+Average graph out-degree = 39.56
+Max out-degree: 50, Min out-degree: 3
+Max nodes searched = 100, Average nodes searched = 79.58
+ANN: stats: 0.0083
+Parlay time: 22.6564
+Recall 1@1: 0.9882
+Recall 2@2: 0.9934
+Recall 5@5: 0.99368
+Recall 10@10: 0.99185
+Recall 20@20: 0.98752
+Recall 50@50: 0.97537
+1 : -a 1.2 -R 50 -L 75 -k 70 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile581295_664808 : '22.656'
+Size of dataset: 1000000
+Medoid ID: 123742
+ANN: Built index: 44.1605
+ANN: Found nearest neighbors: 0.3324
+num queries = 10000
+Average graph out-degree = 60.39
+Max out-degree: 100, Min out-degree: 4
+Max nodes searched = 134, Average nodes searched = 128.5
+ANN: stats: 0.0148
+Parlay time: 44.5077
+Recall 1@1: 0.9913
+Recall 2@2: 0.99675
+Recall 5@5: 0.99816
+Recall 10@10: 0.99881
+Recall 20@20: 0.99854
+Recall 50@50: 0.997344
+Recall 75@75: 0.995701
+Recall 100@100: 0.99365
+1 : -a 1.2 -R 100 -L 125 -k 100 -q /ssd0/ANN/sift1M/sift_query.fvecs -r 1 -o /tmp/ofile618748_858519 : '44.507'

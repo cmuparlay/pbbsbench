@@ -129,16 +129,10 @@ struct cluster{
 	//TODO change this to follow the fine_sequence conventions
 	void edge_union(parlay::sequence<tvec_point*> &v, parlay::sequence<parlay::sequence<edge>> &edges){
 		size_t n = v.size();
-		auto flat_edges = parlay::flatten(edges);
-		auto grouped_by = parlay::group_by_key(flat_edges);
+		auto grouped_by = parlay::group_by_key(parlay::flatten(edges));
 		parlay::parallel_for(0, n, [&] (size_t i){
-			size_t index = grouped_by[i].first;
-			std::set<int> indexSet;
-			for(int j=0; j<grouped_by[i].second.size(); j++) indexSet.insert(grouped_by[i].second[j]);
-			parlay::sequence<int> temp = parlay::sequence<int>();
-			for (std::set<int>::iterator it=indexSet.begin(); it!=indexSet.end(); ++it){
-				temp.push_back(*it);
-			} 
+			auto [index, candidates] = grouped_by[i];
+			auto temp = parlay::remove_duplicates(candidates);
 			v[index]->out_nbh = temp;
 		});
 	}

@@ -40,7 +40,6 @@ struct pyNN_index{
 	float delta;
 	using tvec_point = Tvec_point<T>;
 	using fine_sequence = parlay::sequence<int>;
-	// using slice_tvec = decltype(make_slice(parlay::sequence<tvec_point*>()));
 	using edge = std::pair<int, int>;
 	using labelled_edge = std::pair<edge, float>;
 	using pid = std::pair<int, float>;

@@ -105,7 +105,7 @@ struct hcnng_index{
 	}
 
 	//parameters dim and K are just to interface with the cluster tree code
-	static parlay::sequence<edge> MST3(parlay::sequence<tvec_point*> &v, parlay::sequence<size_t> &active_indices, 
+	static parlay::sequence<edge> MSTk(parlay::sequence<tvec_point*> &v, parlay::sequence<size_t> &active_indices, 
 		unsigned dim, int K){
 		//preprocessing for Kruskal's
 		int N = active_indices.size();
@@ -119,7 +119,6 @@ struct hcnng_index{
 			});
 			
 		});
-		// std::cout << "here" << std::endl; 
 		auto less = [&] (labelled_edge a, labelled_edge b) {return a.second < b.second;};
 		auto sorted_edges = parlay::sort(labelled_edges, less);
 		auto degrees = parlay::tabulate(active_indices.size(), [&] (size_t i) {return 0;});
@@ -149,7 +148,7 @@ struct hcnng_index{
 	void build_index(parlay::sequence<tvec_point*> &v, int cluster_rounds, size_t cluster_size){ 
 		clear(v); 
 		cluster<T> C(d);
-		C.multiple_clustertrees(v, cluster_size, cluster_rounds, &MST3, d, maxDeg);
+		C.multiple_clustertrees(v, cluster_size, cluster_rounds, &MSTk, d, maxDeg);
 	}
 	
 };

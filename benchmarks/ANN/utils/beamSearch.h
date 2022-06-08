@@ -31,7 +31,7 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "../utils/types.h"
-//#include "../utils/clustertree.h"
+#include "../utils/clustertree.h"
 
 extern bool report_stats;
 
@@ -67,7 +67,8 @@ void print_seq(parlay::sequence<int> seq) {
 }
 
 // takes in two sorted sequences and returns a sorted union
-parlay::sequence<pid> seq_union(parlay::sequence<pid>& P,
+template <typename Seq>
+parlay::sequence<pid> seq_union(Seq& P,
                                 parlay::sequence<pid>& Q) {
   auto less = [&](pid a, pid b) { return a.second < b.second; };
   pid* first1 = P.begin();
@@ -75,6 +76,7 @@ parlay::sequence<pid> seq_union(parlay::sequence<pid>& P,
   pid* first2 = Q.begin();
   pid* last2 = Q.end();
   parlay::sequence<pid> result = parlay::sequence<pid>();
+  result.reserve(P.size()+Q.size());
   while (true) {
     if (first1 == last1) {
       while (first2 != last2) {
@@ -111,115 +113,58 @@ parlay::sequence<pid> seq_union(parlay::sequence<pid>& P,
   return result;
 }
 
-// Uses a std::set for the frontier and beam, and unordered_set for
-// visited elements.
-template <typename T>
-parlay::sequence<pid> beam_search_2(Tvec_point<T>* p,
-                                    parlay::sequence<Tvec_point<T>*>& v,
-                                    Tvec_point<T>* medoid, int beamSize,
-                                    unsigned d) {
-  // initialize data structures
-  std::unordered_set<int> visited;
-  auto q_comp = [] (const pid& l, const pid& r) {
-    if (l.second < r.second) return true;
-    if (l.second == r.second) return l.first < r.first;
-    return false;
-  };
-  std::set<pid, decltype(q_comp)> frontier(q_comp);
-  std::set<pid, decltype(q_comp)> beam(q_comp);
-
-  auto ret = parlay::sequence<pid>();
-  ret.reserve(beamSize);
-
-  // the frontier starts with the medoid
-  auto medoid_pair = std::make_pair(
-      medoid->id,
-      distance(medoid->coordinates.begin(), p->coordinates.begin(), d));
-  frontier.insert(medoid_pair);
-  beam.insert(medoid_pair);
-
-  // terminate beam search when the entire frontier has been visited
-  float last_dist = std::numeric_limits<float>::max();
-  while (!frontier.empty()) {
-    // the next node to visit is the unvisited frontier node that is closest to
-    // p
-    pid currentPid = *(frontier.begin());
-    frontier.erase(frontier.begin());
-
-    ret.push_back(currentPid);
-    visited.insert(currentPid.first);
-
-    Tvec_point<T>* current = v[currentPid.first];
-
-    for (const int& ngh : current->out_nbh) {
-      if (visited.find(ngh) == visited.end()) {
-        float dist = distance(v[ngh]->coordinates.begin(), p->coordinates.begin(), d);
-        // insert it into the beam
-        if (dist < last_dist) {
-          beam.insert(std::make_pair(ngh, dist));
-          frontier.insert(std::make_pair(ngh, dist));
-          visited.insert(ngh);
-        }
-      }
-    }
-    if (beam.size() > beamSize) {
-      while (beam.size() > beamSize) {
-        auto it = std::prev(beam.end());
-        pid point = *it;
-        beam.erase(it);
-        auto f_it = frontier.find(point);
-        if (f_it != frontier.end()) {
-          frontier.erase(f_it);
-        }
-      }
-      auto it = std::prev(beam.end());
-      pid point = *it;
-      last_dist = it->second;
-    }
-  }
-  return ret;
-}
-
+// updated version by Guy
 template <typename T>
 std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
     Tvec_point<T>* medoid, int beamSize, unsigned d) {
   // initialize data structures
-  parlay::sequence<pid> visited = parlay::sequence<pid>();
-  parlay::sequence<pid> frontier = parlay::sequence<pid>();
-  auto less = [&](pid a, pid b) { return a.second < b.second; };
+  std::vector<pid> visited;
+  parlay::sequence<pid> frontier;
+  auto less = [&](pid a, pid b) {
+      return a.second < b.second || (a.second == b.second && a.first < b.first); };
+  auto make_pid = [&] (int q) {
+    return std::pair{q, distance(v[q]->coordinates.begin(), p->coordinates.begin(), d)};};
+  int bits = std::ceil(std::log2(beamSize*beamSize));
+  parlay::sequence<int> hash_table(1 << bits, -1);
+
   // the frontier starts with the medoid
-  frontier.push_back(std::make_pair(
-      medoid->id,
-      distance(medoid->coordinates.begin(), p->coordinates.begin(), d)));
+  frontier.push_back(make_pid(medoid->id));
+
+  std::vector<pid> unvisited_frontier(beamSize);
+  parlay::sequence<pid> new_frontier(2*beamSize);
+  unvisited_frontier[0] = frontier[0];
+  bool not_done = true;
+
   // terminate beam search when the entire frontier has been visited
-  while (intersect_nonempty(visited, frontier)) {
-    // the next node to visit is the unvisited frontier node that is closest to
-    // p
-    pid currentPid = (id_next(visited, frontier));
+  while (not_done) {
+    // the next node to visit is the unvisited frontier node that is closest to p
+    pid currentPid = unvisited_frontier[0];
     Tvec_point<T>* current = v[currentPid.first];
-    auto g = [&](int a) {
-      auto pred = [&](pid p) { return p.first == a; };
-      if (parlay::find_if(visited, pred) == visited.end()) return true;
-      return false;
-    };
+    auto g = [&] (int a) {
+         int loc = parlay::hash64_2(a) & ((1 << bits) - 1);
+         if (hash_table[loc] == a) return false;
+         hash_table[loc] = a;
+         return true;};
     auto candidates = parlay::filter(current->out_nbh, g);
-    parlay::sequence<pid> pairCandidates =
-        parlay::sequence<pid>(candidates.size());
-    for (int i = 0; i < candidates.size(); i++) {
-      pairCandidates[i] = std::make_pair(
-          candidates[i], distance(v[candidates[i]]->coordinates.begin(),
-                                  p->coordinates.begin(), d));
-    }
-    auto sortedCandidates = parlay::sort(pairCandidates, less);
-    frontier = seq_union(frontier, sortedCandidates);
-    if (frontier.size() > beamSize)
-      frontier.erase(frontier.begin() + beamSize, frontier.end());
-    // add the node to the visited list
-    visited.push_back(currentPid);
+    auto pairCandidates = parlay::map(candidates, [&] (long c) {return make_pid(c);});
+    auto sortedCandidates = parlay::unique(parlay::sort(pairCandidates, less));
+    auto f_iter = std::set_union(frontier.begin(), frontier.end(),
+         sortedCandidates.begin(), sortedCandidates.end(),
+         new_frontier.begin(), less);
+    size_t f_size = std::min<size_t>(beamSize, f_iter - new_frontier.begin());
+    frontier = parlay::tabulate(f_size, [&] (long i) {return new_frontier[i];});
+    visited.insert(std::upper_bound(visited.begin(), visited.end(), currentPid, less), currentPid);
+    auto uf_iter = std::set_difference(frontier.begin(), frontier.end(),
+         visited.begin(), visited.end(),
+         unvisited_frontier.begin(), less);
+    not_done = uf_iter > unvisited_frontier.begin();
   }
-  return std::make_pair(frontier, visited);
+  return std::make_pair(frontier, parlay::to_sequence(visited));
 }
+
+
+
 
 // searches every element in q starting from a randomly selected point
 template <typename T>
@@ -293,53 +238,53 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
   });
 }
 
-//template<typename T>
-//void warmStartSearch(parlay::sequence<Tvec_point<T>*>& q,
-//                      parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
-//                      int cluster_size, int num_clusterings, int cluster_size_inner, unsigned d){
-//  if(cluster_size_inner < 1){
-//    std::cout << "Error: cluster size must be larger than 1" << std::endl; abort(); 
-//  }
-//  if(num_clusterings*cluster_size > v.size()){
-//    std::cout << "Error: cannot have more points in cluster tree than contained in dataset" << std::endl;
-//    abort();
-//  }
-//  using ctree = cluster_tree<T>;
-//  using node = typename ctree::node;
-//  parlay::sequence<node*> clusters(num_clusterings);
-//  auto indices = parlay::random_permutation<int>(static_cast<int>(v.size()), time(NULL));
-//  parlay::parallel_for(0, num_clusterings, [&] (size_t i){
-//    auto tree_members = parlay::tabulate(cluster_size, [&] (size_t j) {return v[indices[cluster_size*i+j]];});
-//    clusters[i] = ctree::random_clustering_wrapper(tree_members, cluster_size_inner, d);
-//  });
-//  parlay::parallel_for(0, q.size(), [&] (size_t i){
-//    auto candidate_starts = parlay::tabulate(num_clusterings, [&] (size_t j) {
-//      return ctree::search(clusters[j], q[i], v, d);
-//    });
-//    auto comp = [&] (std::pair<size_t, float> a, std::pair<size_t, float> b) {return a.second < b.second;};
-//    size_t start =  (*(parlay::min_element(candidate_starts, comp))).first;
-//    for(const std::pair<size_t, float> i : candidate_starts) std::cout << i.first << std::endl; 
-//    parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-//    parlay::sequence<pid> beamElts;
-//    parlay::sequence<pid> visitedElts;
-//    std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-//    pairElts = beam_search(q[i], v, v[start], beamSizeQ, d);
-//    beamElts = pairElts.first;
-//    visitedElts = pairElts.second;
-//    // the first element of the frontier may be the point itself
-//    // if this occurs, do not report it as a neighbor
-//    if (beamElts[0].first == i) {
-//      for (int j = 0; j < k; j++) {
-//        neighbors[j] = beamElts[j + 1].first;
-//      }
-//    } else {
-//      for (int j = 0; j < k; j++) {
-//        neighbors[j] = beamElts[j].first;
-//      }
-//    }
-//    q[i]->ngh = neighbors;
-//    if (report_stats) q[i]->cnt = visitedElts.size();
-//  });
-//}
+template<typename T>
+void warmStartSearch(parlay::sequence<Tvec_point<T>*>& q,
+                      parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
+                      int cluster_size, int num_clusterings, int cluster_size_inner, unsigned d){
+  if(cluster_size_inner < 1){
+    std::cout << "Error: cluster size must be larger than 1" << std::endl; abort(); 
+  }
+  if(num_clusterings*cluster_size > v.size()){
+    std::cout << "Error: cannot have more points in cluster tree than contained in dataset" << std::endl;
+    abort();
+  }
+  using ctree = cluster_tree<T>;
+  using node = typename ctree::node;
+  parlay::sequence<node*> clusters(num_clusterings);
+  auto indices = parlay::random_permutation<int>(static_cast<int>(v.size()), time(NULL));
+  parlay::parallel_for(0, num_clusterings, [&] (size_t i){
+    auto tree_members = parlay::tabulate(cluster_size, [&] (size_t j) {return v[indices[cluster_size*i+j]];});
+    clusters[i] = ctree::random_clustering_wrapper(tree_members, cluster_size_inner, d);
+  });
+  parlay::parallel_for(0, q.size(), [&] (size_t i){
+    auto candidate_starts = parlay::tabulate(num_clusterings, [&] (size_t j) {
+      return ctree::search(clusters[j], q[i], v, d);
+    });
+    auto comp = [&] (std::pair<size_t, float> a, std::pair<size_t, float> b) {return a.second < b.second;};
+    size_t start =  (*(parlay::min_element(candidate_starts, comp))).first;
+    for(const std::pair<size_t, float> i : candidate_starts) std::cout << i.first << std::endl; 
+    parlay::sequence<int> neighbors = parlay::sequence<int>(k);
+    parlay::sequence<pid> beamElts;
+    parlay::sequence<pid> visitedElts;
+    std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
+    pairElts = beam_search(q[i], v, v[start], beamSizeQ, d);
+    beamElts = pairElts.first;
+    visitedElts = pairElts.second;
+    // the first element of the frontier may be the point itself
+    // if this occurs, do not report it as a neighbor
+    if (beamElts[0].first == i) {
+      for (int j = 0; j < k; j++) {
+        neighbors[j] = beamElts[j + 1].first;
+      }
+    } else {
+      for (int j = 0; j < k; j++) {
+        neighbors[j] = beamElts[j].first;
+      }
+    }
+    q[i]->ngh = neighbors;
+    if (report_stats) q[i]->cnt = visitedElts.size();
+  });
+}
 
 #endif
