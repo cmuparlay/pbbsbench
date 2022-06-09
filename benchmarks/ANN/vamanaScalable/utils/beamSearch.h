@@ -120,13 +120,15 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
     Tvec_point<T>* medoid, int beamSize, unsigned d, int k=0) {
   // initialize data structures
+  auto vvc = v[0]->coordinates.begin();
+  int stride = v[1]->coordinates.begin() - v[0]->coordinates.begin();
   std::vector<pid> visited;
   parlay::sequence<pid> frontier;
   auto less = [&](pid a, pid b) {
       return a.second < b.second || (a.second == b.second && a.first < b.first); };
   auto make_pid = [&] (int q) {
-    return std::pair{q, distance(v[q]->coordinates.begin(), p->coordinates.begin(), d)};};
-  int bits = std::ceil(std::log2(beamSize*beamSize));
+		    return std::pair{q, distance(vvc + q*stride, p->coordinates.begin(), d)};};
+  int bits = std::ceil(std::log2(beamSize*beamSize))-2;
   parlay::sequence<int> hash_table(1 << bits, -1);
 
   // the frontier starts with the medoid
