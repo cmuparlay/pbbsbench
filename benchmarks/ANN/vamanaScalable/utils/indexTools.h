@@ -53,6 +53,16 @@ void add_nbh(int nbh, Tvec_point<T> *p){
 }
 
 template<typename T>
+void add_out_nbh(parlay::sequence<int> nbh, Tvec_point<T> *p){
+	for(int i=0; i<p->out_nbh.size(); i++){
+		p->out_nbh[i] = -1;
+	}
+	for(int i=0; i<nbh.size(); i++){
+		p->out_nbh[i] = nbh[i];
+	}
+}
+
+template<typename T>
 void add_new_nbh(parlay::sequence<int> nbh, Tvec_point<T> *p){
 	for(int i=0; i<p->new_nbh.size(); i++){
 		p->new_nbh[i] = -1;
@@ -93,28 +103,3 @@ void clear(parlay::sequence<Tvec_point<T>*> &v){
 
 #endif  
 
-//TODO fix to use custom allocator
-// template<typename T>
-// void random_index(parlay::sequence<Tvec_point<T>*> &v, int maxDeg){
-// 	size_t n = v.size(); 
-// 	parlay::parallel_for(0, n, [&] (size_t i){
-// 		// std::cout << "here1" << std::endl; 
-//     	std::random_device rd;    
-// 		std::mt19937 rng(rd());   
-// 		std::uniform_int_distribution<int> uni(0,n-1); 
-//     	// std::cout << "here2" << std::endl; 
-// 		//use a set to make sure each out neighbor is unique
-// 		std::set<int> indexset;
-// 		while(indexset.size() < maxDeg){
-// 			int j = uni(rng);;
-// 			//disallow self edges
-// 			if(j != i) indexset.insert(j);
-// 		}
-// 		// std::cout << "here3" << std::endl; 
-// 		for (std::set<int>::iterator it=indexset.begin(); it!=indexset.end(); ++it){
-//     		v[i] -> out_nbh.push_back(*it);
-// 		} 
-
-//     }, 1
-//     );
-// }

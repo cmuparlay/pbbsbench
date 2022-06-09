@@ -30,8 +30,9 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/random.h"
-#include "../utils/types.h"
-#include "../utils/clustertree.h"
+#include "types.h"
+#include "clustertree.h"
+#include "indexTools.h"
 
 extern bool report_stats;
 

@@ -79,7 +79,6 @@ std::pair<char*, size_t> mmapStringFromFile(const char* filename) {
 
 auto parse_fvecs(const char* filename, int maxDeg) {
   auto [fileptr, length] = mmapStringFromFile(filename);
-  // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + 4*d bytes.
   // * first 4 bytes encode the dimension (as an integer)
@@ -87,7 +86,6 @@ auto parse_fvecs(const char* filename, int maxDeg) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  // std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
@@ -96,7 +94,6 @@ auto parse_fvecs(const char* filename, int maxDeg) {
   parlay::sequence<Tvec_point<float>> points(num_vectors);
 
   parlay::sequence<int> &out_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
-  // parlay::sequence<int> &new_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
 
   parlay::parallel_for(0, num_vectors*maxDeg, [&] (size_t i){out_nbh[i] = -1; });
 
@@ -115,7 +112,6 @@ auto parse_fvecs(const char* filename, int maxDeg) {
 
 auto parse_ivecs(const char* filename) {
   auto [fileptr, length] = mmapStringFromFile(filename);
-  // std::cout << "Successfully mmap'd" << std::endl;
 
   // Each vector is 4 + 4*d bytes.
   // * first 4 bytes encode the dimension (as an integer)
@@ -123,11 +119,9 @@ auto parse_ivecs(const char* filename) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  // std::cout << "Dimension = " << d << std::endl;
 
   size_t vector_size = 4 + 4*d;
-  size_t num_vectors = length / vector_size;
-  // std::cout << "Num vectors = " << num_vectors << std::endl;    
+  size_t num_vectors = length / vector_size;  
 
   parlay::sequence<ivec_point> points(num_vectors);
 
@@ -145,8 +139,6 @@ auto parse_ivecs(const char* filename) {
 auto parse_bvecs(const char* filename, int maxDeg) {
 
   auto [fileptr, length] = mmapStringFromFile(filename);
-  // std::cout << "Successfully mmap'd" << std::endl;
-
   // Each vector is 4 + d bytes.
   // * first 4 bytes encode the dimension (as an integer)
   // * next d values are unsigned chars representing vector components
@@ -157,13 +149,10 @@ auto parse_bvecs(const char* filename, int maxDeg) {
 
   size_t vector_size = 4 + d;
   size_t num_vectors = length / vector_size;
-  // size_t num_vectors = 1000000;
-  // std::cout << "Num vectors = " << num_vectors << std::endl;   
 
   parlay::sequence<Tvec_point<uint8_t>> points(num_vectors);
 
   parlay::sequence<int> &out_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
-  // parlay::sequence<int> &new_nbh = *new parlay::sequence<int>(maxDeg*num_vectors);
 
   parlay::parallel_for(0, num_vectors*maxDeg, [&] (size_t i){out_nbh[i] = -1;});
 
@@ -173,8 +162,7 @@ auto parse_bvecs(const char* filename, int maxDeg) {
     uint8_t* end = start + d;
     points[i].id = i; 
     points[i].coordinates = parlay::make_slice(start, end);
-    points[i].out_nbh = parlay::make_slice(out_nbh.begin()+maxDeg*i, out_nbh.begin()+maxDeg*(i+1));
-    // points[i].new_nbh = parlay::make_slice(new_nbh.begin()+maxDeg*i, new_nbh.begin()+maxDeg*(i+1));     
+    points[i].out_nbh = parlay::make_slice(out_nbh.begin()+maxDeg*i, out_nbh.begin()+maxDeg*(i+1));   
   });
 
   return points;
