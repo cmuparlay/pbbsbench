@@ -334,12 +334,12 @@ namespace efanna2e{
 
 
 float distance(uint8_t *p, uint8_t *q, unsigned d){
-  float result = 0;
+  int result = 0;
   for(int i=0; i<d; i++){
     result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
                   ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
   }
-  return result;
+  return (float) result;
 }
 
 float distance(float *q, uint8_t *p, unsigned d){
@@ -355,6 +355,5 @@ float distance(float *p, float *q, unsigned d){
     efanna2e::DistanceL2 distfunc;
     return distfunc.compare(p, q, d);
 }
-
 
 #endif //EFANNA2E_DISTANCE_H

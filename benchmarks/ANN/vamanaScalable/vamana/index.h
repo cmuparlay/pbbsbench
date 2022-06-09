@@ -166,6 +166,18 @@ struct knn_index{
     return robustPrune(p, std::move(cc), v, alpha);
 	}
 
+  // void sort_out(Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v) {
+  //   using pid = std::pair<int, float>;
+  //   int degree = size_of(p->out_nbh);
+  //   auto less = [&] (pid a, pid b) {return a.second < b.second;};
+  //   auto x = parlay::tabulate(degree, [&] (int i) {
+  // 		return pid(p->out_nbh[i], 
+  // 			   distance(p->coordinates.begin(), v[p->out_nbh[i]]->coordinates.begin(), d));}, 1000);
+  //   parlay::sort_inplace(x, less);
+  //   parlay::parallel_for(0,degree, [&] (int i) {
+  // 				     p->out_nbh[i] = x[i].first;}, 1000);
+  // }
+  
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
 		clear(v);
 		//populate with random edges

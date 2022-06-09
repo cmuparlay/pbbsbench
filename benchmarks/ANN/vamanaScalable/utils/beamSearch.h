@@ -117,7 +117,7 @@ parlay::sequence<pid> seq_union(Seq& P,
 template <typename T>
 std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
-    Tvec_point<T>* medoid, int beamSize, unsigned d) {
+    Tvec_point<T>* medoid, int beamSize, unsigned d, int k=0) {
   // initialize data structures
   std::vector<pid> visited;
   parlay::sequence<pid> frontier;
@@ -141,18 +141,22 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     // the next node to visit is the unvisited frontier node that is closest to p
     pid currentPid = unvisited_frontier[0];
     Tvec_point<T>* current = v[currentPid.first];
-    auto nbh = current->out_nbh.cut(0,size_of(current->out_nbh));
+    auto nbh = current->out_nbh.cut(0, size_of(current->out_nbh));
     auto candidates = parlay::filter(nbh,  [&] (int a) {
 	     int loc = parlay::hash64_2(a) & ((1 << bits) - 1);
 	     if (a == p->id || hash_table[loc] == a) return false;
 	     hash_table[loc] = a;
 	     return true;});
     auto pairCandidates = parlay::map(candidates, [&] (long c) {return make_pid(c);}, 1000);
-    auto sortedCandidates = parlay::unique(parlay::sort(pairCandidates, less));
+    auto sortedCandidates = parlay::sort(pairCandidates, less);
     auto f_iter = std::set_union(frontier.begin(), frontier.end(),
 				 sortedCandidates.begin(), sortedCandidates.end(),
 				 new_frontier.begin(), less);
     size_t f_size = std::min<size_t>(beamSize, f_iter - new_frontier.begin());
+    if (k > 0 && f_size > k) 
+      f_size = (std::upper_bound(new_frontier.begin(), new_frontier.begin() + f_size,
+				std::pair{0, 1.14 * new_frontier[k].second}, less)
+		- new_frontier.begin());
     frontier = parlay::tabulate(f_size, [&] (long i) {return new_frontier[i];});
     visited.insert(std::upper_bound(visited.begin(), visited.end(), currentPid, less), currentPid);
     auto uf_iter = std::set_difference(frontier.begin(), frontier.end(),
@@ -262,7 +266,7 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
     parlay::sequence<pid> beamElts;
     parlay::sequence<pid> visitedElts;
     std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-    pairElts = beam_search(q[i], v, medoid, beamSizeQ, d);
+    pairElts = beam_search(q[i], v, medoid, beamSizeQ, d, k);
     beamElts = pairElts.first;
     visitedElts = pairElts.second;
     // the first element of the frontier may be the point itself
