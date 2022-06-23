@@ -12,6 +12,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include <set>
 #include <iterator>
 #include <type_traits>
 #include <limits>
@@ -58,8 +59,8 @@ public:
 	template<typename G>
 	HNSW(const std::string &filename_model, G getter);
 
-	std::vector<T*> search(const T &q, uint32_t k, uint32_t ef);
-
+	std::vector<std::pair<uint32_t,double>> search(const T &q, uint32_t k, uint32_t ef);
+	std::vector<std::tuple<uint32_t,uint32_t,double>> search_ex(const T &q, uint32_t k, uint32_t ef);
 	// save the current model to a file
 	void save(const std::string &filename_model) const;
 private:
@@ -77,6 +78,11 @@ private:
 		node *u;
 	};
 
+	struct dist_ex : dist
+	{
+		uint32_t depth;
+	};
+
 	struct nearest{
 		constexpr bool operator()(const dist &lhs, const dist &rhs) const{
 			return lhs.d>rhs.d;
@@ -89,6 +95,11 @@ private:
 		}
 	};
 
+	struct cmp_id{
+		constexpr bool operator()(const dist &lhs, const dist &rhs) const{
+			return U::get_id(lhs.u->data)<U::get_id(rhs.u->data);
+		}
+	};
 
 	std::vector<node*> entrance; // To init
 	// auto m, max_m0, m_L; // To init
@@ -128,8 +139,8 @@ private:
 	template<typename Iter>
 	void insert(Iter begin, Iter end, bool from_blank);
 
-	void select_neighbors_simple_impl(const T &u, 
-		std::priority_queue<dist,std::vector<dist>,farthest> &C, uint32_t M)
+	template<typename Queue>
+	void select_neighbors_simple_impl(const T &u, Queue &C, uint32_t M)
 	{
 		/*
 		list res;
@@ -140,7 +151,7 @@ private:
 		return res;
 		*/
 		(void)u;
-		std::vector<node*> tie;
+		std::vector<typename Queue::value_type> tie;
 		double dist_tie = 1e20;
 		while(C.size()>M)
 		{
@@ -151,19 +162,20 @@ private:
 				tie.clear();
 			}
 			if(fabs(dist_tie-t.d)<1e-6) // t.d==dist_tie
-				tie.push_back(t.u);
+				tie.push_back(t);
 			C.pop();
 		}
 		if(fabs(dist_tie-C.top().d)<1e-6) // C.top().d==dist_tie
 			while(!tie.empty())
 			{
-				C.push({dist_tie,tie.back()});
+			//	C.push({dist_tie,tie.back()});
+				C.push(tie.back());
 				tie.pop_back();
 			}
 	}
 
-	auto select_neighbors_simple(const T &u, 
-		std::priority_queue<dist,std::vector<dist>,farthest> C, uint32_t M)
+	template<typename Queue>
+	auto select_neighbors_simple(const T &u, Queue C, uint32_t M)
 	{
 		// The parameter C is intended to be copy constructed
 		select_neighbors_simple_impl(u, C, M);
@@ -178,29 +190,29 @@ private:
 		(void)extendCandidate;
 
 		std::priority_queue<dist,std::vector<dist>,farthest> C_cp=C, W_d;
-		/*
-		if(extendCandidate)
+		std::set<dist,cmp_id> W_tmp;
+		while(!C_cp.empty())
 		{
-			while(C_cp.size())
+			auto &e = C_cp.top();
+			W_tmp.insert(e);
+			if(extendCandidate)
 			{
-				const auto e = C_cp.top();
-				C_cp.pop();
-				for(const auto &e_adj : neighbourhood(e.u,level))
+				for(auto *e_adj : neighbourhood(*e.u,level))
 				{
-					if(!W.find(e_adj))
-						W.push(e_adj);
+					if(e_adj==nullptr) continue;
+					if(W_tmp.find(dist{0,e_adj})==W_tmp.end())
+						W_tmp.insert(dist{U::distance(e_adj->data,u,dim),e_adj});
 				}
-		}
-		*/
-		std::vector<node*> R;
-		std::priority_queue<dist,std::vector<dist>,nearest> W;
-		while(C_cp.size())
-		{
-			W.push(C_cp.top());
+			}
 			C_cp.pop();
 		}
-		//auto &W = C_cp;
 
+		std::priority_queue<dist,std::vector<dist>,nearest> W;
+		for(auto &e : W_tmp)
+			W.push(e);
+		W_tmp.clear();
+
+		std::vector<node*> R;
 		while(W.size()>0 && R.size()<M)
 		{
 			const auto e = W.top();
@@ -240,7 +252,7 @@ private:
 
 	auto select_neighbors(const T &u, 
 		const std::priority_queue<dist,std::vector<dist>,farthest> &C, uint32_t M,
-		uint32_t level, bool extendCandidate=false, bool keepPrunedConnections=false)
+		uint32_t level, bool extendCandidate=false, bool keepPrunedConnections=true)
 	{
 		/*
 		(void)level, (void)extendCandidate, (void)keepPrunedConnections;
@@ -262,6 +274,7 @@ private:
 	}
 
 	auto search_layer(const node &u, const std::vector<node*> &eps, uint32_t ef, uint32_t l_c) const; // To static
+	auto search_layer_ex(const node &u, const std::vector<node*> &eps, uint32_t ef, uint32_t l_c) const; // To static
 	auto get_threshold_m(uint32_t level){
 		return level==0? m*2: m;
 	}
@@ -333,7 +346,7 @@ HNSW<U,Allocator>::HNSW(const std::string &filename_model, G getter)
 					read_array(data, args...);
 				}
 			}
-			else 
+			else
 			{
 				static_assert(std::is_standard_layout_v<T>);
 				model.read((char*)&data, sizeof(data));
@@ -633,22 +646,37 @@ void HNSW<U,Allocator>::insert(Iter begin, Iter end, bool from_blank)
 template<typename U, template<typename> class Allocator>
 auto HNSW<U,Allocator>::search_layer(const node &u, const std::vector<node*> &eps, uint32_t ef, uint32_t l_c) const
 {
-	std::vector<bool> visited(n);
-	std::priority_queue<dist,std::vector<dist>,nearest> C;
+	auto W_ex = search_layer_ex(u, eps, ef, l_c);
 	std::priority_queue<dist,std::vector<dist>,farthest> W;
+	while(!W_ex.empty())
+	{
+		W.push(W_ex.top());
+		W_ex.pop();
+	}
+	return W;
+}
+
+template<typename U, template<typename> class Allocator>
+auto HNSW<U,Allocator>::search_layer_ex(const node &u, const std::vector<node*> &eps, uint32_t ef, uint32_t l_c) const
+{
+	std::vector<bool> visited(n);
+	std::priority_queue<dist_ex,std::vector<dist_ex>,nearest> C;
+	std::priority_queue<dist_ex,std::vector<dist_ex>,farthest> W;
 
 	for(auto *ep : eps)
 	{
 		visited[U::get_id(ep->data)] = true;
 		const auto d = U::distance(u.data,ep->data,dim);
-		C.push({d,ep});
-		W.push({d,ep});
+		C.push({d,ep,1});
+		W.push({d,ep,1});
 	}
 
 	while(C.size()>0)
 	{
-		const auto &c = *C.top().u; C.pop();
+		const auto &dc = C.top().depth;
+		const auto &c = *C.top().u;
 		const auto &f = *W.top().u;
+		C.pop();
 		if(U::distance(c.data,u.data,dim)>U::distance(f.data,u.data,dim))
 			break;
 		for(auto *pv: neighbourhood(c, l_c))
@@ -656,11 +684,11 @@ auto HNSW<U,Allocator>::search_layer(const node &u, const std::vector<node*> &ep
 			if(visited[U::get_id(pv->data)]) continue;
 			visited[U::get_id(pv->data)] = true;
 			const auto &f = *W.top().u;
-			if(U::distance(pv->data,u.data,dim)<U::distance(f.data,u.data,dim)||W.size()<ef)
+			if(W.size()<ef||U::distance(pv->data,u.data,dim)<U::distance(f.data,u.data,dim))
 			{
 				const auto d = U::distance(u.data,pv->data,dim);
-				C.push({d,pv});
-				W.push({d,pv});
+				C.push({d,pv,dc+1});
+				W.push({d,pv,dc+1});
 				if(W.size()>ef) W.pop();
 			}
 		}
@@ -668,8 +696,21 @@ auto HNSW<U,Allocator>::search_layer(const node &u, const std::vector<node*> &ep
 	return W;
 }
 
+
 template<typename U, template<typename> class Allocator>
-std::vector<typename HNSW<U,Allocator>::T*> HNSW<U,Allocator>::search(const T &q, uint32_t k, uint32_t ef)
+std::vector<std::pair<uint32_t,double>> HNSW<U,Allocator>::search(const T &q, uint32_t k, uint32_t ef)
+{
+	auto res_ex = search_ex(q,k,ef);
+	std::vector<std::pair<uint32_t,double>> res;
+	res.reserve(res_ex.size());
+	for(const auto &e : res_ex)
+		res.emplace_back(std::get<0>(e), std::get<2>(e));
+
+	return res;
+}
+
+template<typename U, template<typename> class Allocator>
+std::vector<std::tuple<uint32_t,uint32_t,double>> HNSW<U,Allocator>::search_ex(const T &q, uint32_t k, uint32_t ef)
 {
 	node u{0, q, nullptr}; // To optimize
 	std::priority_queue<dist,std::vector<dist>,farthest> W;
@@ -687,13 +728,13 @@ std::vector<typename HNSW<U,Allocator>::T*> HNSW<U,Allocator>::search(const T &q
 		}
 		*/
 	}
-	W = search_layer(u, eps, ef, 0);
-	W = select_neighbors_simple(q, W, k);
-	std::vector<T*> res;
-	while(W.size()>0)
+	auto W_ex = search_layer_ex(u, eps, ef, 0);
+	W_ex = select_neighbors_simple(q, W_ex, k);
+	std::vector<std::tuple<uint32_t,uint32_t,double>> res;
+	while(W_ex.size()>0)
 	{
-		res.push_back(&W.top().u->data);
-		W.pop();
+		res.push_back({U::get_id(W_ex.top().u->data), W_ex.top().depth, W_ex.top().d});
+		W_ex.pop();
 	}
 	return res;
 }
@@ -725,7 +766,7 @@ void HNSW<U,Allocator>::save(const std::string &filename_model) const
 					write_array(data, args...);
 				}
 			}
-			else 
+			else
 			{
 				static_assert(std::is_standard_layout_v<T>);
 				model.write((const char*)&data, sizeof(data));

@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
 	const uint32_t cnt_pts_query_val = atoi(cnt_pts_query);
 	uint32_t cnt_rank_cmp_val = atoi(cnt_rank_cmp);
-	std::vector<std::vector<fvec*>> res(cnt_pts_query_val);
+	std::vector<std::vector<std::pair<uint32_t,double>>> res(cnt_pts_query_val);
 	parlay::parallel_for(0, cnt_pts_query_val, [&](size_t i){
 		res[i] = g.search(q[i], cnt_rank_cmp_val, atoi(ef));
 	});
@@ -135,8 +135,8 @@ int main(int argc, char **argv)
 	{
 		uint32_t cnt_shot = 0;
 		for(uint32_t j=0; j<cnt_rank_cmp_val; ++j)
-			if(std::find_if(res[i].begin(),res[i].end(),[&](fvec *p){
-				return p->id==gt[i][j];}) != res[i].end())
+			if(std::find_if(res[i].begin(),res[i].end(),[&](const std::pair<uint32_t,double> &p){
+				return p.first==gt[i][j];}) != res[i].end())
 			{
 				cnt_shot++;
 			}
