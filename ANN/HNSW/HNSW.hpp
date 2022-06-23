@@ -63,7 +63,7 @@ public:
 	std::vector<std::tuple<uint32_t,uint32_t,double>> search_ex(const T &q, uint32_t k, uint32_t ef);
 	// save the current model to a file
 	void save(const std::string &filename_model) const;
-private:
+public:
 	typedef uint32_t type_index;
 
 	struct node{
