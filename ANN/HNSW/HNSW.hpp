@@ -315,6 +315,19 @@ public:
 			});
 		}
 	}
+
+public:
+	auto get_deg(uint32_t level=0)
+	{
+		std::vector<uint32_t> res;
+		res.reserve(node_pool.size());
+		for(const auto &e : node_pool)
+		{
+			if(e->level>=level)
+				res.push_back(e->neighbors[level].size());
+		}
+		return res;
+	}
 };
 
 
