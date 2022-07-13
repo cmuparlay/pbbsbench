@@ -4,5 +4,5 @@ using vertexId = uint;
 using edgeId = uint;
 using Graph = graph<vertexId,edgeId>;
 
-parlay::sequence<char> maximalIndependentSet(Graph G);
+parlay::sequence<char> maximalIndependentSet(Graph const &G);
 

@@ -29,7 +29,8 @@
 //    MAXIMAL INDEPENDENT SET
 // **************************************************************
 
-parlay::sequence<char> maximalIndependentSet(Graph G) {
+parlay::sequence<char> maximalIndependentSet(Graph const &G)
+{
   size_t n = G.n;
   parlay::sequence<char> Flags(n, (char) 0);
   for (size_t i = 0; i < n; i++) {

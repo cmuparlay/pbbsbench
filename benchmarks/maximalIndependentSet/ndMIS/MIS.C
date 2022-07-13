@@ -36,7 +36,7 @@ using namespace std;
 // and Flags[v] = 2 means vertex is not in MIS
 
 // nondeterministic greed algorithm
-parlay::sequence<char> maximalIndependentSet(Graph G) {
+parlay::sequence<char> maximalIndependentSet(const Graph &G) {
   size_t n = G.n;
   parlay::sequence<char> Flags(n, (char) 0);
   parlay::sequence<bool> V(n, false);
