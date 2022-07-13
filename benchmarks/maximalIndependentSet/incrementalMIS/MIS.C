@@ -41,7 +41,7 @@ struct MISstep {
   char flag;
   parlay::sequence<char> &Flags;
   Graph const &G;
-  MISstep(parlay::sequence<char> & F, Graph &G) : Flags(F), G(G) {}
+  MISstep(parlay::sequence<char> & F, const Graph &G) : Flags(F), G(G) {}
 
   bool reserve(size_t i) {
     size_t d = G[i].degree;
@@ -60,7 +60,7 @@ struct MISstep {
   bool commit(size_t i) { return (Flags[i] = flag) > 0;}
 };
 
-parlay::sequence<char> maximalIndependentSet(Graph GS) {
+parlay::sequence<char> maximalIndependentSet(Graph const &GS) {
   size_t n = GS.n;
   parlay::sequence<char> Flags(n, (char) 0);
   MISstep mis(Flags, GS);
