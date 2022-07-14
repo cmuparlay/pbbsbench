@@ -1,0 +1,5 @@
+*.o
+*testInputs
+*testInputs_small
+*Check
+*.pyc
