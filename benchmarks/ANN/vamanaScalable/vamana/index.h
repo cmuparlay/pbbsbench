@@ -38,9 +38,9 @@ template<typename T>
 struct knn_index{
 	int maxDeg;
 	int beamSize;
-	// int k;
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
+	std::set<int> delete_set; 
 	using tvec_point = Tvec_point<T>;
 	using fvec_point = Tvec_point<float>;
 	tvec_point* medoid;
@@ -166,26 +166,14 @@ struct knn_index{
     return robustPrune(p, std::move(cc), v, alpha);
 	}
 
-  // void sort_out(Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v) {
-  //   using pid = std::pair<int, float>;
-  //   int degree = size_of(p->out_nbh);
-  //   auto less = [&] (pid a, pid b) {return a.second < b.second;};
-  //   auto x = parlay::tabulate(degree, [&] (int i) {
-  // 		return pid(p->out_nbh[i], 
-  // 			   distance(p->coordinates.begin(), v[p->out_nbh[i]]->coordinates.begin(), d));}, 1000);
-  //   parlay::sort_inplace(x, less);
-  //   parlay::parallel_for(0,degree, [&] (int i) {
-  // 				     p->out_nbh[i] = x[i].first;}, 1000);
-  // }
-  
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
 		clear(v);
 		//populate with random edges
 		// if(not from_empty) random_index(v, maxDeg);
 		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
-		build_index_inner(v, 1.0, 2, .1);
-		if(two_pass) build_index_inner(v, r2_alpha, 2, .1);
+		build_index_inner(v, r2_alpha, 2, .02);
+		// if(two_pass) build_index_inner(v, r2_alpha, 2, .1);
 	}
 
 	//executes the index build routine from the DiskANN paper 
@@ -198,7 +186,7 @@ struct knn_index{
 		size_t n = v.size();
 		size_t inc = 0;
 		parlay::sequence<int> rperm;
-		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n)); //, time(NULL));
+		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
 		else rperm = parlay::tabulate(v.size(), [&] (int i) {return i;});
 		size_t count = 0;
 		while(count < n){
