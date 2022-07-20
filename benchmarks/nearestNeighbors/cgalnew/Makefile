@@ -12,7 +12,7 @@ LFLAGS = $(JEMALLOC)
 BENCH = neighbors
 TIME = ../bench/$(BENCH)Time.C
 CHECK = $(BENCH)Check
-INCLUDE = -Icommon -Ipbbslib
+INCLUDE = -Icommon
 CGALINCLUDE = -I/home/magdalen/CGAL-5.2/include -I/home/magdalen/tbb/include -DCGAL_LINKED_WITH_TBB
 CGALLIB = /home/magdalen/tbb/build/libtbb.so
 
