@@ -1,6 +1,6 @@
 include common/parallelDefs
 
-INCLUDE = -Icommon -Ipbbslib
+INCLUDE = -Icommon
 
 SACheck: SACheck.C 
 	$(CC) $(CFLAGS) $(LFLAGS) $(INCLUDE) -o SACheck SACheck.C
