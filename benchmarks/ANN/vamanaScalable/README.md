@@ -59,7 +59,7 @@ Vamana supports dynamic updates in a limited manner in [a branch of pbbsbench]()
 
 The user must supply the entire dataset in one file. After initially building the graph by passing the `build_index()` function a sequence of at least one integer, the user may insert and delete from the index as desired by modifying the `ANN()` function. 
 
-The `insert()` function requires the following parameters:
+The `batch_insert()` function requires the following parameters:
 1. The data `v` passed to the `ANN` function.
 2. A sequence of integers or a single integer. These integers must correspond to indices in `v` and they cannot be already present in the graph.
 3. An optional `bool` parameter. Setting to `false` means the list of inserts will be executed in the order provided by the user. Setting to `true` will randomly shuffle the list of inserts before inserting the individual points, which may increase recall. We recommend setting to `false` for debugging and `true` otherwise.
