@@ -171,73 +171,8 @@ struct knn_index{
 
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<int> inserts){
 		clear(v);
-		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
-		batch_insert(inserts, v, 2, .02, false);
-		// build_index_inner(v, r2_alpha, 2, .02);
-	}
-
-	//executes the index build routine from the DiskANN paper 
-	//uses batches and synchronization to avoid locks
-	//alpha is the alpha value for the RobustPrune routine
-	//base is the exponent base for the batch doubling
-	//max_fraction is the max fraction of the input that can be used for a batch
-	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, double base = 2,
-		double max_fraction = 1.0, bool random_order = true){
-		size_t n = v.size();
-		size_t inc = 0;
-		parlay::sequence<int> rperm;
-		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
-		else rperm = parlay::tabulate(v.size(), [&] (int i) {return i;});
-		size_t count = 0;
-		while(count < n){
-			size_t floor;
-			size_t ceiling;
-			if(pow(base,inc) <= max_fraction*n){
-				floor = static_cast<size_t>(pow(base, inc))-1;
-				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
-				count = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
-			} else{
-				floor = count;
-				ceiling = std::min(count + static_cast<size_t>(max_fraction*n), n)-1;
-				count += static_cast<size_t>(max_fraction*n);
-			}
-			parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
-			//search for each node starting from the medoid, then call
-			//robustPrune with the visited list as its candidate set
-			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				v[rperm[i]]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
-				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
-				if(report_stats) v[rperm[i]]->cnt = visited.size();
-				robustPrune(v[rperm[i]], visited, v, alpha);
-			});
-			//make each edge bidirectional by first adding each new edge
-			//(i,j) to a sequence, then semisorting the sequence by key values
-			auto to_flatten = parlay::tabulate(ceiling-floor, [&] (size_t i){
-				auto edges = parlay::tabulate(size_of(v[rperm[i+floor]]->new_nbh), [&] (size_t j){
-					return std::make_pair((v[rperm[i+floor]]->new_nbh)[j], rperm[i+floor]);
-				});
-				return edges;
-			});
-			parlay::parallel_for(floor, ceiling, [&] (size_t i) {synchronize(v[rperm[i]]);} );
-			auto grouped_by = parlay::group_by_key(parlay::flatten(to_flatten));
-			//finally, add the bidirectional edges; if they do not make
-			//the vertex exceed the degree bound, just add them to out_nbhs;
-			//otherwise, use robustPrune on the vertex with user-specified alpha
-			parlay::parallel_for(0, grouped_by.size(), [&] (size_t j){
-				auto [index, candidates] = grouped_by[j];
-				int newsize = candidates.size() + size_of(v[index]->out_nbh);
-				if(newsize <= maxDeg){
-					for(const int& k : candidates) add_nbh(k, v[index]);
-				} else{
-					parlay::sequence<int> new_out_2(maxDeg, -1);
-					v[index]->new_nbh=parlay::make_slice(new_out_2.begin(), new_out_2.begin()+maxDeg);
-					robustPrune(v[index], candidates, v, alpha);  
-					synchronize(v[index]);
-				}
-			});
-			inc += 1;
-		}
+		batch_insert(inserts, v, true);
 	}
 
 	void lazy_delete(parlay::sequence<int> deletes, parlay::sequence<Tvec_point<T>*> &v){
@@ -312,25 +247,23 @@ struct knn_index{
 
 	}
 
-	void batch_insert(parlay::sequence<int> &inserts, parlay::sequence<Tvec_point<T>*> &v, double base = 2,
-		double max_fraction = .02, bool random_order = true){
+	void batch_insert(parlay::sequence<int> &inserts, parlay::sequence<Tvec_point<T>*> &v, bool random_order = false, double base = 2,
+		double max_fraction = .02){
 		for(int p : inserts){
 			if(p < 0 || p > (int) v.size() || (v[p]->out_nbh[0] != -1 && v[p]->id != medoid->id)){
 				std::cout << "ERROR: invalid or already inserted point " << p << " given to batch_insert" << std::endl;
 				abort();
 			}
 		}
-		// std::cout << "here" << std::endl; 
 		size_t n = v.size();
 		size_t m = inserts.size();
 		size_t inc = 0;
 		size_t count = 0;
-		size_t max_batch_size = static_cast<size_t>(max_fraction*n);
+		size_t max_batch_size = static_cast<size_t>(max_fraction*static_cast<float>(n));
 		parlay::sequence<int> rperm;
 		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(m), time(NULL));
 		else rperm = parlay::tabulate(m, [&] (int i) {return i;});
 		auto shuffled_inserts = parlay::tabulate(m, [&] (size_t i) {return inserts[rperm[i]];});
-		// std::cout << "here1" << std::endl; 
 		while(count < m){
 			size_t floor;
 			size_t ceiling;
@@ -338,19 +271,18 @@ struct knn_index{
 				floor = static_cast<size_t>(pow(base, inc))-1;
 				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), m)-1;
 				count = std::min(static_cast<size_t>(pow(base, inc+1)), m)-1;
-				// std::cout << "here2" << std::endl; 
 			} else{
 				floor = count;
 				ceiling = std::min(count + static_cast<size_t>(max_batch_size), m)-1;
 				count += static_cast<size_t>(max_batch_size);
 			}
-			// std::cout << "here3" << std::endl; 
+			// std::cout << floor << std::endl;
 			// std::cout << ceiling << std::endl;
-			// std::cout << floor << std::endl; 
+			// std::cout << count << std::endl; 
+			// std::cout << std::endl; 
 			parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
-			// std::cout << "here2" << std::endl; 
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				size_t index = shuffled_inserts[i];
 				v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
@@ -360,7 +292,6 @@ struct knn_index{
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
-			// std::cout << "here3" << std::endl; 
 			auto to_flatten = parlay::tabulate(ceiling-floor, [&] (size_t i){
 				int index = shuffled_inserts[i+floor];
 				auto edges = parlay::tabulate(size_of(v[index]->new_nbh), [&] (size_t j){
@@ -373,7 +304,6 @@ struct knn_index{
 			//finally, add the bidirectional edges; if they do not make
 			//the vertex exceed the degree bound, just add them to out_nbhs;
 			//otherwise, use robustPrune on the vertex with user-specified alpha
-			// std::cout << "here4" << std::endl; 
 			parlay::parallel_for(0, grouped_by.size(), [&] (size_t j){
 				auto [index, candidates] = grouped_by[j];
 				int newsize = candidates.size() + size_of(v[index]->out_nbh);
@@ -386,7 +316,6 @@ struct knn_index{
 					synchronize(v[index]);
 				}
 			});
-			// std::cout << "here5" << std::endl; 
 			inc += 1;
 		}
 	}

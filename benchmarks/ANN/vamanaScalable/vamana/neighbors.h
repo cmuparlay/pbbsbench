@@ -40,35 +40,21 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
   parlay::internal::timer t("ANN",report_stats); 
   {
     unsigned d = (v[0]->coordinates).size();
-    std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
-
-    
-    int parts = 10; 
-    size_t n = v.size();
-    size_t m = (size_t) (n/parts);
-    size_t r = m/2; 
-    parlay::sequence<int> inserts = parlay::tabulate(m, [&] (size_t i){return static_cast<int>(n-i-1);});
-    std::cout << "Building with points " << inserts[inserts.size()-1] << " through " << inserts[0] << std::endl; 
+    parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);});
     I.build_index(v, inserts);
-    t.next("Built index");
-    for(int i=parts*2-1; i>1; i--){
-      parlay::sequence<int> delete_list = parlay::tabulate(r, [&] (size_t j){return static_cast<int>(((i)*r)+r-j-1);});
-      std::cout << "Deleting points " << delete_list[delete_list.size()-1] << " through " << delete_list[0] << std::endl; 
-      I.lazy_delete(delete_list, v);
+    int parts = 20;
+    size_t m = v.size()/parts;
+    for(int i=0; i<parts; i++){
+      parlay::sequence<int> indices = parlay::tabulate(m, [&] (size_t j){return static_cast<int>(i*m+j);});
+      I.lazy_delete(indices, v);
       I.consolidate_deletes(v);
-      parlay::sequence<int> insert_list = parlay::tabulate(r, [&] (size_t j){return static_cast<int>(((i)*r)-r-j-1);});
-      std::cout << "Inserting points " << insert_list[insert_list.size()-1] << " through " << insert_list[0] << std::endl; 
-      I.batch_insert(insert_list, v);
+      I.batch_insert(indices, v, true);
     }
-
-    I.check_index(v);
-
     I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
     if(report_stats){
-      //average numbers of nodes searched using beam search
       graph_stats(v);
       query_stats(q);
       t.next("stats");
