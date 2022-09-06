@@ -5,7 +5,7 @@ CHECKFILES = serialMST.o $(BNCHMRK)Check.o
 
 COMMON = 
 
-INCLUDE = -Icommon -Ipbbslib
+INCLUDE = -Icommon
 
 %.o : %.C $(COMMON)
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
