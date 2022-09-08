@@ -40,17 +40,21 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
   parlay::internal::timer t("ANN",report_stats); 
   {
     unsigned d = (v[0]->coordinates).size();
-    std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
-    I.build_index(v, true);
-    t.next("Built index");
+    parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);});
+    I.build_index(v, inserts);
+    int parts = 20;
+    size_t m = v.size()/parts;
+    for(int i=0; i<parts; i++){
+      parlay::sequence<int> indices = parlay::tabulate(m, [&] (size_t j){return static_cast<int>(i*m+j);});
+      I.lazy_delete(indices, v);
+      I.consolidate_deletes(v);
+      I.batch_insert(indices, v, true);
+    }
     I.searchNeighbors(q, v, beamSizeQ, k);
-    float query_time = t.next_time();
-    std::cout << "num queries = " << q.size() << std::endl;
-    std::cout << "query throughput = " << (q.size()/query_time) << "/second" <<std::endl;
+    t.next("Found nearest neighbors");
     if(report_stats){
-      //average numbers of nodes searched using beam search
       graph_stats(v);
       query_stats(q);
       t.next("stats");
@@ -67,7 +71,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
     std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
-    I.build_index(v);
+    I.build_index(v, parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);}));
     t.next("Built index");  
     if(report_stats){
       graph_stats(v);
@@ -75,3 +79,13 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
     }
   };
 }
+
+
+    // int parts = 10;
+    // size_t m = (size_t) (v.size()/parts);
+    // for(int i=0; i<parts; i++){
+    //   parlay::sequence<int> delete_list = parlay::tabulate(m, [&] (size_t j){return static_cast<int>(parts*i+j);});
+    //   I.lazy_delete(delete_list, v);
+    //   I.consolidate_deletes(v);
+    //   I.batch_insert(delete_list, v, true);
+    // }

@@ -38,9 +38,9 @@ template<typename T>
 struct knn_index{
 	int maxDeg;
 	int beamSize;
-	// int k;
 	double r2_alpha; //alpha parameter for round 2 of robustPrune
 	unsigned d;
+	std::set<int> delete_set; 
 	using tvec_point = Tvec_point<T>;
 	using fvec_point = Tvec_point<float>;
 	tvec_point* medoid;
@@ -115,12 +115,15 @@ struct knn_index{
 
 	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
 	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
-	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha) {
+	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha, bool add = true) {
     // add out neighbors of p to the candidate set.
-		for (size_t i=0; i<size_of(p->out_nbh); i++) {
-			candidates.push_back(std::make_pair(p->out_nbh[i],
-				distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
-		}
+    if(add){
+    	for (size_t i=0; i<size_of(p->out_nbh); i++) {
+				candidates.push_back(std::make_pair(p->out_nbh[i],
+					distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
+			}
+    }
+		
 
 		// Sort the candidate set in reverse order according to distance from p.
 		auto less = [&] (pid a, pid b) {return a.second < b.second;};
@@ -157,80 +160,146 @@ struct knn_index{
 
 	//wrapper to allow calling robustPrune on a sequence of candidates 
 	//that do not come with precomputed distances
-	void robustPrune(Tvec_point<T>* p, parlay::sequence<int> candidates, parlay::sequence<Tvec_point<T>*> &v, double alpha){
+	void robustPrune(Tvec_point<T>* p, parlay::sequence<int> candidates, parlay::sequence<Tvec_point<T>*> &v, double alpha, bool add = true){
     parlay::sequence<pid> cc;
     cc.reserve(candidates.size() + size_of(p->out_nbh));
     for (size_t i=0; i<candidates.size(); ++i) {
       cc.push_back(std::make_pair(candidates[i], distance(v[candidates[i]]->coordinates.begin(), p->coordinates.begin(), d)));
     }
-    return robustPrune(p, std::move(cc), v, alpha);
+    return robustPrune(p, std::move(cc), v, alpha, add);
 	}
 
-  // void sort_out(Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v) {
-  //   using pid = std::pair<int, float>;
-  //   int degree = size_of(p->out_nbh);
-  //   auto less = [&] (pid a, pid b) {return a.second < b.second;};
-  //   auto x = parlay::tabulate(degree, [&] (int i) {
-  // 		return pid(p->out_nbh[i], 
-  // 			   distance(p->coordinates.begin(), v[p->out_nbh[i]]->coordinates.begin(), d));}, 1000);
-  //   parlay::sort_inplace(x, less);
-  //   parlay::parallel_for(0,degree, [&] (int i) {
-  // 				     p->out_nbh[i] = x[i].first;}, 1000);
-  // }
-  
-	void build_index(parlay::sequence<Tvec_point<T>*> &v, bool from_empty = true, bool two_pass = true){
+	void build_index(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<int> inserts){
 		clear(v);
-		//populate with random edges
-		// if(not from_empty) random_index(v, maxDeg);
-		//find the medoid, which each beamSearch will begin from
 		find_approx_medoid(v);
-		build_index_inner(v, 1.0, 2, .1);
-		if(two_pass) build_index_inner(v, r2_alpha, 2, .1);
+		batch_insert(inserts, v, true);
 	}
 
-	//executes the index build routine from the DiskANN paper 
-	//uses batches and synchronization to avoid locks
-	//alpha is the alpha value for the RobustPrune routine
-	//base is the exponent base for the batch doubling
-	//max_fraction is the max fraction of the input that can be used for a batch
-	void build_index_inner(parlay::sequence<Tvec_point<T>*> &v, double alpha = 1.0, double base = 2,
-		double max_fraction = 1.0, bool random_order = true){
+	void lazy_delete(parlay::sequence<int> deletes, parlay::sequence<Tvec_point<T>*> &v){
+		for(int p : deletes){
+			if(p < 0 || p > (int) v.size() ){
+				std::cout << "ERROR: invalid point " << p << " given to lazy_delete" << std::endl; 
+				abort();
+			}
+			if(p != medoid->id) delete_set.insert(p);
+			else std::cout << "Deleting medoid not permitted; continuing" << std::endl; 
+		} 
+	}
+
+	void lazy_delete(int p, parlay::sequence<Tvec_point<T>*> &v){
+		if(p < 0 || p > (int) v.size()){
+			std::cout << "ERROR: invalid point " << p << " given to lazy_delete" << std::endl; 
+			abort();
+		}
+		if(p == medoid->id){
+			std::cout << "Deleting medoid not permitted; continuing" << std::endl; 
+			return;
+		} 
+		delete_set.insert(p);
+	}
+
+	void consolidate_deletes(parlay::sequence<Tvec_point<T>*> &v){
+		//clear deleted neighbors out of delete set for preprocessing
+
+		parlay::parallel_for(0, v.size(), [&] (size_t i){
+			if(delete_set.find(i) != delete_set.end()){
+				parlay::sequence<int> new_edges; 
+				for(int j=0; j<size_of(v[i]->out_nbh); j++){
+					if(delete_set.find(v[i]->out_nbh[j]) == delete_set.end()) new_edges.push_back(v[i]->out_nbh[j]);
+				}
+				if(new_edges.size() < size_of(v[i]->out_nbh)) add_out_nbh(new_edges, v[i]); 
+			}
+		});
+
+		parlay::parallel_for(0, v.size(), [&] (size_t i){
+			if(delete_set.find(i) == delete_set.end() && size_of(v[i]->out_nbh) != 0){
+				std::set<int> new_edges;
+				bool modify = false;
+				for(int j=0; j<size_of(v[i]->out_nbh); j++){
+					if(delete_set.find(v[i]->out_nbh[j]) == delete_set.end()){
+						new_edges.insert(v[i]->out_nbh[j]);
+					} else{
+						modify = true;
+						int index = v[i]->out_nbh[j];
+						for(int k=0; k<size_of(v[index]->out_nbh); k++) new_edges.insert(v[index]->out_nbh[k]);
+					}
+				}
+				//TODO only prune if overflow happens
+				//TODO modify in separate step with new memory initialized in one block
+				if(modify){ 
+					parlay::sequence<int> candidates;
+					for(int j : new_edges) candidates.push_back(j);
+					parlay::sequence<int> new_neighbors(maxDeg, -1);
+					v[i]->new_nbh = parlay::make_slice(new_neighbors.begin(), new_neighbors.end());
+					robustPrune(v[i], candidates, v, r2_alpha, false);
+					synchronize(v[i]);
+				}
+				
+			} 
+		});
+		parlay::parallel_for(0, v.size(), [&] (size_t i){
+			if(delete_set.find(i) != delete_set.end()){
+				clear(v[i]);
+			} 
+		});
+ 
+		delete_set.clear();
+
+	}
+
+	void batch_insert(parlay::sequence<int> &inserts, parlay::sequence<Tvec_point<T>*> &v, bool random_order = false, double base = 2,
+		double max_fraction = .02){
+		for(int p : inserts){
+			if(p < 0 || p > (int) v.size() || (v[p]->out_nbh[0] != -1 && v[p]->id != medoid->id)){
+				std::cout << "ERROR: invalid or already inserted point " << p << " given to batch_insert" << std::endl;
+				abort();
+			}
+		}
 		size_t n = v.size();
+		size_t m = inserts.size();
 		size_t inc = 0;
-		parlay::sequence<int> rperm;
-		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(n)); //, time(NULL));
-		else rperm = parlay::tabulate(v.size(), [&] (int i) {return i;});
 		size_t count = 0;
-		while(count < n){
+		size_t max_batch_size = static_cast<size_t>(max_fraction*static_cast<float>(n));
+		parlay::sequence<int> rperm;
+		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(m), time(NULL));
+		else rperm = parlay::tabulate(m, [&] (int i) {return i;});
+		auto shuffled_inserts = parlay::tabulate(m, [&] (size_t i) {return inserts[rperm[i]];});
+		while(count < m){
 			size_t floor;
 			size_t ceiling;
-			if(pow(base,inc) <= max_fraction*n){
+			if(pow(base,inc) <= max_batch_size){
 				floor = static_cast<size_t>(pow(base, inc))-1;
-				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
-				count = std::min(static_cast<size_t>(pow(base, inc+1)), n)-1;
+				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), m)-1;
+				count = std::min(static_cast<size_t>(pow(base, inc+1)), m)-1;
 			} else{
 				floor = count;
-				ceiling = std::min(count + static_cast<size_t>(max_fraction*n), n)-1;
-				count += static_cast<size_t>(max_fraction*n);
+				ceiling = std::min(count + static_cast<size_t>(max_batch_size), m)-1;
+				count += static_cast<size_t>(max_batch_size);
 			}
+			// std::cout << floor << std::endl;
+			// std::cout << ceiling << std::endl;
+			// std::cout << count << std::endl; 
+			// std::cout << std::endl; 
 			parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
-				v[rperm[i]]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
-				parlay::sequence<pid> visited = (beam_search(v[rperm[i]], v, medoid, beamSize, d)).second;
-				if(report_stats) v[rperm[i]]->cnt = visited.size();
-				robustPrune(v[rperm[i]], visited, v, alpha);
+				size_t index = shuffled_inserts[i];
+				v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
+				parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d)).second;
+				if(report_stats) v[index]->cnt = visited.size();
+				robustPrune(v[index], visited, v, r2_alpha);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values
 			auto to_flatten = parlay::tabulate(ceiling-floor, [&] (size_t i){
-				auto edges = parlay::tabulate(size_of(v[rperm[i+floor]]->new_nbh), [&] (size_t j){
-					return std::make_pair((v[rperm[i+floor]]->new_nbh)[j], rperm[i+floor]);
+				int index = shuffled_inserts[i+floor];
+				auto edges = parlay::tabulate(size_of(v[index]->new_nbh), [&] (size_t j){
+					return std::make_pair((v[index]->new_nbh)[j], index);
 				});
 				return edges;
 			});
-			parlay::parallel_for(floor, ceiling, [&] (size_t i) {synchronize(v[rperm[i]]);} );
+			parlay::parallel_for(floor, ceiling, [&] (size_t i) {synchronize(v[shuffled_inserts[i]]);} );
 			auto grouped_by = parlay::group_by_key(parlay::flatten(to_flatten));
 			//finally, add the bidirectional edges; if they do not make
 			//the vertex exceed the degree bound, just add them to out_nbhs;
@@ -243,13 +312,39 @@ struct knn_index{
 				} else{
 					parlay::sequence<int> new_out_2(maxDeg, -1);
 					v[index]->new_nbh=parlay::make_slice(new_out_2.begin(), new_out_2.begin()+maxDeg);
-					robustPrune(v[index], candidates, v, alpha);
+					robustPrune(v[index], candidates, v, r2_alpha);  
 					synchronize(v[index]);
 				}
 			});
 			inc += 1;
 		}
 	}
+
+	void batch_insert(int p, parlay::sequence<Tvec_point<T>*> &v){
+		parlay::sequence<int> inserts;
+		inserts.push_back(p);
+		batch_insert(inserts, v, true);
+	}
+
+	void check_index(parlay::sequence<Tvec_point<T>*> &v){
+		parlay::parallel_for(0, v.size(), [&] (size_t i){
+      if(v[i]->id > 1000000 && v[i]->id != medoid->id){
+      	if(size_of(v[i]->out_nbh) != 0) {
+      		std::cout << "ERROR : deleted point " << i << " still in graph" << std::endl; 
+      		abort();
+      	}
+      }else{
+      	for(int j=0; j<size_of(v[i]->out_nbh); j++){
+      		int nbh = v[i]->out_nbh[j];
+      		if(nbh > 1000000 && nbh != medoid->id){
+      			std::cout << "ERROR : point " << i << " contains deleted neighbor " << nbh << std::endl; 
+      			abort();
+      		}
+      	}
+      }
+    });
+	}
+
 
 	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k){
 		searchFromSingle(q, v, beamSizeQ, k, d, medoid);
