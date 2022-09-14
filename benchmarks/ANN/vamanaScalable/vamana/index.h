@@ -24,7 +24,6 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/random.h"
-#include "../utils/seq_allocator.h"
 #include "../utils/indexTools.h"
 #include "common/geometry.h"
 #include <random>

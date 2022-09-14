@@ -121,7 +121,7 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* medoid, int beamSize, unsigned d, int k=0) {
   // initialize data structures
   auto vvc = v[0]->coordinates.begin();
-  int stride = v[1]->coordinates.begin() - v[0]->coordinates.begin();
+  long stride = v[1]->coordinates.begin() - v[0]->coordinates.begin();
   std::vector<pid> visited;
   parlay::sequence<pid> frontier;
   auto less = [&](pid a, pid b) {
