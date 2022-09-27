@@ -1,0 +1,28 @@
+Recall 1@1: 0.9952
+Recall 2@2: 0.9937
+Recall 10@10: 0.98699
+Recall 50@50: 0.971374
+Recall 100@100: 0.957901
+Recall 200@200: 0.937127
+1 : -a 1000 -R 3 -L 30 -Q 250 -k 200 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile156307_931571 : '6638.375'
+HCNNG : 0 : weighted time, min=6638.375 median=6638.375 mean=6638.375
+TEST TERMINATED ABNORMALLY:
+[./neighbors -a 1000 -R 3 -L 30 -Q 250 -k 200 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile636391_572456 /ssd1/ANN/sift/sift500M.bvecs
+Killed
+]
+Recall 1@1: 0.9856
+Recall 2@2: 0.98415
+Recall 10@10: 0.97506
+Recall 50@50: 0.950712
+Recall 100@100: 0.932407
+Recall 200@200: 0.906588
+1 : -a 1000 -R 3 -L 30 -Q 250 -k 200 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile358852_641128 : '38277.591'
+HCNNG : 0 : weighted time, min=38277.591 median=38277.591 mean=38277.591
+Recall 1@1: 0.9815
+Recall 2@2: 0.97875
+Recall 10@10: 0.96643
+Recall 50@50: 0.939256
+Recall 100@100: 0.918889
+Recall 200@200: 0.890647
+1 : -a 1000 -R 3 -L 30 -Q 250 -k 200 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -r 1 -o /tmp/ofile811220_863179 : '78594.891'
+HCNNG : 0 : weighted time, min=78594.891 median=78594.891 mean=78594.891

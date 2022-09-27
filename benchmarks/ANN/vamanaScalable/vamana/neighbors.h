@@ -44,14 +44,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg, int beamSize, i
     findex I(maxDeg, beamSize, alpha, d);
     parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);});
     I.build_index(v, inserts);
-    int parts = 20;
-    size_t m = v.size()/parts;
-    for(int i=0; i<parts; i++){
-      parlay::sequence<int> indices = parlay::tabulate(m, [&] (size_t j){return static_cast<int>(i*m+j);});
-      I.lazy_delete(indices, v);
-      I.consolidate_deletes(v);
-      I.batch_insert(indices, v, true);
-    }
+    t.next("Build index");
     I.searchNeighbors(q, v, beamSizeQ, k);
     t.next("Found nearest neighbors");
     if(report_stats){

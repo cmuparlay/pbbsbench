@@ -59,36 +59,21 @@ struct cluster{
     		tvec_point* first = v[f];
     		tvec_point* second = v[s];
 
-    		auto flags_closer_first = parlay::tabulate(active_indices.size(), [&] (size_t ind) {
-    			tvec_point* p = v[ind];
-		      	float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-		      	float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
-		      	return dist_first <= dist_second;
-    		});
+    		// Split points based on which of the two points are closer.
+		    auto closer_first = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
+		      tvec_point* p = v[ind];
+		      float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
+		      float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
+		      return dist_first <= dist_second;
 
-    		auto closer_first = parlay::pack(active_indices, flags_closer_first);
+		    });
 
-    		auto flags_closer_second = parlay::tabulate(active_indices.size(), [&] (size_t i) {
-    			return not flags_closer_first[i];
-    		});
-
-    		auto closer_second = parlay::pack(active_indices, flags_closer_second);
-
-    		// // Split points based on which of the two points are closer.
-		    // auto closer_first = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
-		    //   tvec_point* p = v[ind];
-		    //   float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-		    //   float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
-		    //   return dist_first <= dist_second;
-
-		    // });
-
-		    // auto closer_second = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
-		    //   tvec_point* p = v[ind];
-		    //   float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-		    //   float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
-		    //   return dist_second < dist_first;
-		    // });
+		    auto closer_second = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
+		      tvec_point* p = v[ind];
+		      float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
+		      float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
+		      return dist_second < dist_first;
+		    });
 
 		    auto left_rnd = rnd.fork(0);
 		    auto right_rnd = rnd.fork(1);

@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
   if (k > 1000 || k < 1) P.badArgument();
   double alpha = P.getOptionDoubleValue("-a", 1.2);
   double delta = P.getOptionDoubleValue("-d", .01);
-  int HCNNG = P.getOptionIntValue("-b", 0);
+  int algoOpt = P.getOptionIntValue("-b", 0);
 
   bool fvecs = true;
   std::string filename = std::string(iFile);
@@ -124,7 +124,8 @@ int main(int argc, char* argv[]) {
   if(filename[n-5] == 'b') fvecs = false;
 
   int maxDeg;
-  if(HCNNG != 0) maxDeg = R*L;
+  if(algoOpt == 1) maxDeg = L*R;
+  else if(algoOpt == 2) maxDeg = 2*R;
   else maxDeg = R;
 
 

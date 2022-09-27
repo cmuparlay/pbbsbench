@@ -67,52 +67,7 @@ void print_seq(parlay::sequence<int> seq) {
   std::cout << "]" << std::endl;
 }
 
-// takes in two sorted sequences and returns a sorted union
-template <typename Seq>
-parlay::sequence<pid> seq_union(Seq& P,
-                                parlay::sequence<pid>& Q) {
-  auto less = [&](pid a, pid b) { return a.second < b.second; };
-  pid* first1 = P.begin();
-  pid* last1 = P.end();
-  pid* first2 = Q.begin();
-  pid* last2 = Q.end();
-  parlay::sequence<pid> result = parlay::sequence<pid>();
-  result.reserve(P.size()+Q.size());
-  while (true) {
-    if (first1 == last1) {
-      while (first2 != last2) {
-        result.push_back(*first2);
-        ++first2;
-      }
-      return result;
-    } else if (first2 == last2) {
-      while (first1 != last1) {
-        result.push_back(*first1);
-        ++first1;
-      }
-      return result;
-    }
-    if (less(*first1, *first2)) {
-      result.push_back(*first1);
-      ++first1;
-    } else if (less(*first2, *first1)) {
-      result.push_back(*first2);
-      ++first2;
-    } else {
-      if (first1->first == first2->first) {
-        result.push_back(*first1);
-        ++first1;
-        ++first2;
-      } else {
-        result.push_back(*first1);
-        result.push_back(*first2);
-        ++first1;
-        ++first2;
-      }
-    }
-  }
-  return result;
-}
+
 
 // updated version by Guy
 template <typename T>
