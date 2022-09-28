@@ -258,7 +258,7 @@ struct knn_index{
 		size_t m = inserts.size();
 		size_t inc = 0;
 		size_t count = 0;
-		size_t max_batch_size = static_cast<size_t>(max_fraction*static_cast<float>(n));
+		size_t max_batch_size = std::min(static_cast<size_t>(max_fraction*static_cast<float>(n)), 1000000ul);
 		parlay::sequence<int> rperm;
 		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(m), time(NULL));
 		else rperm = parlay::tabulate(m, [&] (int i) {return i;});
@@ -345,7 +345,7 @@ struct knn_index{
 	}
 
 
-	void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k){
-		searchFromSingle(q, v, beamSizeQ, k, d, medoid);
-	}
+  void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k, float cut){
+    searchFromSingle(q, v, beamSizeQ, k, d, medoid, cut);
+  }
 };

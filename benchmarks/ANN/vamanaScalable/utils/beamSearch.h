@@ -73,7 +73,7 @@ void print_seq(parlay::sequence<int> seq) {
 template <typename T>
 std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
-    Tvec_point<T>* medoid, int beamSize, unsigned d, int k=0) {
+    Tvec_point<T>* medoid, int beamSize, unsigned d, int k=0, float cut=1.14) {
   // initialize data structures
   auto vvc = v[0]->coordinates.begin();
   long stride = v[1]->coordinates.begin() - v[0]->coordinates.begin();
@@ -113,7 +113,7 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
     size_t f_size = std::min<size_t>(beamSize, f_iter - new_frontier.begin());
     if (k > 0 && f_size > k) 
       f_size = (std::upper_bound(new_frontier.begin(), new_frontier.begin() + f_size,
-				std::pair{0, 1.14 * new_frontier[k].second}, less)
+				std::pair{0, cut * new_frontier[k].second}, less)
 		- new_frontier.begin());
     frontier = parlay::tabulate(f_size, [&] (long i) {return new_frontier[i];});
     visited.insert(std::upper_bound(visited.begin(), visited.end(), currentPid, less), currentPid);
@@ -213,7 +213,7 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
 template <typename T>
 void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
-                      unsigned d, Tvec_point<T>* medoid) {
+                      unsigned d, Tvec_point<T>* medoid, float cut) {
   if ((k + 1) > beamSizeQ) {
     std::cout << "Error: beam search parameter Q = " << beamSizeQ
               << " same size or smaller than k = " << k << std::endl;
@@ -224,7 +224,7 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
     parlay::sequence<pid> beamElts;
     parlay::sequence<pid> visitedElts;
     std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-    pairElts = beam_search(q[i], v, medoid, beamSizeQ, d, k);
+    pairElts = beam_search(q[i], v, medoid, beamSizeQ, d, k, cut);
     beamElts = pairElts.first;
     visitedElts = pairElts.second;
     // the first element of the frontier may be the point itself

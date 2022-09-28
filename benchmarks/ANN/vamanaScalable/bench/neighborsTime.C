@@ -64,8 +64,11 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
 }
 
 template<typename T>
-void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_point<T>> &qpoints,
-  int k, int rounds, int maxDeg, int beamSize, int beamSizeQ, double delta, double alpha, char* outFile) 
+void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
+		   parlay::sequence<Tvec_point<T>> &qpoints,
+		   int k, int rounds, int maxDeg, int beamSize,
+		   int beamSizeQ, double delta, double alpha, char* outFile,
+		   parlay::sequence<ivec_point>& groundTruth) 
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -78,7 +81,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts, parlay::sequence<Tvec_p
     time_loop(rounds, 0, 
       [&] () {},
       [&] () {
-        ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, alpha, delta, qpts); 
+        ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth); 
       },
       [&] () {});
 
@@ -105,6 +108,7 @@ int main(int argc, char* argv[]) {
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   char* qFile = P.getOptionValue("-q");
+  char* cFile = P.getOptionValue("-c");
   int R = P.getOptionIntValue("-R", 5);
   if (R < 1) P.badArgument();
   int L = P.getOptionIntValue("-L", 10);
@@ -128,13 +132,15 @@ int main(int argc, char* argv[]) {
   else if(algoOpt == 2) maxDeg = 2*R;
   else maxDeg = R;
 
-
+  parlay::sequence<ivec_point> groundTruth;
+  if (cFile != nullptr)	groundTruth = parse_ivecs(cFile);
 
   if(fvecs){ //vectors are floating point coordinates
     parlay::sequence<Tvec_point<float>> points = parse_fvecs(iFile, maxDeg);
     if(qFile != NULL){
       parlay::sequence<Tvec_point<float>> qpoints = parse_fvecs(qFile, 0);
-      timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q, delta, alpha, oFile);
+      timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q,
+			   delta, alpha, oFile, groundTruth);
     }
     else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile);
   } 
@@ -142,7 +148,8 @@ int main(int argc, char* argv[]) {
     parlay::sequence<Tvec_point<uint8_t>> points = parse_bvecs(iFile, maxDeg);
     if(qFile != NULL){
       parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_bvecs(qFile, 0);
-      timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q, delta, alpha, oFile);
+      timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q, delta,
+			     alpha, oFile, groundTruth);
     }
     else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile);}  
 }
