@@ -168,10 +168,15 @@ struct knn_index{
     return robustPrune(p, std::move(cc), v, alpha, add);
 	}
 
-	void build_index(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<int> inserts){
+	void build_index(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<int> inserts, bool two_pass=false){
 		clear(v);
 		find_approx_medoid(v);
-		batch_insert(inserts, v, true);
+		if(two_pass){
+			std::cout << "Starting first pass" << std::endl; 
+			batch_insert(inserts, v, true, 1.0, 2, .02, two_pass);
+			std::cout << "Finished first pass" << std::endl;
+		} 
+		batch_insert(inserts, v, true, r2_alpha, 2, .02,  two_pass);
 	}
 
 	void lazy_delete(parlay::sequence<int> deletes, parlay::sequence<Tvec_point<T>*> &v){
@@ -246,12 +251,15 @@ struct knn_index{
 
 	}
 
-	void batch_insert(parlay::sequence<int> &inserts, parlay::sequence<Tvec_point<T>*> &v, bool random_order = false, double base = 2,
-		double max_fraction = .02){
-		for(int p : inserts){
-			if(p < 0 || p > (int) v.size() || (v[p]->out_nbh[0] != -1 && v[p]->id != medoid->id)){
-				std::cout << "ERROR: invalid or already inserted point " << p << " given to batch_insert" << std::endl;
-				abort();
+	void batch_insert(parlay::sequence<int> &inserts, parlay::sequence<Tvec_point<T>*> &v, bool random_order = false, double alpha = 1.2, double base = 2,
+		double max_fraction = .02, bool two_pass = false){
+		std::cout << "alpha " << alpha << std::endl; 
+		if(two_pass == false){
+			for(int p : inserts){
+				if(p < 0 || p > (int) v.size() || (v[p]->out_nbh[0] != -1 && v[p]->id != medoid->id)){
+					std::cout << "ERROR: invalid or already inserted point " << p << " given to batch_insert" << std::endl;
+					abort();
+				}
 			}
 		}
 		size_t n = v.size();
@@ -260,7 +268,7 @@ struct knn_index{
 		size_t count = 0;
 		size_t max_batch_size = std::min(static_cast<size_t>(max_fraction*static_cast<float>(n)), 1000000ul);
 		parlay::sequence<int> rperm;
-		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(m), time(NULL));
+		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(m));
 		else rperm = parlay::tabulate(m, [&] (int i) {return i;});
 		auto shuffled_inserts = parlay::tabulate(m, [&] (size_t i) {return inserts[rperm[i]];});
 		while(count < m){
@@ -287,7 +295,7 @@ struct knn_index{
 				v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
 				parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d)).second;
 				if(report_stats) v[index]->cnt = visited.size();
-				robustPrune(v[index], visited, v, r2_alpha);
+				robustPrune(v[index], visited, v, alpha);
 			});
 			//make each edge bidirectional by first adding each new edge
 			//(i,j) to a sequence, then semisorting the sequence by key values

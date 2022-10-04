@@ -36,24 +36,96 @@
 extern bool report_stats;
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int MSTdeg, int num_clusters, int beamSizeQ, double cluster_size, double dummy2,
-  parlay::sequence<Tvec_point<T>*> &q) {
-  parlay::internal::timer t("ANN",report_stats); 
-  {
-    unsigned d = (v[0]->coordinates).size();
-    using findex = hcnng_index<T>;
-    findex I(MSTdeg, d);
-    I.build_index(v, num_clusters, cluster_size);
-    t.next("Built index");
-    beamSearchRandom(q, v, beamSizeQ, k, d);
-    t.next("Found nearest neighbors");
-    if(report_stats){
-      graph_stats(v);
-      query_stats(q);
-      t.next("stats");
+void checkRecall(hcnng_index<T>& I,
+		  parlay::sequence<Tvec_point<T>*> &v,
+		  parlay::sequence<Tvec_point<T>*> &q,
+		  parlay::sequence<ivec_point> groundTruth,
+		  int k,
+		  int beamQ,
+		  float cut,
+      unsigned d) {
+  parlay::internal::timer t;
+  int r = 10;
+  beamSearchRandom(q, v, beamQ, k, d, cut);
+  t.next_time();
+  beamSearchRandom(q, v, beamQ, k, d, cut);
+  float query_time = t.next_time();
+  float recall = 0.0;
+  if (groundTruth.size() > 0) {
+    size_t n = q.size();
+    int numCorrect = 0;
+    for(int i=0; i<n; i++){
+      std::set<int> reported_nbhs;
+      for(int l=0; l<r; l++)
+	reported_nbhs.insert((q[i]->ngh)[l]);
+      for(int l=0; l<r; l++)
+	if (reported_nbhs.find((groundTruth[i].coordinates)[l])
+	    != reported_nbhs.end())
+	  numCorrect += 1;
     }
-  };
+    recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
+  }
+  std::cout << "k = " << k << ", Q = " << beamQ << ", cut = " << cut
+	    << ", throughput = " << (q.size()/query_time) << "/second";
+  if (groundTruth.size() > 0)
+    std::cout << ", recall = " << recall << std::endl;
+  else std::cout << std::endl;
 }
+
+template<typename T>
+void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
+	 int num_clusters, int beamSizeQ, double cluster_size, double dummy,
+	 parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth) {
+
+  parlay::internal::timer t("ANN",report_stats); 
+  unsigned d = (v[0]->coordinates).size();
+  using findex = hcnng_index<T>;
+  findex I(mstDeg, d);
+  parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
+					    return static_cast<int>(i);});
+  I.build_index(v, num_clusters, cluster_size);
+    t.next("Built index");
+  std::cout << "num queries = " << q.size() << std::endl;
+  std::vector<int> beams = {32, 50, 75, 125, 500};
+  std::vector<int> allk = {10, 15, 20, 30, 50, 100};
+  std::vector<float> cuts = {1.1, 1.15, 1.2, 1.25};
+  for (float cut : cuts)
+    for (float Q : beams) 
+      checkRecall(I, v, q, groundTruth, 10, Q, cut, d);
+
+  std::cout << " ... " << std::endl;
+
+  for (float cut : cuts)
+    for (int kk : allk)
+      checkRecall(I, v, q, groundTruth, kk, 500, cut, d);
+
+  beamSearchRandom(q, v, beamSizeQ, k, d, 1.14);
+  if(report_stats){
+    graph_stats(v);
+    query_stats(q);
+    t.next("stats");
+  }
+}
+
+// template<typename T>
+// void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int MSTdeg, int num_clusters, int beamSizeQ, double cluster_size, double dummy2,
+//   parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth) {
+//   parlay::internal::timer t("ANN",report_stats); 
+//   {
+//     unsigned d = (v[0]->coordinates).size();
+//     using findex = hcnng_index<T>;
+//     findex I(MSTdeg, d);
+//     I.build_index(v, num_clusters, cluster_size);
+//     t.next("Built index");
+//     beamSearchRandom(q, v, beamSizeQ, k, d);
+//     t.next("Found nearest neighbors");
+//     if(report_stats){
+//       graph_stats(v);
+//       query_stats(q);
+//       t.next("stats");
+//     }
+//   };
+// }
 
 
 template<typename T>
