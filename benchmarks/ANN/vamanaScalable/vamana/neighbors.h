@@ -84,7 +84,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   I.build_index(v, inserts);
   t.next("Build index");
   std::cout << "num queries = " << q.size() << std::endl;
-  std::vector<int> beams = {32, 50, 75, 100, 125, 250, 500};
+  std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
   std::vector<int> allk = {10, 15, 20, 30, 50, 100};
   std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
   for (float cut : cuts)

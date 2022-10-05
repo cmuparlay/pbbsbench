@@ -35,7 +35,7 @@ template<typename T>
 int size_of(parlay::slice<T*, T*> nbh){
 	int size = 0;
 	int i=0;
-	while(nbh[i] != -1 && i<nbh.size()) {size++; i++;}
+	while(i<nbh.size() && nbh[i] != -1) {size++; i++;}
 	return size;
 }
 
@@ -51,6 +51,10 @@ void add_nbh(int nbh, Tvec_point<T> *p){
 
 template<typename T>
 void add_out_nbh(parlay::sequence<int> nbh, Tvec_point<T> *p){
+  if (nbh.size() > p->out_nbh.size()) {
+    std::cout << "oversize" << std::endl;
+    abort();
+  }
 	for(int i=0; i<p->out_nbh.size(); i++){
 		p->out_nbh[i] = -1;
 	}

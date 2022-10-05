@@ -90,7 +90,7 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
   frontier.push_back(make_pid(medoid->id));
 
   std::vector<pid> unvisited_frontier(beamSize);
-  parlay::sequence<pid> new_frontier(2*beamSize);
+  parlay::sequence<pid> new_frontier(beamSize + v[0]->out_nbh.size());
   unvisited_frontier[0] = frontier[0];
   int remain = 1;
 
