@@ -132,7 +132,7 @@ struct knn_index{
     // new_nbhs.reserve(maxDeg);
 
     size_t candidate_idx = 0;
-		while (new_nbhs.size() <= maxDeg && candidate_idx < candidates.size()) {
+		while (new_nbhs.size() < maxDeg && candidate_idx < candidates.size()) {
       // Don't need to do modifications.
       int p_star = candidates[candidate_idx].first;
       candidate_idx++;
@@ -173,10 +173,10 @@ struct knn_index{
 		find_approx_medoid(v);
 		if(two_pass){
 			std::cout << "Starting first pass" << std::endl; 
-			batch_insert(inserts, v, true, 1.0, 2, .02, two_pass);
+			batch_insert(inserts, v, true, 1.3, 2, .02, two_pass);
 			std::cout << "Finished first pass" << std::endl;
 		} 
-		batch_insert(inserts, v, true, r2_alpha, 2, .02,  two_pass);
+		batch_insert(inserts, v, true, 1.3, 2, .01,  two_pass);
 	}
 
 	void lazy_delete(parlay::sequence<int> deletes, parlay::sequence<Tvec_point<T>*> &v){

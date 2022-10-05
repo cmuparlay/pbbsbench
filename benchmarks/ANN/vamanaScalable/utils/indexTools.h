@@ -61,6 +61,10 @@ void add_out_nbh(parlay::sequence<int> nbh, Tvec_point<T> *p){
 
 template<typename T>
 void add_new_nbh(parlay::sequence<int> nbh, Tvec_point<T> *p){
+  if (nbh.size() > p->new_nbh.size()) {
+    std::cout << "oversize" << std::endl;
+    abort();
+  }
 	for(int i=0; i<p->new_nbh.size(); i++){
 		p->new_nbh[i] = -1;
 	}

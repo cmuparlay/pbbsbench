@@ -15,7 +15,7 @@ auto convert(const char* infile, const char* outfile) {
 		     return parlay::to_sequence(str.cut(4 + i * (4 + dims), (i+1) * (4 + dims)));});
   parlay::sequence<char> head(8);
   *((int *) head.data()) = n;
-  *((int *) head.data() + 4) = dims;
+  *(((int *) head.data()) + 1) = dims;
   auto strout = parlay::append(head, parlay::flatten(vects));
   parlay::chars_to_file(strout, outfile);
 }
