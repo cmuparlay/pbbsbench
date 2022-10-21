@@ -25,7 +25,7 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "common/geometry.h"
-#include "../utils/cluster.h"
+#include "../utils/clusterEdge.h"
 #include <random>
 #include <set>
 #include <math.h>
@@ -104,8 +104,40 @@ struct hcnng_index{
 		return (N*(N-1) - (N-i)*(N-i-1))/2;
 	}
 
+	//inserts each edge after checking for duplicates
+	static void process_edges(parlay::sequence<tvec_point*> &v, parlay::sequence<edge> edges){
+		int maxDeg = v[1]->out_nbh.begin() - v[0]->out_nbh.begin();
+		auto grouped = parlay::group_by_key(edges);
+		for(auto pair : grouped){
+			auto [index, candidates] = pair;
+			for(auto c : candidates){
+				if(size_of(v[index]->out_nbh) < maxDeg){
+					add_nbh(c, v[index]);
+				}else{
+					remove_edge_duplicates(v[index]);
+					add_nbh(c, v[index]);
+				}
+			}
+		}
+	}
+
+	static void remove_edge_duplicates(tvec_point* p){
+		parlay::sequence<int> points;
+		for(int i=0; i<size_of(p->out_nbh); i++){
+			points.push_back(p->out_nbh[i]);
+		}
+		auto np = parlay::remove_duplicates(points);
+		add_out_nbh(np, p);
+	}
+
+	void remove_all_duplicates(parlay::sequence<tvec_point*> &v){
+		parlay::parallel_for(0, v.size(), [&] (size_t i){
+			remove_edge_duplicates(v[i]);
+		});
+	}
+
 	//parameters dim and K are just to interface with the cluster tree code
-	static parlay::sequence<edge> MSTk(parlay::sequence<tvec_point*> &v, parlay::sequence<size_t> &active_indices, 
+	static void MSTk(parlay::sequence<tvec_point*> &v, parlay::sequence<size_t> &active_indices, 
 		unsigned dim, int K){
 		//preprocessing for Kruskal's
 		int N = active_indices.size();
@@ -141,7 +173,7 @@ struct hcnng_index{
 			}
 		}
 		delete disjset;
-		return MST_edges;
+		process_edges(v, MST_edges);
 	}
 
 
@@ -149,6 +181,7 @@ struct hcnng_index{
 		clear(v); 
 		cluster<T> C(d);
 		C.multiple_clustertrees(v, cluster_size, cluster_rounds, &MSTk, d, maxDeg);
+		remove_all_duplicates(v);
 	}
 	
 };
