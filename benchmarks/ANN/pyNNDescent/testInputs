@@ -8,110 +8,27 @@ oFile = "100M_test.txt"
 
 
 tests = [    
-    # [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
-    #     "-k 5", "-r '[1]'"]
-    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_10M.ivecs", 
-    #     "-a 10 -R 50 -L 40 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],  
-    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-    #     "-R 3 -L 30 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-        "-a 10 -R 30 -L 40 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],   
-    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-    #     "-R 4 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
-    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-    #     "-R 5 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
-    # [1, "siftsmall_base.fvecs", "siftsmall_query.fvecs", "siftsmall_groundtruth.ivecs", 
-    #     "-R 20 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
-    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-    #     "-a 1.4 -R 50 -L 75 -Q 250 -k 200", " -r '[1, 2, 10, 50, 100, 200]'"],
-    # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-    #     "-a 1.4 -R 100 -L 125 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
-     # [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-        # "-a 1.4 -R 200 -L 250 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"]
+        "-a 20 -R 20 -L 1000 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"], 
+	# [1, "sift10M.bvecs", "bigann_query.bvecs", "idx_10M.ivecs", 
+    #     "-a 3000 -R 3 -L 20 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"], 
+	# [1, "sift10M.bvecs", "bigann_query.bvecs", "idx_10M.ivecs", 
+    #     "-a 3000 -R 3 -L 30 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"], 
+  
     ]
 
 
 # tests = [    
 #     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
+#         "-R 3 -L 20 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
 #     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
+#         "-R 3 -L 40 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
 #     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
+#         "-R 3 -L 60 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
 #     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
+#         "-R 3 -L 80 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
 #     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 10 -L 15 -k 10", "-k 10 -r '[1]'"],
-
-
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 20 -L 30 -k 25", "-k 25 -r '[1, 2, 5, 10, 20]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 20 -L 30 -k 25", "-k 25 -r '[1, 2, 5, 10, 20]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 20 -L 30 -k 25", "-k 25 -r '[1, 2, 5, 10, 20]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 20 -L 30 -k 25", "-k 25 -r '[1, 2, 5, 10, 20]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 20 -L 30 -k 25", "-k 25 -r '[1, 2, 5, 10, 20]'"],
-
-
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 30 -L 45 -k 35", "-k 35 -r '[1, 2, 5, 10, 20, 30]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 30 -L 45 -k 35", "-k 35 -r '[1, 2, 5, 10, 20, 30]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 30 -L 45 -k 35", "-k 35 -r '[1, 2, 5, 10, 20, 30]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 30 -L 45 -k 35", "-k 35 -r '[1, 2, 5, 10, 20, 30]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 30 -L 45 -k 35", "-k 35 -r '[1, 2, 5, 10, 20, 30]'"],
-
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 40 -L 60 -k 55", "-k 35 -r '[1, 2, 5, 10, 20, 30, 40, 50]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 40 -L 60 -k 55", "-k 35 -r '[1, 2, 5, 10, 20, 30, 40, 50]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 40 -L 60 -k 55", "-k 35 -r '[1, 2, 5, 10, 20, 30, 40, 50]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 40 -L 60 -k 55", "-k 35 -r '[1, 2, 5, 10, 20, 30, 40, 50]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 40 -L 60 -k 55", "-k 35 -r '[1, 2, 5, 10, 20, 30, 40, 50]'"],
-
-
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50, 70]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50, 70]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50, 70]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50, 70]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 50 -L 75 -k 70", "-k 70 -r '[1, 2, 5, 10, 20, 50, 70]'"],
-
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 75 -L 100 -k 90", "-k 70 -r '[1, 2, 5, 10, 20, 50, 75, 90]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 75 -L 100 -k 90", "-k 70 -r '[1, 2, 5, 10, 20, 50, 75, 90]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 75 -L 100 -k 90", "-k 70 -r '[1, 2, 5, 10, 20, 50, 75, 90]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 75 -L 100 -k 90", "-k 70 -r '[1, 2, 5, 10, 20, 50, 75, 90]'"],
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 75 -L 100 -k 90", "-k 70 -r '[1, 2, 5, 10, 20, 50, 75, 90]'"],
-
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.2 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.4 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.6 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 1.8 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
-#     [1, "sift1M.bvecs", "bigann_query.bvecs", "idx_1M.ivecs", 
-#         "-a 2.0 -R 100 -L 125 -k 100", "-k 100 -r '[1, 2, 5, 10, 20, 50, 75, 100]'"]
-
+#         "-R 3 -L 100 -Q 250 -k 200", "-r '[1, 2, 10, 50, 100, 200]'"],
 #     ]
 
 

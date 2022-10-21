@@ -138,15 +138,12 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
   }
   // use a random shuffle to generate random starting points for each query
   size_t n = v.size();
-  // auto indices =
-  //     parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+  auto indices =
+      parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+  // for(size_t i=0; i<q.size(); i++){
   parlay::parallel_for(0, q.size(), [&](size_t i) {
     parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-    std::random_device rd;    
-    std::mt19937 rng(rd());   
-    std::uniform_int_distribution<int> uni(0,v.size()); 
-    parlay::random rnd(uni(rng));
-    size_t index = rnd.ith_rand(0);
+    size_t index = indices[i];
     Tvec_point<T>* start = v[index];
     parlay::sequence<pid> beamElts;
     parlay::sequence<pid> visitedElts;
@@ -168,6 +165,7 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
     q[i]->ngh = neighbors;
     if (report_stats) q[i]->cnt = visitedElts.size();
   });
+  // }
 }
 
 template <typename T>
@@ -184,7 +182,7 @@ void searchFromSingle(parlay::sequence<Tvec_point<T>*>& q,
     parlay::sequence<pid> beamElts;
     parlay::sequence<pid> visitedElts;
     std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-    pairElts = beam_search(q[i], v, medoid, beamSizeQ, d, k, cut);
+    pairElts = beam_search(q[i], v, medoid, beamSizeQ, d, 0, cut);
     beamElts = pairElts.first;
     visitedElts = pairElts.second;
     // the first element of the frontier may be the point itself

@@ -44,9 +44,10 @@ void checkRecall(knn_index<T>& I,
 		  float cut) {
   parlay::internal::timer t;
   int r = 10;
-  I.searchNeighbors(q, v, beamQ, k, cut);
+  unsigned d = (v[0]->coordinates).size();
+  beamSearchRandom(q, v, beamQ, k, d, cut);
   t.next_time();
-  I.searchNeighbors(q, v, beamQ, k, cut);
+  beamSearchRandom(q, v, beamQ, k, d, cut);
   float query_time = t.next_time();
   float recall = 0.0;
   if (groundTruth.size() > 0) {
@@ -81,7 +82,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   findex I(maxDeg, beamSize, alpha, d);
   parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
 					    return static_cast<int>(i);});
-  I.build_index(v, inserts);
+  I.build_index(v, inserts, true);
   t.next("Build index");
   std::cout << "num queries = " << q.size() << std::endl;
   std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
@@ -117,7 +118,8 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
     std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
-    I.build_index(v, parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);}));
+    I.build_index(v, parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);})
+    );
     t.next("Built index");  
     if(report_stats){
       graph_stats(v);

@@ -173,7 +173,7 @@ struct knn_index{
 		find_approx_medoid(v);
 		if(two_pass){
 		  std::cout << "Starting first pass" << std::endl; 
-		  batch_insert(inserts, v, true, r2_alpha, 2, .02, two_pass);
+		  batch_insert(inserts, v, true, 1.0, 2, .02, two_pass);
 		  std::cout << "Finished first pass" << std::endl;
 		} 
 		batch_insert(inserts, v, true, r2_alpha, 2, .02,  two_pass);

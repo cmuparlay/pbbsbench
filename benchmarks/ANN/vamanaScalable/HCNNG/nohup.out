@@ -283,3 +283,837 @@ cd ../bench; make -s neighborsCheck
 ANN: Built index: 653.1014
 num queries = 10000
 neighbors.sh: line 8: 67082 Segmentation fault      (core dumped) ./neighbors -a 1000 -R 3 -L 30 -k 200 -Q 250 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -o outFile -c /ssd1/ANN/sift/idx_10M.ivecs /ssd1/ANN/sift/sift10M.bvecs
+cd ../bench; make -s neighborsCheck
+ANN: Built index: 21.6241
+num queries = 10000
+k = 10, Q = 32, cut = 1.1, throughput = 5.928e+05/second, recall = 0.7669
+k = 10, Q = 50, cut = 1.1, throughput = 6.238e+05/second, recall = 0.7777
+k = 10, Q = 75, cut = 1.1, throughput = 6.199e+05/second, recall = 0.7781
+k = 10, Q = 125, cut = 1.1, throughput = 6.053e+05/second, recall = 0.7782
+k = 10, Q = 500, cut = 1.1, throughput = 4.863e+05/second, recall = 0.7782
+k = 10, Q = 32, cut = 1.15, throughput = 5.141e+05/second, recall = 0.7943
+k = 10, Q = 50, cut = 1.15, throughput = 4.754e+05/second, recall = 0.8423
+k = 10, Q = 75, cut = 1.15, throughput = 4.401e+05/second, recall = 0.8563
+k = 10, Q = 125, cut = 1.15, throughput = 4.292e+05/second, recall = 0.8583
+k = 10, Q = 500, cut = 1.15, throughput = 3.711e+05/second, recall = 0.8583
+k = 10, Q = 32, cut = 1.2, throughput = 5.554e+05/second, recall = 0.7977
+k = 10, Q = 50, cut = 1.2, throughput = 3.08e+05/second, recall = 0.8616
+k = 10, Q = 75, cut = 1.2, throughput = 3.308e+05/second, recall = 0.8986
+k = 10, Q = 125, cut = 1.2, throughput = 2.911e+05/second, recall = 0.9171
+k = 10, Q = 500, cut = 1.2, throughput = 2.529e+05/second, recall = 0.9197
+k = 10, Q = 32, cut = 1.25, throughput = 5.501e+05/second, recall = 0.798
+k = 10, Q = 50, cut = 1.25, throughput = 3.85e+05/second, recall = 0.8647
+k = 10, Q = 75, cut = 1.25, throughput = 2.989e+05/second, recall = 0.9099
+k = 10, Q = 125, cut = 1.25, throughput = 2.182e+05/second, recall = 0.9456
+k = 10, Q = 500, cut = 1.25, throughput = 1.613e+05/second, recall = 0.9614
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 4.846e+05/second, recall = 0.7782
+k = 15, Q = 500, cut = 1.1, throughput = 3.84e+05/second, recall = 0.8416
+k = 20, Q = 500, cut = 1.1, throughput = 3.16e+05/second, recall = 0.88
+k = 30, Q = 500, cut = 1.1, throughput = 2.345e+05/second, recall = 0.9244
+k = 50, Q = 500, cut = 1.1, throughput = 1.464e+05/second, recall = 0.9624
+k = 100, Q = 500, cut = 1.1, throughput = 6.82e+04/second, recall = 0.9881
+k = 10, Q = 500, cut = 1.15, throughput = 3.513e+05/second, recall = 0.8583
+k = 15, Q = 500, cut = 1.15, throughput = 2.716e+05/second, recall = 0.9071
+k = 20, Q = 500, cut = 1.15, throughput = 2.094e+05/second, recall = 0.9355
+k = 30, Q = 500, cut = 1.15, throughput = 1.561e+05/second, recall = 0.964
+k = 50, Q = 500, cut = 1.15, throughput = 9.103e+04/second, recall = 0.9844
+k = 100, Q = 500, cut = 1.15, throughput = 4.579e+04/second, recall = 0.9953
+k = 10, Q = 500, cut = 1.2, throughput = 2.766e+05/second, recall = 0.9197
+k = 15, Q = 500, cut = 1.2, throughput = 1.89e+05/second, recall = 0.9532
+k = 20, Q = 500, cut = 1.2, throughput = 1.469e+05/second, recall = 0.9702
+k = 30, Q = 500, cut = 1.2, throughput = 1.005e+05/second, recall = 0.9845
+k = 50, Q = 500, cut = 1.2, throughput = 6.206e+04/second, recall = 0.994
+k = 100, Q = 500, cut = 1.2, throughput = 3.94e+04/second, recall = 0.9959
+k = 10, Q = 500, cut = 1.25, throughput = 1.761e+05/second, recall = 0.9614
+k = 15, Q = 500, cut = 1.25, throughput = 1.213e+05/second, recall = 0.9794
+k = 20, Q = 500, cut = 1.25, throughput = 9.417e+04/second, recall = 0.9872
+k = 30, Q = 500, cut = 1.25, throughput = 6.248e+04/second, recall = 0.9936
+k = 50, Q = 500, cut = 1.25, throughput = 4.648e+04/second, recall = 0.9957
+k = 100, Q = 500, cut = 1.25, throughput = 3.671e+04/second, recall = 0.9959
+Average graph out-degree = 15.29
+Max out-degree: 30, Min out-degree: 1
+Max nodes searched = 290, Average nodes searched = 257.8
+ANN: stats: 6.7745
+Parlay time: 28.3988
+
+
+ANN: Built index: 43.0350
+num queries = 10000
+k = 10, Q = 32, cut = 1.1, throughput = 4.864e+05/second, recall = 0.8834
+k = 10, Q = 50, cut = 1.1, throughput = 4.531e+05/second, recall = 0.896
+k = 10, Q = 75, cut = 1.1, throughput = 4.573e+05/second, recall = 0.8967
+k = 10, Q = 125, cut = 1.1, throughput = 4.582e+05/second, recall = 0.8967
+k = 10, Q = 500, cut = 1.1, throughput = 3.787e+05/second, recall = 0.8967
+k = 10, Q = 32, cut = 1.15, throughput = 4.193e+05/second, recall = 0.8967
+k = 10, Q = 50, cut = 1.15, throughput = 3.42e+05/second, recall = 0.9349
+k = 10, Q = 75, cut = 1.15, throughput = 3.152e+05/second, recall = 0.9476
+k = 10, Q = 125, cut = 1.15, throughput = 3.048e+05/second, recall = 0.9504
+k = 10, Q = 500, cut = 1.15, throughput = 2.699e+05/second, recall = 0.9504
+k = 10, Q = 32, cut = 1.2, throughput = 3.549e+05/second, recall = 0.8979
+k = 10, Q = 50, cut = 1.2, throughput = 3.06e+05/second, recall = 0.942
+k = 10, Q = 75, cut = 1.2, throughput = 2.481e+05/second, recall = 0.9651
+k = 10, Q = 125, cut = 1.2, throughput = 2.068e+05/second, recall = 0.9779
+k = 10, Q = 500, cut = 1.2, throughput = 1.754e+05/second, recall = 0.9805
+k = 10, Q = 32, cut = 1.25, throughput = 4.233e+05/second, recall = 0.898
+k = 10, Q = 50, cut = 1.25, throughput = 3.057e+05/second, recall = 0.9427
+k = 10, Q = 75, cut = 1.25, throughput = 2.223e+05/second, recall = 0.9678
+k = 10, Q = 125, cut = 1.25, throughput = 1.609e+05/second, recall = 0.9854
+k = 10, Q = 500, cut = 1.25, throughput = 1.088e+05/second, recall = 0.9935
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 3.888e+05/second, recall = 0.8967
+k = 15, Q = 500, cut = 1.1, throughput = 2.887e+05/second, recall = 0.937
+k = 20, Q = 500, cut = 1.1, throughput = 2.359e+05/second, recall = 0.9583
+k = 30, Q = 500, cut = 1.1, throughput = 1.708e+05/second, recall = 0.9789
+k = 50, Q = 500, cut = 1.1, throughput = 1.073e+05/second, recall = 0.9922
+k = 100, Q = 500, cut = 1.1, throughput = 5.405e+04/second, recall = 0.9986
+k = 10, Q = 500, cut = 1.15, throughput = 2.411e+05/second, recall = 0.9504
+k = 15, Q = 500, cut = 1.15, throughput = 1.97e+05/second, recall = 0.9741
+k = 20, Q = 500, cut = 1.15, throughput = 1.549e+05/second, recall = 0.9845
+k = 30, Q = 500, cut = 1.15, throughput = 1.071e+05/second, recall = 0.9934
+k = 50, Q = 500, cut = 1.15, throughput = 6.738e+04/second, recall = 0.9982
+k = 100, Q = 500, cut = 1.15, throughput = 3.877e+04/second, recall = 0.9995
+k = 10, Q = 500, cut = 1.2, throughput = 1.895e+05/second, recall = 0.9805
+k = 15, Q = 500, cut = 1.2, throughput = 1.362e+05/second, recall = 0.9912
+k = 20, Q = 500, cut = 1.2, throughput = 9.506e+04/second, recall = 0.9954
+k = 30, Q = 500, cut = 1.2, throughput = 7.214e+04/second, recall = 0.9984
+k = 50, Q = 500, cut = 1.2, throughput = 4.677e+04/second, recall = 0.9993
+k = 100, Q = 500, cut = 1.2, throughput = 3.209e+04/second, recall = 0.9995
+k = 10, Q = 500, cut = 1.25, throughput = 1.186e+05/second, recall = 0.9935
+k = 15, Q = 500, cut = 1.25, throughput = 8.313e+04/second, recall = 0.9974
+k = 20, Q = 500, cut = 1.25, throughput = 6.664e+04/second, recall = 0.9987
+k = 30, Q = 500, cut = 1.25, throughput = 4.807e+04/second, recall = 0.9994
+k = 50, Q = 500, cut = 1.25, throughput = 3.677e+04/second, recall = 0.9995
+k = 100, Q = 500, cut = 1.25, throughput = 3.039e+04/second, recall = 0.9995
+Average graph out-degree = 25.61
+Max out-degree: 57, Min out-degree: 5
+Max nodes searched = 277, Average nodes searched = 255.5
+ANN: stats: 8.6703
+Parlay time: 51.7054
+
+
+ANN: Built index: 222.1507
+num queries = 10000
+k = 10, Q = 32, cut = 1.1, throughput = 4.913e+05/second, recall = 0.6727
+k = 10, Q = 50, cut = 1.1, throughput = 4.672e+05/second, recall = 0.6867
+k = 10, Q = 75, cut = 1.1, throughput = 4.615e+05/second, recall = 0.6874
+k = 10, Q = 125, cut = 1.1, throughput = 3.919e+05/second, recall = 0.6875
+k = 10, Q = 500, cut = 1.1, throughput = 3.9e+05/second, recall = 0.6875
+k = 10, Q = 32, cut = 1.15, throughput = 4.453e+05/second, recall = 0.7003
+k = 10, Q = 50, cut = 1.15, throughput = 3.633e+05/second, recall = 0.7549
+k = 10, Q = 75, cut = 1.15, throughput = 3.334e+05/second, recall = 0.7736
+k = 10, Q = 125, cut = 1.15, throughput = 3.116e+05/second, recall = 0.7769
+k = 10, Q = 500, cut = 1.15, throughput = 2.748e+05/second, recall = 0.7771
+k = 10, Q = 32, cut = 1.2, throughput = 4.339e+05/second, recall = 0.7041
+k = 10, Q = 50, cut = 1.2, throughput = 3.269e+05/second, recall = 0.7768
+k = 10, Q = 75, cut = 1.2, throughput = 2.618e+05/second, recall = 0.8242
+k = 10, Q = 125, cut = 1.2, throughput = 2.226e+05/second, recall = 0.8518
+k = 10, Q = 500, cut = 1.2, throughput = 1.898e+05/second, recall = 0.8572
+k = 10, Q = 32, cut = 1.25, throughput = 4.322e+05/second, recall = 0.7046
+k = 10, Q = 50, cut = 1.25, throughput = 3.167e+05/second, recall = 0.7803
+k = 10, Q = 75, cut = 1.25, throughput = 2.354e+05/second, recall = 0.8373
+k = 10, Q = 125, cut = 1.25, throughput = 1.727e+05/second, recall = 0.8893
+k = 10, Q = 500, cut = 1.25, throughput = 1.203e+05/second, recall = 0.919
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 3.971e+05/second, recall = 0.6875
+k = 15, Q = 500, cut = 1.1, throughput = 3.127e+05/second, recall = 0.7549
+k = 20, Q = 500, cut = 1.1, throughput = 2.567e+05/second, recall = 0.8015
+k = 30, Q = 500, cut = 1.1, throughput = 1.902e+05/second, recall = 0.8586
+k = 50, Q = 500, cut = 1.1, throughput = 1.172e+05/second, recall = 0.9168
+k = 100, Q = 500, cut = 1.1, throughput = 5.855e+04/second, recall = 0.9652
+k = 10, Q = 500, cut = 1.15, throughput = 2.864e+05/second, recall = 0.7771
+k = 15, Q = 500, cut = 1.15, throughput = 2.07e+05/second, recall = 0.837
+k = 20, Q = 500, cut = 1.15, throughput = 1.715e+05/second, recall = 0.8758
+k = 30, Q = 500, cut = 1.15, throughput = 1.185e+05/second, recall = 0.9198
+k = 50, Q = 500, cut = 1.15, throughput = 6.689e+04/second, recall = 0.9573
+k = 100, Q = 500, cut = 1.15, throughput = 3.73e+04/second, recall = 0.9822
+k = 10, Q = 500, cut = 1.2, throughput = 1.85e+05/second, recall = 0.8572
+k = 15, Q = 500, cut = 1.2, throughput = 1.356e+05/second, recall = 0.905
+k = 20, Q = 500, cut = 1.2, throughput = 9.411e+04/second, recall = 0.9319
+k = 30, Q = 500, cut = 1.2, throughput = 7.236e+04/second, recall = 0.9596
+k = 50, Q = 500, cut = 1.2, throughput = 4.418e+04/second, recall = 0.9793
+k = 100, Q = 500, cut = 1.2, throughput = 3.113e+04/second, recall = 0.9833
+k = 10, Q = 500, cut = 1.25, throughput = 1.204e+05/second, recall = 0.919
+k = 15, Q = 500, cut = 1.25, throughput = 8.37e+04/second, recall = 0.9508
+k = 20, Q = 500, cut = 1.25, throughput = 6.388e+04/second, recall = 0.9664
+k = 30, Q = 500, cut = 1.25, throughput = 4.652e+04/second, recall = 0.9788
+k = 50, Q = 500, cut = 1.25, throughput = 3.476e+04/second, recall = 0.9831
+k = 100, Q = 500, cut = 1.25, throughput = 2.985e+04/second, recall = 0.9833
+Average graph out-degree = 16.84
+Max out-degree: 30, Min out-degree: 1
+Max nodes searched = 333, Average nodes searched = 259.7
+ANN: stats: 8.6604
+Parlay time: 230.8111
+
+
+ANN: Built index: 425.8078
+num queries = 10000
+k = 10, Q = 32, cut = 1.1, throughput = 3.287e+05/second, recall = 0.8223
+k = 10, Q = 50, cut = 1.1, throughput = 3.2e+05/second, recall = 0.8386
+k = 10, Q = 75, cut = 1.1, throughput = 3.133e+05/second, recall = 0.84
+k = 10, Q = 125, cut = 1.1, throughput = 3.115e+05/second, recall = 0.8402
+k = 10, Q = 500, cut = 1.1, throughput = 2.807e+05/second, recall = 0.8402
+k = 10, Q = 32, cut = 1.15, throughput = 3.123e+05/second, recall = 0.8367
+k = 10, Q = 50, cut = 1.15, throughput = 2.487e+05/second, recall = 0.8848
+k = 10, Q = 75, cut = 1.15, throughput = 2.187e+05/second, recall = 0.9059
+k = 10, Q = 125, cut = 1.15, throughput = 2.065e+05/second, recall = 0.9114
+k = 10, Q = 500, cut = 1.15, throughput = 1.807e+05/second, recall = 0.9118
+k = 10, Q = 32, cut = 1.2, throughput = 3.103e+05/second, recall = 0.8377
+k = 10, Q = 50, cut = 1.2, throughput = 2.281e+05/second, recall = 0.8923
+k = 10, Q = 75, cut = 1.2, throughput = 1.763e+05/second, recall = 0.929
+k = 10, Q = 125, cut = 1.2, throughput = 1.42e+05/second, recall = 0.9534
+k = 10, Q = 500, cut = 1.2, throughput = 1.172e+05/second, recall = 0.96
+k = 10, Q = 32, cut = 1.25, throughput = 3.077e+05/second, recall = 0.8378
+k = 10, Q = 50, cut = 1.25, throughput = 2.234e+05/second, recall = 0.8931
+k = 10, Q = 75, cut = 1.25, throughput = 1.643e+05/second, recall = 0.9324
+k = 10, Q = 125, cut = 1.25, throughput = 1.105e+05/second, recall = 0.9651
+k = 10, Q = 500, cut = 1.25, throughput = 7.25e+04/second, recall = 0.985
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 2.657e+05/second, recall = 0.8402
+k = 15, Q = 500, cut = 1.1, throughput = 2.133e+05/second, recall = 0.8921
+k = 20, Q = 500, cut = 1.1, throughput = 1.683e+05/second, recall = 0.9213
+k = 30, Q = 500, cut = 1.1, throughput = 1.241e+05/second, recall = 0.9539
+k = 50, Q = 500, cut = 1.1, throughput = 7.74e+04/second, recall = 0.979
+k = 100, Q = 500, cut = 1.1, throughput = 3.965e+04/second, recall = 0.9943
+k = 10, Q = 500, cut = 1.15, throughput = 1.894e+05/second, recall = 0.9118
+k = 15, Q = 500, cut = 1.15, throughput = 1.348e+05/second, recall = 0.9473
+k = 20, Q = 500, cut = 1.15, throughput = 1.073e+05/second, recall = 0.9653
+k = 30, Q = 500, cut = 1.15, throughput = 7.649e+04/second, recall = 0.9823
+k = 50, Q = 500, cut = 1.15, throughput = 4.758e+04/second, recall = 0.9932
+k = 100, Q = 500, cut = 1.15, throughput = 2.641e+04/second, recall = 0.9971
+k = 10, Q = 500, cut = 1.2, throughput = 1.2e+05/second, recall = 0.96
+k = 15, Q = 500, cut = 1.2, throughput = 8.507e+04/second, recall = 0.9793
+k = 20, Q = 500, cut = 1.2, throughput = 6.61e+04/second, recall = 0.9876
+k = 30, Q = 500, cut = 1.2, throughput = 4.531e+04/second, recall = 0.994
+k = 50, Q = 500, cut = 1.2, throughput = 3.093e+04/second, recall = 0.9969
+k = 100, Q = 500, cut = 1.2, throughput = 2.358e+04/second, recall = 0.9971
+k = 10, Q = 500, cut = 1.25, throughput = 7.194e+04/second, recall = 0.985
+k = 15, Q = 500, cut = 1.25, throughput = 5.072e+04/second, recall = 0.9925
+k = 20, Q = 500, cut = 1.25, throughput = 4.22e+04/second, recall = 0.9955
+k = 30, Q = 500, cut = 1.25, throughput = 3.191e+04/second, recall = 0.9969
+k = 50, Q = 500, cut = 1.25, throughput = 2.597e+04/second, recall = 0.9971
+k = 100, Q = 500, cut = 1.25, throughput = 2.192e+04/second, recall = 0.9971
+Average graph out-degree = 29.8
+Max out-degree: 60, Min out-degree: 1
+Max nodes searched = 338, Average nodes searched = 257
+ANN: stats: 12.2632
+Parlay time: 438.0711
+
+
+cd ../bench; make -s neighborsCheck
+ANN: Built index: 21.4097
+num queries = 10000
+k = 10, Q = 32, cut = 1.1, throughput = 5.479e+05/second, recall = 0.7674
+k = 10, Q = 50, cut = 1.1, throughput = 6.029e+05/second, recall = 0.7781
+k = 10, Q = 75, cut = 1.1, throughput = 5.929e+05/second, recall = 0.7786
+k = 10, Q = 125, cut = 1.1, throughput = 5.701e+05/second, recall = 0.7786
+k = 10, Q = 500, cut = 1.1, throughput = 4.984e+05/second, recall = 0.7786
+k = 10, Q = 32, cut = 1.15, throughput = 5.728e+05/second, recall = 0.7954
+k = 10, Q = 50, cut = 1.15, throughput = 4.736e+05/second, recall = 0.8422
+k = 10, Q = 75, cut = 1.15, throughput = 4.417e+05/second, recall = 0.8557
+k = 10, Q = 125, cut = 1.15, throughput = 4.316e+05/second, recall = 0.8578
+k = 10, Q = 500, cut = 1.15, throughput = 3.583e+05/second, recall = 0.8579
+k = 10, Q = 32, cut = 1.2, throughput = 5.552e+05/second, recall = 0.7991
+k = 10, Q = 50, cut = 1.2, throughput = 4.191e+05/second, recall = 0.8619
+k = 10, Q = 75, cut = 1.2, throughput = 3.097e+05/second, recall = 0.8986
+k = 10, Q = 125, cut = 1.2, throughput = 2.932e+05/second, recall = 0.917
+k = 10, Q = 500, cut = 1.2, throughput = 2.488e+05/second, recall = 0.9196
+k = 10, Q = 32, cut = 1.25, throughput = 5.377e+05/second, recall = 0.7995
+k = 10, Q = 50, cut = 1.25, throughput = 3.873e+05/second, recall = 0.8648
+k = 10, Q = 75, cut = 1.25, throughput = 2.967e+05/second, recall = 0.9101
+k = 10, Q = 125, cut = 1.25, throughput = 2.221e+05/second, recall = 0.9451
+k = 10, Q = 500, cut = 1.25, throughput = 1.63e+05/second, recall = 0.9613
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 5.058e+05/second, recall = 0.7786
+k = 15, Q = 500, cut = 1.1, throughput = 3.73e+05/second, recall = 0.8422
+k = 20, Q = 500, cut = 1.1, throughput = 3.148e+05/second, recall = 0.8797
+k = 30, Q = 500, cut = 1.1, throughput = 2.332e+05/second, recall = 0.9249
+k = 50, Q = 500, cut = 1.1, throughput = 1.452e+05/second, recall = 0.9627
+k = 100, Q = 500, cut = 1.1, throughput = 7.201e+04/second, recall = 0.9885
+k = 10, Q = 500, cut = 1.15, throughput = 3.599e+05/second, recall = 0.8579
+k = 15, Q = 500, cut = 1.15, throughput = 2.726e+05/second, recall = 0.9071
+k = 20, Q = 500, cut = 1.15, throughput = 2.172e+05/second, recall = 0.9351
+k = 30, Q = 500, cut = 1.15, throughput = 1.514e+05/second, recall = 0.964
+k = 50, Q = 500, cut = 1.15, throughput = 9.389e+04/second, recall = 0.9846
+k = 100, Q = 500, cut = 1.15, throughput = 4.497e+04/second, recall = 0.9955
+k = 10, Q = 500, cut = 1.2, throughput = 2.74e+05/second, recall = 0.9196
+k = 15, Q = 500, cut = 1.2, throughput = 1.957e+05/second, recall = 0.9538
+k = 20, Q = 500, cut = 1.2, throughput = 1.48e+05/second, recall = 0.97
+k = 30, Q = 500, cut = 1.2, throughput = 1.01e+05/second, recall = 0.9852
+k = 50, Q = 500, cut = 1.2, throughput = 6.328e+04/second, recall = 0.9941
+k = 100, Q = 500, cut = 1.2, throughput = 4.03e+04/second, recall = 0.9961
+k = 10, Q = 500, cut = 1.25, throughput = 1.761e+05/second, recall = 0.9613
+k = 15, Q = 500, cut = 1.25, throughput = 1.218e+05/second, recall = 0.9797
+k = 20, Q = 500, cut = 1.25, throughput = 9.337e+04/second, recall = 0.9879
+k = 30, Q = 500, cut = 1.25, throughput = 6.537e+04/second, recall = 0.9939
+k = 50, Q = 500, cut = 1.25, throughput = 4.495e+04/second, recall = 0.996
+k = 100, Q = 500, cut = 1.25, throughput = 3.621e+04/second, recall = 0.9961
+Average graph out-degree = 15.29
+Max out-degree: 30, Min out-degree: 1
+Max nodes searched = 336, Average nodes searched = 257.6
+ANN: stats: 6.7344
+Parlay time: 28.1443
+
+
+ANN: Built index: 42.8105
+num queries = 10000
+k = 10, Q = 32, cut = 1.1, throughput = 4.035e+05/second, recall = 0.8826
+k = 10, Q = 50, cut = 1.1, throughput = 4.366e+05/second, recall = 0.8945
+k = 10, Q = 75, cut = 1.1, throughput = 4.548e+05/second, recall = 0.8954
+k = 10, Q = 125, cut = 1.1, throughput = 4.369e+05/second, recall = 0.8955
+k = 10, Q = 500, cut = 1.1, throughput = 3.905e+05/second, recall = 0.8955
+k = 10, Q = 32, cut = 1.15, throughput = 4.336e+05/second, recall = 0.8964
+k = 10, Q = 50, cut = 1.15, throughput = 3.477e+05/second, recall = 0.9342
+k = 10, Q = 75, cut = 1.15, throughput = 3.072e+05/second, recall = 0.9479
+k = 10, Q = 125, cut = 1.15, throughput = 3.022e+05/second, recall = 0.9505
+k = 10, Q = 500, cut = 1.15, throughput = 2.648e+05/second, recall = 0.9506
+k = 10, Q = 32, cut = 1.2, throughput = 4.227e+05/second, recall = 0.8973
+k = 10, Q = 50, cut = 1.2, throughput = 3.096e+05/second, recall = 0.9415
+k = 10, Q = 75, cut = 1.2, throughput = 2.468e+05/second, recall = 0.9657
+k = 10, Q = 125, cut = 1.2, throughput = 2.057e+05/second, recall = 0.9786
+k = 10, Q = 500, cut = 1.2, throughput = 1.715e+05/second, recall = 0.9812
+k = 10, Q = 32, cut = 1.25, throughput = 4.205e+05/second, recall = 0.8973
+k = 10, Q = 50, cut = 1.25, throughput = 2.977e+05/second, recall = 0.9423
+k = 10, Q = 75, cut = 1.25, throughput = 2.228e+05/second, recall = 0.9686
+k = 10, Q = 125, cut = 1.25, throughput = 1.597e+05/second, recall = 0.986
+k = 10, Q = 500, cut = 1.25, throughput = 1.089e+05/second, recall = 0.9937
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 3.718e+05/second, recall = 0.8955
+k = 15, Q = 500, cut = 1.1, throughput = 2.985e+05/second, recall = 0.9375
+k = 20, Q = 500, cut = 1.1, throughput = 2.321e+05/second, recall = 0.959
+k = 30, Q = 500, cut = 1.1, throughput = 1.683e+05/second, recall = 0.9797
+k = 50, Q = 500, cut = 1.1, throughput = 1.093e+05/second, recall = 0.9927
+k = 100, Q = 500, cut = 1.1, throughput = 5.465e+04/second, recall = 0.9986
+k = 10, Q = 500, cut = 1.15, throughput = 2.697e+05/second, recall = 0.9506
+k = 15, Q = 500, cut = 1.15, throughput = 1.963e+05/second, recall = 0.9741
+k = 20, Q = 500, cut = 1.15, throughput = 1.562e+05/second, recall = 0.985
+k = 30, Q = 500, cut = 1.15, throughput = 1.094e+05/second, recall = 0.9936
+k = 50, Q = 500, cut = 1.15, throughput = 6.706e+04/second, recall = 0.9981
+k = 100, Q = 500, cut = 1.15, throughput = 3.582e+04/second, recall = 0.9994
+k = 10, Q = 500, cut = 1.2, throughput = 1.901e+05/second, recall = 0.9812
+k = 15, Q = 500, cut = 1.2, throughput = 1.359e+05/second, recall = 0.9913
+k = 20, Q = 500, cut = 1.2, throughput = 9.976e+04/second, recall = 0.9956
+k = 30, Q = 500, cut = 1.2, throughput = 7.288e+04/second, recall = 0.9983
+k = 50, Q = 500, cut = 1.2, throughput = 4.692e+04/second, recall = 0.9993
+k = 100, Q = 500, cut = 1.2, throughput = 3.183e+04/second, recall = 0.9994
+k = 10, Q = 500, cut = 1.25, throughput = 1.217e+05/second, recall = 0.9937
+k = 15, Q = 500, cut = 1.25, throughput = 8.251e+04/second, recall = 0.9975
+k = 20, Q = 500, cut = 1.25, throughput = 6.813e+04/second, recall = 0.9987
+k = 30, Q = 500, cut = 1.25, throughput = 4.964e+04/second, recall = 0.9993
+k = 50, Q = 500, cut = 1.25, throughput = 3.704e+04/second, recall = 0.9994
+k = 100, Q = 500, cut = 1.25, throughput = 3.086e+04/second, recall = 0.9994
+Average graph out-degree = 25.55
+Max out-degree: 57, Min out-degree: 2
+Max nodes searched = 278, Average nodes searched = 255.7
+ANN: stats: 8.7134
+Parlay time: 51.5239
+g++ -DHOMEGROWN -pthread -mcx16 -O3 -std=c++17 -march=native -DNDEBUG -I .  -include neighbors.h -o neighbors ../bench/neighborsTime.C -DHOMEGROWN -pthread -ldl -L/usr/local/lib -ljemalloc 
+common/MakeBench:19: recipe for target 'neighbors' failed
+make: *** [neighbors] Interrupt
+cd ../bench; make -s neighborsCheck
+
+10 trees, 100M points
+ANN: Built index: 2350.4310
+num queries = 10000
+k = 10, Q = 15, cut = 1.1, throughput = 1.464e+05/second, recall = 0.4471
+k = 10, Q = 20, cut = 1.1, throughput = 1.359e+05/second, recall = 0.5005
+k = 10, Q = 30, cut = 1.1, throughput = 1.282e+05/second, recall = 0.5575
+k = 10, Q = 50, cut = 1.1, throughput = 1.238e+05/second, recall = 0.5775
+k = 10, Q = 75, cut = 1.1, throughput = 1.239e+05/second, recall = 0.5785
+k = 10, Q = 100, cut = 1.1, throughput = 1.228e+05/second, recall = 0.5786
+k = 10, Q = 125, cut = 1.1, throughput = 1.228e+05/second, recall = 0.5796
+k = 10, Q = 250, cut = 1.1, throughput = 1.204e+05/second, recall = 0.5797
+k = 10, Q = 500, cut = 1.1, throughput = 1.152e+05/second, recall = 0.5797
+k = 10, Q = 15, cut = 1.125, throughput = 1.465e+05/second, recall = 0.4482
+k = 10, Q = 20, cut = 1.125, throughput = 1.377e+05/second, recall = 0.5017
+k = 10, Q = 30, cut = 1.125, throughput = 1.254e+05/second, recall = 0.5737
+k = 10, Q = 50, cut = 1.125, throughput = 1.163e+05/second, recall = 0.6204
+k = 10, Q = 75, cut = 1.125, throughput = 1.141e+05/second, recall = 0.6277
+k = 10, Q = 100, cut = 1.125, throughput = 1.129e+05/second, recall = 0.6284
+k = 10, Q = 125, cut = 1.125, throughput = 1.128e+05/second, recall = 0.6284
+k = 10, Q = 250, cut = 1.125, throughput = 1.123e+05/second, recall = 0.6286
+k = 10, Q = 500, cut = 1.125, throughput = 1.032e+05/second, recall = 0.6291
+k = 10, Q = 15, cut = 1.15, throughput = 1.46e+05/second, recall = 0.4484
+k = 10, Q = 20, cut = 1.15, throughput = 1.369e+05/second, recall = 0.5044
+k = 10, Q = 30, cut = 1.15, throughput = 1.244e+05/second, recall = 0.5796
+k = 10, Q = 50, cut = 1.15, throughput = 1.102e+05/second, recall = 0.6499
+k = 10, Q = 75, cut = 1.15, throughput = 1.041e+05/second, recall = 0.6711
+k = 10, Q = 100, cut = 1.15, throughput = 1.023e+05/second, recall = 0.6748
+k = 10, Q = 125, cut = 1.15, throughput = 1.029e+05/second, recall = 0.6754
+k = 10, Q = 250, cut = 1.15, throughput = 9.963e+04/second, recall = 0.6758
+k = 10, Q = 500, cut = 1.15, throughput = 9.74e+04/second, recall = 0.6759
+k = 10, Q = 15, cut = 1.175, throughput = 1.467e+05/second, recall = 0.4462
+k = 10, Q = 20, cut = 1.175, throughput = 1.374e+05/second, recall = 0.5018
+k = 10, Q = 30, cut = 1.175, throughput = 1.244e+05/second, recall = 0.5807
+k = 10, Q = 50, cut = 1.175, throughput = 1.07e+05/second, recall = 0.6658
+k = 10, Q = 75, cut = 1.175, throughput = 9.768e+04/second, recall = 0.7068
+k = 10, Q = 100, cut = 1.175, throughput = 9.458e+04/second, recall = 0.7197
+k = 10, Q = 125, cut = 1.175, throughput = 8.969e+04/second, recall = 0.723
+k = 10, Q = 250, cut = 1.175, throughput = 8.976e+04/second, recall = 0.7247
+k = 10, Q = 500, cut = 1.175, throughput = 8.653e+04/second, recall = 0.7249
+k = 10, Q = 15, cut = 1.2, throughput = 1.457e+05/second, recall = 0.4449
+k = 10, Q = 20, cut = 1.2, throughput = 1.37e+05/second, recall = 0.5039
+k = 10, Q = 30, cut = 1.2, throughput = 1.226e+05/second, recall = 0.5824
+k = 10, Q = 50, cut = 1.2, throughput = 1.054e+05/second, recall = 0.6731
+k = 10, Q = 75, cut = 1.2, throughput = 9.324e+04/second, recall = 0.728
+k = 10, Q = 100, cut = 1.2, throughput = 8.736e+04/second, recall = 0.7538
+k = 10, Q = 125, cut = 1.2, throughput = 8.448e+04/second, recall = 0.7628
+k = 10, Q = 250, cut = 1.2, throughput = 7.68e+04/second, recall = 0.7696
+k = 10, Q = 500, cut = 1.2, throughput = 7.478e+04/second, recall = 0.77
+k = 10, Q = 15, cut = 1.25, throughput = 1.464e+05/second, recall = 0.447
+k = 10, Q = 20, cut = 1.25, throughput = 1.365e+05/second, recall = 0.5029
+k = 10, Q = 30, cut = 1.25, throughput = 1.21e+05/second, recall = 0.5824
+k = 10, Q = 50, cut = 1.25, throughput = 1.002e+05/second, recall = 0.6753
+k = 10, Q = 75, cut = 1.25, throughput = 8.925e+04/second, recall = 0.7434
+k = 10, Q = 100, cut = 1.25, throughput = 7.927e+04/second, recall = 0.7839
+k = 10, Q = 125, cut = 1.25, throughput = 7.232e+04/second, recall = 0.8076
+k = 10, Q = 250, cut = 1.25, throughput = 6.14e+04/second, recall = 0.8447
+k = 10, Q = 500, cut = 1.25, throughput = 5.426e+04/second, recall = 0.8501
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 1.149e+05/second, recall = 0.5786
+k = 15, Q = 500, cut = 1.1, throughput = 1.023e+05/second, recall = 0.6528
+k = 20, Q = 500, cut = 1.1, throughput = 9.311e+04/second, recall = 0.703
+k = 30, Q = 500, cut = 1.1, throughput = 7.609e+04/second, recall = 0.7709
+k = 50, Q = 500, cut = 1.1, throughput = 5.694e+04/second, recall = 0.8434
+k = 100, Q = 500, cut = 1.1, throughput = 3.463e+04/second, recall = 0.9192
+k = 10, Q = 500, cut = 1.125, throughput = 1.045e+05/second, recall = 0.6277
+k = 15, Q = 500, cut = 1.125, throughput = 9e+04/second, recall = 0.7001
+k = 20, Q = 500, cut = 1.125, throughput = 8.191e+04/second, recall = 0.7477
+k = 30, Q = 500, cut = 1.125, throughput = 6.534e+04/second, recall = 0.8107
+k = 50, Q = 500, cut = 1.125, throughput = 4.828e+04/second, recall = 0.8769
+k = 100, Q = 500, cut = 1.125, throughput = 2.803e+04/second, recall = 0.9399
+k = 10, Q = 500, cut = 1.15, throughput = 9.707e+04/second, recall = 0.6776
+k = 15, Q = 500, cut = 1.15, throughput = 8.296e+04/second, recall = 0.746
+k = 20, Q = 500, cut = 1.15, throughput = 7.065e+04/second, recall = 0.7916
+k = 30, Q = 500, cut = 1.15, throughput = 5.276e+04/second, recall = 0.8492
+k = 50, Q = 500, cut = 1.15, throughput = 3.921e+04/second, recall = 0.9064
+k = 100, Q = 500, cut = 1.15, throughput = 2.319e+04/second, recall = 0.95
+k = 10, Q = 500, cut = 1.175, throughput = 8.548e+04/second, recall = 0.7242
+k = 15, Q = 500, cut = 1.175, throughput = 7.036e+04/second, recall = 0.7896
+k = 20, Q = 500, cut = 1.175, throughput = 6.007e+04/second, recall = 0.8316
+k = 30, Q = 500, cut = 1.175, throughput = 4.687e+04/second, recall = 0.8824
+k = 50, Q = 500, cut = 1.175, throughput = 3.215e+04/second, recall = 0.9302
+k = 100, Q = 500, cut = 1.175, throughput = 2.152e+04/second, recall = 0.9522
+k = 10, Q = 500, cut = 1.2, throughput = 7.038e+04/second, recall = 0.7699
+k = 15, Q = 500, cut = 1.2, throughput = 5.991e+04/second, recall = 0.8292
+k = 20, Q = 500, cut = 1.2, throughput = 5.117e+04/second, recall = 0.8675
+k = 30, Q = 500, cut = 1.2, throughput = 3.954e+04/second, recall = 0.911
+k = 50, Q = 500, cut = 1.2, throughput = 2.684e+04/second, recall = 0.9446
+k = 100, Q = 500, cut = 1.2, throughput = 2.074e+04/second, recall = 0.9525
+k = 10, Q = 500, cut = 1.25, throughput = 5.445e+04/second, recall = 0.8505
+k = 15, Q = 500, cut = 1.25, throughput = 4.174e+04/second, recall = 0.8964
+k = 20, Q = 500, cut = 1.25, throughput = 3.583e+04/second, recall = 0.9223
+k = 30, Q = 500, cut = 1.25, throughput = 2.735e+04/second, recall = 0.9444
+k = 50, Q = 500, cut = 1.25, throughput = 2.223e+04/second, recall = 0.9521
+k = 100, Q = 500, cut = 1.25, throughput = 2.014e+04/second, recall = 0.9527
+k = 100, Q = 1000, cut = 10, throughput = 8296/second, recall = 0.9795
+Average graph out-degree = 17.92
+Max out-degree: 30, Min out-degree: 1
+Max nodes searched = 365, Average nodes searched = 264
+ANN: stats: 31.2440
+Parlay time: 2381.6751
+
+20 trees, 100M points
+ANN: Built index: 4712.0493
+num queries = 10000
+k = 10, Q = 15, cut = 1.1, throughput = 1.205e+05/second, recall = 0.6175
+k = 10, Q = 20, cut = 1.1, throughput = 1.15e+05/second, recall = 0.673
+k = 10, Q = 30, cut = 1.1, throughput = 1.056e+05/second, recall = 0.7337
+k = 10, Q = 50, cut = 1.1, throughput = 9.943e+04/second, recall = 0.7623
+k = 10, Q = 75, cut = 1.1, throughput = 9.849e+04/second, recall = 0.7642
+k = 10, Q = 100, cut = 1.1, throughput = 9.808e+04/second, recall = 0.7645
+k = 10, Q = 125, cut = 1.1, throughput = 9.794e+04/second, recall = 0.7646
+k = 10, Q = 250, cut = 1.1, throughput = 9.688e+04/second, recall = 0.7646
+k = 10, Q = 500, cut = 1.1, throughput = 9.094e+04/second, recall = 0.7646
+k = 10, Q = 15, cut = 1.125, throughput = 1.243e+05/second, recall = 0.6168
+k = 10, Q = 20, cut = 1.125, throughput = 1.15e+05/second, recall = 0.6736
+k = 10, Q = 30, cut = 1.125, throughput = 1.033e+05/second, recall = 0.7434
+k = 10, Q = 50, cut = 1.125, throughput = 9.128e+04/second, recall = 0.7978
+k = 10, Q = 75, cut = 1.125, throughput = 8.797e+04/second, recall = 0.8098
+k = 10, Q = 100, cut = 1.125, throughput = 8.741e+04/second, recall = 0.8112
+k = 10, Q = 125, cut = 1.125, throughput = 8.556e+04/second, recall = 0.8115
+k = 10, Q = 250, cut = 1.125, throughput = 8.526e+04/second, recall = 0.8116
+k = 10, Q = 500, cut = 1.125, throughput = 8.126e+04/second, recall = 0.8116
+k = 10, Q = 15, cut = 1.15, throughput = 1.259e+05/second, recall = 0.6176
+k = 10, Q = 20, cut = 1.15, throughput = 1.147e+05/second, recall = 0.6747
+k = 10, Q = 30, cut = 1.15, throughput = 1.021e+05/second, recall = 0.747
+k = 10, Q = 50, cut = 1.15, throughput = 8.663e+04/second, recall = 0.817
+k = 10, Q = 75, cut = 1.15, throughput = 7.396e+04/second, recall = 0.8451
+k = 10, Q = 100, cut = 1.15, throughput = 7.649e+04/second, recall = 0.8509
+k = 10, Q = 125, cut = 1.15, throughput = 7.607e+04/second, recall = 0.8526
+k = 10, Q = 250, cut = 1.15, throughput = 7.396e+04/second, recall = 0.8531
+k = 10, Q = 500, cut = 1.15, throughput = 7.184e+04/second, recall = 0.8531
+k = 10, Q = 15, cut = 1.175, throughput = 1.253e+05/second, recall = 0.618
+k = 10, Q = 20, cut = 1.175, throughput = 1.157e+05/second, recall = 0.6735
+k = 10, Q = 30, cut = 1.175, throughput = 1.011e+05/second, recall = 0.7469
+k = 10, Q = 50, cut = 1.175, throughput = 8.179e+04/second, recall = 0.8234
+k = 10, Q = 75, cut = 1.175, throughput = 7.283e+04/second, recall = 0.864
+k = 10, Q = 100, cut = 1.175, throughput = 6.791e+04/second, recall = 0.8807
+k = 10, Q = 125, cut = 1.175, throughput = 6.647e+04/second, recall = 0.8863
+k = 10, Q = 250, cut = 1.175, throughput = 6.342e+04/second, recall = 0.8897
+k = 10, Q = 500, cut = 1.175, throughput = 5.357e+04/second, recall = 0.8899
+k = 10, Q = 15, cut = 1.2, throughput = 1.254e+05/second, recall = 0.6168
+k = 10, Q = 20, cut = 1.2, throughput = 1.155e+05/second, recall = 0.6733
+k = 10, Q = 30, cut = 1.2, throughput = 1.014e+05/second, recall = 0.7469
+k = 10, Q = 50, cut = 1.2, throughput = 8.25e+04/second, recall = 0.8262
+k = 10, Q = 75, cut = 1.2, throughput = 6.955e+04/second, recall = 0.8737
+k = 10, Q = 100, cut = 1.2, throughput = 6.295e+04/second, recall = 0.898
+k = 10, Q = 125, cut = 1.2, throughput = 5.92e+04/second, recall = 0.9102
+k = 10, Q = 250, cut = 1.2, throughput = 5.402e+04/second, recall = 0.9216
+k = 10, Q = 500, cut = 1.2, throughput = 4.929e+04/second, recall = 0.9219
+k = 10, Q = 15, cut = 1.25, throughput = 1.248e+05/second, recall = 0.6175
+k = 10, Q = 20, cut = 1.25, throughput = 1.159e+05/second, recall = 0.6733
+k = 10, Q = 30, cut = 1.25, throughput = 1.013e+05/second, recall = 0.7474
+k = 10, Q = 50, cut = 1.25, throughput = 8.169e+04/second, recall = 0.8265
+k = 10, Q = 75, cut = 1.25, throughput = 6.705e+04/second, recall = 0.8771
+k = 10, Q = 100, cut = 1.25, throughput = 5.773e+04/second, recall = 0.9073
+k = 10, Q = 125, cut = 1.25, throughput = 5.156e+04/second, recall = 0.9263
+k = 10, Q = 250, cut = 1.25, throughput = 3.951e+04/second, recall = 0.9579
+k = 10, Q = 500, cut = 1.25, throughput = 3.342e+04/second, recall = 0.9644
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 9.291e+04/second, recall = 0.7651
+k = 15, Q = 500, cut = 1.1, throughput = 7.824e+04/second, recall = 0.8253
+k = 20, Q = 500, cut = 1.1, throughput = 6.77e+04/second, recall = 0.864
+k = 30, Q = 500, cut = 1.1, throughput = 5.31e+04/second, recall = 0.9092
+k = 50, Q = 500, cut = 1.1, throughput = 3.793e+04/second, recall = 0.9507
+k = 100, Q = 500, cut = 1.1, throughput = 2.133e+04/second, recall = 0.9822
+k = 10, Q = 500, cut = 1.125, throughput = 6.944e+04/second, recall = 0.8113
+k = 15, Q = 500, cut = 1.125, throughput = 6.695e+04/second, recall = 0.8656
+k = 20, Q = 500, cut = 1.125, throughput = 5.749e+04/second, recall = 0.8983
+k = 30, Q = 500, cut = 1.125, throughput = 4.422e+04/second, recall = 0.9366
+k = 50, Q = 500, cut = 1.125, throughput = 3.041e+04/second, recall = 0.9681
+k = 100, Q = 500, cut = 1.125, throughput = 1.71e+04/second, recall = 0.9878
+k = 10, Q = 500, cut = 1.15, throughput = 7.18e+04/second, recall = 0.854
+k = 15, Q = 500, cut = 1.15, throughput = 5.698e+04/second, recall = 0.9009
+k = 20, Q = 500, cut = 1.15, throughput = 4.631e+04/second, recall = 0.9286
+k = 30, Q = 500, cut = 1.15, throughput = 3.583e+04/second, recall = 0.9579
+k = 50, Q = 500, cut = 1.15, throughput = 2.44e+04/second, recall = 0.9802
+k = 100, Q = 500, cut = 1.15, throughput = 1.628e+04/second, recall = 0.9891
+k = 10, Q = 500, cut = 1.175, throughput = 5.992e+04/second, recall = 0.8897
+k = 15, Q = 500, cut = 1.175, throughput = 4.703e+04/second, recall = 0.9298
+k = 20, Q = 500, cut = 1.175, throughput = 3.801e+04/second, recall = 0.9518
+k = 30, Q = 500, cut = 1.175, throughput = 2.84e+04/second, recall = 0.9732
+k = 50, Q = 500, cut = 1.175, throughput = 2.008e+04/second, recall = 0.9865
+k = 100, Q = 500, cut = 1.175, throughput = 1.535e+04/second, recall = 0.9892
+k = 10, Q = 500, cut = 1.2, throughput = 4.984e+04/second, recall = 0.9222
+k = 15, Q = 500, cut = 1.2, throughput = 3.705e+04/second, recall = 0.9528
+k = 20, Q = 500, cut = 1.2, throughput = 3.133e+04/second, recall = 0.9685
+k = 30, Q = 500, cut = 1.2, throughput = 2.333e+04/second, recall = 0.9828
+k = 50, Q = 500, cut = 1.2, throughput = 1.732e+04/second, recall = 0.9886
+k = 100, Q = 500, cut = 1.2, throughput = 1.47e+04/second, recall = 0.9892
+k = 10, Q = 500, cut = 1.25, throughput = 3.336e+04/second, recall = 0.9646
+k = 15, Q = 500, cut = 1.25, throughput = 2.527e+04/second, recall = 0.98
+k = 20, Q = 500, cut = 1.25, throughput = 2.148e+04/second, recall = 0.9856
+k = 30, Q = 500, cut = 1.25, throughput = 1.768e+04/second, recall = 0.9886
+k = 50, Q = 500, cut = 1.25, throughput = 1.545e+04/second, recall = 0.9892
+k = 100, Q = 500, cut = 1.25, throughput = 1.431e+04/second, recall = 0.9892
+k = 100, Q = 1000, cut = 10, throughput = 6360/second, recall = 0.997
+Average graph out-degree = 32.99
+Max out-degree: 60, Min out-degree: 1
+Max nodes searched = 323, Average nodes searched = 259.7
+ANN: stats: 44.1603
+Parlay time: 4756.2097
+
+30 trees, 100M points
+ANN: Built index: 7151.7034
+num queries = 10000
+k = 10, Q = 15, cut = 1.1, throughput = 1.114e+05/second, recall = 0.7012
+k = 10, Q = 20, cut = 1.1, throughput = 1.022e+05/second, recall = 0.7535
+k = 10, Q = 30, cut = 1.1, throughput = 9.065e+04/second, recall = 0.8122
+k = 10, Q = 50, cut = 1.1, throughput = 8.451e+04/second, recall = 0.8424
+k = 10, Q = 75, cut = 1.1, throughput = 8.341e+04/second, recall = 0.8455
+k = 10, Q = 100, cut = 1.1, throughput = 8.286e+04/second, recall = 0.8457
+k = 10, Q = 125, cut = 1.1, throughput = 8.252e+04/second, recall = 0.8456
+k = 10, Q = 250, cut = 1.1, throughput = 8.052e+04/second, recall = 0.8456
+k = 10, Q = 500, cut = 1.1, throughput = 7.733e+04/second, recall = 0.8456
+k = 10, Q = 15, cut = 1.125, throughput = 1.124e+05/second, recall = 0.6988
+k = 10, Q = 20, cut = 1.125, throughput = 1.013e+05/second, recall = 0.7531
+k = 10, Q = 30, cut = 1.125, throughput = 7.752e+04/second, recall = 0.8178
+k = 10, Q = 50, cut = 1.125, throughput = 7.749e+04/second, recall = 0.8704
+k = 10, Q = 75, cut = 1.125, throughput = 6.778e+04/second, recall = 0.8843
+k = 10, Q = 100, cut = 1.125, throughput = 7.272e+04/second, recall = 0.8865
+k = 10, Q = 125, cut = 1.125, throughput = 7.25e+04/second, recall = 0.8869
+k = 10, Q = 250, cut = 1.125, throughput = 7.12e+04/second, recall = 0.887
+k = 10, Q = 500, cut = 1.125, throughput = 6.655e+04/second, recall = 0.8862
+k = 10, Q = 15, cut = 1.15, throughput = 1.126e+05/second, recall = 0.7012
+k = 10, Q = 20, cut = 1.15, throughput = 9.529e+04/second, recall = 0.7534
+k = 10, Q = 30, cut = 1.15, throughput = 8.886e+04/second, recall = 0.8196
+k = 10, Q = 50, cut = 1.15, throughput = 7.252e+04/second, recall = 0.8825
+k = 10, Q = 75, cut = 1.15, throughput = 6.535e+04/second, recall = 0.9101
+k = 10, Q = 100, cut = 1.15, throughput = 6.295e+04/second, recall = 0.917
+k = 10, Q = 125, cut = 1.15, throughput = 5.812e+04/second, recall = 0.9192
+k = 10, Q = 250, cut = 1.15, throughput = 5.999e+04/second, recall = 0.9202
+k = 10, Q = 500, cut = 1.15, throughput = 5.709e+04/second, recall = 0.9202
+k = 10, Q = 15, cut = 1.175, throughput = 1.119e+05/second, recall = 0.6999
+k = 10, Q = 20, cut = 1.175, throughput = 1.02e+05/second, recall = 0.7533
+k = 10, Q = 30, cut = 1.175, throughput = 8.809e+04/second, recall = 0.8199
+k = 10, Q = 50, cut = 1.175, throughput = 6.691e+04/second, recall = 0.886
+k = 10, Q = 75, cut = 1.175, throughput = 6.003e+04/second, recall = 0.9226
+k = 10, Q = 100, cut = 1.175, throughput = 5.493e+04/second, recall = 0.9369
+k = 10, Q = 125, cut = 1.175, throughput = 5.321e+04/second, recall = 0.9426
+k = 10, Q = 250, cut = 1.175, throughput = 4.888e+04/second, recall = 0.9462
+k = 10, Q = 500, cut = 1.175, throughput = 4.63e+04/second, recall = 0.9463
+k = 10, Q = 15, cut = 1.2, throughput = 1.107e+05/second, recall = 0.7007
+k = 10, Q = 20, cut = 1.2, throughput = 1.022e+05/second, recall = 0.7531
+k = 10, Q = 30, cut = 1.2, throughput = 8.818e+04/second, recall = 0.8208
+k = 10, Q = 50, cut = 1.2, throughput = 7.011e+04/second, recall = 0.8877
+k = 10, Q = 75, cut = 1.2, throughput = 5.73e+04/second, recall = 0.9268
+k = 10, Q = 100, cut = 1.2, throughput = 5.094e+04/second, recall = 0.9451
+k = 10, Q = 125, cut = 1.2, throughput = 4.71e+04/second, recall = 0.9554
+k = 10, Q = 250, cut = 1.2, throughput = 4.175e+04/second, recall = 0.9659
+k = 10, Q = 500, cut = 1.2, throughput = 3.819e+04/second, recall = 0.9666
+k = 10, Q = 15, cut = 1.25, throughput = 1.123e+05/second, recall = 0.7016
+k = 10, Q = 20, cut = 1.25, throughput = 1.027e+05/second, recall = 0.7536
+k = 10, Q = 30, cut = 1.25, throughput = 8.807e+04/second, recall = 0.82
+k = 10, Q = 50, cut = 1.25, throughput = 6.938e+04/second, recall = 0.8878
+k = 10, Q = 75, cut = 1.25, throughput = 5.477e+04/second, recall = 0.9279
+k = 10, Q = 100, cut = 1.25, throughput = 4.218e+04/second, recall = 0.949
+k = 10, Q = 125, cut = 1.25, throughput = 4.137e+04/second, recall = 0.962
+k = 10, Q = 250, cut = 1.25, throughput = 3.042e+04/second, recall = 0.9835
+k = 10, Q = 500, cut = 1.25, throughput = 2.503e+04/second, recall = 0.9885
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 7.791e+04/second, recall = 0.8448
+k = 15, Q = 500, cut = 1.1, throughput = 6.172e+04/second, recall = 0.8955
+k = 20, Q = 500, cut = 1.1, throughput = 5.477e+04/second, recall = 0.9248
+k = 30, Q = 500, cut = 1.1, throughput = 4.203e+04/second, recall = 0.955
+k = 50, Q = 500, cut = 1.1, throughput = 2.854e+04/second, recall = 0.9796
+k = 100, Q = 500, cut = 1.1, throughput = 1.676e+04/second, recall = 0.9943
+k = 10, Q = 500, cut = 1.125, throughput = 6.797e+04/second, recall = 0.8867
+k = 15, Q = 500, cut = 1.125, throughput = 5.224e+04/second, recall = 0.9272
+k = 20, Q = 500, cut = 1.125, throughput = 4.533e+04/second, recall = 0.9497
+k = 30, Q = 500, cut = 1.125, throughput = 3.413e+04/second, recall = 0.9725
+k = 50, Q = 500, cut = 1.125, throughput = 2.309e+04/second, recall = 0.9885
+k = 100, Q = 500, cut = 1.125, throughput = 1.362e+04/second, recall = 0.9963
+k = 10, Q = 500, cut = 1.15, throughput = 5.658e+04/second, recall = 0.9205
+k = 15, Q = 500, cut = 1.15, throughput = 4.401e+04/second, recall = 0.9525
+k = 20, Q = 500, cut = 1.15, throughput = 3.657e+04/second, recall = 0.969
+k = 30, Q = 500, cut = 1.15, throughput = 2.721e+04/second, recall = 0.9839
+k = 50, Q = 500, cut = 1.15, throughput = 1.835e+04/second, recall = 0.9939
+k = 100, Q = 500, cut = 1.15, throughput = 1.233e+04/second, recall = 0.9965
+k = 10, Q = 500, cut = 1.175, throughput = 4.522e+04/second, recall = 0.9467
+k = 15, Q = 500, cut = 1.175, throughput = 3.437e+04/second, recall = 0.9706
+k = 20, Q = 500, cut = 1.175, throughput = 2.888e+04/second, recall = 0.9817
+k = 30, Q = 500, cut = 1.175, throughput = 2.131e+04/second, recall = 0.9914
+k = 50, Q = 500, cut = 1.175, throughput = 1.508e+04/second, recall = 0.9959
+k = 100, Q = 500, cut = 1.175, throughput = 1.176e+04/second, recall = 0.9966
+k = 10, Q = 500, cut = 1.2, throughput = 3.75e+04/second, recall = 0.9665
+k = 15, Q = 500, cut = 1.2, throughput = 2.883e+04/second, recall = 0.9829
+k = 20, Q = 500, cut = 1.2, throughput = 2.267e+04/second, recall = 0.9897
+k = 30, Q = 500, cut = 1.2, throughput = 1.765e+04/second, recall = 0.9949
+k = 50, Q = 500, cut = 1.2, throughput = 1.349e+04/second, recall = 0.9965
+k = 100, Q = 500, cut = 1.2, throughput = 1.134e+04/second, recall = 0.9966
+k = 10, Q = 500, cut = 1.25, throughput = 2.474e+04/second, recall = 0.9884
+k = 15, Q = 500, cut = 1.25, throughput = 1.914e+04/second, recall = 0.994
+k = 20, Q = 500, cut = 1.25, throughput = 1.608e+04/second, recall = 0.9958
+k = 30, Q = 500, cut = 1.25, throughput = 1.354e+04/second, recall = 0.9965
+k = 50, Q = 500, cut = 1.25, throughput = 1.197e+04/second, recall = 0.9966
+k = 100, Q = 500, cut = 1.25, throughput = 1.134e+04/second, recall = 0.9966
+k = 100, Q = 1000, cut = 10, throughput = 5269/second, recall = 0.9991
+Average graph out-degree = 46.33
+Max out-degree: 90, Min out-degree: 1
+Max nodes searched = 281, Average nodes searched = 258.3
+ANN: stats: 55.5035
+Parlay time: 7207.2070
+
+20 trees, 1B points
+cd ../bench; make -s neighborsCheck
+ANN: Built index: 52238.8687
+num queries = 10000
+k = 10, Q = 15, cut = 1.1, throughput = 1.179e+04/second, recall = 0.5198
+k = 10, Q = 20, cut = 1.1, throughput = 1.179e+04/second, recall = 0.5748
+k = 10, Q = 30, cut = 1.1, throughput = 1.161e+04/second, recall = 0.6399
+k = 10, Q = 50, cut = 1.1, throughput = 1.146e+04/second, recall = 0.6701
+k = 10, Q = 75, cut = 1.1, throughput = 1.155e+04/second, recall = 0.6728
+k = 10, Q = 100, cut = 1.1, throughput = 1.157e+04/second, recall = 0.6726
+k = 10, Q = 125, cut = 1.1, throughput = 1.148e+04/second, recall = 0.6716
+k = 10, Q = 250, cut = 1.1, throughput = 1.144e+04/second, recall = 0.672
+k = 10, Q = 500, cut = 1.1, throughput = 1.139e+04/second, recall = 0.6719
+k = 10, Q = 15, cut = 1.125, throughput = 1.191e+04/second, recall = 0.5208
+k = 10, Q = 20, cut = 1.125, throughput = 1.165e+04/second, recall = 0.5777
+k = 10, Q = 30, cut = 1.125, throughput = 1.142e+04/second, recall = 0.6502
+k = 10, Q = 50, cut = 1.125, throughput = 1.121e+04/second, recall = 0.7095
+k = 10, Q = 75, cut = 1.125, throughput = 1.109e+04/second, recall = 0.7228
+k = 10, Q = 100, cut = 1.125, throughput = 1.122e+04/second, recall = 0.7239
+k = 10, Q = 125, cut = 1.125, throughput = 1.121e+04/second, recall = 0.7236
+k = 10, Q = 250, cut = 1.125, throughput = 1.12e+04/second, recall = 0.7242
+k = 10, Q = 500, cut = 1.125, throughput = 1.097e+04/second, recall = 0.7253
+k = 10, Q = 15, cut = 1.15, throughput = 1.164e+04/second, recall = 0.5214
+k = 10, Q = 20, cut = 1.15, throughput = 1.165e+04/second, recall = 0.5771
+k = 10, Q = 30, cut = 1.15, throughput = 1.145e+04/second, recall = 0.653
+k = 10, Q = 50, cut = 1.15, throughput = 1.123e+04/second, recall = 0.731
+k = 10, Q = 75, cut = 1.15, throughput = 1.097e+04/second, recall = 0.7638
+k = 10, Q = 100, cut = 1.15, throughput = 1.086e+04/second, recall = 0.7713
+k = 10, Q = 125, cut = 1.15, throughput = 1.093e+04/second, recall = 0.7727
+k = 10, Q = 250, cut = 1.15, throughput = 1.093e+04/second, recall = 0.7734
+k = 10, Q = 500, cut = 1.15, throughput = 1.09e+04/second, recall = 0.7739
+k = 10, Q = 15, cut = 1.175, throughput = 1.174e+04/second, recall = 0.5212
+k = 10, Q = 20, cut = 1.175, throughput = 1.152e+04/second, recall = 0.577
+k = 10, Q = 30, cut = 1.175, throughput = 1.141e+04/second, recall = 0.6516
+k = 10, Q = 50, cut = 1.175, throughput = 1.119e+04/second, recall = 0.7403
+k = 10, Q = 75, cut = 1.175, throughput = 1.086e+04/second, recall = 0.7878
+k = 10, Q = 100, cut = 1.175, throughput = 1.08e+04/second, recall = 0.8067
+k = 10, Q = 125, cut = 1.175, throughput = 1.06e+04/second, recall = 0.8146
+k = 10, Q = 250, cut = 1.175, throughput = 1.057e+04/second, recall = 0.8187
+k = 10, Q = 500, cut = 1.175, throughput = 1.046e+04/second, recall = 0.8189
+k = 10, Q = 15, cut = 1.2, throughput = 1.191e+04/second, recall = 0.5193
+k = 10, Q = 20, cut = 1.2, throughput = 1.18e+04/second, recall = 0.5763
+k = 10, Q = 30, cut = 1.2, throughput = 1.148e+04/second, recall = 0.6531
+k = 10, Q = 50, cut = 1.2, throughput = 1.121e+04/second, recall = 0.7425
+k = 10, Q = 75, cut = 1.2, throughput = 1.079e+04/second, recall = 0.7985
+k = 10, Q = 100, cut = 1.2, throughput = 1.057e+04/second, recall = 0.8291
+k = 10, Q = 125, cut = 1.2, throughput = 1.036e+04/second, recall = 0.8442
+k = 10, Q = 250, cut = 1.2, throughput = 1.008e+04/second, recall = 0.86
+k = 10, Q = 500, cut = 1.2, throughput = 9956/second, recall = 0.8604
+k = 10, Q = 15, cut = 1.25, throughput = 1.149e+04/second, recall = 0.5192
+k = 10, Q = 20, cut = 1.25, throughput = 1.165e+04/second, recall = 0.5768
+k = 10, Q = 30, cut = 1.25, throughput = 1.156e+04/second, recall = 0.6529
+k = 10, Q = 50, cut = 1.25, throughput = 1.114e+04/second, recall = 0.7436
+k = 10, Q = 75, cut = 1.25, throughput = 1.068e+04/second, recall = 0.8046
+k = 10, Q = 100, cut = 1.25, throughput = 1.033e+04/second, recall = 0.843
+k = 10, Q = 125, cut = 1.25, throughput = 9996/second, recall = 0.8675
+k = 10, Q = 250, cut = 1.25, throughput = 9274/second, recall = 0.9137
+k = 10, Q = 500, cut = 1.25, throughput = 8855/second, recall = 0.9248
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 1.106e+04/second, recall = 0.6728
+k = 15, Q = 500, cut = 1.1, throughput = 1.097e+04/second, recall = 0.7416
+k = 20, Q = 500, cut = 1.1, throughput = 1.061e+04/second, recall = 0.7864
+k = 30, Q = 500, cut = 1.1, throughput = 1.021e+04/second, recall = 0.844
+k = 50, Q = 500, cut = 1.1, throughput = 9242/second, recall = 0.9033
+k = 100, Q = 500, cut = 1.1, throughput = 7503/second, recall = 0.9553
+k = 10, Q = 500, cut = 1.125, throughput = 1.105e+04/second, recall = 0.7242
+k = 15, Q = 500, cut = 1.125, throughput = 1.065e+04/second, recall = 0.7889
+k = 20, Q = 500, cut = 1.125, throughput = 1.015e+04/second, recall = 0.8306
+k = 30, Q = 500, cut = 1.125, throughput = 9744/second, recall = 0.8814
+k = 50, Q = 500, cut = 1.125, throughput = 8586/second, recall = 0.9299
+k = 100, Q = 500, cut = 1.125, throughput = 6862/second, recall = 0.9668
+k = 10, Q = 500, cut = 1.15, throughput = 1.075e+04/second, recall = 0.7735
+k = 15, Q = 500, cut = 1.15, throughput = 1.04e+04/second, recall = 0.8328
+k = 20, Q = 500, cut = 1.15, throughput = 9845/second, recall = 0.8695
+k = 30, Q = 500, cut = 1.15, throughput = 9099/second, recall = 0.9125
+k = 50, Q = 500, cut = 1.15, throughput = 7911/second, recall = 0.9514
+k = 100, Q = 500, cut = 1.15, throughput = 6457/second, recall = 0.9697
+k = 10, Q = 500, cut = 1.175, throughput = 1.051e+04/second, recall = 0.8187
+k = 15, Q = 500, cut = 1.175, throughput = 9934/second, recall = 0.8715
+k = 20, Q = 500, cut = 1.175, throughput = 9265/second, recall = 0.9037
+k = 30, Q = 500, cut = 1.175, throughput = 8437/second, recall = 0.9383
+k = 50, Q = 500, cut = 1.175, throughput = 7235/second, recall = 0.9641
+k = 100, Q = 500, cut = 1.175, throughput = 6286/second, recall = 0.9699
+k = 10, Q = 500, cut = 1.2, throughput = 1.001e+04/second, recall = 0.8606
+k = 15, Q = 500, cut = 1.2, throughput = 9205/second, recall = 0.9055
+k = 20, Q = 500, cut = 1.2, throughput = 8621/second, recall = 0.9309
+k = 30, Q = 500, cut = 1.2, throughput = 7697/second, recall = 0.9565
+k = 50, Q = 500, cut = 1.2, throughput = 6668/second, recall = 0.9688
+k = 100, Q = 500, cut = 1.2, throughput = 6204/second, recall = 0.9699
+k = 10, Q = 500, cut = 1.25, throughput = 8856/second, recall = 0.9247
+k = 15, Q = 500, cut = 1.25, throughput = 7990/second, recall = 0.9514
+k = 20, Q = 500, cut = 1.25, throughput = 7416/second, recall = 0.9627
+k = 30, Q = 500, cut = 1.25, throughput = 6730/second, recall = 0.9689
+k = 50, Q = 500, cut = 1.25, throughput = 6344/second, recall = 0.9699
+k = 100, Q = 500, cut = 1.25, throughput = 6197/second, recall = 0.9699
+k = 100, Q = 1000, cut = 10, throughput = 3814/second, recall = 0.9885
+Average graph out-degree = 35.11
+Max out-degree: 60, Min out-degree: 1
+Max nodes searched = 343, Average nodes searched = 262
+ANN: stats: 198.2649
+Parlay time: 52437.1337
+cd ../bench; make -s neighborsCheck
+30 trees, 1B points
+ANN: Built index: 79340.5972
+num queries = 10000
+k = 10, Q = 15, cut = 1.1, throughput = 1.182e+04/second, recall = 0.6134
+k = 10, Q = 20, cut = 1.1, throughput = 1.176e+04/second, recall = 0.6666
+k = 10, Q = 30, cut = 1.1, throughput = 1.106e+04/second, recall = 0.7321
+k = 10, Q = 50, cut = 1.1, throughput = 1.144e+04/second, recall = 0.7666
+k = 10, Q = 75, cut = 1.1, throughput = 1.144e+04/second, recall = 0.7691
+k = 10, Q = 100, cut = 1.1, throughput = 1.118e+04/second, recall = 0.7698
+k = 10, Q = 125, cut = 1.1, throughput = 1.139e+04/second, recall = 0.7702
+k = 10, Q = 250, cut = 1.1, throughput = 1.141e+04/second, recall = 0.7706
+k = 10, Q = 500, cut = 1.1, throughput = 1.12e+04/second, recall = 0.7706
+k = 10, Q = 15, cut = 1.125, throughput = 1.155e+04/second, recall = 0.6132
+k = 10, Q = 20, cut = 1.125, throughput = 1.165e+04/second, recall = 0.6675
+k = 10, Q = 30, cut = 1.125, throughput = 1.137e+04/second, recall = 0.7403
+k = 10, Q = 50, cut = 1.125, throughput = 1.116e+04/second, recall = 0.7993
+k = 10, Q = 75, cut = 1.125, throughput = 1.102e+04/second, recall = 0.8154
+k = 10, Q = 100, cut = 1.125, throughput = 1.101e+04/second, recall = 0.8181
+k = 10, Q = 125, cut = 1.125, throughput = 1.112e+04/second, recall = 0.8184
+k = 10, Q = 250, cut = 1.125, throughput = 1.054e+04/second, recall = 0.8188
+k = 10, Q = 500, cut = 1.125, throughput = 1.089e+04/second, recall = 0.8185
+k = 10, Q = 15, cut = 1.15, throughput = 1.191e+04/second, recall = 0.6104
+k = 10, Q = 20, cut = 1.15, throughput = 1.173e+04/second, recall = 0.6679
+k = 10, Q = 30, cut = 1.15, throughput = 1.127e+04/second, recall = 0.7401
+k = 10, Q = 50, cut = 1.15, throughput = 1.112e+04/second, recall = 0.8141
+k = 10, Q = 75, cut = 1.15, throughput = 1.079e+04/second, recall = 0.8487
+k = 10, Q = 100, cut = 1.15, throughput = 1.077e+04/second, recall = 0.8584
+k = 10, Q = 125, cut = 1.15, throughput = 1.069e+04/second, recall = 0.8611
+k = 10, Q = 250, cut = 1.15, throughput = 1.069e+04/second, recall = 0.8618
+k = 10, Q = 500, cut = 1.15, throughput = 1.054e+04/second, recall = 0.8622
+k = 10, Q = 15, cut = 1.175, throughput = 1.192e+04/second, recall = 0.6115
+k = 10, Q = 20, cut = 1.175, throughput = 1.166e+04/second, recall = 0.6676
+k = 10, Q = 30, cut = 1.175, throughput = 1.141e+04/second, recall = 0.7403
+k = 10, Q = 50, cut = 1.175, throughput = 1.105e+04/second, recall = 0.8186
+k = 10, Q = 75, cut = 1.175, throughput = 1.043e+04/second, recall = 0.8642
+k = 10, Q = 100, cut = 1.175, throughput = 1.033e+04/second, recall = 0.8839
+k = 10, Q = 125, cut = 1.175, throughput = 1.035e+04/second, recall = 0.8931
+k = 10, Q = 250, cut = 1.175, throughput = 1.024e+04/second, recall = 0.8994
+k = 10, Q = 500, cut = 1.175, throughput = 9972/second, recall = 0.8992
+k = 10, Q = 15, cut = 1.2, throughput = 1.191e+04/second, recall = 0.6107
+k = 10, Q = 20, cut = 1.2, throughput = 1.181e+04/second, recall = 0.6674
+k = 10, Q = 30, cut = 1.2, throughput = 1.134e+04/second, recall = 0.7413
+k = 10, Q = 50, cut = 1.2, throughput = 1.102e+04/second, recall = 0.8195
+k = 10, Q = 75, cut = 1.2, throughput = 1.059e+04/second, recall = 0.8697
+k = 10, Q = 100, cut = 1.2, throughput = 1.01e+04/second, recall = 0.8966
+k = 10, Q = 125, cut = 1.2, throughput = 1.02e+04/second, recall = 0.9117
+k = 10, Q = 250, cut = 1.2, throughput = 9590/second, recall = 0.9288
+k = 10, Q = 500, cut = 1.2, throughput = 9326/second, recall = 0.9305
+k = 10, Q = 15, cut = 1.25, throughput = 1.189e+04/second, recall = 0.6121
+k = 10, Q = 20, cut = 1.25, throughput = 1.16e+04/second, recall = 0.6682
+k = 10, Q = 30, cut = 1.25, throughput = 1.148e+04/second, recall = 0.7423
+k = 10, Q = 50, cut = 1.25, throughput = 1.104e+04/second, recall = 0.8207
+k = 10, Q = 75, cut = 1.25, throughput = 1.052e+04/second, recall = 0.8715
+k = 10, Q = 100, cut = 1.25, throughput = 9918/second, recall = 0.9023
+k = 10, Q = 125, cut = 1.25, throughput = 9701/second, recall = 0.9222
+k = 10, Q = 250, cut = 1.25, throughput = 8603/second, recall = 0.96
+k = 10, Q = 500, cut = 1.25, throughput = 7975/second, recall = 0.9703
+ ... 
+k = 10, Q = 500, cut = 1.1, throughput = 1.117e+04/second, recall = 0.7694
+k = 15, Q = 500, cut = 1.1, throughput = 1.075e+04/second, recall = 0.8302
+k = 20, Q = 500, cut = 1.1, throughput = 1.045e+04/second, recall = 0.8668
+k = 30, Q = 500, cut = 1.1, throughput = 9780/second, recall = 0.9118
+k = 50, Q = 500, cut = 1.1, throughput = 8606/second, recall = 0.9515
+k = 100, Q = 500, cut = 1.1, throughput = 6699/second, recall = 0.9825
+k = 10, Q = 500, cut = 1.125, throughput = 1.102e+04/second, recall = 0.8183
+k = 15, Q = 500, cut = 1.125, throughput = 1.039e+04/second, recall = 0.871
+k = 20, Q = 500, cut = 1.125, throughput = 9916/second, recall = 0.903
+k = 30, Q = 500, cut = 1.125, throughput = 9080/second, recall = 0.9388
+k = 50, Q = 500, cut = 1.125, throughput = 7758/second, recall = 0.9696
+k = 100, Q = 500, cut = 1.125, throughput = 5909/second, recall = 0.9872
+k = 10, Q = 500, cut = 1.15, throughput = 1.046e+04/second, recall = 0.8621
+k = 15, Q = 500, cut = 1.15, throughput = 9562/second, recall = 0.907
+k = 20, Q = 500, cut = 1.15, throughput = 9318/second, recall = 0.9333
+k = 30, Q = 500, cut = 1.15, throughput = 8282/second, recall = 0.9605
+k = 50, Q = 500, cut = 1.15, throughput = 6961/second, recall = 0.9816
+k = 100, Q = 500, cut = 1.15, throughput = 5614/second, recall = 0.9878
+k = 10, Q = 500, cut = 1.175, throughput = 1e+04/second, recall = 0.8994
+k = 15, Q = 500, cut = 1.175, throughput = 9182/second, recall = 0.9365
+k = 20, Q = 500, cut = 1.175, throughput = 8601/second, recall = 0.9557
+k = 30, Q = 500, cut = 1.175, throughput = 7526/second, recall = 0.9755
+k = 50, Q = 500, cut = 1.175, throughput = 6197/second, recall = 0.9866
+k = 100, Q = 500, cut = 1.175, throughput = 5442/second, recall = 0.9878
+k = 10, Q = 500, cut = 1.2, throughput = 9305/second, recall = 0.93
+k = 15, Q = 500, cut = 1.2, throughput = 8430/second, recall = 0.9575
+k = 20, Q = 500, cut = 1.2, throughput = 7792/second, recall = 0.9722
+k = 30, Q = 500, cut = 1.2, throughput = 6762/second, recall = 0.9838
+k = 50, Q = 500, cut = 1.2, throughput = 5827/second, recall = 0.9876
+k = 100, Q = 500, cut = 1.2, throughput = 5434/second, recall = 0.9878
+k = 10, Q = 500, cut = 1.25, throughput = 7987/second, recall = 0.9704
+k = 15, Q = 500, cut = 1.25, throughput = 6995/second, recall = 0.9821
+k = 20, Q = 500, cut = 1.25, throughput = 6497/second, recall = 0.986
+k = 30, Q = 500, cut = 1.25, throughput = 5861/second, recall = 0.9877
+k = 50, Q = 500, cut = 1.25, throughput = 5513/second, recall = 0.9878
+k = 100, Q = 500, cut = 1.25, throughput = 5357/second, recall = 0.9878
+k = 100, Q = 1000, cut = 10, throughput = 3243/second, recall = 0.996
+Average graph out-degree = 50.21
+Max out-degree: 90, Min out-degree: 1
+Max nodes searched = 315, Average nodes searched = 260.1
+ANN: stats: 214.4041
+Parlay time: 79555.0014

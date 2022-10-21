@@ -86,9 +86,9 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
   I.build_index(v, num_clusters, cluster_size);
     t.next("Built index");
   std::cout << "num queries = " << q.size() << std::endl;
-  std::vector<int> beams = {32, 50, 75, 125, 500};
+  std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
   std::vector<int> allk = {10, 15, 20, 30, 50, 100};
-  std::vector<float> cuts = {1.1, 1.15, 1.2, 1.25};
+  std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
   for (float cut : cuts)
     for (float Q : beams) 
       checkRecall(I, v, q, groundTruth, 10, Q, cut, d);
@@ -98,6 +98,9 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
   for (float cut : cuts)
     for (int kk : allk)
       checkRecall(I, v, q, groundTruth, kk, 500, cut, d);
+
+  // check "best accuracy"
+  checkRecall(I, v, q, groundTruth, 100, 1000, 10.0, d);
 
   beamSearchRandom(q, v, beamSizeQ, k, d, 1.14);
   if(report_stats){
