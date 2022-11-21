@@ -34,9 +34,11 @@
 #include "parlay/alloc.h"
 #include "common/geometry.h"
 #include "../octTree/oct_tree.h"
+#include "counter.h"
 #define sq(x) (((double) (x))* ((double) (x)))
 
 typedef size_t* Point; 
+typedef double* DPoint;
 size_t shift, MAX1;
 int key_bits = 60;
 int d; 
@@ -80,8 +82,9 @@ void print_point(Point p){
 }
 
 
+
 template<class vtx>
-void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
+std::pair<DPoint, double> convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 	//prelims for rounding each point to an integer: 
 	// 1) find the smallest point in each dimension
 	// 2) find the largest gap between min and max over all dimensions
@@ -103,6 +106,13 @@ void convert(parlay::sequence<vtx*> &v, size_t n, Point P[]){
 	    	for (int j = 0; j < d; j++) 
 	      		P[i][j] = (size_t) floor(maxval * ((v[i] -> pt)[j] - min_point[j])/Delta);  	
     });
+	DPoint min_Point;
+	min_Point = (DPoint) parlay::p_malloc(65*d);
+	for(int i=0; i<d; i++) {
+		min_Point[i] = min_point[i];
+		// std::cout << min_Point[i] << std::endl;
+	}
+	return std::make_pair(min_Point, Delta);
 }
 
 inline bool less_msb(size_t x, size_t y) { return x < y && x < (x^y); }
@@ -121,21 +131,33 @@ auto cmp_shuffle = [] (Point p, Point q){
 
 //sort the points based on their interleave ordering
 void SSS_preprocess(Point P[], size_t n){ 
-	shift = (size_t)(drand48()*MAX1) ; //can be changed to 0 (in theory this voids the time guarantees but no difference in practice)
+	shift = 0; //can be changed to 0 (in theory this voids the time guarantees but no difference in practice)
 	parlay::sort_inplace(parlay::make_slice(P, P+n), cmp_shuffle);}
 
-template<int d>
+
+
+template<int d, class vtx>
 struct Chan_nn{
 
 	double r, r_sq; 
 	Point ans;
 
+	DPoint min_point;
+	double Delta;
+
 	size_t q1_[d], q2_[d];
 	Point q1 = q1_;
 	Point q2 = q2_; 
+	
+	atomic_sum_counter<size_t> recursive_calls;
 
-	Chan_nn(){
+	parlay::sequence<vtx*> v;
+
+	Chan_nn(DPoint min, double D){
+		min_point = min;
+		Delta = D;
 		r_sq = DBL_MAX;
+		recursive_calls.reset();
 	}
 
 	void check_dist(Point p, Point q){
@@ -155,6 +177,30 @@ struct Chan_nn{
 		}
 	}
 
+
+
+  using point = typename vtx::pointT;
+  using box = std::pair<point, point>;
+  using indexed_point = std::pair<size_t, vtx*>;
+
+
+  template <typename Seq>
+  static box get_box(Seq &V) { 
+    size_t n = V.size();
+    auto minmax = [&] (box x, box y) {
+      return box(x.first.minCoords(y.first),
+     x.second.maxCoords(y.second));};
+    // uses a delayed sequence to avoid making a copy
+    auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
+      return box(V[i]->pt, V[i]->pt);});
+    box identity = pts[0];  
+    box final = parlay::reduce(pts, parlay::make_monoid(minmax, identity));
+    return (final);
+  }
+
+
+	
+
 	//find the distance between query point q and the box defined by p1 and p2
 	double dist_sq_to_box(Point q, Point p1, Point p2){
 		int i, j; size_t x, y; double z;
@@ -169,25 +215,84 @@ struct Chan_nn{
 		return z;
 	}
 
-	void SSS_query0(Point P[], size_t n, Point q){
-		if (n==0) return;
-		check_dist(P[n/2], q);
-		if (n == 1 || dist_sq_to_box(q, P[0], P[n-1])*sq(1+eps) > r_sq) { 
+	void SSS_query0(Point P[], size_t l, size_t h, Point q){
+		size_t m = h-l;
+		size_t mid = l+m/2;
+		if (m==0) return;
+		recursive_calls.update_value(1);
+		check_dist(P[mid], q);
+		if (m == 1 || dist_sq_to_box(q, P[l], P[h-1])*sq(1+eps) > r_sq) { 
 			return;
 		} 
-		if(cmp_shuffle(q, P[n/2])){
-			SSS_query0(P, n/2, q);
-			if(not cmp_shuffle (q2, P[n/2])) SSS_query0(P+n/2+1, n-n/2-1, q);
+		if(cmp_shuffle(q, P[mid])){
+			SSS_query0(P, l, mid, q);
+			if(not cmp_shuffle (q2, P[mid])) SSS_query0(P, mid+1, h, q);
 		} else{
-			SSS_query0(P+n/2+1, n-n/2-1, q);
-			if(cmp_shuffle(q1, P[n/2])) SSS_query0(P, n/2, q);
+			SSS_query0(P, mid+1, h, q);
+			if(cmp_shuffle(q1, P[mid])) SSS_query0(P, l, mid, q);
 		}
 	}
+
+	void brute_force(Point P[], size_t l, size_t h, Point q){
+		for(size_t i=l; i<h; i++) check_dist(P[i], q);
+	}
+
+	void SSS_query_midchoice(Point P[], size_t l, size_t h, Point q, 
+		parlay::slice<indexed_point*, indexed_point*> tags, int bit){
+		if(h-l == 0) return;
+		if(bit == 0) return brute_force(P, l, h, q);
+		else{
+			// std::cout << "here1" << std::endl;
+			// std::cout << bit << std::endl;
+			size_t val = ((size_t) 1) << (bit - 1);
+			size_t mask = (bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << bit);
+			auto less = [&] (indexed_point x) { return (x.first & mask) < val; };
+			// std::cout << tags.size() << std::endl;
+			// std::cout << "binary searching" << std::endl;
+			// and then we binary search for the cut point
+			size_t pos = parlay::internal::binary_search(tags, less);
+			// std::cout << pos << std::endl;
+			// std::cout << "here2" << std::endl;
+			if(pos == 0 || pos == h-l) return SSS_query_midchoice(P, l, h, q, tags, bit-1);
+			size_t split = l+pos-1;
+			// std::cout << "here3" << std::endl;
+			check_dist(P[split], q);
+			recursive_calls.update_value(1);
+			// std::cout << "here4" << std::endl;
+			if(h-l == 1 || dist_sq_to_box(q, P[l], P[h-1])*sq(1+eps) > r_sq) return;
+			if(cmp_shuffle(q, P[split])){
+				// std::cout << "here5" << std::endl;
+				auto l_tags = tags.cut(0, pos);
+				// std::cout << "size of ltags " << l_tags.size() << std::endl;
+				SSS_query_midchoice(P, l, split+1, q, l_tags, bit-1);
+				if(not cmp_shuffle (q2, P[split])){ 
+					auto r_tags = tags.cut(pos, h-l);
+					// std::cout << "size of rtags " << r_tags.size() << std::endl;
+					SSS_query_midchoice(P, split+1, h, q, r_tags, bit-1);
+				}
+			} else{
+				// std::cout << "here6" << std::endl;
+				auto r_tags = tags.cut(pos, h-l);
+				// std::cout << pos << std::endl;
+				// std::cout << "size of rtags " << r_tags.size() << std::endl;
+				SSS_query_midchoice(P, split+1, h, q, r_tags, bit-1);
+				if(cmp_shuffle(q1, P[split])){
+					auto l_tags = tags.cut(0, pos);
+					// std::cout << "size of ltags " << l_tags.size() << std::endl;
+					SSS_query_midchoice(P, l, split+1, q, l_tags, bit-1);
+				}
+			}
+		}
+		
+
+		
+	}
+
 
 	//brute-force check correctness for approximately 100 points out of every 10 million
 	bool do_check_correct(){
 		float check = (float) rand()/RAND_MAX;
-		if (check < .00001) return true;
+		if (check < .1) return true;
 		return false;
 	}
 
@@ -219,9 +324,21 @@ struct Chan_nn{
 		}		
 	}
 
-	Point SSS_query(Point P[], size_t n, Point q){
-		SSS_query0(P, n, q);
+	Point SSS_query(Point P[], size_t n, Point q, parlay::sequence<indexed_point> &tags){
+		// parlay::slice<indexed_point*, indexed_point*> tagged = parlay::make_slice(tags);
+		bool mid = true;
+		if(mid) SSS_query0(P, 0, n, q);
+		else{
+			// std::cout << "making slice" << std::endl;
+			parlay::slice<indexed_point*, indexed_point*> tagged = parlay::make_slice(tags);
+			// std::cout << "entering recursion" << std::endl;
+			SSS_query_midchoice(P, 0, n, q, tagged, key_bits);
+		}
 		return ans;
+	}
+
+	size_t num_calls(){
+		return recursive_calls.get_value();
 	}
 
 }; //end Chan_nn struct
@@ -236,40 +353,62 @@ void ANN(parlay::sequence<vtx*> &v, int k){
     }
 	timer t("ANN", report_stats);{
 		size_t n = v.size(); 
+		size_t num_trials = n;
 		d = (v[0]->pt.dimension());
+		parlay::sequence<size_t> recursive_calls(n, 0);
 		Point *P;
 		P = (Point*) parlay::p_malloc((n+1)*64); 
-		convert(v, n, P);
+		auto [min_point, Delta] = convert(v, n, P);
+		// for(int i=0; i<d; i++) std::cout << min_point[i] << std::endl;
+		using o_tree = oct_tree<vtx>;
+		auto tagged_points = o_tree::tag_points_external(v);
 		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); 
 		SSS_preprocess(P, n); 
 		t.next("preprocess");
-		parlay::parallel_for(0, n, [&] (size_t i){
+		parlay::parallel_for(0, num_trials, [&] (size_t i){
 			if(d==2){
-				Chan_nn<2> C;
-				C.SSS_query(P, n, P[i]);
+				// std::cout << "NEW QUERY" << std::endl;
+				// Chan_nn<2, vtx> C;
+				using CNN = Chan_nn<2, vtx>;
+				CNN C(min_point, Delta);
+				C.SSS_query(P, n, P[i], tagged_points);
+				recursive_calls[i] = C.num_calls();
 			} else{
-				Chan_nn<3> C; 
-				C.SSS_query(P, n, P[i]);
+				// Chan_nn<3, vtx> C; 
+				using CNN = Chan_nn<3, vtx>;
+				CNN C(min_point, Delta);
+				C.SSS_query(P, n, P[i], tagged_points);
+				recursive_calls[i] = C.num_calls();
 			}
 		}
 		);
 		t.next("find all");
 		if (check_correctness){
-			parlay::parallel_for(0, n, [&] (size_t i){
+			parlay::parallel_for(0, num_trials, [&] (size_t i){
 				if(d==2){
-					Chan_nn<2> C;
-					C.SSS_query(P, n, P[i]);
+					// Chan_nn<2, vtx> C;
+					using CNN = Chan_nn<2, vtx>;
+					CNN C(min_point, Delta);
+					C.SSS_query(P, n, P[i], tagged_points);
 					C.check_correct(P, n, P[i]);
+					recursive_calls[i] = C.num_calls();
 				} else{
-					Chan_nn<3> C; 
-					C.SSS_query(P, n, P[i]);
+					// Chan_nn<3, vtx> C;
+					using CNN = Chan_nn<3, vtx>;
+					CNN C(min_point, Delta); 
+					C.SSS_query(P, n, P[i], tagged_points);
 					C.check_correct(P, n, P[i]);
+					recursive_calls[i] = C.num_calls();
 				}
 			}
 			);
 			t.next("check correctness");
 		}
+		size_t total = parlay::reduce(recursive_calls);
+		std::cout << "Total recursive calls " << total << std::endl;
+		std::cout << "Avg recursive calls " << ( (float) total/ (float) num_trials) << std::endl;
+
 		parlay::parallel_for(0, n, [&] (size_t i){
 			parlay::p_free(P[i]);
 		});

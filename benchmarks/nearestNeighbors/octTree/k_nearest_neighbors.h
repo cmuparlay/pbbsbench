@@ -233,6 +233,7 @@ struct k_nearest_neighbors {
     }
 
   void k_nearest_fromLeaf(node* T) {
+    
     node* current = T; //this will be the node that node*T points to
     if (current -> is_leaf()){
         if (report_stats) leaf_cnt++;

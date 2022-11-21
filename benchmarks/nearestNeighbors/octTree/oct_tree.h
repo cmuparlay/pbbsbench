@@ -502,8 +502,12 @@ struct oct_tree {
     return tree_ptr(r);
   }
 
+  static parlay::sequence<indexed_point> tag_points_external(parlay::sequence<vtx*> &V) {
+    return tag_points(V);
+  }
+
 private:
-  constexpr static int key_bits = 64;
+  constexpr static int key_bits = 60;
  
 
   // tags each point (actually a pointer to it), with an interger

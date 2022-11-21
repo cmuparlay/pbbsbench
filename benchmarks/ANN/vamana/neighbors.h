@@ -118,13 +118,30 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
     std::cout << "Size of dataset: " << v.size() << std::endl; 
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
-    I.build_index(v, parlay::tabulate(v.size(), [&] (size_t i){return static_cast<int>(i);}), true
-    );
+    size_t num_to_count = 1000;
+    I.build_index(v, parlay::tabulate(v.size()-num_to_count, [&] (size_t i){
+      return static_cast<int>(i);}));
     t.next("Built index");  
-    if(report_stats){
-      graph_stats(v);
-      t.next("stats");
+    auto inserts = parlay::tabulate(num_to_count, [&] (size_t i) {
+      return static_cast<int>(v.size() - num_to_count+i);
+    });
+    parlay::sequence<std::pair<int, int>> edges;
+    I.insert_and_count(inserts, v, edges);
+    t.next("Performed insertions");
+    auto grouped = parlay::group_by_key(edges);
+    auto counts = parlay::tabulate(grouped.size(), [&] (size_t i){
+      return std::make_pair(grouped[i].first, parlay::reduce(grouped[i].second));
+    });
+    auto less = [&] (std::pair<int, int> a, std::pair<int, int> b) {return a.second>b.second;};
+    auto sorted = parlay::sort(counts, less);
+    std::cout << sorted.size() << std::endl;
+    for(int i=0; i<40; i++){
+      std::cout << "ID: " << sorted[i].first << " Freq: " << sorted[i].second << std::endl;
     }
+    // if(report_stats){
+    //   graph_stats(v);
+    //   t.next("stats");
+    // }
   };
 }
 
