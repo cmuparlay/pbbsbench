@@ -29,7 +29,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 #include "benchUtils.h"
-
+#include "../../nearestNeighbors/Chan05/counter.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>

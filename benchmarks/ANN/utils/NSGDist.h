@@ -13,9 +13,14 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
+#include "../../nearestNeighbors/Chan05/counter.h"
 
+extern bool report_stats;
 
 namespace efanna2e{
+
+  atomic_sum_counter<size_t> distance_calls;
+  
   enum Metric{
     L2 = 0,
     INNER_PRODUCT = 1,
@@ -334,6 +339,7 @@ namespace efanna2e{
 
 
 float distance(uint8_t *p, uint8_t *q, unsigned d){
+  if(report_stats) efanna2e::distance_calls.update_value(1);
   int result = 0;
   for(int i=0; i<d; i++){
     result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
@@ -343,6 +349,7 @@ float distance(uint8_t *p, uint8_t *q, unsigned d){
 }
 
 float distance(float *q, uint8_t *p, unsigned d){
+  if(report_stats) efanna2e::distance_calls.update_value(1);
   float result = 0;
   for(int i=0; i<d; i++){
     result += (q[i] - (float) p[i]) *
@@ -352,6 +359,7 @@ float distance(float *q, uint8_t *p, unsigned d){
 }
 
 float distance(float *p, float *q, unsigned d){
+    if(report_stats) efanna2e::distance_calls.update_value(1);
     efanna2e::DistanceL2 distfunc;
     return distfunc.compare(p, q, d);
 }

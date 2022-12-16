@@ -45,9 +45,9 @@ void checkRecall(knn_index<T>& I,
   parlay::internal::timer t;
   int r = 10;
   unsigned d = (v[0]->coordinates).size();
-  beamSearchRandom(q, v, beamQ, k, d, cut);
+  int dist_cmps = I.searchNeighbors(q, v, beamQ, k, cut);
   t.next_time();
-  beamSearchRandom(q, v, beamQ, k, d, cut);
+  I.searchNeighbors(q, v, beamQ, k, cut);
   float query_time = t.next_time();
   float recall = 0.0;
   if (groundTruth.size() > 0) {
@@ -68,6 +68,7 @@ void checkRecall(knn_index<T>& I,
 	    << ", throughput = " << (q.size()/query_time) << "/second";
   if (groundTruth.size() > 0)
     std::cout << ", recall = " << recall << std::endl;
+  if(report_stats) std::cout << "Distance comparisons: " << dist_cmps << std::endl;
   else std::cout << std::endl;
 }
 

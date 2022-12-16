@@ -84,6 +84,9 @@ using namespace std;
       coord zz = z + ((dir & 4) ? offset : -offset);
       return point(xx, yy, zz);
     }
+    point changeCoords(std::vector<coord> v){
+      return point(v[0], v[1], v[2]);
+    }
     // checks if pt is outside of a box centered at this point with
     // radius hsize
     bool outOfBox(point pt, coord hsize) { 

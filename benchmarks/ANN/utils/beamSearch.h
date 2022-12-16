@@ -139,7 +139,7 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
 
 // searches every element in q starting from a randomly selected point
 template <typename T>
-void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
+int beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, double cut = 1.14) {
   if ((k + 1) > beamSizeQ) {
@@ -147,6 +147,7 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
               << " same size or smaller than k = " << k << std::endl;
     abort();
   }
+  if(report_stats) efanna2e::distance_calls.reset();
   // use a random shuffle to generate random starting points for each query
   size_t n = v.size();
   auto indices =
@@ -176,11 +177,13 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
     q[i]->ngh = neighbors;
     if (report_stats) q[i]->cnt = visitedElts.size();
   });
+  if(report_stats) return efanna2e::distance_calls.get_value();
+  else return 0;
   // }
 }
 
 template <typename T>
-void searchAll(parlay::sequence<Tvec_point<T>*>& q,
+int searchAll(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, Tvec_point<T>* starting_point, float cut) {
     
@@ -190,7 +193,7 @@ void searchAll(parlay::sequence<Tvec_point<T>*>& q,
 }
 
 template <typename T>
-void searchAll(parlay::sequence<Tvec_point<T>*>& q,
+int searchAll(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, parlay::sequence<Tvec_point<T>*> starting_points, float cut) {
   if ((k + 1) > beamSizeQ) {
@@ -198,6 +201,7 @@ void searchAll(parlay::sequence<Tvec_point<T>*>& q,
               << " same size or smaller than k = " << k << std::endl;
     abort();
   }
+  if(report_stats) efanna2e::distance_calls.reset();
   parlay::parallel_for(0, q.size(), [&](size_t i) {
     parlay::sequence<int> neighbors = parlay::sequence<int>(k);
     parlay::sequence<pid> beamElts;
@@ -220,6 +224,8 @@ void searchAll(parlay::sequence<Tvec_point<T>*>& q,
     q[i]->ngh = neighbors;
     if (report_stats) q[i]->cnt = visitedElts.size();
   });
+  if(report_stats) return efanna2e::distance_calls.get_value();
+  return 0;
 }
 
 template<typename T>

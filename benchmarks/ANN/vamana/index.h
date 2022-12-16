@@ -25,6 +25,7 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "../utils/indexTools.h"
+#include "../../nearestNeighbors/Chan05/counter.h"
 #include "common/geometry.h"
 #include <random>
 #include <set>
@@ -410,8 +411,8 @@ struct knn_index{
 	}
 
 
-  void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k, float cut){
-    searchAll(q, v, beamSizeQ, k, d, medoid, cut);
+  int searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k, float cut){
+    return searchAll(q, v, beamSizeQ, k, d, medoid, cut);
   }
 
   void rangeSearch(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, 

@@ -278,9 +278,9 @@ struct k_nearest_neighbors {
     size_t val = ((size_t) 1) << (pos - 1);
     size_t mask = (pos == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << pos);
     if ((interleave_integer & mask) <= val){
-      return 1;
-    } else{
       return 0;
+    } else{
+      return 1;
     }
   }
 
@@ -292,9 +292,9 @@ node* find_leaf(point p, node* T, box b, double Delta){ //takes in a point since
   //then, we use this interleave integer to find the correct leaf
   while (not (current->is_leaf())){
     if(lookup_bit(searchInt, current -> bit) == 0){ 
-      current = current->Right(); 
+      current = current->Left(); 
     } else{
-      current = current->Left();
+      current = current->Right();
     }
   };
   return current;
@@ -350,122 +350,243 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     }
   }
 
-  void batch_insert0(slice_t idpts, node* T){
-    if (idpts.size()==0) return;
-    T->set_flag(true);
-    if(T->is_leaf()){
-      if(T->size() + idpts.size() < o_tree::node_cutoff || T->bit == 0){
-        T->batch_update(idpts);
-      } else{    
-        o_tree::batch_split(idpts, T);
+  //TODO this doesn't seem to properly deal with border cases
+  bool within_box(node* T, vtx* vertex) {
+      int dimensions = vertex->pt.dimension();
+      auto box = T->Box();
+      bool result = true;
+      for (int i = 0; i < dimensions; i++) {
+	result = (result &&
+		  (box.first[i] < vertex->pt[i]) &&
+		  (box.second[i] > vertex->pt[i]));
       }
-    } else{
-        T->set_size(T->size()+idpts.size());
-        int new_bit = T->bit; 
-        size_t val = ((size_t) 1) << (new_bit - 1);
-        size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
-        auto less = [&] (indexed_point x) {
-          return (x.first & mask) < val;
-        };
-        int cut_point = parlay::internal::binary_search(idpts, less);
-        int child_bit = (T->Right())->bit;
-        if(child_bit == (new_bit-1)){
-          parlay::par_do_if(idpts.size() > 100,
-            [&] () {batch_insert0(idpts.cut(0, cut_point), T->Left());},
-            [&] () {batch_insert0(idpts.cut(cut_point, idpts.size()), T->Right());}
-          );
-        } else{
-          indexed_point sample = get_point(T);
-          int sample_pos = lookup_bit(sample.first, new_bit-1);
-          if(sample_pos == 0){ //the points already in the tree are on the left
-            o_tree::create_new(T, idpts.cut(0, cut_point), new_bit, true);
-            batch_insert0(idpts.cut(cut_point, idpts.size()), T->Left()); 
-          } else{
-            o_tree::create_new(T, idpts.cut(cut_point, idpts.size()), new_bit, false);
-            batch_insert0(idpts.cut(0, cut_point), T->Right());
-          } 
+      return result;
+    }
+
+  //takes in a single point and a pointer to the root of the tree
+  //assumes integer coordinates
+  void insert_point(vtx* p, node* R, box b, double Delta){
+    int dims = p->pt.dimension();
+    //TODO switch to long int coordinates only
+    //TODO allow root to change
+    indexed_point q = std::make_pair(o_tree::interleave_bits(p->pt, b.first, Delta), p);
+    insert_point0(q, R, o_tree::key_bits);
+  }
+
+  void insert_point0(indexed_point q, node* T, int bit){
+    //lock T
+    if(T->is_leaf()) insert_into_leaf(q, T);
+    else{
+      if(!within_box(T, q.second)){
+        // std::cout << "not within box" << std::endl;
+        //two cases: bit unchanged but box changed, 
+        //or need to create new leaf and internal node
+
+        //if next bit of integer isn't same as node,
+        //iterate until either make a leaf or bits match
+        bool leaf_made = false;
+        while(bit != T->bit){
+          if(lookup_bit(q.first, bit) == 1){
+            //form leaf
+            parlay::sequence<indexed_point> points = {q};
+            node* R = node::new_leaf(parlay::make_slice(points), bit-1);
+            node* P = node::new_node(T, R, bit);
+            //lock G
+            node* G = T->Parent();
+            T->set_parent(P);
+            R->set_parent(P);
+            if(G != nullptr) node::delete_tree(G);
+            leaf_made = true;
+            //release lock on G
+            break;
+          }else bit--;
         }
+        if(bit==T->bit) insert_internal(q, T);
+        //fix boxes if issue not fixed by creation of leaf
+        if(!leaf_made){
+          //lock L, R, P
+          node* P = T->Parent();
+          node* L = T->Left();
+          node* R = T->Right();
+          node* N = node::new_node(L, R, T->bit);
+          L->set_parent(N);
+          R->set_parent(N);
+          if(T==P->Left()) P->set_child(N, true);
+          else P->set_child(N, false);
+          node::delete_tree(T);
+          //release locks on L, R, P
+        }
+      } else insert_internal(q, T);
     }
+    //release lock on T
   }
 
-  void batch_insert(parlay::sequence<vtx*> v, node* R, box b, double Delta){
-    size_t vsize = v.size();
-    //make sure all the points are within the bounding box of the initial tree
-    box points_box = o_tree::get_box(v);
-    int dims = v[0]->pt.dimension();
-    bool ll_bad = false;
-    bool ur_bad = false;
-    for(int i=0; i<dims; i++){
-      if(points_box.first[i] < b.first[i]){
-        ll_bad = true;
-      }
-      if(points_box.second[i] > b.second[i]){
-        ur_bad = true;
-      }
-    }
-    if(ll_bad || ur_bad){
-      std::cout << "ERROR: points not contained in bounding box of data structure" << std::endl;
-      abort();
-    }
-    parlay::sequence<indexed_point> idpts; 
-    idpts = parlay::sequence<indexed_point>(vsize);
-    auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
-  return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
-      });
-    auto less = [] (indexed_point a, indexed_point b){
-      return a.first < b.first; 
-    };
-    auto x = parlay::sort(points, less);
-    batch_insert0(parlay::make_slice(x), R);
-    box root_box = o_tree::update_boxes(R);
+  //assumes lock on T
+  void insert_internal(indexed_point q, node* T){
+    node* N;
+    if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
+    else N = T->Right();
+    // std::cout << "recursing" << std::endl;
+    insert_point0(q, N, T->bit-1);
   }
 
-  void batch_delete0(slice_t idpts, node* R){
-    if(idpts.size()==0) return;
-    R->set_flag(true);
-    if(R->is_leaf()){
-      size_t n = idpts.size();
-      if(n == R->size()){
-        o_tree::prune(R);
-      }else{
-        R->batch_remove(idpts);
-      }
-    } else{
-      size_t n = idpts.size();
-      if(n == R->size()){
-        o_tree::prune(R);
+  void insert_into_leaf(indexed_point q, node* T){
+    //lock G
+      // std::cout << "reached leaf" << std::endl;
+      parlay::sequence<indexed_point> points = T->indexed_pts;
+      points.push_back(q);
+      node* G = T->Parent();
+      bool left = (G->Left() == T);
+      if(T->size() + 1 < o_tree::node_cutoff || T->bit == 0){
+        node* N = node::new_leaf(parlay::make_slice(points), T->bit);
+        G->set_child(N, left);
+        node::delete_tree(T);
       } else{
-        R->set_size(R->size()-n);
-        int new_bit = R->bit; 
-        size_t val = ((size_t) 1) << (new_bit - 1);
-        size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
-        auto less = [&] (indexed_point x) {
-          return (x.first & mask) < val;
+        int cut_point = 0;
+        int new_bit = T->bit;
+        auto less_sort = [&] (indexed_point a, indexed_point b){
+          return a.first < b.first;
         };
-        int cut_point = parlay::internal::binary_search(idpts, less);
-        parlay::par_do_if(n > 100,
-          [&] () {batch_delete0(idpts.cut(0, cut_point), R->Left());},
-          [&] () {batch_delete0(idpts.cut(cut_point, n), R->Right());}
-        );
+        parlay::sort_inplace(points, less_sort);
+        //search for cut point
+        while(cut_point == 0 | cut_point == points.size()){
+          size_t val = ((size_t) 1) << (new_bit - 1);
+          size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+          auto less = [&] (indexed_point x) {
+            return (x.first & mask) < val;
+          };
+          cut_point = parlay::internal::binary_search(points, less);
+          new_bit--;
+        }
+        parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
+        node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
+        node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
+        node* P = node::new_node(L, R, T->bit);
+        L->set_parent(P);
+        R->set_parent(P);
+        G->set_child(G, P);
+        node::delete_tree(T);
       }
-    }
+      //release lock on G
   }
 
-  void batch_delete(parlay::sequence<vtx*> v, node* R, box b, double Delta){
-    size_t vsize = v.size();
-    parlay::sequence<indexed_point> idpts; 
-    idpts = parlay::sequence<indexed_point>(vsize);
-    auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
-      return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
-    });
-    auto less = [] (indexed_point a, indexed_point b){
-      return a.first < b.first; 
-    };
-    auto x = parlay::sort(points, less); 
-    batch_delete0(parlay::make_slice(x), R);
-    o_tree::compress(R);  
-    box root_box = o_tree::update_boxes(R);
-  }
+
+  // void batch_insert0(slice_t idpts, node* T){
+  //   if (idpts.size()==0) return;
+  //   T->set_flag(true);
+  //   if(T->is_leaf()){
+  //     if(T->size() + idpts.size() < o_tree::node_cutoff || T->bit == 0){
+  //       T->batch_update(idpts);
+  //     } else{    
+  //       o_tree::batch_split(idpts, T);
+  //     }
+  //   } else{
+  //       T->set_size(T->size()+idpts.size());
+  //       int new_bit = T->bit; 
+  //       size_t val = ((size_t) 1) << (new_bit - 1);
+  //       size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+  //       auto less = [&] (indexed_point x) {
+  //         return (x.first & mask) < val;
+  //       };
+  //       int cut_point = parlay::internal::binary_search(idpts, less);
+  //       int child_bit = (T->Right())->bit;
+  //       if(child_bit == (new_bit-1)){
+  //         parlay::par_do_if(idpts.size() > 100,
+  //           [&] () {batch_insert0(idpts.cut(0, cut_point), T->Left());},
+  //           [&] () {batch_insert0(idpts.cut(cut_point, idpts.size()), T->Right());}
+  //         );
+  //       } else{
+  //         indexed_point sample = get_point(T);
+  //         int sample_pos = lookup_bit(sample.first, new_bit-1);
+  //         if(sample_pos == 0){ //the points already in the tree are on the left
+  //           o_tree::create_new(T, idpts.cut(0, cut_point), new_bit, true);
+  //           batch_insert0(idpts.cut(cut_point, idpts.size()), T->Left()); 
+  //         } else{
+  //           o_tree::create_new(T, idpts.cut(cut_point, idpts.size()), new_bit, false);
+  //           batch_insert0(idpts.cut(0, cut_point), T->Right());
+  //         } 
+  //       }
+  //   }
+  // }
+
+  // void batch_insert(parlay::sequence<vtx*> v, node* R, box b, double Delta){
+  //   size_t vsize = v.size();
+  //   //make sure all the points are within the bounding box of the initial tree
+  //   box points_box = o_tree::get_box(v);
+  //   int dims = v[0]->pt.dimension();
+  //   bool ll_bad = false;
+  //   bool ur_bad = false;
+  //   for(int i=0; i<dims; i++){
+  //     if(points_box.first[i] < b.first[i]){
+  //       ll_bad = true;
+  //     }
+  //     if(points_box.second[i] > b.second[i]){
+  //       ur_bad = true;
+  //     }
+  //   }
+  //   if(ll_bad || ur_bad){
+  //     std::cout << "ERROR: points not contained in bounding box of data structure" << std::endl;
+  //     abort();
+  //   }
+  //   parlay::sequence<indexed_point> idpts; 
+  //   idpts = parlay::sequence<indexed_point>(vsize);
+  //   auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
+  // return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
+  //     });
+  //   auto less = [] (indexed_point a, indexed_point b){
+  //     return a.first < b.first; 
+  //   };
+  //   auto x = parlay::sort(points, less);
+  //   batch_insert0(parlay::make_slice(x), R);
+  //   box root_box = o_tree::update_boxes(R);
+  // }
+
+  // void batch_delete0(slice_t idpts, node* R){
+  //   if(idpts.size()==0) return;
+  //   R->set_flag(true);
+  //   if(R->is_leaf()){
+  //     size_t n = idpts.size();
+  //     if(n == R->size()){
+  //       o_tree::prune(R);
+  //     }else{
+  //       R->batch_remove(idpts);
+  //     }
+  //   } else{
+  //     size_t n = idpts.size();
+  //     if(n == R->size()){
+  //       o_tree::prune(R);
+  //     } else{
+  //       R->set_size(R->size()-n);
+  //       int new_bit = R->bit; 
+  //       size_t val = ((size_t) 1) << (new_bit - 1);
+  //       size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+  //       auto less = [&] (indexed_point x) {
+  //         return (x.first & mask) < val;
+  //       };
+  //       int cut_point = parlay::internal::binary_search(idpts, less);
+  //       parlay::par_do_if(n > 100,
+  //         [&] () {batch_delete0(idpts.cut(0, cut_point), R->Left());},
+  //         [&] () {batch_delete0(idpts.cut(cut_point, n), R->Right());}
+  //       );
+  //     }
+  //   }
+  // }
+
+  // void batch_delete(parlay::sequence<vtx*> v, node* R, box b, double Delta){
+  //   size_t vsize = v.size();
+  //   parlay::sequence<indexed_point> idpts; 
+  //   idpts = parlay::sequence<indexed_point>(vsize);
+  //   auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
+  //     return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
+  //   });
+  //   auto less = [] (indexed_point a, indexed_point b){
+  //     return a.first < b.first; 
+  //   };
+  //   auto x = parlay::sort(points, less); 
+  //   batch_delete0(parlay::make_slice(x), R);
+  //   o_tree::compress(R);  
+  //   box root_box = o_tree::update_boxes(R);
+  // }
 
 }; //this ends the k_nearest_neighbors structure
 

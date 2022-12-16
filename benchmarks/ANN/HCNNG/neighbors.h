@@ -46,7 +46,7 @@ void checkRecall(hcnng_index<T>& I,
       unsigned d) {
   parlay::internal::timer t;
   int r = 10;
-  beamSearchRandom(q, v, beamQ, k, d, cut);
+  int dist_cmps = beamSearchRandom(q, v, beamQ, k, d, cut);
   t.next_time();
   beamSearchRandom(q, v, beamQ, k, d, cut);
   float query_time = t.next_time();
@@ -70,6 +70,7 @@ void checkRecall(hcnng_index<T>& I,
   if (groundTruth.size() > 0)
     std::cout << ", recall = " << recall << std::endl;
   else std::cout << std::endl;
+  if(report_stats) std::cout << "Distance comparisons: " << dist_cmps << std::endl;
 }
 
 template<typename T>

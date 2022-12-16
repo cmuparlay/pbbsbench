@@ -46,6 +46,9 @@ bool report_stats = true;
 bool check_correctness = false; //optional correctness check; very slow
 int algorithm_version = 0; //just to comply with the makefile requirements
 double eps = 0; 
+bool midpoint_search = true;
+int node_cutoff = 32;
+bool leaf_search = false;
 
 //because std::abs doesn't work on size_t type
 size_t abs(size_t x, size_t y){
@@ -224,6 +227,7 @@ struct Chan_nn{
 		if (m == 1 || dist_sq_to_box(q, P[l], P[h-1])*sq(1+eps) > r_sq) { 
 			return;
 		} 
+		if(leaf_search && m < node_cutoff) brute_force(P, l, h, q);
 		if(cmp_shuffle(q, P[mid])){
 			SSS_query0(P, l, mid, q);
 			if(not cmp_shuffle (q2, P[mid])) SSS_query0(P, mid+1, h, q);
@@ -241,6 +245,7 @@ struct Chan_nn{
 		parlay::slice<indexed_point*, indexed_point*> tags, int bit){
 		if(h-l == 0) return;
 		if(bit == 0) return brute_force(P, l, h, q);
+		if(h-l < node_cutoff && leaf_search) return brute_force(P, l, h, q);
 		else{
 			// std::cout << "here1" << std::endl;
 			// std::cout << bit << std::endl;
@@ -326,8 +331,7 @@ struct Chan_nn{
 
 	Point SSS_query(Point P[], size_t n, Point q, parlay::sequence<indexed_point> &tags){
 		// parlay::slice<indexed_point*, indexed_point*> tagged = parlay::make_slice(tags);
-		bool mid = true;
-		if(mid) SSS_query0(P, 0, n, q);
+		if(midpoint_search) SSS_query0(P, 0, n, q);
 		else{
 			// std::cout << "making slice" << std::endl;
 			parlay::slice<indexed_point*, indexed_point*> tagged = parlay::make_slice(tags);
@@ -361,7 +365,9 @@ void ANN(parlay::sequence<vtx*> &v, int k){
 		auto [min_point, Delta] = convert(v, n, P);
 		// for(int i=0; i<d; i++) std::cout << min_point[i] << std::endl;
 		using o_tree = oct_tree<vtx>;
-		auto tagged_points = o_tree::tag_points_external(v);
+		// auto tagged_points = o_tree::tag_points_external(v);
+		using indexed_point = std::pair<size_t, vtx*>;
+		parlay::sequence<indexed_point> tagged_points;
 		t.next("convert to Chan's types");
 		srand48(12121+n+n+d); 
 		SSS_preprocess(P, n); 
