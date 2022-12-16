@@ -29,7 +29,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 #include "benchUtils.h"
-#include "../../nearestNeighbors/Chan05/counter.h"
+
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -48,18 +48,18 @@ bool report_stats = true;
 
 template<typename T>
 void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
-  int rounds, int maxDeg, int beamSize, double delta, double alpha, char* outFile) 
+  int rounds, int maxDeg, int beamSize, double delta, double alpha, char* outFile)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
       return &pts[i];});
- 
-  time_loop(rounds, 0, 
+
+  time_loop(rounds, 0,
   [&] () {},
   [&] () {
     ANN<T>(v, maxDeg, beamSize, alpha, delta);
   },
-  [&] () {});  
+  [&] () {});
 
 }
 
@@ -68,20 +68,20 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
 		   parlay::sequence<Tvec_point<T>> &qpoints,
 		   int k, int rounds, int maxDeg, int beamSize,
 		   int beamSizeQ, double delta, double alpha, char* outFile,
-		   parlay::sequence<ivec_point>& groundTruth) 
+		   parlay::sequence<ivec_point>& groundTruth)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
       return &pts[i];});
 
   size_t q = qpoints.size();
-  auto qpts =  parlay::tabulate(q, [&] (size_t i) -> Tvec_point<T>* {   
+  auto qpts =  parlay::tabulate(q, [&] (size_t i) -> Tvec_point<T>* {
       return &qpoints[i];});
 
-    time_loop(rounds, 0, 
+    time_loop(rounds, 0,
       [&] () {},
       [&] () {
-        ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth); 
+        ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth);
       },
       [&] () {});
 
@@ -95,7 +95,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
       });
       writeIntSeqToFile(Pout, outFile);
     }
-  
+
 
 }
 
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
 			   delta, alpha, oFile, groundTruth);
     }
     else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile);
-  } 
+  }
   else{ //vectors are uint8 coordinates
     parlay::sequence<Tvec_point<uint8_t>> points = parse_bvecs(iFile, maxDeg);
     if(qFile != NULL){
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
       timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q, delta,
 			     alpha, oFile, groundTruth);
     }
-    else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile);}  
+    else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile);}
 }
 
 
@@ -204,24 +204,24 @@ int main(int argc, char* argv[]) {
  //        }
  //        to_flatten[i] = edges;
  //      });
- //      std::cout << "here1" << std::endl; 
+ //      std::cout << "here1" << std::endl;
  //    auto edges_unsorted = parlay::flatten(to_flatten);
- //    std::cout << "here2" << std::endl; 
+ //    std::cout << "here2" << std::endl;
  //    auto grouped_edges = parlay::group_by_key(edges_unsorted);
- //    std::cout << "here3" << std::endl; 
+ //    std::cout << "here3" << std::endl;
  //    parlay::parallel_for(0, n, [&] (size_t i){
  //      int count = 0;
  //      // parlay::sequence<int> edge_ids = grouped_edges[i].second;
- //      std::cout << grouped_edges[i].second.size() << std::endl; 
+ //      std::cout << grouped_edges[i].second.size() << std::endl;
  //      for(int j=0; j<grouped_edges[i].second.size(); j++){
  //        count+=1;
-        
+
  //        if(j<grouped_edges[i].second.size()-1){
  //          int current = grouped_edges[i].second[j];
  //          int next = grouped_edges[i].second[j+1];
  //          if(current == next) j+=1;
  //        }
-        
+
  //      }
  //      udegrees[i] = count;
  //    });
@@ -234,9 +234,9 @@ int main(int argc, char* argv[]) {
    // if (outFile != NULL) {
    //    parlay::sequence<int> graph(n*(maxDeg+1));
    //    parlay::parallel_for(0, n, [&] (size_t i){
-   //      graph[i*(maxDeg+1)] = (int) i; 
+   //      graph[i*(maxDeg+1)] = (int) i;
    //      int degree = v[i]->out_nbh.size();
-   //      for(int j=0; j<degree; j++) graph[i*(maxDeg+1)+1+j] = v[i]->out_nbh[j]; 
+   //      for(int j=0; j<degree; j++) graph[i*(maxDeg+1)+1+j] = v[i]->out_nbh[j];
    //      int rem = maxDeg - degree;
    //      for(int j=0; j<rem; j++) graph[i*(maxDeg+1)+1+degree+j] = -1;
    //    });

@@ -25,10 +25,10 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "common/geometry.h"
-#include "../utils/NSGDist.h"  
+#include "../utils/NSGDist.h"
 #include "../utils/types.h"
 #include "index.h"
-#include "../utils/beamSearch.h"  
+#include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
 
@@ -77,7 +77,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 int beamSize, int beamSizeQ, double alpha, double dummy,
 	 parlay::sequence<Tvec_point<T>*> &q,
 	 parlay::sequence<ivec_point> groundTruth) {
-  parlay::internal::timer t("ANN",report_stats); 
+  parlay::internal::timer t("ANN",report_stats);
   unsigned d = (v[0]->coordinates).size();
   using findex = knn_index<T>;
   findex I(maxDeg, beamSize, alpha, d);
@@ -90,7 +90,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   std::vector<int> allk = {10, 15, 20, 30, 50, 100};
   std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
   for (float cut : cuts)
-    for (float Q : beams) 
+    for (float Q : beams)
       checkRecall(I, v, q, groundTruth, 10, Q, cut);
 
   std::cout << " ... " << std::endl;
@@ -113,16 +113,16 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy) {
-  parlay::internal::timer t("ANN",report_stats); 
-  { 
+  parlay::internal::timer t("ANN",report_stats);
+  {
     unsigned d = (v[0]->coordinates).size();
-    std::cout << "Size of dataset: " << v.size() << std::endl; 
+    std::cout << "Size of dataset: " << v.size() << std::endl;
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
     size_t num_to_count = 1000;
     I.build_index(v, parlay::tabulate(v.size()-num_to_count, [&] (size_t i){
       return static_cast<int>(i);}));
-    t.next("Built index");  
+    t.next("Built index");
     auto inserts = parlay::tabulate(num_to_count, [&] (size_t i) {
       return static_cast<int>(v.size() - num_to_count+i);
     });
