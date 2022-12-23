@@ -1,11 +1,13 @@
 #!/bin/bash
 
-make clean all
+make 
 
 echo "2DinCube"
 echo ''
 echo ''
-./neighbors -d 2 ../geometryData/data/2DinCube_10M
+./neighbors -d 2 -k 1 -o oFile ../geometryData/data/2DinCube_10M
+cd ../bench
+./neighborsCheck -d 2 -k 1 -r 100 ../geometryData/data/2DinCube_10M ../octTreeSimplified/oFile
 # echo "2Dkuzmin"
 # echo ''
 # echo ''

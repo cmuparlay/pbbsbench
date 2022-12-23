@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = true;
-int algorithm_version = 0;
+int algorithm_version = 2;
 // 0=root based, 1=bit based, >2=map based
 
 #include <algorithm>
@@ -40,33 +40,38 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
   {
     using knn_tree = k_nearest_neighbors<vtx, max_k>;
+    using point = typename knn_tree::point;
     using node = typename knn_tree::node;
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
   
+    //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);
 
-    // create sequences for insertion and deletion
+    //split initial vertices into two sequences: one to build the tree with
+    //and one to later insert point by point
     size_t n = v.size(); 
-    parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>(n-10);
-    parlay::sequence<vtx*> v2 = parlay::sequence<vtx*>(10);
+    size_t init = 3*n/4;
+    size_t ins = n-init;
+    parlay::sequence<vtx*> v1(init);
+    parlay::sequence<vtx*> v2(ins);
     parlay::parallel_for(0, n, [&] (size_t i){
-      if(i<n-10) v1[i] = v[i];
-      else v2[i-n+10] = v[i];
+      if(i<init) v1[i] = v[i];
+      else v2[i-init] = v[i];
     }, 1
     );
 
-    //build tree with optional box
-    knn_tree T(v1);
+    //build tree with bounding box
+    knn_tree T(v1, whole_box);
     t.next("build tree");
 
-    //prelims for insert/delete    
+    //prelims for insert  
     int dims = v[0]->pt.dimension();
-    node* root = T.tree.get();
     box_delta bd = T.get_box_delta(dims);
 
-    for(int i=0; i<1; i++){
-      T.insert_point(v2[i], root, bd.first, bd.second);  
+
+    for(int i=0; i<v2.size(); i++){
+      T.insert_point(v2[i], T.tree, bd.first, bd.second);  
     }
 
     t.next("insert points");
@@ -75,26 +80,21 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       std::cout << "depth = " << T.tree->depth() << std::endl;
 
     if (algorithm_version == 0) { // this is for starting from root 
-      // this reorders the vertices for locality
-      parlay::sequence<vtx*> vr = T.vertices();
-      t.next("flatten tree");
 
       // find nearest k neighbors for each point
-      size_t n = vr.size();
+      size_t n = v.size();
       parlay::parallel_for (0, n, [&] (size_t i) {
-	       T.k_nearest(vr[i], k);
+	       T.k_nearest(v[i], k);
       }, 1);
     
     } else if (algorithm_version == 1) {
-        parlay::sequence<vtx*> vr = T.vertices();
-        t.next("flatten tree");
 
         int dims = (v[0]->pt).dimension();  
-        node* root = T.tree.get(); 
+        node* root = T.tree; 
         box_delta bd = T.get_box_delta(dims);
-        size_t n = vr.size();
+        size_t n = v.size();
         parlay::parallel_for(0, n, [&] (size_t i) {
-          T.k_nearest_leaf(vr[i], T.find_leaf(vr[i]->pt, root, bd.first, bd.second), k);
+          T.k_nearest_leaf(v[i], T.find_leaf(v[i]->pt, root, bd.first, bd.second), k);
         }
         );
 

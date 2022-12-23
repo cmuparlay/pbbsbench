@@ -53,8 +53,8 @@ int checkNeighbors(parlay::sequence<long> &neighbors, parlay::sequence<point2> &
     double minD = parlay::reduce(distances, parlay::minm<double>());
 
     double d = (P[jj] - P[neighbors[k*jj]]).Length();
-
     double errorTolerance = 1e-6;
+    
     if ((d - minD) / (d + minD)  > errorTolerance) {
       cout << "error in neighborsCheck: for point " << jj 
 	   << " min distance reported is: " << d 
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
     parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
     return checkNeighbors(neighbors, PIn, k, r);
   }
-  // } else if (d == 3) {
+//  else if (d == 3) {
   //   parlay::sequence<point3d> PIn = readPointsFromFile<point3d>(iFile);
   //   intT n = PIn.n;
   //   point3d* P = PIn.A;

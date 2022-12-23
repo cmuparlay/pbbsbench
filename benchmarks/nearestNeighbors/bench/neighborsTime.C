@@ -64,7 +64,7 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
       return &vv[i];});
 
   // run once for warmup
-  time_loop(rounds, 1.0,
+  time_loop(rounds, 0.0,
 	    [&] () {},
 	    [&] () {ANN<maxK>(v, k);},
 	    [&] () {});
@@ -72,9 +72,11 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
   if (outFile != NULL) {
     int m = n * k;
     parlay::sequence<int> Pout(m);
-    parlay::parallel_for (0, n, [&] (size_t i) {
-	for (int j=0; j < k; j++)
+    parlay::parallel_for (0, n-1, [&] (size_t i) {
+
+	for (int j=0; j < k; j++){
 	  Pout[k*i + j] = (v[i]->ngh[j])->identifier;
+  }
       });
     writeIntSeqToFile(Pout, outFile);
   }
