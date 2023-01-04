@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # run all tests
 #
@@ -145,7 +145,7 @@ def detectCPUs():
      """
     # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
-       if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+       if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
            # Linux & Unix:
            ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
            if isinstance(ncpus, int) and ncpus > 0:
@@ -196,11 +196,11 @@ def runtest(test,procs,check) :
     else : rounds = 5
     dir = "benchmarks/" + test[0]
     numactl = useNumactl and (procs > 1)
-    options = "-r " + `rounds`
+    options = "-r " + repr(rounds)
     if (doSmall) : testInputs = "./testInputs_small"
     else : testInputs = "./testInputs"
     if (procs > 0) :
-        options =  options + " -p " + `procs`
+        options =  options + " -p " + repr(procs)
     if not(check):
         options = options + " -x"
     if keep_tmp_files:
@@ -216,7 +216,7 @@ def runtest(test,procs,check) :
 
 try :
     if scale : processors = getProcessors()
-    else : os.system("echo " + "\"running on " + `maxcpus` + " threads\"")
+    else : os.system("echo " + "\"running on " + repr(maxcpus) + " threads\"")
     for test in tests :
         isParallel = test[1]
         primary = (int(test[2]) == 0)
@@ -234,6 +234,5 @@ try :
                         os.system("echo")
                     runtest(test, processors[n-1], not(noCheck))
 
-except NameError,v :
-  x, = v
-  print "TEST TERMINATED ABNORMALLY:\n"+x
+except NameError as x:
+  print("TEST TERMINATED ABNORMALLY:\n"+str(x))
