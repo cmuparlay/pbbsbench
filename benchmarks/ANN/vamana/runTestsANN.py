@@ -129,9 +129,8 @@ def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOut
           " median=" + stripFloat(totalTimeMedian/totalWeight) +
           " mean=" + stripFloat(totalTimeMean/totalWeight))
     # return 0
-  except NameError,v:
-    x, = v
-    print "TEST TERMINATED ABNORMALLY:\n["+x + "]"
+  except NameError as x:
+    print("TEST TERMINATED ABNORMALLY:\n["+str(x) + "]")
     return 1
   except KeyboardInterrupt:
     return 1
