@@ -16,12 +16,12 @@ def addLineToFile(oFile, line):
 
 def onPprocessors(command,p) :
   if os.environ.has_key("OPENMP"):
-    return "OMP_NUM_THREADS="+`p`+" " + command
+    return "OMP_NUM_THREADS="+repr(p)+" " + command
     return command  
   elif os.environ.has_key("CILK"):
-    return "CILK_NWORKERS="+`p`+" " + command
+    return "CILK_NWORKERS="+repr(p)+" " + command
   else:
-    return "PARLAY_NUM_THREADS="+`p`+" " + command
+    return "PARLAY_NUM_THREADS="+repr(p)+" " + command
   
 def shellGetOutput(str) :
   process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
@@ -73,7 +73,7 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, oF
       out = shellGetOutput("cd " + dataDir + "; make " + shortiFileName)
     longiFileName = " ".join(dataDir + "/" + name for name in iFileName)
     runOptions = runOptions + " -q " + longqFileName
-    runOptions = runOptions + " -r " + `rounds`
+    runOptions = runOptions + " -r " + repr(rounds)
     if (noOutput == 0) :
       runOptions = runOptions + " -o " + outFile
     times = runSingle(runProgram, runOptions, longgFileName, procs, oFile)
@@ -91,7 +91,7 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, oF
     outputStr = ""
     if (len(runOptions) > 0) :
       outputStr = " : " + runOptions
-    outStr = `weight` + outputStr + " : " + ptimes
+    outStr = repr(weight) + outputStr + " : " + ptimes
     print(outStr)
     addLineToFile(oFile, outStr)
     return [weight,times]
@@ -124,7 +124,7 @@ def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOut
       totalTimeMedian = totalTimeMedian + weight*times[(l-1)/2]
       totalWeight = totalWeight + weight
       j += 1
-    print(name + " : " + `procs` +" : " +
+    print(name + " : " + repr(procs) +" : " +
           "weighted time, min=" + stripFloat(totalTimeMin/totalWeight) +
           " median=" + stripFloat(totalTimeMedian/totalWeight) +
           " mean=" + stripFloat(totalTimeMean/totalWeight))
