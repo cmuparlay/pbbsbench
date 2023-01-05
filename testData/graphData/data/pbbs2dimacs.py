@@ -13,7 +13,7 @@ b.pop()
 
 numVertices = sys.argv[2]
 numEdges = len(b)
-print 'p sp ' + numVertices + ' ' + str(numEdges)
+print('p sp ' + numVertices + ' ' + str(numEdges))
 
 for line in b:
     points = line.split(' ')
@@ -23,4 +23,4 @@ for line in b:
     
     mul = float(pow(10,int(weightList[1])))
     weight = float(weightList[0]) * mul
-    print 'a ' + str(u) + ' ' + str(v) + ' ' + str(weight*100)
+    print('a ' + str(u) + ' ' + str(v) + ' ' + str(weight*100))
