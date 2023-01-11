@@ -4,13 +4,13 @@ import random
 import os
 
 def onPprocessors(command,p) :
-  if os.environ.has_key("OPENMP"):
-    return "OMP_NUM_THREADS="+`p`+" " + command
+  if "OPENMP" in os.environ:
+    return "OMP_NUM_THREADS="+repr(p)+" " + command
     return command  
-  elif os.environ.has_key("CILK"):
-    return "CILK_NWORKERS="+`p`+" " + command
+  elif "CILK" in os.environ:
+    return "CILK_NWORKERS="+repr(p)+" " + command
   else:
-    return "PARLAY_NUM_THREADS="+`p`+" " + command
+    return "PARLAY_NUM_THREADS="+repr(p)+" " + command
   
 def shellGetOutput(str) :
   process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
@@ -19,7 +19,7 @@ def shellGetOutput(str) :
   
   if (len(err) > 0):
       raise NameError(str+"\n"+output+err)
-  return output
+  return output.decode("utf-8")
 
 def stripFloat(val) :
   trunc = float(int(val*1000))/1000
@@ -53,7 +53,7 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, ke
     if len(dataDir)>0:
       out = shellGetOutput("cd " + dataDir + "; make " + shortInputNames)
     longInputNames = " ".join(dataDir + "/" + name for name in inputFileNames)
-    runOptions = runOptions + " -r " + `rounds`
+    runOptions = runOptions + " -r " + repr(rounds)
     if (noOutput == 0) :
       runOptions = runOptions + " -o " + outFile
     times = runSingle(runProgram, runOptions, longInputNames, procs)
@@ -91,7 +91,7 @@ def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOut
                for test in tests]
     meanOfMeans = geomean([geomean(times) for (w,times) in results])
     meanOfMins = geomean([sorted(times)[0] for (w,times) in results])
-    print(name + " : " + `procs` +" : " +
+    print(name + " : " + repr(procs) +" : " +
           "geomean of mins = " + stripFloat(meanOfMins) +
           ", geomean of geomeans = " + stripFloat(meanOfMeans))
     if (addToDatabase) :
@@ -102,9 +102,8 @@ def timeAll(name, runProgram, checkProgram, dataDir, tests, rounds, procs, noOut
         print("Could not insert result in database. Error:", sys.exc_info()[0])
 #        if (os.getlogin() == 'akyrola'):  raise
     return 0
-  except NameError,v:
-    x, = v
-    print "TEST TERMINATED ABNORMALLY:\n["+x + "]"
+  except NameError as x:
+    print("TEST TERMINATED ABNORMALLY:\n["+str(x) + "]")
     return 1
   except KeyboardInterrupt:
     return 1
@@ -231,7 +230,7 @@ def getHostId():
     
     (sysname, nodename, release, version, machine) = os.uname()
     
-    if (os.environ.has_key("OPENMP")):
+    if ("OPENMP" in os.environ):
        nodename = nodename + "[OPENMP]"
     
     cursor.execute("select id from pbbs_hosts where hostname=%s and procmodel=%s and version=%s and numprocs=%s", (nodename, procmodel, version, numprocs))
@@ -267,7 +266,7 @@ def detectCPUs():
      """
     # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
-       if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+       if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
            # Linux & Unix:
            ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
            if isinstance(ncpus, int) and ncpus > 0:
@@ -275,7 +274,7 @@ def detectCPUs():
        else: # OSX:
            return int(os.popen2("sysctl -n hw.ncpu")[1].read())
     # Windows:
-    if os.environ.has_key("NUMBER_OF_PROCESSORS"):
+    if "NUMBER_OF_PROCESSORS" in os.environ:
            ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
            if ncpus > 0:
                return ncpus
