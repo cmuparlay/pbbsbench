@@ -385,15 +385,20 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         //if next bit of integer isn't same as node,
         //iterate until either make a leaf or bits match
         bool leaf_made = false;
+        node* Q = T;
+        while(!(Q->is_leaf())){node* L = Q->Right(); Q=L;}
+        indexed_point s = Q->indexed_pts[0];
         while(bit != T->bit){
-          if(lookup_bit(q.first, bit) == 1){
+          if(lookup_bit(q.first, bit) != lookup_bit(s.first, bit)){
             //we know we are in case 1
             //form leaf
             node* G = T->Parent();
             parlay::sequence<indexed_point> points = {q};
             node* R = node::new_leaf(parlay::make_slice(points), bit-1);
             //new parent node should replace T as G's child
-            node* P = node::new_node(T, R, bit, G);
+            node* P;
+            if(lookup_bit(q.first, bit) == 0) node::new_node(R, T, bit, G);
+            else P = node::new_node(T, R, bit, G);
             T->set_parent(P);
             R->set_parent(P);
             if(G != nullptr){

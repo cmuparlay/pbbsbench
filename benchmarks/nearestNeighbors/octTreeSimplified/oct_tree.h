@@ -104,13 +104,19 @@ struct oct_tree {
 
   struct node { 
 
+  //WARNING!!!!!!!
+  //the "size" field of a node is by design not always accurate
+  //it should always be updated before being used in any function
+  //this is for concurrency reasons
+  //WARNING!!!!!!!
+
   public:
     int bit;
     parlay::sequence<indexed_point> indexed_pts;
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
-    size_t size() {return n;}
+    size_t size() {return n;} //NOT ALWAYS ACCURATE
     bool is_leaf() {return (L == nullptr) && (R == nullptr);}
     bool is_root() {return parent==nullptr;}
     node* Left() {return L;}
@@ -257,7 +263,7 @@ struct oct_tree {
 
   private:
 
-    size_t n;
+    size_t n; //NOT ALWAYS ACCURATE
     node *parent;
     node *L;
     node *R;
@@ -283,11 +289,7 @@ struct oct_tree {
     }
   }; // end struct node
 
-  
-  // // A unique pointer to a tree node to ensure the tree is
-  // // destructed when the pointer is, and that  no copies are made.
-  // struct delete_tree {void operator() (node *T) const {node::delete_tree(T);}};
-  // using tree_ptr = std::unique_ptr<node,delete_tree>;
+
 
   // build a tree given a sequence of pointers to points
   template <typename Seq>
