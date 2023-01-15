@@ -397,7 +397,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             node* R = node::new_leaf(parlay::make_slice(points), bit-1);
             //new parent node should replace T as G's child
             node* P;
-            if(lookup_bit(q.first, bit) == 0) node::new_node(R, T, bit, G);
+            if(lookup_bit(q.first, bit) == 0) P = node::new_node(R, T, bit, G);
             else P = node::new_node(T, R, bit, G);
             T->set_parent(P);
             R->set_parent(P);
