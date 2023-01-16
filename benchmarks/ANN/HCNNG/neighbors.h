@@ -46,7 +46,7 @@ void checkRecall(hcnng_index<T>& I,
       unsigned d) {
   parlay::internal::timer t;
   int r = 10;
-  int dist_cmps = beamSearchRandom(q, v, beamQ, k, d, cut);
+  beamSearchRandom(q, v, beamQ, k, d, cut);
   t.next_time();
   beamSearchRandom(q, v, beamQ, k, d, cut);
   float query_time = t.next_time();
@@ -70,7 +70,7 @@ void checkRecall(hcnng_index<T>& I,
   if (groundTruth.size() > 0)
     std::cout << ", recall = " << recall << std::endl;
   else std::cout << std::endl;
-  if(report_stats) std::cout << "Distance comparisons: " << dist_cmps << std::endl;
+  query_stats(q);
 }
 
 template<typename T>
@@ -103,10 +103,9 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
   // check "best accuracy"
   checkRecall(I, v, q, groundTruth, 100, 1000, 10.0, d);
 
-  beamSearchRandom(q, v, beamSizeQ, k, d, 1.14);
   if(report_stats){
     graph_stats(v);
-    query_stats(q);
+    // query_stats(q);
     t.next("stats");
   }
 }

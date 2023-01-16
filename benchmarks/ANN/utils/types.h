@@ -32,7 +32,8 @@
 template<typename T>
 struct Tvec_point {
   int id;
-  int cnt; 
+  int visited;
+  int dist_calls;  
   parlay::slice<T*, T*> coordinates;
   parlay::slice<int*, int*> out_nbh; 
   parlay::slice<int*, int*> new_nbh; 

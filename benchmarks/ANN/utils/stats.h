@@ -40,9 +40,18 @@ void graph_stats(parlay::sequence<Tvec_point<T>*> &v){
 
 template<typename T>
 void query_stats(parlay::sequence<Tvec_point<T>*> &q){
-	auto s = parlay::delayed_seq<size_t>(q.size(), [&] (size_t i) {return q[i]->cnt;});
-    size_t i = parlay::max_element(s) - s.begin();
-    size_t sum = parlay::reduce(s);
-    std::cout << "Max nodes searched = " << s[i] 
-    	<< ", Average nodes searched = " << sum/((double) q.size()) << std::endl;
+	//stats on visited lists
+	auto visited_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->visited;});
+	parlay::sort_inplace(visited_stats);
+	int avg_visited = (int) parlay::reduce(visited_stats)/((double) q.size());
+	size_t tail_index = .99*((float) q.size());
+	int tail_visited = visited_stats[tail_index];
+	std::cout << "Average num visited: " << avg_visited << ", 99th percentile num visited: " << tail_visited << std::endl;
+	//stats on distance comparisons
+	auto dist_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->dist_calls;});
+	parlay::sort_inplace(dist_stats);
+	int avg_dist = (int) parlay::reduce(dist_stats)/((double) q.size());
+	int tail_dist = dist_stats[tail_index];
+	std::cout << "Average dist cmps: " << avg_dist << ", 99th percentile dist cmps: " << tail_dist << std::endl;
+	std::cout << std::endl;
 }

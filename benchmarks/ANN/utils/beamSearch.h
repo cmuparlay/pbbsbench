@@ -68,7 +68,7 @@ void print_seq(parlay::sequence<int> seq) {
 
 // updated version by Guy
 template <typename T>
-std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
+std::pair<std::pair<parlay::sequence<pid>, parlay::sequence<pid>>, int> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
     Tvec_point<T>* starting_point, int beamSize, unsigned d, int k=0, float cut=1.14) {
   
@@ -80,10 +80,11 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
 
 // updated version by Guy
 template <typename T>
-std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
+std::pair<std::pair<parlay::sequence<pid>, parlay::sequence<pid>>, int> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
     parlay::sequence<Tvec_point<T>*> starting_points, int beamSize, unsigned d, int k=0, float cut=1.14) {
   // initialize data structures
+  int dist_cmps = 0;
   auto vvc = v[0]->coordinates.begin();
   long stride = v[1]->coordinates.begin() - v[0]->coordinates.begin();
   std::vector<pid> visited;
@@ -97,6 +98,8 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
   auto pre_frontier = parlay::tabulate(starting_points.size(), [&] (size_t i) {
     return make_pid(starting_points[i]->id);
   });
+
+  dist_cmps += starting_points.size();
 
   auto frontier = parlay::sort(pre_frontier, less);
 
@@ -117,6 +120,7 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
 	     hash_table[loc] = a;
 	     return true;});
     auto pairCandidates = parlay::map(candidates, [&] (long c) {return make_pid(c);}, 1000);
+    dist_cmps += candidates.size();
     auto sortedCandidates = parlay::sort(pairCandidates, less);
     auto f_iter = std::set_union(frontier.begin(), frontier.end(),
 				 sortedCandidates.begin(), sortedCandidates.end(),
@@ -133,13 +137,13 @@ std::pair<parlay::sequence<pid>, parlay::sequence<pid>> beam_search(
 				 unvisited_frontier.begin(), less);
     remain = uf_iter - unvisited_frontier.begin();
   }
-  return std::make_pair(frontier, parlay::to_sequence(visited));
+  return std::make_pair(std::make_pair(frontier, parlay::to_sequence(visited)), dist_cmps);
 }
 
 
 // searches every element in q starting from a randomly selected point
 template <typename T>
-int beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
+void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, double cut = 1.14) {
   if ((k + 1) > beamSizeQ) {
@@ -147,53 +151,39 @@ int beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
               << " same size or smaller than k = " << k << std::endl;
     abort();
   }
-  if(report_stats) efanna2e::distance_calls.reset();
   // use a random shuffle to generate random starting points for each query
   size_t n = v.size();
   auto indices =
       parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
-  // for(size_t i=0; i<q.size(); i++){
   parlay::parallel_for(0, q.size(), [&](size_t i) {
     parlay::sequence<int> neighbors = parlay::sequence<int>(k);
     size_t index = indices[i];
     Tvec_point<T>* start = v[index];
     parlay::sequence<pid> beamElts;
     parlay::sequence<pid> visitedElts;
-    std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-    pairElts = beam_search(q[i], v, start, beamSizeQ, d, k, cut);
+    auto [pairElts, dist_cmps] = beam_search(q[i], v, start, beamSizeQ, d, k, cut);
     beamElts = pairElts.first;
     visitedElts = pairElts.second;
-    // the first element of the frontier may be the point itself
-    // if this occurs, do not report it as a neighbor
-    if (beamElts[0].first == i) {
-      for (int j = 0; j < k; j++) {
-        neighbors[j] = beamElts[j + 1].first;
-      }
-    } else {
-      for (int j = 0; j < k; j++) {
-        neighbors[j] = beamElts[j].first;
-      }
+    for (int j = 0; j < k; j++) {
+      neighbors[j] = beamElts[j].first;
     }
     q[i]->ngh = neighbors;
-    if (report_stats) q[i]->cnt = visitedElts.size();
+    if (report_stats) {q[i]->visited = visitedElts.size(); q[i]->dist_calls = dist_cmps; }
   });
-  if(report_stats) return efanna2e::distance_calls.get_value();
-  else return 0;
-  // }
 }
 
 template <typename T>
-int searchAll(parlay::sequence<Tvec_point<T>*>& q,
+void searchAll(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, Tvec_point<T>* starting_point, float cut) {
     
     parlay::sequence<Tvec_point<T>*> start_points;
     start_points.push_back(starting_point);
-    return searchAll(q, v, beamSizeQ, k, d, start_points, cut);
+    searchAll(q, v, beamSizeQ, k, d, start_points, cut);
 }
 
 template <typename T>
-int searchAll(parlay::sequence<Tvec_point<T>*>& q,
+void searchAll(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, parlay::sequence<Tvec_point<T>*> starting_points, float cut) {
   if ((k + 1) > beamSizeQ) {
@@ -201,31 +191,22 @@ int searchAll(parlay::sequence<Tvec_point<T>*>& q,
               << " same size or smaller than k = " << k << std::endl;
     abort();
   }
-  if(report_stats) efanna2e::distance_calls.reset();
   parlay::parallel_for(0, q.size(), [&](size_t i) {
     parlay::sequence<int> neighbors = parlay::sequence<int>(k);
     parlay::sequence<pid> beamElts;
     parlay::sequence<pid> visitedElts;
-    std::pair<parlay::sequence<pid>, parlay::sequence<pid>> pairElts;
-    pairElts = beam_search(q[i], v, starting_points, beamSizeQ, d, 0, cut);
+    auto [pairElts, dist_cmps] = beam_search(q[i], v, starting_points, beamSizeQ, d, k, cut);
     beamElts = pairElts.first;
     visitedElts = pairElts.second;
-    // the first element of the frontier may be the point itself
-    // if this occurs, do not report it as a neighbor
-    if (beamElts[0].first == i) {
-      for (int j = 0; j < k; j++) {
-        neighbors[j] = beamElts[j + 1].first;
-      }
-    } else {
       for (int j = 0; j < k; j++) {
         neighbors[j] = beamElts[j].first;
       }
-    }
     q[i]->ngh = neighbors;
-    if (report_stats) q[i]->cnt = visitedElts.size();
+    if (report_stats){ 
+      q[i]->visited = visitedElts.size();
+      q[i]->dist_calls = dist_cmps; 
+    }
   });
-  if(report_stats) return efanna2e::distance_calls.get_value();
-  return 0;
 }
 
 template<typename T>
@@ -251,7 +232,8 @@ std::set<int> rangeSearch(Tvec_point<T>* q, parlay::sequence<Tvec_point<T>*>& v,
   int beam = beamSize;
 
   while(max_rad <= slack*r){
-    auto [visited, neighbors] = beam_search(q, v, start_point, beam, d);
+    auto [pairElts, dist_cmps] = beam_search(q, v, start_point, beam, d);
+    auto [visited, neighbors] = pairElts;
     double new_rad = neighbors[neighbors.size()-1].second;
     for(auto p : neighbors){
       if(p.second <= r) nbh.insert(p.first);

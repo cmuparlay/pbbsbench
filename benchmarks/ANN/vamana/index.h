@@ -268,8 +268,8 @@ struct knn_index{
 		parlay::parallel_for(floor, ceiling, [&] (size_t i){
 			size_t index = shuffled_inserts[i];
 			v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
-			parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d)).second;
-			if(report_stats) v[index]->cnt = visited.size();
+			parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d)).first.second;
+			if(report_stats) v[index]->visited = visited.size();
 			robustPrune(v[index], visited, v, alpha);
 		});
 		//make each edge bidirectional by first adding each new edge
@@ -341,18 +341,14 @@ struct knn_index{
 				ceiling = std::min(count + static_cast<size_t>(max_batch_size), m)-1;
 				count += static_cast<size_t>(max_batch_size);
 			}
-			// std::cout << floor << std::endl;
-			// std::cout << ceiling << std::endl;
-			// std::cout << count << std::endl; 
-			// std::cout << std::endl; 
 			parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
 			//search for each node starting from the medoid, then call
 			//robustPrune with the visited list as its candidate set
 			parlay::parallel_for(floor, ceiling, [&] (size_t i){
 				size_t index = shuffled_inserts[i];
 				v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
-				parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d)).second;
-				if(report_stats) v[index]->cnt = visited.size();
+				parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d)).first.second;
+				if(report_stats) v[index]->visited = visited.size();
 				robustPrune(v[index], visited, v, alpha);
 			});
 			//make each edge bidirectional by first adding each new edge
@@ -411,8 +407,8 @@ struct knn_index{
 	}
 
 
-  int searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k, float cut){
-    return searchAll(q, v, beamSizeQ, k, d, medoid, cut);
+  void searchNeighbors(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, int beamSizeQ, int k, float cut){
+    searchAll(q, v, beamSizeQ, k, d, medoid, cut);
   }
 
   void rangeSearch(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, 

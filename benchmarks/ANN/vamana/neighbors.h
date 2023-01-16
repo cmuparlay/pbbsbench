@@ -45,7 +45,7 @@ void checkRecall(knn_index<T>& I,
   parlay::internal::timer t;
   int r = 10;
   unsigned d = (v[0]->coordinates).size();
-  int dist_cmps = I.searchNeighbors(q, v, beamQ, k, cut);
+  I.searchNeighbors(q, v, beamQ, k, cut);
   t.next_time();
   I.searchNeighbors(q, v, beamQ, k, cut);
   float query_time = t.next_time();
@@ -68,8 +68,7 @@ void checkRecall(knn_index<T>& I,
 	    << ", throughput = " << (q.size()/query_time) << "/second";
   if (groundTruth.size() > 0)
     std::cout << ", recall = " << recall << std::endl;
-  if(report_stats) std::cout << "Distance comparisons: " << dist_cmps << std::endl;
-  else std::cout << std::endl;
+  query_stats(q);
 }
 
 template<typename T>
@@ -105,8 +104,6 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   I.searchNeighbors(q, v, beamSizeQ, k, 1.14);
   if(report_stats){
     graph_stats(v);
-    query_stats(q);
-    t.next("stats");
   }
 }
 
