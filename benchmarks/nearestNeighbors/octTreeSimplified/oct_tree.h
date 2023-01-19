@@ -27,6 +27,8 @@
 #include "parlay/alloc.h"
 #include "common/geometry.h"
 #include "common/get_time.h"
+#include "flock/flock.h"
+#include "verlib/verlib.h"
 
 // vtx must support v->pt
 // and v->pt must support pt.dimension(), pt[i],
@@ -113,14 +115,16 @@ struct oct_tree {
   public:
     int bit;
     parlay::sequence<indexed_point> indexed_pts;
+    flck::atomic_write_once<bool> removed;
+    flck::lock lck;
     using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
     size_t size() {return n;} //NOT ALWAYS ACCURATE
     bool is_leaf() {return (L == nullptr) && (R == nullptr);}
     bool is_root() {return parent==nullptr;}
-    node* Left() {return L;}
-    node* Right() {return R;}
+    node* Left() {return L.load();}
+    node* Right() {return R.load();}
     node* Parent() {return parent;}
     leaf_seq& Vertices() {return P;}
 
@@ -142,7 +146,7 @@ struct oct_tree {
 
 
     // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts, int currentBit) { 
+    node(slice_t Pts, int currentBit) : removed(false) { 
       n = Pts.size();
       parent = nullptr;
 
@@ -160,7 +164,7 @@ struct oct_tree {
     }
 
     // construct an internal binary node
-    node(node* L, node* R, int currentBit) : L(L), R(R) { 
+    node(node* L, node* R, int currentBit) : removed(false), L(L), R(R) { 
       parent = nullptr;
       b = box(L->b.first.minCoords(R->b.first),
 	      L->b.second.maxCoords(R->b.second));
@@ -169,7 +173,7 @@ struct oct_tree {
       bit = currentBit;
     }
 
-    node(node* L, node* R, int currentBit, box B) : L(L), R(R) { 
+    node(node* L, node* R, int currentBit, box B) : removed(false), L(L), R(R) { 
       parent = nullptr;
       b = B;
       n = L->size() + R->size();
@@ -226,8 +230,8 @@ struct oct_tree {
 	for (int i=0; i < size(); i++) f(P[i],this);
       else {
 	parlay::par_do_if(n > 1000,
-			  [&] () {L->map(f);},
-			  [&] () {R->map(f);});
+			  [&] () {L.load()->map(f);},
+			  [&] () {R.load()->map(f);});
       }
     }
 
@@ -237,8 +241,8 @@ struct oct_tree {
       else {
 	size_t l, r;
 	parlay::par_do_if(n > 1000,
-			  [&] () {l = L->depth();},
-			  [&] () {r = R->depth();});
+			  [&] () {l = L.load()->depth();},
+			  [&] () {r = R.load()->depth();});
 	return 1 + std::max(l,r);
       }
     }
@@ -246,8 +250,8 @@ struct oct_tree {
     // recursively frees the tree
     static void delete_tree(node* T) {
       if (T != nullptr) {
-	T->~node();
-	node::free_node(T);
+        T->~node();
+        node::free_node(T);
       }
     }
 
@@ -257,16 +261,17 @@ struct oct_tree {
     node(node&&) = delete;
     node& operator=(node const&) = delete;
     node& operator=(node&&) = delete;
+    node() { }
 
     static node* alloc_node();
     static void free_node(node* T);
-
+    static void retire_node(node* T);
   private:
 
     size_t n; //NOT ALWAYS ACCURATE
-    node *parent;
-    node *L;
-    node *R;
+    node* parent;
+    std::atomic<node*> L;
+    std::atomic<node*> R;
     box b;
     point centerv;
     leaf_seq P;
@@ -280,7 +285,7 @@ struct oct_tree {
 	for (int i=0; i < T->size(); i++)
 	  R[i] = T->P[i];
       else {
-	size_t n_left = T->L->size();
+	size_t n_left = T->L.load()->size();
 	size_t n = T->size();
 	parlay::par_do_if(n > 1000,
 	  [&] () {flatten_rec(T->L, R.cut(0, n_left));},
@@ -410,11 +415,14 @@ private:
   // uses the parlay memory manager, could be replaced will alloc/free
 
 template <typename vtx>
-parlay::type_allocator<typename oct_tree<vtx>::node> node_allocator;
+verlib::memory_pool<typename oct_tree<vtx>::node> node_allocator;
 
 template <typename vtx>
-typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node() { return node_allocator<vtx>.alloc();}
+typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node() { return node_allocator<vtx>.new_obj();}
 
 template <typename vtx>
-void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.free(T);}
+void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.destruct(T);}
+  
+template <typename vtx>
+void oct_tree<vtx>::node::retire_node(node* T) { node_allocator<vtx>.retire(T);}
   

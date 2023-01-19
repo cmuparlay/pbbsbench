@@ -32,7 +32,9 @@ int queue_cutoff = 50;
 #include "common/geometry.h"
 #include "oct_tree.h"
 #include "qknn.hpp"
-
+#include "flock/flock.h"
+#include "verlib/verlib.h"
+#include <assert.h>
 
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
@@ -47,7 +49,8 @@ struct k_nearest_neighbors {
   using box = typename o_tree::box;
   using slice_t = typename o_tree::slice_t;
 
-  node* tree;
+  std::atomic<node*> tree;
+  flck::lock root_lock;
 
   box tree_box; 
 
@@ -310,11 +313,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 }
 
   void k_nearest(vtx* p, int k) {
-    kNN nn(p,k);
-    nn.k_nearest_rec(tree); //this is passing in a pointer to the o_tree root
-    if (report_stats) p->counter = nn.internal_cnt;
-    for (int i=0; i < k; i++)
-      p->ngh[i] = nn[i];
+    verlib::with_epoch([&] {
+      kNN nn(p,k);
+      nn.k_nearest_rec(tree); //this is passing in a pointer to the o_tree root
+      if (report_stats) p->counter = nn.internal_cnt;
+      for (int i=0; i < k; i++)
+        p->ngh[i] = nn[i];
+    });
   }
 
  
@@ -358,63 +363,87 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   //strips a point of its child pointers before deleting
   //to ensure child pointers are not deleted
   void delete_single(node* T){
-    T->set_parent(nullptr);
-    T->set_child(nullptr, true);
-    T->set_child(nullptr, false);
-    node::delete_tree(T);
+    if(T != nullptr) {
+      T->removed.store(true);
+      node::retire_node(T);
+    }
   }
 
   //takes in a single point and a pointer to the root of the tree
   //as well as a bounding box and its largest side length
   //assumes integer coordinates
   void insert_point(vtx* p, node* R, box b, double Delta){
-    int dims = p->pt.dimension();
-    size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
-    indexed_point q = std::make_pair(interleave_int, p);
-    insert_point0(q, R, o_tree::key_bits);
+    verlib::with_epoch([&] {
+      int dims = p->pt.dimension();
+      size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
+      indexed_point q = std::make_pair(interleave_int, p);
+      while(true) {
+        if(insert_point0(q, nullptr, R, o_tree::key_bits, false)) break;
+        // std::cout << "insert attempt failed" << std::endl; 
+      }
+      // while(!insert_point0(q, nullptr, R, o_tree::key_bits, false)) {} // repeat until success
+    });
   }
 
-  void insert_point0(indexed_point q, node* T, int bit){
+  bool insert_point0(indexed_point q, node* parent, node* T, int bit, bool parent_locked=false){
     //lock T
-    if(T->is_leaf()) insert_into_leaf(q, T);
-    else{
-      if(!within_box(T, q.second)){
-        //two cases: (1) need to create new leaf and internal node,
-        //or (2) bit unchanged and box changed
+    // assert(false);
+    if(!parent_locked && (T->is_leaf() || !within_box(T, q.second))) {
+      // enter locking mode
+      if(parent == nullptr) { // T is root
+        return root_lock.try_lock([=] { return insert_point0(q, parent, T, bit, true); });
+      } else {
+        return parent->lck.try_lock([=] {
+          if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
+            // std::cout << "failed valdiation" << std::endl; 
+            return false;
+          } else return insert_point0(q, parent, T, bit, true);
+        });
+      }
+    }
 
-        //if next bit of integer isn't same as node,
-        //iterate until either make a leaf or bits match
-        bool leaf_made = false;
-        node* Q = T;
-        while(!(Q->is_leaf())){node* L = Q->Right(); Q=L;}
-        indexed_point s = Q->indexed_pts[0];
-        while(bit != T->bit){
-          if(lookup_bit(q.first, bit) != lookup_bit(s.first, bit)){
-            //we know we are in case 1
-            //form leaf
-            node* G = T->Parent();
-            parlay::sequence<indexed_point> points = {q};
-            node* R = node::new_leaf(parlay::make_slice(points), bit-1);
-            //new parent node should replace T as G's child
-            node* P;
-            if(lookup_bit(q.first, bit) == 0) P = node::new_node(R, T, bit, G);
-            else P = node::new_node(T, R, bit, G);
-            T->set_parent(P);
-            R->set_parent(P);
-            if(G != nullptr){
-              bool left = false;
-              if(T == G->Left()) left = true;
-              G->set_child(P, left);
-            }
-            if(T == tree) {std::cout << "root changed" << std::endl; set_root(P);}
-            leaf_made = true;
-          }else bit--;
-        }
-        if(!leaf_made){
+    if(T->is_leaf()) {
+      assert(parent_locked);
+      return T->lck.try_lock([=] { return insert_into_leaf(q, parent, T); });
+    } else {
+      if(!within_box(T, q.second)) {
+        assert(parent_locked);
+        return T->lck.try_lock([=] {
+          //two cases: (1) need to create new leaf and internal node,
+          //or (2) bit unchanged and box changed
+
+          //if next bit of integer isn't same as node,
+          //iterate until either make a leaf or bits match
+          node* Q = T;
+          while(!(Q->is_leaf())){node* L = Q->Right(); Q=L;}
+          indexed_point s = Q->indexed_pts[0];
+          int cur_bit = bit;
+          while(cur_bit != T->bit) {
+            if(lookup_bit(q.first, cur_bit) != lookup_bit(s.first, cur_bit)){
+              //we know we are in case 1
+              //form leaf
+              node* G = parent;
+              parlay::sequence<indexed_point> points = {q};
+              node* R = node::new_leaf(parlay::make_slice(points), cur_bit-1);
+              //new parent node should replace T as G's child
+              node* P;
+              if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit, G);
+              else P = node::new_node(T, R, cur_bit, G);
+              T->set_parent(P);
+              R->set_parent(P);
+              if(G != nullptr){
+                bool left = false;
+                if(T == G->Left()) left = true;
+                G->set_child(P, left);
+              }
+              if(T == tree) {std::cout << "root changed (internal: added new level)" << std::endl; set_root(P);}
+              return true;
+            } else cur_bit--;
+          }
           //case 2
           //calculate new box around T, and create new internal node
           //with corrected box
-          node* P = T->Parent();
+          node* P = parent;
           node* L = T->Left();
           node* R = T->Right();
           box b = T->Box();
@@ -426,27 +455,31 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             if(T==P->Left()) P->set_child(N, true);
             else P->set_child(N, false);
           } 
-          if(T == tree) {std::cout << "root changed" << std::endl; set_root(N);}
+          if(T == tree) {
+            std::cout << "root changed (internal: updated bounding box)" << std::endl;
+            assert(parent == nullptr); 
+            set_root(N);
+          }
           delete_single(T);
-          insert_internal(q, N);
-        }
-      } else insert_internal(q, T);
+          return insert_internal(q, N, true);
+        });
+      } else return insert_internal(q, T, false);
     }
   }
 
   //assumes lock on T
   //uses q's interleave integer to recurse right or left
-  void insert_internal(indexed_point q, node* T){
+  bool insert_internal(indexed_point q, node* T, bool parent_locked=false){
     node* N;
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
-    insert_point0(q, N, T->bit-1);
+    return insert_point0(q, T, N, T->bit-1, parent_locked);
   }
 
-  void insert_into_leaf(indexed_point q, node* T){
+  bool insert_into_leaf(indexed_point q, node* parent, node* T){
       parlay::sequence<indexed_point> points = T->indexed_pts;
       points.push_back(q);
-      node* G = T->Parent();
+      node* G = parent;
       bool left;
       if(G != nullptr) left = (G->Left() == T);
       //two cases: either (1) the leaf size is below the cutoff, in which case
@@ -456,9 +489,9 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         //case 1
         node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
         if(G != nullptr) G->set_child(N, left);
-        if(tree == T) {std::cout << "root changed" << std::endl; set_root(N);}
+        if(tree == T) {std::cout << "root changed (leaf: insert)" << std::endl; set_root(N);}
         delete_single(T);
-      } else{
+      } else {
         //case 2
 
         //sort points in leaf by interleave order
@@ -485,9 +518,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         L->set_parent(P);
         R->set_parent(P);
         if(G != nullptr) G->set_child(P, left);
-        if(T == tree){std::cout << "root changed" << std::endl; set_root(P);}
+        if(T == tree){std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(P);}
         delete_single(T);
       }
+      return true;
   }
 
 }; //this ends the k_nearest_neighbors structure

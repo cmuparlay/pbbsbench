@@ -70,14 +70,14 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     box_delta bd = T.get_box_delta(dims);
 
 
-    for(int i=0; i<v2.size(); i++){
-      T.insert_point(v2[i], T.tree, bd.first, bd.second);  
-    }
+    parlay::parallel_for(0, v2.size(), [&] (size_t i) {
+      T.insert_point(v2[i], T.tree.load(), bd.first, bd.second);  
+    }, 1);
 
     t.next("insert points");
 
     if (report_stats) 
-      std::cout << "depth = " << T.tree->depth() << std::endl;
+      std::cout << "depth = " << T.tree.load()->depth() << std::endl;
 
     if (algorithm_version == 0) { // this is for starting from root 
 
@@ -90,7 +90,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     } else if (algorithm_version == 1) {
 
         int dims = (v[0]->pt).dimension();  
-        node* root = T.tree; 
+        node* root = T.tree.load(); 
         box_delta bd = T.get_box_delta(dims);
         size_t n = v.size();
         parlay::parallel_for(0, n, [&] (size_t i) {
@@ -105,7 +105,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
         };
 
         // find nearest k neighbors for each point
-        T.tree -> map(f);
+        T.tree.load() -> map(f);
     }
 
     t.next("try all");
