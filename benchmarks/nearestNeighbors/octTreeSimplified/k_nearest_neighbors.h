@@ -404,11 +404,11 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
     if(T->is_leaf()) {
       assert(parent_locked);
-      return T->lck.try_lock([=] { return insert_into_leaf(q, parent, T); });
+      return T->lck.with_lock([=] { return insert_into_leaf(q, parent, T); });
     } else {
       if(!within_box(T, q.second)) {
         assert(parent_locked);
-        return T->lck.try_lock([=] {
+        return T->lck.with_lock([=] {
           //two cases: (1) need to create new leaf and internal node,
           //or (2) bit unchanged and box changed
 
@@ -449,19 +449,22 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           box b = T->Box();
           box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
           node* N = node::new_node(L, R, T->bit, bigger, P);
-          L->set_parent(N);
-          R->set_parent(N);
-          if(P != nullptr){
-            if(T==P->Left()) P->set_child(N, true);
-            else P->set_child(N, false);
-          } 
-          if(T == tree) {
-            std::cout << "root changed (internal: updated bounding box)" << std::endl;
-            assert(parent == nullptr); 
-            set_root(N);
-          }
-          delete_single(T);
-          return insert_internal(q, N, true);
+          return N->lck.with_lock([=] {
+            L->set_parent(N);
+            R->set_parent(N);
+            if(P != nullptr){
+              if(T==P->Left()) P->set_child(N, true);
+              else P->set_child(N, false);
+            } 
+            if(T == tree) {
+              std::cout << "root changed (internal: updated bounding box)" << std::endl;
+              assert(parent == nullptr); 
+              set_root(N);
+            }
+            delete_single(T);
+            return insert_internal(q, N, true);
+          });
+
         });
       } else return insert_internal(q, T, false);
     }
