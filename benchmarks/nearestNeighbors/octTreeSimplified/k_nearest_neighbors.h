@@ -361,6 +361,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     T->set_parent(nullptr);
     T->set_child(nullptr, true);
     T->set_child(nullptr, false);
+    T->set_removed();
     node::delete_tree(T);
   }
 
@@ -371,14 +372,27 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     int dims = p->pt.dimension();
     size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
     indexed_point q = std::make_pair(interleave_int, p);
-    insert_point0(q, R, o_tree::key_bits);
+    insert_point0(q, nullptr, R, o_tree::key_bits,false);
   }
 
-  void insert_point0(indexed_point q, node* T, int bit){
+  void insert_point0(indexed_point q, node* P, node* T, int bit, bool parent_locked=false){
     //lock T
-    if(T->is_leaf()) insert_into_leaf(q, T);
+    if(T->is_leaf()) insert_into_leaf(q, P, T, parent_locked);
     else{
       if(!within_box(T, q.second)){
+        if(!parent_locked) {
+          if(P == nullptr) { // T is root
+            lock_root_ptr();
+          } else {
+            P->lock();
+            if(P->is_removed() || !(P->left == T || P->right == T)) { // if P is removed or P's child isn't T
+              P->unlock();
+              insert_point0(q, nullptr, tree, o_tree::key_bits,false);
+              return;
+            }
+          }
+        } 
+        T->lock();       
         //two cases: (1) need to create new leaf and internal node,
         //or (2) bit unchanged and box changed
 
@@ -392,7 +406,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           if(lookup_bit(q.first, bit) != lookup_bit(s.first, bit)){
             //we know we are in case 1
             //form leaf
-            node* G = T->Parent();
+            node* G = P;
             parlay::sequence<indexed_point> points = {q};
             node* R = node::new_leaf(parlay::make_slice(points), bit-1);
             //new parent node should replace T as G's child
@@ -414,7 +428,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           //case 2
           //calculate new box around T, and create new internal node
           //with corrected box
-          node* P = T->Parent();
+          node* P = P;
           node* L = T->Left();
           node* R = T->Right();
           box b = T->Box();
@@ -428,25 +442,46 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           } 
           if(T == tree) {std::cout << "root changed" << std::endl; set_root(N);}
           delete_single(T);
-          insert_internal(q, N);
+          insert_internal(q, N, true);
         }
-      } else insert_internal(q, T);
+        T.unlock();
+        if(!parent_locked) {
+          if(P == nullptr) { // T is root
+            unlock_root_ptr();
+          } else {
+            P->unlock();
+          }
+        } 
+      } else insert_internal(q, T, false);
     }
   }
 
   //assumes lock on T
   //uses q's interleave integer to recurse right or left
-  void insert_internal(indexed_point q, node* T){
+  void insert_internal(indexed_point q, node* T, bool parent_locked=false){
     node* N;
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
-    insert_point0(q, N, T->bit-1);
+    insert_point0(q, N, T->bit-1, parent_locked);
   }
 
-  void insert_into_leaf(indexed_point q, node* T){
+  void insert_into_leaf(indexed_point q, node* P, node* T, bool parent_locked=false){
+      if(!parent_locked) {
+        if(P == nullptr) { // T is root
+          lock_root_ptr();
+        } else {
+          P->lock();
+          if(P->is_removed() || !(P->left == T || P->right == T)) { // if P is removed or P's child isn't T
+            P->unlock();
+            insert_point0(q, nullptr, tree, o_tree::key_bits,false);
+            return;
+          }
+        }
+      } 
+      T->lock();
       parlay::sequence<indexed_point> points = T->indexed_pts;
       points.push_back(q);
-      node* G = T->Parent();
+      node* G = P;
       bool left;
       if(G != nullptr) left = (G->Left() == T);
       //two cases: either (1) the leaf size is below the cutoff, in which case
@@ -488,6 +523,14 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         if(T == tree){std::cout << "root changed" << std::endl; set_root(P);}
         delete_single(T);
       }
+      T->unlock();
+      if(!parent_locked) {
+        if(P == nullptr) { // T is root
+          unlock_root_ptr();
+        } else {
+          P->unlock();
+        }
+      } 
   }
 
 }; //this ends the k_nearest_neighbors structure

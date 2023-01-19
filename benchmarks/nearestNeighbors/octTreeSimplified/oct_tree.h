@@ -246,8 +246,8 @@ struct oct_tree {
     // recursively frees the tree
     static void delete_tree(node* T) {
       if (T != nullptr) {
-	T->~node();
-	node::free_node(T);
+        T->~node();
+        node::free_node(T);
       }
     }
 
