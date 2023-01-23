@@ -22,7 +22,7 @@
 
 bool report_stats = true;
 int algorithm_version = 0;
-// 0=root based, 1=bit based, >2=map based
+// 0=root based, 1=bit based
 
 #include <algorithm>
 #include <math.h> 
@@ -92,7 +92,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 	       T.k_nearest(v[i], k);
       }, 1);
     
-    } else if (algorithm_version == 1) {
+    } else {
 
         int dims = (v[0]->pt).dimension();  
         node* root = T.tree.load(); 
@@ -102,15 +102,6 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
           T.k_nearest_leaf(v[i], T.find_leaf(v[i]->pt, root, bd.first, bd.second), k);
         }
         );
-
-
-    } else { //(algorithm_version == 2) this is for starting from leaf, finding leaf using map()
-        auto f = [&] (vtx* p, node* n){ 
-  	     return T.k_nearest_leaf(p, n, k); 
-        };
-
-        // find nearest k neighbors for each point
-        T.tree.load() -> map(f);
     }
 
     t.next("try all");

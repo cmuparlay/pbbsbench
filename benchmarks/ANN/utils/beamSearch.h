@@ -193,28 +193,27 @@ void searchAll(parlay::sequence<Tvec_point<T>*>& q,
   }
   parlay::parallel_for(0, q.size(), [&](size_t i) {
     parlay::sequence<int> neighbors = parlay::sequence<int>(k);
-    parlay::sequence<pid> beamElts;
-    parlay::sequence<pid> visitedElts;
     auto [pairElts, dist_cmps] = beam_search(q[i], v, starting_points, beamSizeQ, d, k, cut);
-    beamElts = pairElts.first;
-    visitedElts = pairElts.second;
+    auto [beamElts, visitedElts] = pairElts;
       for (int j = 0; j < k; j++) {
         neighbors[j] = beamElts[j].first;
       }
     q[i]->ngh = neighbors;
-    if (report_stats){ 
-      q[i]->visited = visitedElts.size();
-      q[i]->dist_calls = dist_cmps; 
-    }
+    q[i]->visited = visitedElts.size();
+    q[i]->dist_calls = dist_cmps; 
+
   });
 }
 
 template<typename T>
 void rangeSearchAll(parlay::sequence<Tvec_point<T>*> q, parlay::sequence<Tvec_point<T>*>& v, 
-  int beamSize, unsigned d, Tvec_point<T>* start_point, double r, double slack = 1.0){
+  int beamSize, unsigned d, Tvec_point<T>* start_point, double r, int k, double cut, double slack){
 
     parlay::parallel_for(0, q.size(), [&] (size_t i){
-      auto in_range = range_search(q[i], v, beamSize, d, start_point, r, slack);
+      q[i]->rounds = 0;
+      q[i]->visited = 0;
+      q[i]->dist_calls = 0;
+      auto in_range = range_search(q[i], v, beamSize, d, start_point, r, k, cut, slack);
       parlay::sequence<int> nbh;
       for(auto j : in_range) nbh.push_back(j);
       q[i]->ngh = nbh;
@@ -222,25 +221,52 @@ void rangeSearchAll(parlay::sequence<Tvec_point<T>*> q, parlay::sequence<Tvec_po
 }
 
 template<typename T>
-std::set<int> rangeSearch(Tvec_point<T>* q, parlay::sequence<Tvec_point<T>*>& v, 
-  int beamSize, unsigned d, Tvec_point<T>* start_point, double r, double slack = 1.0){
+void rangeSearchRandom(parlay::sequence<Tvec_point<T>*> q, parlay::sequence<Tvec_point<T>*>& v, 
+  int beamSize, unsigned d, double r, int k, double cut = 1.14, double slack = 1.0){
+    size_t n = v.size();
+    auto indices = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+    parlay::parallel_for(0, q.size(), [&] (size_t i){
+      auto in_range = range_search(q[i], v, beamSize, d, v[indices[i]], r, k, cut, slack);
+      parlay::sequence<int> nbh;
+      for(auto j : in_range) nbh.push_back(j);
+      q[i]->ngh = nbh;
+    });
+    
+}
+
+template<typename T>   
+std::set<int> range_search(Tvec_point<T>* q, parlay::sequence<Tvec_point<T>*>& v, 
+  int beamSize, unsigned d, Tvec_point<T>* start_point, double r, int k, float cut, double slack){
   
   double max_rad = 0;
 
   std::set<int> nbh;
-
+  int K = k;
   int beam = beamSize;
+  parlay::sequence<Tvec_point<T>*> start_points = {start_point};
 
+  int rounds = 0;
+  int num_visited = 0;
+  int dist_calls = 0;
   while(max_rad <= slack*r){
-    auto [pairElts, dist_cmps] = beam_search(q, v, start_point, beam, d);
+    auto [pairElts, dist_cmps] = beam_search(q, v, start_points, beam, d, K, cut);
     auto [visited, neighbors] = pairElts;
     double new_rad = neighbors[neighbors.size()-1].second;
+    parlay::sequence<Tvec_point<T>*> new_start_points;
     for(auto p : neighbors){
-      if(p.second <= r) nbh.insert(p.first);
+      if(p.second <= r){nbh.insert(p.first); new_start_points.push_back(v[p.first]);}
     }
     beam *= 2;
+    K*= 2;
     max_rad = new_rad;
+    start_points = new_start_points;
+    rounds += 1;
+    num_visited += visited.size();
+    dist_calls += dist_cmps;
   }
+  q->dist_calls = dist_calls;
+  q->rounds = rounds;
+  q->visited = num_visited;
 
   return nbh;
 

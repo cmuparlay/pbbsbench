@@ -412,7 +412,7 @@ struct knn_index{
   }
 
   void rangeSearch(parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<Tvec_point<T>*> &v, 
-  	int beamSizeQ, double r, double slack = 1.0){
-		rangeSearchAll(q, v, beamSize, d, medoid, r, slack);
+  	int beamSizeQ, double r, int k, float cut=1.14, double slack = 3.0){
+		rangeSearchAll(q, v, beamSizeQ, d, medoid, r, k, cut, slack);
 	}
 };

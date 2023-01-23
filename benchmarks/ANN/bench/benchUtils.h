@@ -110,6 +110,40 @@ auto parse_fvecs(const char* filename, int maxDeg) {
   return points;
 }
 
+auto parse_fvecs_with_graph(const char* filename, const char* graphname){
+  auto [fileptr, length] = mmapStringFromFile(filename);
+  auto [graphptr, graphlength] = mmapStringFromFile(filename);
+
+  int d = *((int*)fileptr);
+  size_t vector_size = 4 + 4*d;
+  size_t num_vectors = length / vector_size;
+
+  int maxDeg = *((int*)graphptr+4);
+  int num_points = *((int*)graphptr);
+
+  if(num_vectors != num_points){
+    std::cout << "ERROR: graph and data files do not match" << std::endl;
+    abort();
+  }
+
+  parlay::sequence<Tvec_point<float>> points(num_vectors);
+
+  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    points[i].id = i; 
+    
+    size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
+    float* start = (float*)(fileptr + offset_in_bytes);
+    float* end = start + d;
+    points[i].coordinates = parlay::make_slice(start, end);
+
+    int* start_graph = (int*)(fileptr + 8 + maxDeg*i);
+    int* end_graph = start_graph + maxDeg;
+    points[i].out_nbh = parlay::make_slice(start_graph, end_graph);  
+  });
+
+  return std::make_pair(points, maxDeg);
+}
+
 auto parse_ivecs(const char* filename) {
   auto [fileptr, length] = mmapStringFromFile(filename);
 
@@ -145,8 +179,6 @@ auto parse_bvecs(const char* filename, int maxDeg) {
   // See http://corpus-texmex.irisa.fr/ for more details.
 
   int d = *((int*)fileptr);
-  // std::cout << "Dimension = " << d << std::endl;
-
   size_t vector_size = 4 + d;
   size_t num_vectors = length / vector_size;
 
@@ -168,19 +200,54 @@ auto parse_bvecs(const char* filename, int maxDeg) {
   return points;
 }
 
-// template<typename T>
-// auto add_outnbh(parlay::sequence<Tvec_point<T>> v, int maxDeg){
-//   int n = v.size();
-//   parlay::sequence<int> &outnbh = *new parlay::sequence<int>(n*maxDeg);
-//   parlay::sequence<int> &newnbh = *new parlay::sequence<int>(n*maxDeg);
-//   parlay::parallel_for(0, n, [&] (size_t i){
-//     for(int j=0; j<maxDeg; j++){outnbh[i*maxDeg+j] = -1; newnbh[i*maxDeg+j] = -1;}
-//     parlay::slice<int*, int*> &outnbhi = *new parlay::make_slice<int*, int*>(outnbh.begin() + i*maxDeg, outnbh.begin() + (i+1)*maxDeg);
-//     // outnbhi = parlay::make_slice(outnbh.begin() + i*maxDeg, outnbh.begin() + (i+1)*maxDeg); 
-//     v[i].out_nbh = outnbhi;
-//     v[i].new_nbh = parlay::make_slice(outnbh.begin() + i*maxDeg, outnbh.begin()+(i+1)*maxDeg);
-//   });
-//   // if(v[0].out_nbh.size() != maxDeg) abort();
-// }
+auto parse_bvecs_with_graph(const char* filename, const char* graphname) {
+
+  auto [fileptr, length] = mmapStringFromFile(filename);
+  auto [graphptr, graphlength] = mmapStringFromFile(filename);
+  // Each vector is 4 + d bytes.
+  // * first 4 bytes encode the dimension (as an integer)
+  // * next d values are unsigned chars representing vector components
+  // See http://corpus-texmex.irisa.fr/ for more details.
+
+  int d = *((int*)fileptr);
+  size_t vector_size = 4 + d;
+  size_t num_vectors = length / vector_size;
+
+  int maxDeg = *((int*)graphptr+4);
+  int num_points = *((int*)graphptr);
+
+  parlay::sequence<Tvec_point<uint8_t>> points(num_vectors);
+
+  parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+    points[i].id = i; 
+
+    size_t offset_in_bytes = vector_size * i + 4;  // skip dimension
+    uint8_t* start = (uint8_t*)(fileptr + offset_in_bytes);
+    uint8_t* end = start + d;
+    points[i].coordinates = parlay::make_slice(start, end);
+
+    int* start_graph = (int*)(fileptr + 8 + maxDeg*i);
+    int* end_graph = start_graph + maxDeg;
+    points[i].out_nbh = parlay::make_slice(start_graph, end_graph);   
+  });
+
+  return std::make_pair(maxDeg, points);
+}
+
+//graph file format begins with number of points N, then max degree
+//then N+1 offsets indicating beginning and end of each vector
+//then the IDs in the vector
+//assumes user correctly matches data file and graph file
+template<typename T>
+void write_graph(parlay::sequence<Tvec_point<T>*> &v, char* outFile, int maxDeg){
+  parlay::sequence<int> preamble = {static_cast<int>(v.size()), maxDeg};
+  int* preamble_data = preamble.begin();
+  int* graph_data = v[0]->out_nbh.begin();
+  std::ofstream writer;
+  writer.open(outFile, std::ios::binary | std::ios::out);
+  writer.write((char *) preamble_data, 2*sizeof(int));
+  writer.write((char *) graph_data, v.size()*maxDeg*sizeof(int));
+  writer.close();
+}
 
 

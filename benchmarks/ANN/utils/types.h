@@ -34,6 +34,7 @@ struct Tvec_point {
   int id;
   int visited;
   int dist_calls;  
+  int rounds;
   parlay::slice<T*, T*> coordinates;
   parlay::slice<int*, int*> out_nbh; 
   parlay::slice<int*, int*> new_nbh; 
@@ -52,8 +53,9 @@ struct Tvec_point {
 struct ivec_point {
   int id;
   parlay::slice<int*, int*> coordinates;
+  parlay::slice<float*, float*> distances;
   ivec_point() :
-    coordinates(parlay::make_slice<int*, int*>(nullptr, nullptr)) {}
+    coordinates(parlay::make_slice<int*, int*>(nullptr, nullptr)), distances(parlay::make_slice<float*, float*>(nullptr, nullptr)) {}
 };
 
 #endif
