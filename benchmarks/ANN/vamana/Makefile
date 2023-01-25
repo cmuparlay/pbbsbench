@@ -1,6 +1,6 @@
 include common/parallelDefsANN
 
-REQUIRE = ../utils/beamSearch.h index.h ../utils/indexTools.h
+REQUIRE = ../utils/beamSearch.h index.h ../utils/indexTools.h ../bench/benchUtils.h
 BENCH = neighbors
 
 include common/MakeBench

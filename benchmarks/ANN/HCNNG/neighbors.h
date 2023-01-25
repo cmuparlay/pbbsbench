@@ -36,7 +36,7 @@
 extern bool report_stats;
 
 template<typename T>
-void checkRecall(hcnng_index<T>& I,
+void checkRecall(
 		  parlay::sequence<Tvec_point<T>*> &v,
 		  parlay::sequence<Tvec_point<T>*> &q,
 		  parlay::sequence<ivec_point> groundTruth,
@@ -76,70 +76,55 @@ void checkRecall(hcnng_index<T>& I,
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
 	 int num_clusters, int beamSizeQ, double cluster_size, double dummy,
-	 parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth) {
+	 parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth, bool graph_built) {
 
   parlay::internal::timer t("ANN",report_stats); 
-  unsigned d = (v[0]->coordinates).size();
   using findex = hcnng_index<T>;
-  findex I(mstDeg, d);
-  parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
+  unsigned d = (v[0]->coordinates).size();
+  if(!graph_built){
+    findex I(mstDeg, d);
+     parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
 					    return static_cast<int>(i);});
-  I.build_index(v, num_clusters, cluster_size);
+    I.build_index(v, num_clusters, cluster_size);
     t.next("Built index");
+  }
+
   std::cout << "num queries = " << q.size() << std::endl;
   std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
   std::vector<int> allk = {10, 15, 20, 30, 50, 100};
   std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
   for (float cut : cuts)
     for (float Q : beams) 
-      checkRecall(I, v, q, groundTruth, 10, Q, cut, d);
+      checkRecall(v, q, groundTruth, 10, Q, cut, d);
 
   std::cout << " ... " << std::endl;
 
   for (float cut : cuts)
     for (int kk : allk)
-      checkRecall(I, v, q, groundTruth, kk, 500, cut, d);
+      checkRecall(v, q, groundTruth, kk, 500, cut, d);
 
   // check "best accuracy"
-  checkRecall(I, v, q, groundTruth, 100, 1000, 10.0, d);
+  checkRecall(v, q, groundTruth, 100, 1000, 10.0, d);
 
   if(report_stats){
     graph_stats(v);
-    // query_stats(q);
     t.next("stats");
   }
 }
 
-// template<typename T>
-// void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int MSTdeg, int num_clusters, int beamSizeQ, double cluster_size, double dummy2,
-//   parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth) {
-//   parlay::internal::timer t("ANN",report_stats); 
-//   {
-//     unsigned d = (v[0]->coordinates).size();
-//     using findex = hcnng_index<T>;
-//     findex I(MSTdeg, d);
-//     I.build_index(v, num_clusters, cluster_size);
-//     t.next("Built index");
-//     beamSearchRandom(q, v, beamSizeQ, k, d);
-//     t.next("Found nearest neighbors");
-//     if(report_stats){
-//       graph_stats(v);
-//       query_stats(q);
-//       t.next("stats");
-//     }
-//   };
-// }
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int MSTdeg, int num_clusters, double cluster_size, double dummy2) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int MSTdeg, int num_clusters, double cluster_size, double dummy2, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
     using findex = hcnng_index<T>;
     findex I(MSTdeg, d);
-    I.build_index(v, num_clusters, cluster_size);
-    t.next("Built index");
+    if(!graph_built){
+      I.build_index(v, num_clusters, cluster_size);
+      t.next("Built index");
+    }
     if(report_stats){
       graph_stats(v);
       t.next("stats");

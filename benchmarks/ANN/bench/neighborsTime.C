@@ -48,7 +48,7 @@ bool report_stats = true;
 
 template<typename T>
 void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
-  int rounds, int maxDeg, int beamSize, double delta, double alpha, char* outFile)
+  int rounds, int R, int beamSize, double delta, double alpha, char* outFile, int maxDeg, bool graph_built = false)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -57,18 +57,25 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
   time_loop(rounds, 0,
   [&] () {},
   [&] () {
-    ANN<T>(v, maxDeg, beamSize, alpha, delta);
+    ANN<T>(v, R, beamSize, alpha, delta, graph_built);
   },
   [&] () {});
+
+  if(outFile != NULL) {
+    std::cout << "Writing graph..."; 
+    write_graph(v, outFile, maxDeg); 
+    std::cout << " done" << std::endl;
+  }
+
 
 }
 
 template<typename T>
 void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
 		   parlay::sequence<Tvec_point<T>> &qpoints,
-		   int k, int rounds, int maxDeg, int beamSize,
+		   int k, int rounds, int R, int beamSize,
 		   int beamSizeQ, double delta, double alpha, char* outFile,
-		   parlay::sequence<ivec_point>& groundTruth)
+		   parlay::sequence<ivec_point>& groundTruth, int maxDeg, bool graph_built = false)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -81,19 +88,14 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
     time_loop(rounds, 0,
       [&] () {},
       [&] () {
-        ANN<T>(v, k, maxDeg, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth);
+        ANN<T>(v, k, R, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth, graph_built);
       },
       [&] () {});
 
-    if (outFile != NULL) {
-      int m = q * (k+1);
-      parlay::sequence<int> Pout(m);
-      parlay::parallel_for (0, q, [&] (size_t i) {
-        Pout[(k+1)*i] = qpts[i]->id;
-        for (int j=0; j < k; j++)
-          Pout[(k+1)*i + j+1] = (qpts[i]->ngh)[j];
-      });
-      writeIntSeqToFile(Pout, outFile);
+    if(outFile != NULL) {
+      std::cout << "Writing graph..."; 
+      write_graph(v, outFile, maxDeg); 
+      std::cout << " done" << std::endl;
     }
 
 
@@ -103,10 +105,11 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
 int main(int argc, char* argv[]) {
     commandLine P(argc,argv,
     "[-a <alpha>] [-d <delta>] [-R <deg>]"
-        "[-L <bm>] [-k <k> ] [-Q <bmq>] [-q <qF>] [-o <oF>] [-r <rnds>] [-b <algoOpt>] <inFile>");
+        "[-L <bm>] [-k <k> ] [-Q <bmq>] [-q <qF>] [-g <gF>] [-o <oF>] [-r <rnds>] [-b <algoOpt>] <inFile>");
 
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
+  char* gFile = P.getOptionValue("-g");
   char* qFile = P.getOptionValue("-q");
   char* cFile = P.getOptionValue("-c");
   int R = P.getOptionIntValue("-R", 5);
@@ -127,31 +130,56 @@ int main(int argc, char* argv[]) {
   std::string::size_type n = filename.size();
   if(filename[n-5] == 'b') fvecs = false;
 
-  int maxDeg;
-  if(algoOpt == 1) maxDeg = L*R;
-  else if(algoOpt == 2) maxDeg = 2*R;
-  else maxDeg = R;
+  
 
   parlay::sequence<ivec_point> groundTruth;
   if (cFile != nullptr)	groundTruth = parse_ivecs(cFile);
 
-  if(fvecs){ //vectors are floating point coordinates
+  if(gFile != NULL){
+    if(fvecs){ //vectors are floating point coordinates
+    auto [points, maxDeg] = parse_fvecs_with_graph(iFile, gFile);
+    if(qFile != NULL){
+      parlay::sequence<Tvec_point<float>> qpoints = parse_fvecs(qFile, 0);
+      timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q,
+			   delta, alpha, oFile, groundTruth, maxDeg, true);
+    }
+    else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile, maxDeg, true);
+  }
+  else{ //vectors are uint8 coordinates
+    auto [points, maxDeg] = parse_bvecs_with_graph(iFile, gFile);
+    if(qFile != NULL){
+      parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_bvecs(qFile, 0);
+      timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q, delta,
+			     alpha, oFile, groundTruth, maxDeg, true);
+    }
+    else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, true);
+  }
+  }else{
+    int maxDeg;
+    if(algoOpt == 1) maxDeg = L*R;
+    else if(algoOpt == 2) maxDeg = 2*R;
+    else maxDeg = R;
+    if(fvecs){ //vectors are floating point coordinates
     parlay::sequence<Tvec_point<float>> points = parse_fvecs(iFile, maxDeg);
     if(qFile != NULL){
       parlay::sequence<Tvec_point<float>> qpoints = parse_fvecs(qFile, 0);
       timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q,
-			   delta, alpha, oFile, groundTruth);
+			   delta, alpha, oFile, groundTruth, maxDeg);
     }
-    else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile);
+    else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile, maxDeg);
   }
   else{ //vectors are uint8 coordinates
     parlay::sequence<Tvec_point<uint8_t>> points = parse_bvecs(iFile, maxDeg);
     if(qFile != NULL){
       parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_bvecs(qFile, 0);
       timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q, delta,
-			     alpha, oFile, groundTruth);
+			     alpha, oFile, groundTruth, maxDeg);
     }
-    else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile);}
+    else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg);
+  }
+  }
+
+
 }
 
 

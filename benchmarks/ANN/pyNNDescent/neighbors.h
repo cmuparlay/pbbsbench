@@ -35,7 +35,7 @@
 extern bool report_stats;
 
 template<typename T>
-void checkRecall(pyNN_index<T>& I,
+void checkRecall(
 		  parlay::sequence<Tvec_point<T>*> &v,
 		  parlay::sequence<Tvec_point<T>*> &q,
 		  parlay::sequence<ivec_point> groundTruth,
@@ -74,19 +74,20 @@ void checkRecall(pyNN_index<T>& I,
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, int beamSizeQ, double num_clusters, double alpha,
-  parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth) {
+  parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats); 
   {
     
     unsigned d = (v[0]->coordinates).size();
     using findex = pyNN_index<T>;
-    findex I(K, d, .05);
-    std::cout << "Degree bound K " << K << std::endl;
-    std::cout << "Cluster size " << cluster_size << std::endl;
-    std::cout << "Number of clusters " << num_clusters << std::endl;
-    // std::cout << "Change parameter " << delta << std::endl; 
-    I.build_index(v, cluster_size, (int) num_clusters, alpha);
-    t.next("Built index");
+    if(!graph_built){
+      findex I(K, d, .05);
+      std::cout << "Degree bound K " << K << std::endl;
+      std::cout << "Cluster size " << cluster_size << std::endl;
+      std::cout << "Number of clusters " << num_clusters << std::endl;
+      I.build_index(v, cluster_size, (int) num_clusters, alpha);
+      t.next("Built index");
+    }
 
     std::cout << "num queries = " << q.size() << std::endl;
     std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
@@ -94,42 +95,38 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
     std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
     for (float cut : cuts)
       for (float Q : beams) 
-        checkRecall(I, v, q, groundTruth, 10, Q, cut, d);
+        checkRecall(v, q, groundTruth, 10, Q, cut, d);
 
     std::cout << " ... " << std::endl;
 
     for (float cut : cuts)
       for (int kk : allk)
-        checkRecall(I, v, q, groundTruth, kk, 500, cut, d);
+        checkRecall(v, q, groundTruth, kk, 500, cut, d);
 
     // check "best accuracy"
-    checkRecall(I, v, q, groundTruth, 100, 1000, 10.0, d);
+    checkRecall(v, q, groundTruth, 100, 1000, 10.0, d);
 
     // beamSearchRandom(q, v, beamSizeQ, k, d);
     t.next("Found nearest neighbors");
     if(report_stats){
-      //average numbers of nodes searched using beam search
       graph_stats(v);
-      // query_stats(q);
-      // t.next("stats");
+      t.next("stats");
     }
   };
 }
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double num_clusters, double alpha) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double num_clusters, double alpha, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
-    // std::cout << K << std::endl;
-    // std::cout << cluster_size << std::endl;
-    // std::cout << num_clusters << std::endl;
-    // std::cout << delta << std::endl;
     unsigned d = (v[0]->coordinates).size();
     using findex = pyNN_index<T>;
-    findex I(K, d, .05);
-    I.build_index(v, cluster_size, (int) num_clusters, alpha);
-    t.next("Built index");
+    if(!graph_built){
+       findex I(K, d, .05);
+      I.build_index(v, cluster_size, (int) num_clusters, alpha);
+      t.next("Built index");
+    }
     if(report_stats){
       graph_stats(v);
       t.next("stats");

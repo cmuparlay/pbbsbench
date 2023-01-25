@@ -112,14 +112,16 @@ auto parse_fvecs(const char* filename, int maxDeg) {
 
 auto parse_fvecs_with_graph(const char* filename, const char* graphname){
   auto [fileptr, length] = mmapStringFromFile(filename);
-  auto [graphptr, graphlength] = mmapStringFromFile(filename);
+  auto [graphptr, graphlength] = mmapStringFromFile(graphname);
 
   int d = *((int*)fileptr);
   size_t vector_size = 4 + 4*d;
   size_t num_vectors = length / vector_size;
 
-  int maxDeg = *((int*)graphptr+4);
+  int maxDeg = *((int*)(graphptr+4));
   int num_points = *((int*)graphptr);
+
+  std::cout << "Detected graph with " << num_points << " points and max degree " << maxDeg << std::endl;
 
   if(num_vectors != num_points){
     std::cout << "ERROR: graph and data files do not match" << std::endl;
@@ -136,7 +138,7 @@ auto parse_fvecs_with_graph(const char* filename, const char* graphname){
     float* end = start + d;
     points[i].coordinates = parlay::make_slice(start, end);
 
-    int* start_graph = (int*)(fileptr + 8 + maxDeg*i);
+    int* start_graph = (int*)(graphptr + 8 + 4*maxDeg*i);
     int* end_graph = start_graph + maxDeg;
     points[i].out_nbh = parlay::make_slice(start_graph, end_graph);  
   });
@@ -203,7 +205,7 @@ auto parse_bvecs(const char* filename, int maxDeg) {
 auto parse_bvecs_with_graph(const char* filename, const char* graphname) {
 
   auto [fileptr, length] = mmapStringFromFile(filename);
-  auto [graphptr, graphlength] = mmapStringFromFile(filename);
+  auto [graphptr, graphlength] = mmapStringFromFile(graphname);
   // Each vector is 4 + d bytes.
   // * first 4 bytes encode the dimension (as an integer)
   // * next d values are unsigned chars representing vector components
@@ -213,8 +215,14 @@ auto parse_bvecs_with_graph(const char* filename, const char* graphname) {
   size_t vector_size = 4 + d;
   size_t num_vectors = length / vector_size;
 
-  int maxDeg = *((int*)graphptr+4);
+  int maxDeg = *((int*)(graphptr+4));
   int num_points = *((int*)graphptr);
+
+  std::cout << "Detected graph with " << num_points << " points and max degree " << maxDeg << std::endl;
+  if(num_vectors != num_points){
+    std::cout << "ERROR: graph and data files do not match" << std::endl;
+    abort();
+  }
 
   parlay::sequence<Tvec_point<uint8_t>> points(num_vectors);
 
@@ -226,12 +234,12 @@ auto parse_bvecs_with_graph(const char* filename, const char* graphname) {
     uint8_t* end = start + d;
     points[i].coordinates = parlay::make_slice(start, end);
 
-    int* start_graph = (int*)(fileptr + 8 + maxDeg*i);
+    int* start_graph = (int*)(graphptr + 8 + 4*maxDeg*i);
     int* end_graph = start_graph + maxDeg;
     points[i].out_nbh = parlay::make_slice(start_graph, end_graph);   
   });
 
-  return std::make_pair(maxDeg, points);
+  return std::make_pair(points, maxDeg);
 }
 
 //graph file format begins with number of points N, then max degree
@@ -240,7 +248,9 @@ auto parse_bvecs_with_graph(const char* filename, const char* graphname) {
 //assumes user correctly matches data file and graph file
 template<typename T>
 void write_graph(parlay::sequence<Tvec_point<T>*> &v, char* outFile, int maxDeg){
-  parlay::sequence<int> preamble = {static_cast<int>(v.size()), maxDeg};
+  int n = static_cast<int>(v.size());
+  std::cout << "Writing graph with " << n << " points and max degree " << maxDeg << std::endl;
+  parlay::sequence<int> preamble = {n, maxDeg};
   int* preamble_data = preamble.begin();
   int* graph_data = v[0]->out_nbh.begin();
   std::ofstream writer;

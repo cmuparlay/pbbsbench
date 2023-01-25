@@ -75,15 +75,20 @@ template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 int beamSize, int beamSizeQ, double alpha, double dummy,
 	 parlay::sequence<Tvec_point<T>*> &q,
-	 parlay::sequence<ivec_point> groundTruth) {
+	 parlay::sequence<ivec_point> groundTruth, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats);
   unsigned d = (v[0]->coordinates).size();
   using findex = knn_index<T>;
   findex I(maxDeg, beamSize, alpha, d);
-  parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
+  if(graph_built){
+    I.find_approx_medoid(v);
+  } else{
+    parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
 					    return static_cast<int>(i);});
-  I.build_index(v, inserts, true);
-  t.next("Build index");
+    I.build_index(v, inserts);
+    t.next("Build index");
+  }
+  
   std::cout << "num queries = " << q.size() << std::endl;
   std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
   std::vector<int> allk = {10, 15, 20, 30, 50, 100};
@@ -101,7 +106,6 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   // check "best accuracy"
   checkRecall(I, v, q, groundTruth, 100, 1000, 10.0);
 
-  I.searchNeighbors(q, v, beamSizeQ, k, 1.14);
   if(report_stats){
     graph_stats(v);
   }
@@ -109,37 +113,23 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats);
   {
     unsigned d = (v[0]->coordinates).size();
-    std::cout << "Size of dataset: " << v.size() << std::endl;
     using findex = knn_index<T>;
     findex I(maxDeg, beamSize, alpha, d);
-    size_t num_to_count = 1000;
-    I.build_index(v, parlay::tabulate(v.size()-num_to_count, [&] (size_t i){
-      return static_cast<int>(i);}));
-    t.next("Built index");
-    auto inserts = parlay::tabulate(num_to_count, [&] (size_t i) {
-      return static_cast<int>(v.size() - num_to_count+i);
-    });
-    parlay::sequence<std::pair<int, int>> edges;
-    I.insert_and_count(inserts, v, edges);
-    t.next("Performed insertions");
-    auto grouped = parlay::group_by_key(edges);
-    auto counts = parlay::tabulate(grouped.size(), [&] (size_t i){
-      return std::make_pair(grouped[i].first, parlay::reduce(grouped[i].second));
-    });
-    auto less = [&] (std::pair<int, int> a, std::pair<int, int> b) {return a.second>b.second;};
-    auto sorted = parlay::sort(counts, less);
-    std::cout << sorted.size() << std::endl;
-    for(int i=0; i<40; i++){
-      std::cout << "ID: " << sorted[i].first << " Freq: " << sorted[i].second << std::endl;
+    if(graph_built) I.find_approx_medoid(v);
+    else{
+      parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
+					    return static_cast<int>(i);});
+      I.build_index(v, inserts);
+      t.next("Built index");
     }
-    // if(report_stats){
-    //   graph_stats(v);
-    //   t.next("stats");
-    // }
+    if(report_stats){
+      graph_stats(v);
+      t.next("stats");
+    }
   };
 }
 
