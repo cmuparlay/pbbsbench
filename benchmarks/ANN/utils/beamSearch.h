@@ -208,11 +208,7 @@ void searchAll(parlay::sequence<Tvec_point<T>*>& q,
 template<typename T>
 void rangeSearchAll(parlay::sequence<Tvec_point<T>*> q, parlay::sequence<Tvec_point<T>*>& v, 
   int beamSize, unsigned d, Tvec_point<T>* start_point, double r, int k, double cut, double slack){
-
     parlay::parallel_for(0, q.size(), [&] (size_t i){
-      q[i]->rounds = 0;
-      q[i]->visited = 0;
-      q[i]->dist_calls = 0;
       auto in_range = range_search(q[i], v, beamSize, d, start_point, r, k, cut, slack);
       parlay::sequence<int> nbh;
       for(auto j : in_range) nbh.push_back(j);
@@ -245,25 +241,44 @@ std::set<int> range_search(Tvec_point<T>* q, parlay::sequence<Tvec_point<T>*>& v
   int beam = beamSize;
   parlay::sequence<Tvec_point<T>*> start_points = {start_point};
 
+
   int rounds = 0;
   int num_visited = 0;
   int dist_calls = 0;
-  while(max_rad <= slack*r){
+  while((max_rad <= slack*r)){
     auto [pairElts, dist_cmps] = beam_search(q, v, start_points, beam, d, K, cut);
-    auto [visited, neighbors] = pairElts;
-    double new_rad = neighbors[neighbors.size()-1].second;
-    parlay::sequence<Tvec_point<T>*> new_start_points;
-    for(auto p : neighbors){
-      if(p.second <= r){nbh.insert(p.first); new_start_points.push_back(v[p.first]);}
-    }
-    beam *= 2;
-    K*= 2;
-    max_rad = new_rad;
-    start_points = new_start_points;
+    auto [neighbors, visited] = pairElts;
+
     rounds += 1;
     num_visited += visited.size();
     dist_calls += dist_cmps;
+    
+    bool new_nbh = false;
+    for(auto p : visited){
+      if((p.second <= r) && (nbh.find(p.first) == nbh.end())){
+        new_nbh = true;
+        nbh.insert(p.first);
+      }
+    }
+    if(new_nbh == false && rounds != 1) break;
+
+    parlay::sequence<Tvec_point<T>*> new_start_points;
+    if(nbh.size() == 0) new_start_points = {start_point};
+    else for(auto p : nbh) new_start_points.push_back(v[p]);
+    
+    start_points = new_start_points;
+
+    double new_rad = neighbors[neighbors.size()-1].second;
+    if((rounds != 1) && (new_rad >= max_rad)) break;
+    else max_rad = new_rad;
+
+    beam *= 2;
+    K *= 2;
+    
+    
+    
   }
+
   q->dist_calls = dist_calls;
   q->rounds = rounds;
   q->visited = num_visited;

@@ -47,53 +47,61 @@ void query_stats(parlay::sequence<Tvec_point<T>*> &q){
 }
 
 template<typename T>
-void range_query_stats(parlay::sequence<Tvec_point<T>*> &q){
+auto range_query_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto pred = [&] (Tvec_point<T>* p) {return (p->ngh.size()==0);};
 	auto pred1 = [&] (Tvec_point<T>* p) {return !pred(p);};
 	auto zero_queries = parlay::filter(q, pred);
 	auto nonzero_queries = parlay::filter(q, pred1);
-	std::cout << std::endl;
-	std::cout << "For nonzero entries: " << std::endl;
-	visited_stats(nonzero_queries);
-	distance_stats(nonzero_queries);
-	rounds_stats(nonzero_queries);
-	std::cout << std::endl;
-	std::cout << "For zero entries: " << std::endl;
-	visited_stats(zero_queries);
-	distance_stats(zero_queries);
-	rounds_stats(zero_queries);
-	std::cout << std::endl;
+	// std::cout << std::endl;
+	// std::cout << "For nonzero entries: " << std::endl;
+	parlay::sequence<int> vz = visited_stats(nonzero_queries);
+	parlay::sequence<int> dz = distance_stats(nonzero_queries);
+	parlay::sequence<int> rz = rounds_stats(nonzero_queries);
+	// std::cout << std::endl;
+	// std::cout << "For zero entries: " << std::endl;
+	parlay::sequence<int> vn = visited_stats(zero_queries);
+	parlay::sequence<int> dn = distance_stats(zero_queries);
+	parlay::sequence<int> rn = rounds_stats(zero_queries);
+	// std::cout << std::endl;
+	auto result = {rn, dn, vn, rz, dz, vz};
+	return parlay::flatten(result);
 }
 
 template<typename T> 
-void visited_stats(parlay::sequence<Tvec_point<T>*> &q){
+parlay::sequence<int> visited_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto visited_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->visited;});
 	parlay::sort_inplace(visited_stats);
 	int avg_visited = (int) parlay::reduce(visited_stats)/((double) q.size());
 	size_t tail_index = .99*((float) q.size());
 	int tail_visited = visited_stats[tail_index];
-	std::cout << "Average num visited: " << avg_visited << ", 99th percentile num visited: " << tail_visited << std::endl;
+	auto result = {avg_visited, tail_visited};
+	return result;
+	// std::cout << "Average num visited: " << avg_visited << ", 99th percentile num visited: " << tail_visited << std::endl;
 }
 
 template<typename T> 
-void distance_stats(parlay::sequence<Tvec_point<T>*> &q){
+parlay::sequence<int> distance_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto dist_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->dist_calls;});
 	parlay::sort_inplace(dist_stats);
 	int avg_dist = (int) parlay::reduce(dist_stats)/((double) q.size());
 	size_t tail_index = .99*((float) q.size());
 	int tail_dist = dist_stats[tail_index];
-	std::cout << "Average dist cmps: " << avg_dist << ", 99th percentile dist cmps: " << tail_dist << std::endl;
+	auto result = {avg_dist, tail_dist};
+	return result;
+	// std::cout << "Average dist cmps: " << avg_dist << ", 99th percentile dist cmps: " << tail_dist << std::endl;
 }
 
 template<typename T> 
-void rounds_stats(parlay::sequence<Tvec_point<T>*> &q){
+parlay::sequence<int> rounds_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto exp_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->rounds;});
 	parlay::sort_inplace(exp_stats);
 	int avg_exps = (int) parlay::reduce(exp_stats)/((double) q.size());
 	size_t tail_index = .99*((float) q.size());
 	int tail_exps = exp_stats[tail_index];
-	std::cout << "Average rounds: " << avg_exps << ", 99th percentile rounds: " << tail_exps << 
-		", max rounds: " << exp_stats[exp_stats.size()-1] << std::endl;
+	// std::cout << "Average rounds: " << avg_exps << ", 99th percentile rounds: " << tail_exps << 
+		// ", max rounds: " << exp_stats[exp_stats.size()-1] << std::endl;
+	auto result = {avg_exps, tail_exps, exp_stats[exp_stats.size()-1]};
+	return result;
 }
 
 void range_gt_stats(parlay::sequence<ivec_point> groundTruth){
