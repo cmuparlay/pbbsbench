@@ -50,20 +50,20 @@ struct k_nearest_neighbors {
   using box = typename o_tree::box;
   using slice_t = typename o_tree::slice_t;
 
-  std::atomic<node*> tree;
+  verlib::versioned_ptr<node> tree;
   flck::lock root_lock;
 
   box tree_box; 
 
   void set_box(box b){tree_box = b;}
 
-  void set_root(node* root){tree = root;}
+  void set_root(node* root){tree.store(root);}
 
     // generates the search structure
   k_nearest_neighbors(parlay::sequence<vtx*> &V) {
     tree = o_tree::build(V); 
     // node* root = tree.get();
-    set_box(tree->Box());
+    set_box(tree.load()->Box());
   }
 
   k_nearest_neighbors(parlay::sequence<vtx*> &V, box b) {
@@ -94,7 +94,7 @@ struct k_nearest_neighbors {
   // returns the vertices in the search structure, in an
   //  order that has spacial locality
   parlay::sequence<vtx*> vertices() {
-    return tree->flatten();
+    return tree.load()->flatten();
   }
 
 
@@ -238,7 +238,6 @@ struct k_nearest_neighbors {
     }
 
   void k_nearest_fromLeaf(node* T) {
-    
     node* current = T; //this will be the node that node*T points to
     if (current -> is_leaf()){
       if (report_stats) leaf_cnt++;
@@ -315,9 +314,9 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 }
 
   void k_nearest(vtx* p, int k) {
-    verlib::with_epoch([&] {
+    verlib::with_snapshot([&] {
       kNN nn(p,k);
-      nn.k_nearest_rec(tree); //this is passing in a pointer to the o_tree root
+      nn.k_nearest_rec(tree.load()); //this is passing in a pointer to the o_tree root
       if (report_stats) p->counter = nn.internal_cnt;
       for (int i=0; i < k; i++)
         p->ngh[i] = nn[i];
@@ -439,7 +438,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
                 if(T == G->Left()) left = true;
                 G->set_child(P, left);
               }
-              if(T == tree) {std::cout << "root changed (internal: added new level)" << std::endl; set_root(P);}
+              if(T == tree.load()) {std::cout << "root changed (internal: added new level)" << std::endl; set_root(P);}
               return true;
             } else cur_bit--;
           }
@@ -459,7 +458,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
               if(T==P->Left()) P->set_child(N, true);
               else P->set_child(N, false);
             } 
-            if(T == tree) {
+            if(T == tree.load()) {
               std::cout << "root changed (internal: updated bounding box)" << std::endl;
               assert(parent == nullptr); 
               set_root(N);
@@ -495,7 +494,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         //case 1
         node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
         if(G != nullptr) G->set_child(N, left);
-        if(tree == T) {std::cout << "root changed (leaf: insert)" << std::endl; set_root(N);}
+        if(tree.load() == T) {std::cout << "root changed (leaf: insert)" << std::endl; set_root(N);}
         delete_single(T);
       } else {
         //case 2
@@ -524,7 +523,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         L->set_parent(P);
         R->set_parent(P);
         if(G != nullptr) G->set_child(P, left);
-        if(T == tree){std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(P);}
+        if(T == tree.load()){std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(P);}
         delete_single(T);
       }
       return true;

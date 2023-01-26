@@ -121,7 +121,7 @@ struct oct_tree {
     point center() {return centerv;}
     box Box() {return b;}
     size_t size() {return n;} //NOT ALWAYS ACCURATE
-    bool is_leaf() {return (L == nullptr) && (R == nullptr);}
+    bool is_leaf() {return (L.load() == nullptr) && (R.load() == nullptr);}
     bool is_root() {return parent==nullptr;}
     node* Left() {return L.load();}
     node* Right() {return R.load();}
@@ -270,8 +270,8 @@ struct oct_tree {
 
     size_t n; //NOT ALWAYS ACCURATE
     node* parent;
-    std::atomic<node*> L;
-    std::atomic<node*> R;
+    verlib::versioned_ptr<node> L;
+    verlib::versioned_ptr<node> R;
     box b;
     point centerv;
     leaf_seq P;
