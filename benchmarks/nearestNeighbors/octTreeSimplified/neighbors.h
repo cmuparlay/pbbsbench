@@ -70,14 +70,15 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     box_delta bd = T.get_box_delta(dims);
 
 
-    for(int j = 0; j < v2.size(); j++)
-      T.insert_point(v2[j], T.tree.load(), bd.first, bd.second); 
+    // for(int j = 0; j < v2.size(); j++)
+    //   T.insert_point(v2[j], bd.first, bd.second); 
     
-    // parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-    //   for(int j = i; j < v2.size(); j+=2) {
-    //     T.insert_point(v2[j], T.tree.load(), bd.first, bd.second); 
-    //   }
-    // }, 1, true);
+    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
+      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
+        T.insert_point(v2[j], bd.first, bd.second); 
+      }
+      // std::cout << "thread finished inserting\n";
+    }, 1, true);
 
     t.next("insert points");
 

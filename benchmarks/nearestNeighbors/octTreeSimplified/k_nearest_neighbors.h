@@ -374,12 +374,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   //takes in a single point and a pointer to the root of the tree
   //as well as a bounding box and its largest side length
   //assumes integer coordinates
-  void insert_point(vtx* p, node* R, box b, double Delta){
+  void insert_point(vtx* p, box b, double Delta){
     verlib::with_epoch([&] {
       int dims = p->pt.dimension();
       size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
       indexed_point q = std::make_pair(interleave_int, p);
       while(true) {
+        node* R = tree.load();
         if(insert_point0(q, nullptr, R, o_tree::key_bits, false)) break;
         // std::cout << "insert attempt failed" << std::endl; 
       }
