@@ -35,6 +35,7 @@ int queue_cutoff = 50;
 #include "flock/flock.h"
 #include "verlib/verlib.h"
 #include <assert.h>
+#include <sstream>
 
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
@@ -173,8 +174,9 @@ struct k_nearest_neighbors {
 
     kNN(vtx *p, int kk) {
       if (kk > max_k) {
-	std::cout << "k too large in kNN" << std::endl;
-	abort();}
+        std::cout << "k too large in kNN" << std::endl;
+        abort();
+      }
       k = kk;
       vertex = p;
       dimensions = p->pt.dimension();
@@ -183,8 +185,8 @@ struct k_nearest_neighbors {
       // distance "infinity".
       if (k < queue_cutoff){
         for (int i=0; i<k; i++) {
-        	neighbors[i] = (vtx*) NULL; 
-        	distances[i] = numeric_limits<double>::max();
+          neighbors[i] = (vtx*) NULL; 
+          distances[i] = numeric_limits<double>::max();
         }
       } else{
         nearest_nbh = qknn<vtx>();
@@ -198,13 +200,13 @@ struct k_nearest_neighbors {
     void update_nearest(vtx *other) {  
       auto dist = (vertex->pt - other->pt).sqLength();
       if (dist < max_distance) { 
-      	neighbors[0] = other;
-      	distances[0] = dist;
-      	for (int i = 1;
-      	     i < k && distances[i-1] < distances[i];
-      	     i++) {
-      	  swap(distances[i-1], distances[i]);
-      	  swap(neighbors[i-1], neighbors[i]); 
+          neighbors[0] = other;
+          distances[0] = dist;
+          for (int i = 1;
+               i < k && distances[i-1] < distances[i];
+               i++) {
+            swap(distances[i-1], distances[i]);
+            swap(neighbors[i-1], neighbors[i]); 
         }
         max_distance = distances[0];
       }
@@ -224,9 +226,9 @@ struct k_nearest_neighbors {
       auto box = T->Box();
       bool result = true;
       for (int i = 0; i < dimensions; i++) {
-	result = (result &&
-		  (box.first[i] - epsilon < vertex->pt[i]) &&
-		  (box.second[i] + epsilon > vertex->pt[i]));
+        result = (result &&
+              (box.first[i] - epsilon < vertex->pt[i]) &&
+              (box.second[i] + epsilon > vertex->pt[i]));
       }
       return result;
     }
@@ -243,18 +245,18 @@ struct k_nearest_neighbors {
       int j = k-1;
       int r = k-1;
       while (r >= 0) {
-	if (L.distances[i] < R.distances[j]) {
-	  distances[r] = L.distances[i];
-	  neighbors[r] = L.neighbors[i];
-	  i--; 
-	} else {
-	  distances[r] = R.distances[j];
-	  neighbors[r] = R.neighbors[j];
-	  // same neighbor could appear in both lists
-	  if (L.neighbors[i] == R.neighbors[j]) i--;
-	  j--;
-	}
-	r--;
+        if (L.distances[i] < R.distances[j]) {
+          distances[r] = L.distances[i];
+          neighbors[r] = L.neighbors[i];
+          i--; 
+        } else {
+          distances[r] = R.distances[j];
+          neighbors[r] = R.neighbors[j];
+          // same neighbor could appear in both lists
+          if (L.neighbors[i] == R.neighbors[j]) i--;
+          j--;
+        }
+        r--;
       }
     }
     
@@ -262,30 +264,30 @@ struct k_nearest_neighbors {
     void k_nearest_rec(node* T) {
       if (within_epsilon_box(T, sqrt(max_distance))) { 
         if (report_stats) internal_cnt++;
-	       if (T->is_leaf()) {
-	         if (report_stats) leaf_cnt++;
-	         auto &Vtx = T->Vertices();
-	         for (int i = 0; i < T->size(); i++)
-	           if (Vtx[i] != vertex){ 
-                if (k < queue_cutoff){
-                  update_nearest(Vtx[i]);
-                } else{
-                  update_nearest_queue(Vtx[i]);
-                }
-              } 
-	} else if (T->size() > 10000 && algorithm_version != 0 && k < queue_cutoff) { 
-	  auto L = *this; // make copies of the distances
-	  auto R = *this; // so safe to call in parallel
-	  parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
-			 [&] () {R.k_nearest_rec(T->Right());});
-	  merge(L,R); // merge the results
-	} else if (distance(T->Left()) < distance(T->Right())) {
-	  k_nearest_rec(T->Left());
-	  k_nearest_rec(T->Right());
-	} else {
-	  k_nearest_rec(T->Right());
-	  k_nearest_rec(T->Left());
-	}
+        if (T->is_leaf()) {
+          if (report_stats) leaf_cnt++;
+          auto &Vtx = T->Vertices();
+          for (int i = 0; i < T->size(); i++)
+            if (Vtx[i] != vertex) { 
+              if (k < queue_cutoff){
+                update_nearest(Vtx[i]);
+              } else{
+                update_nearest_queue(Vtx[i]);
+            }
+          } 
+        } else if (T->size() > 10000 && algorithm_version != 0 && k < queue_cutoff) { 
+          auto L = *this; // make copies of the distances
+          auto R = *this; // so safe to call in parallel
+          parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
+                 [&] () {R.k_nearest_rec(T->Right());});
+          merge(L,R); // merge the results
+        } else if (distance(T->Left()) < distance(T->Right())) {
+          k_nearest_rec(T->Left());
+          k_nearest_rec(T->Right());
+        } else {
+          k_nearest_rec(T->Right());
+          k_nearest_rec(T->Left());
+        }
       }
     }
 
@@ -293,17 +295,17 @@ struct k_nearest_neighbors {
     
     node* current = T; //this will be the node that node*T points to
     if (current -> is_leaf()){
-        if (report_stats) leaf_cnt++;
-        auto &Vtx = T->Vertices();
-        for (int i = 0; i < T->size(); i++)
-          if (Vtx[i] != vertex){
-            if (k < queue_cutoff){
-              update_nearest(Vtx[i]);
-            } else{
-              update_nearest_queue(Vtx[i]);
-            }
+      if (report_stats) leaf_cnt++;
+      auto &Vtx = T->Vertices();
+      for (int i = 0; i < T->size(); i++)
+        if (Vtx[i] != vertex){
+          if (k < queue_cutoff){
+            update_nearest(Vtx[i]);
+          } else{
+            update_nearest_queue(Vtx[i]);
           }
-      } 
+        }
+    } 
     while((not within_epsilon_box(current, -sqrt(max_distance))) and (current -> Parent() != nullptr)){ 
       node* parent = (current -> Parent());
       if (current == parent -> Right()){
@@ -315,7 +317,7 @@ struct k_nearest_neighbors {
     }
   }
 
-  }; // this ends the knn structure
+}; // this ends the knn structure
 
 
   using box_delta = std::pair<box, double>;
@@ -407,9 +409,9 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       auto box = T->Box();
       bool result = true;
       for (int i = 0; i < dimensions; i++) {
-	result = (result &&
-		  (box.first[i] < vertex->pt[i]) &&
-		  (box.second[i] > vertex->pt[i]));
+    result = (result &&
+          (box.first[i] < vertex->pt[i]) &&
+          (box.second[i] > vertex->pt[i]));
       }
       return result;
     }
@@ -426,12 +428,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   //takes in a single point and a pointer to the root of the tree
   //as well as a bounding box and its largest side length
   //assumes integer coordinates
-  void insert_point(vtx* p, node* R, box b, double Delta){
+  void insert_point(vtx* p, box b, double Delta){
     verlib::with_epoch([&] {
       int dims = p->pt.dimension();
       size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
       indexed_point q = std::make_pair(interleave_int, p);
       while(true) {
+        node* R = tree.load();
         if(insert_point0(q, nullptr, R, o_tree::key_bits, false)) break;
         // std::cout << "insert attempt failed" << std::endl; 
       }

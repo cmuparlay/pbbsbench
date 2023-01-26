@@ -72,14 +72,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     for(int j = 0; j < v2.size(); j++)
       T.insert_point(v2[j], T.tree.load(), bd.first, bd.second); 
-
-    t.next("insert points");
-
-    // knn_tree Q(v, whole_box);
-    // t.next("build second tree");
-
-    // T.are_equal(Q.tree.load(), dims);
-    // t.next("check equality");
+    
     // parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
     //   for(int j = i; j < v2.size(); j+=2) {
     //     T.insert_point(v2[j], T.tree.load(), bd.first, bd.second); 
