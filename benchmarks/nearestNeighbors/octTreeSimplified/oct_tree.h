@@ -62,33 +62,7 @@ struct oct_tree {
     return r;
   }
 
-  // takes a point, rounds each coordinate to an integer, and interleaves
-  // the bits into "key_bits" total bits.
-  // min_point is the minimmum x,y,z coordinate for all points
-  // delta is the largest range of any of the three dimensions
-  static size_t interleave_bits2(point p, point min_point, double delta) {
-    std::cout << "here1" << std::endl;
-    int dim = p.dimension();
-    int bits = key_bits/dim;
-    uint maxval = (((size_t) 1) << bits) - 1; //maybe should just be size_t instead of uint
-    uint ip[dim];
-    std::cout << "here2" << std::endl;
-    for (int i = 0; i < dim; i++) 
-      ip[i] = floor(maxval * (p[i] - min_point[i])/delta); //could be something other than floor? nearest to?
-    std::cout << "here3" << std::endl;
-    size_t r = 0;
-    int loc = 0;
-    std::cout << "here4" << std::endl;
-    for (int i =0; i < bits; i++)
-      for (int d = 0; d < dim; d++) 
-  r = r | (((ip[d] >> i) & (size_t) 1) << (loc++));
-  std::cout << "here5" << std::endl;
-    return r;
-  }
-
-
-
-    // generates a box consisting of a lower left corner,
+  // generates a box consisting of a lower left corner,
   // and an upper right corner.
   template <typename Seq>
   static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
@@ -129,6 +103,8 @@ struct oct_tree {
     leaf_seq& Vertices() {return P;}
 
     void set_parent(node* Parent){parent = Parent;}
+
+    void set_size(size_t s){n=s;}
 
     void set_child(node* child, bool left){
       if(left) L = child;
@@ -266,6 +242,7 @@ struct oct_tree {
     static node* alloc_node();
     static void free_node(node* T);
     static void retire_node(node* T);
+    static void shuffle(size_t n);
   private:
 
     size_t n; //NOT ALWAYS ACCURATE
@@ -425,4 +402,9 @@ void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.destruct(T);}
   
 template <typename vtx>
 void oct_tree<vtx>::node::retire_node(node* T) { node_allocator<vtx>.retire(T);}
+
+template <typename vtx>
+void oct_tree<vtx>::node::shuffle(size_t n) { node_allocator<vtx>.shuffle(10000000);}
+
+
   

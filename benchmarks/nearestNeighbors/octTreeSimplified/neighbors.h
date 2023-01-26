@@ -60,7 +60,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       else v2[i-init] = v[i];
     }, 1
     );
-
+    
     //build tree with bounding box
     knn_tree T(v1, whole_box);
     t.next("build tree");
@@ -72,17 +72,27 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     for(int j = 0; j < v2.size(); j++)
       T.insert_point(v2[j], T.tree.load(), bd.first, bd.second); 
-    
+
+    t.next("insert points");
+
+    // knn_tree Q(v, whole_box);
+    // t.next("build second tree");
+
+    // T.are_equal(Q.tree.load(), dims);
+    // t.next("check equality");
     // parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
     //   for(int j = i; j < v2.size(); j+=2) {
     //     T.insert_point(v2[j], T.tree.load(), bd.first, bd.second); 
     //   }
     // }, 1, true);
 
-    t.next("insert points");
+    
 
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
+
+    // T.set_sizes();
+    // t.next("compute sizes");
 
     if (algorithm_version == 0) { // this is for starting from root 
 

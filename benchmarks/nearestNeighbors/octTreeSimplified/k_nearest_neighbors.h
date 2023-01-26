@@ -54,9 +54,63 @@ struct k_nearest_neighbors {
 
   box tree_box; 
 
+  bool box_eq(box b, box c, int d){
+    bool first = true;
+    bool second = true;
+    for(int i=0; i<d; i++){
+      first = first && (b.first[i] == c.first[i]);
+      second = second && (b.second[i] == c.second[i]);
+    }
+    return (first && second);
+  }
+
+  void are_equal(node* T, int d){
+    node* V = tree.load();
+    return are_equal_rec(V, T, d);
+  }
+
+  void are_equal_rec(node* V, node* T, int d){
+    if(T->bit != V->bit){
+      std::cout << "UNEQUAL: bit" << std::endl;
+    }
+    if(!box_eq(T->Box(), V->Box(), d)){
+      std::cout << "UNEQUAL: box" << std::endl;
+    }
+    if(!(T->is_leaf()) && !(V->is_leaf())){
+      are_equal_rec(T->Left(), V->Left(), d);
+      are_equal_rec(T->Right(), V->Right(), d);
+      return;
+    }
+    else if(T->is_leaf() && V->is_leaf()){
+      if(T->size() != V->size()){
+        std::cout << "UNEQUAL: leaf size" << std::endl;
+      } //not a true eq check
+     
+      return;
+    } else{
+      std::cout << "UNEQUAL: internal node vs leaf node" << std::endl;
+      abort();
+    }
+  }
+
   void set_box(box b){tree_box = b;}
 
+  //TODO ask Hao if this is correct
   void set_root(node* root){tree = root;}
+
+  void set_sizes(){
+    node* T = tree.load();
+    set_sizes_rec(T);
+  }
+
+  size_t set_sizes_rec(node* T){
+    if(T->is_leaf()) return T->size();
+    else{
+      size_t s = set_sizes_rec(T->Left()) + set_sizes_rec(T->Right());
+      T->set_size(s);
+      return s;
+    }
+  }
 
     // generates the search structure
   k_nearest_neighbors(parlay::sequence<vtx*> &V) {
@@ -505,7 +559,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         parlay::sort_inplace(points, less_sort);
         //search for cut point
         int new_bit = T->bit;
-        while(cut_point == 0 | cut_point == points.size()){
+        while((cut_point == 0 | cut_point == points.size()) && new_bit != 0){
           size_t val = ((size_t) 1) << (new_bit - 1);
           size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
           auto less = [&] (indexed_point x) {
@@ -514,15 +568,23 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           cut_point = parlay::internal::binary_search(points, less);
           new_bit--;
         }
-        parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
-        node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
-        node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
-        node* P = node::new_node(L, R, T->bit, G);
-        L->set_parent(P);
-        R->set_parent(P);
-        if(G != nullptr) G->set_child(P, left);
-        if(T == tree){std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(P);}
-        delete_single(T);
+        if(new_bit == 0){
+          node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
+          if(G != nullptr) G->set_child(N, left);
+          if(tree == T) {std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(N);}
+          delete_single(T);
+        } else{
+          parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
+          node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
+          node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
+          node* P = node::new_node(L, R, T->bit, G);
+          L->set_parent(P);
+          R->set_parent(P);
+          if(G != nullptr) G->set_child(P, left);
+          if(T == tree){std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(P);}
+          delete_single(T);
+        }
+        
       }
       return true;
   }
