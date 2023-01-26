@@ -491,7 +491,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
                 if(T == G->Left()) left = true;
                 G->set_child(P, left);
               }
-              if(T == tree.load()) {std::cout << "root changed (internal: added new level)" << std::endl; set_root(P);}
+              if(T == tree.load()) {
+                // std::cout << "root changed (internal: added new level)" << std::endl; 
+                set_root(P);
+              }
               return true;
             } else cur_bit--;
           }
@@ -512,7 +515,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
               else P->set_child(N, false);
             } 
             if(T == tree.load()) {
-              std::cout << "root changed (internal: updated bounding box)" << std::endl;
+              // std::cout << "root changed (internal: updated bounding box)" << std::endl;
               assert(parent == nullptr); 
               set_root(N);
             }
@@ -547,7 +550,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         //case 1
         node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
         if(G != nullptr) G->set_child(N, left);
-        if(tree.load() == T) {std::cout << "root changed (leaf: insert)" << std::endl; set_root(N);}
+        if(tree.load() == T) {
+          // std::cout << "root changed (leaf: insert)" << std::endl; 
+          set_root(N);
+        }
         delete_single(T);
       } else {
         //case 2
@@ -572,7 +578,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         if(new_bit == 0){
           node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
           if(G != nullptr) G->set_child(N, left);
-          if(tree == T.load()) {std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(N);}
+          if(tree.load() == T) {
+            // std::cout << "root changed (leaf: split and insert)" << std::endl; 
+            set_root(N);
+          }
           delete_single(T);
         } else{
           parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
@@ -582,7 +591,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           L->set_parent(P);
           R->set_parent(P);
           if(G != nullptr) G->set_child(P, left);
-          if(T == tree.load()){std::cout << "root changed (leaf: split and insert)" << std::endl; set_root(P);}
+          if(T == tree.load()){
+            // std::cout << "root changed (leaf: split and insert)" << std::endl; 
+            set_root(P);
+          }
           delete_single(T);
         }
       }
