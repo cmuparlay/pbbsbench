@@ -105,6 +105,8 @@ struct knn_index{
 		std::cout << "Medoid ID: " << medoid->id << std::endl;
 	}
 
+	int get_medoid(){return medoid->id;}
+
 	void print_set(std::set<int> myset){
 		std::cout << "[";
 		for (std::set<int>::iterator it=myset.begin(); it!=myset.end(); ++it){

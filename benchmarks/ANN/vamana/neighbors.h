@@ -31,45 +31,46 @@
 #include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
+#include "../utils/parse_results.h"
+#include "../utils/check_nn_recall.h"
 
 extern bool report_stats;
 
-template<typename T>
-void checkRecall(knn_index<T>& I,
-		  parlay::sequence<Tvec_point<T>*> &v,
-		  parlay::sequence<Tvec_point<T>*> &q,
-		  parlay::sequence<ivec_point> groundTruth,
-		  int k,
-		  int beamQ,
-		  float cut) {
-  parlay::internal::timer t;
-  int r = 10;
-  unsigned d = (v[0]->coordinates).size();
-  I.searchNeighbors(q, v, beamQ, k, cut);
-  t.next_time();
-  I.searchNeighbors(q, v, beamQ, k, cut);
-  float query_time = t.next_time();
-  float recall = 0.0;
-  if (groundTruth.size() > 0) {
-    size_t n = q.size();
-    int numCorrect = 0;
-    for(int i=0; i<n; i++){
-      std::set<int> reported_nbhs;
-      for(int l=0; l<r; l++)
-	reported_nbhs.insert((q[i]->ngh)[l]);
-      for(int l=0; l<r; l++)
-	if (reported_nbhs.find((groundTruth[i].coordinates)[l])
-	    != reported_nbhs.end())
-	  numCorrect += 1;
-    }
-    recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
-  }
-  std::cout << "k = " << k << ", Q = " << beamQ << ", cut = " << cut
-	    << ", throughput = " << (q.size()/query_time) << "/second";
-  if (groundTruth.size() > 0)
-    std::cout << ", recall = " << recall << std::endl;
-  query_stats(q);
-}
+// template<typename T>
+// nn_result checkRecall(knn_index<T>& I,
+// 		  parlay::sequence<Tvec_point<T>*> &v,
+// 		  parlay::sequence<Tvec_point<T>*> &q,
+// 		  parlay::sequence<ivec_point> groundTruth,
+// 		  int k,
+// 		  int beamQ,
+// 		  float cut) {
+//   parlay::internal::timer t;
+//   int r = 10;
+//   unsigned d = (v[0]->coordinates).size();
+//   I.searchNeighbors(q, v, beamQ, k, cut);
+//   t.next_time();
+//   I.searchNeighbors(q, v, beamQ, k, cut);
+//   float query_time = t.next_time();
+//   float recall = 0.0;
+//   if (groundTruth.size() > 0) {
+//     size_t n = q.size();
+//     int numCorrect = 0;
+//     for(int i=0; i<n; i++){
+//       std::set<int> reported_nbhs;
+//       for(int l=0; l<r; l++)
+// 	reported_nbhs.insert((q[i]->ngh)[l]);
+//       for(int l=0; l<r; l++)
+// 	if (reported_nbhs.find((groundTruth[i].coordinates)[l])
+// 	    != reported_nbhs.end())
+// 	  numCorrect += 1;
+//     }
+//     recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
+//   }
+//   float QPS = q.size()/query_time;
+//   parlay::sequence<int> stats = query_stats(q);
+//   nn_result N(recall, stats, QPS, k, beamQ, cut);
+//   return N;
+// }
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
@@ -88,27 +89,10 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
     I.build_index(v, inserts);
     t.next("Build index");
   }
-  
-  std::cout << "num queries = " << q.size() << std::endl;
-  std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
-  std::vector<int> allk = {10, 15, 20, 30, 50, 100};
-  std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
-  for (float cut : cuts)
-    for (float Q : beams)
-      checkRecall(I, v, q, groundTruth, 10, Q, cut);
 
-  std::cout << " ... " << std::endl;
-
-  for (float cut : cuts)
-    for (int kk : allk)
-      checkRecall(I, v, q, groundTruth, kk, 500, cut);
-
-  // check "best accuracy"
-  checkRecall(I, v, q, groundTruth, 100, 1000, 10.0);
-
-  if(report_stats){
-    graph_stats(v);
-  }
+  int medoid = I.get_medoid();
+  search_and_parse(v, q, groundTruth, false, medoid);
+  graph_stats(v);
 }
 
 
@@ -133,12 +117,3 @@ void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double al
   };
 }
 
-
-    // int parts = 10;
-    // size_t m = (size_t) (v.size()/parts);
-    // for(int i=0; i<parts; i++){
-    //   parlay::sequence<int> delete_list = parlay::tabulate(m, [&] (size_t j){return static_cast<int>(parts*i+j);});
-    //   I.lazy_delete(delete_list, v);
-    //   I.consolidate_deletes(v);
-    //   I.batch_insert(delete_list, v, true);
-    // }

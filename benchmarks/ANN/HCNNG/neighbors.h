@@ -31,48 +31,11 @@
 #include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
+#include "../utils/parse_results.h"
+#include "../utils/check_nn_recall.h"
 #include "hcnng_index.h"
 
 extern bool report_stats;
-
-template<typename T>
-void checkRecall(
-		  parlay::sequence<Tvec_point<T>*> &v,
-		  parlay::sequence<Tvec_point<T>*> &q,
-		  parlay::sequence<ivec_point> groundTruth,
-		  int k,
-		  int beamQ,
-		  float cut,
-      unsigned d) {
-  parlay::internal::timer t;
-  int r = 10;
-  beamSearchRandom(q, v, beamQ, k, d, cut);
-  t.next_time();
-  beamSearchRandom(q, v, beamQ, k, d, cut);
-  float query_time = t.next_time();
-  float recall = 0.0;
-  if (groundTruth.size() > 0) {
-    size_t n = q.size();
-    int numCorrect = 0;
-    for(int i=0; i<n; i++){
-      std::set<int> reported_nbhs;
-      for(int l=0; l<r; l++)
-	reported_nbhs.insert((q[i]->ngh)[l]);
-      for(int l=0; l<r; l++)
-	if (reported_nbhs.find((groundTruth[i].coordinates)[l])
-	    != reported_nbhs.end())
-	  numCorrect += 1;
-    }
-    recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
-  }
-  std::cout << "k = " << k << ", Q = " << beamQ << ", cut = " << cut
-	    << ", throughput = " << (q.size()/query_time) << "/second";
-  if (groundTruth.size() > 0)
-    std::cout << ", recall = " << recall << std::endl;
-  else std::cout << std::endl;
-  query_stats(q);
-}
-
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
 	 int num_clusters, int beamSizeQ, double cluster_size, double dummy,
@@ -89,22 +52,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
     t.next("Built index");
   }
 
-  std::cout << "num queries = " << q.size() << std::endl;
-  std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
-  std::vector<int> allk = {10, 15, 20, 30, 50, 100};
-  std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
-  for (float cut : cuts)
-    for (float Q : beams) 
-      checkRecall(v, q, groundTruth, 10, Q, cut, d);
-
-  std::cout << " ... " << std::endl;
-
-  for (float cut : cuts)
-    for (int kk : allk)
-      checkRecall(v, q, groundTruth, kk, 500, cut, d);
-
-  // check "best accuracy"
-  checkRecall(v, q, groundTruth, 100, 1000, 10.0, d);
+  search_and_parse(v, q, groundTruth);
 
   if(report_stats){
     graph_stats(v);
