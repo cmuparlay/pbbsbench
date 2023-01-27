@@ -1,0 +1,546 @@
+make: *** No rule to make target '../bench/testInputs', needed by 'testInputs'.  Stop.
+1M, R=64
+Detected 100000 query points with 7731 unique matches
+Detected 1000000 points with dimension 256
+Detected 100000 points with dimension 256
+Medoid ID: 854852
+alpha 1.2
+ANN: Build index: 29.5188
+For recall above: 0.6
+k = 10, Q = 75, cut = 1.14, slack = 1, throughput = 1.123e+05/second
+
+Nonzero recall: 0.6229
+Zero recall: 1
+Combined recall: 0.9903
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 4612, 99th percentile dist cmps: 6693
+Average num visited: 82, 99th percentile num visited: 118
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 4204, 99th percentile dist cmps: 8380
+Average num visited: 79, 99th percentile num visited: 173
+
+
+For recall above: 0.7
+k = 10, Q = 125, cut = 1.14, slack = 1, throughput = 6.679e+04/second
+
+Nonzero recall: 0.7014
+Zero recall: 1
+Combined recall: 0.9923
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 7149, 99th percentile dist cmps: 9595
+Average num visited: 131, 99th percentile num visited: 173
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 6205, 99th percentile dist cmps: 12837
+Average num visited: 118, 99th percentile num visited: 273
+
+
+For recall above: 0.8
+k = 10, Q = 500, cut = 1.14, slack = 1, throughput = 1.396e+04/second
+
+Nonzero recall: 0.8458
+Zero recall: 1
+Combined recall: 0.996
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: -21402, 99th percentile dist cmps: 25620
+Average num visited: 493, 99th percentile num visited: 523
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 18103, 99th percentile dist cmps: 25754
+Average num visited: 405, 99th percentile num visited: 537
+
+
+For recall above: 0.9
+k = 100, Q = 1000, cut = 10, slack = 5, throughput = 1531/second
+
+Nonzero recall: 0.9223
+Zero recall: 1
+Combined recall: 0.998
+
+For nonzero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 20908, 99th percentile dist cmps: 121188
+Average num visited: 3002, 99th percentile num visited: 3017
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 104103, 99th percentile dist cmps: 120154
+Average num visited: 3001, 99th percentile num visited: 3014
+
+
+ANN: Searching: 843.3163
+Average graph out-degree = 63.88
+Max out-degree: 64, Min out-degree: 0
+ANN: stats: 0.0089
+Parlay time: 872.8446
+Writing graph...Writing graph with 1000000 points and max degree 64
+ done
+1M, R=128
+Detected 100000 query points with 7731 unique matches
+Detected 1000000 points with dimension 256
+Detected 100000 points with dimension 256
+Medoid ID: 854852
+alpha 1.2
+ANN: Build index: 144.1987
+For recall above: 0.6
+k = 20, Q = 30, cut = 1.14, slack = 1, throughput = 1.165e+05/second
+
+Nonzero recall: 0.7222
+Zero recall: 1
+Combined recall: 0.9928
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 4528, 99th percentile dist cmps: 6942
+Average num visited: 36, 99th percentile num visited: 55
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 4836, 99th percentile dist cmps: 8688
+Average num visited: 40, 99th percentile num visited: 95
+
+
+For recall above: 0.7
+k = 20, Q = 30, cut = 1.14, slack = 1, throughput = 1.165e+05/second
+
+Nonzero recall: 0.7222
+Zero recall: 1
+Combined recall: 0.9928
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 4528, 99th percentile dist cmps: 6942
+Average num visited: 36, 99th percentile num visited: 55
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 4836, 99th percentile dist cmps: 8688
+Average num visited: 40, 99th percentile num visited: 95
+
+
+For recall above: 0.8
+k = 10, Q = 50, cut = 1.14, slack = 1, throughput = 7.122e+04/second
+
+Nonzero recall: 0.8053
+Zero recall: 1
+Combined recall: 0.995
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 6852, 99th percentile dist cmps: 9826
+Average num visited: 56, 99th percentile num visited: 80
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 6589, 99th percentile dist cmps: 12523
+Average num visited: 56, 99th percentile num visited: 119
+
+
+For recall above: 0.9
+k = 20, Q = 125, cut = 1.14, slack = 1, throughput = 2.909e+04/second
+
+Nonzero recall: 0.9151
+Zero recall: 1
+Combined recall: 0.9978
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 14996, 99th percentile dist cmps: 18371
+Average num visited: 129, 99th percentile num visited: 155
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 13889, 99th percentile dist cmps: 25157
+Average num visited: 124, 99th percentile num visited: 281
+
+
+ANN: Searching: 1836.6952
+Average graph out-degree = 128
+Max out-degree: 128, Min out-degree: 0
+ANN: stats: 0.0150
+Parlay time: 1980.9096
+Writing graph...Writing graph with 1000000 points and max degree 128
+ done
+make: *** No rule to make target '../bench/testInputs', needed by 'testInputs'.  Stop.
+10M, R=64
+Detected 100000 query points with 76789 unique matches
+Detected 10000000 points with dimension 256
+Detected 100000 points with dimension 256
+Medoid ID: 6245143
+alpha 1.2
+ANN: Build index: 292.8736
+For recall above: 0.6
+k = 20, Q = 500, cut = 1.14, slack = 3, throughput = 3406/second
+
+Nonzero recall: 0.6017
+Zero recall: 1
+Combined recall: 0.9664
+
+For nonzero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 19637, 99th percentile dist cmps: 81071
+Average num visited: 1511, 99th percentile num visited: 1729
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 3
+Average dist cmps: 53657, 99th percentile dist cmps: 78018
+Average num visited: 1284, 99th percentile num visited: 1663
+
+
+For recall above: 0.7
+k = 652199, Q = 46198176, cut = 4.582e-41, slack = 4.695e-306, throughput = 8.481e-39/second
+
+Nonzero recall: 2.962e-309
+Zero recall: 6.938e-310
+Combined recall: 1.029e-306
+
+For nonzero entries: 
+Average rounds: 107129952, 99th percentile rounds: 32696, max rounds: 2942026
+Average dist cmps: 4881704, 99th percentile dist cmps: 0
+Average num visited: 0, 99th percentile num visited: -1508949896
+
+For zero entries: 
+Average rounds: 32694, 99th percentile rounds: 3136752, max rounds: 32696
+Average dist cmps: 2541713, 99th percentile dist cmps: 3115291
+Average num visited: -3124048, 99th percentile num visited: 32695
+
+
+For recall above: 0.8
+k = 8282939, Q = 113480288, cut = 4.582e-41, slack = 3.692e-308, throughput = 4.24e-39/second
+
+Nonzero recall: 0
+Zero recall: 0
+Combined recall: 6.938e-310
+
+For nonzero entries: 
+Average rounds: 109115920, 99th percentile rounds: 32696, max rounds: 9852757
+Average dist cmps: 4575880, 99th percentile dist cmps: 112178528
+Average num visited: 32696, 99th percentile num visited: 6716766
+
+For zero entries: 
+Average rounds: 8524816, 99th percentile rounds: 5371472, max rounds: 32696
+Average dist cmps: 5523508, 99th percentile dist cmps: 2686966
+Average num visited: 91225632, 99th percentile num visited: 32696
+
+
+For recall above: 0.9
+k = 652199, Q = 46198176, cut = 4.582e-41, slack = 4.695e-306, throughput = 8.481e-39/second
+
+Nonzero recall: 0
+Zero recall: 6.938e-310
+Combined recall: 1.029e-306
+
+For nonzero entries: 
+Average rounds: 107129952, 99th percentile rounds: 32696, max rounds: 2942026
+Average dist cmps: 4881704, 99th percentile dist cmps: 0
+Average num visited: 0, 99th percentile num visited: -1508949896
+
+For zero entries: 
+Average rounds: 32694, 99th percentile rounds: 3136752, max rounds: 32696
+Average dist cmps: 2541713, 99th percentile dist cmps: 3115291
+Average num visited: -3124048, 99th percentile num visited: 32695
+
+
+ANN: Searching: 1070.1473
+Average graph out-degree = 55
+Max out-degree: 64, Min out-degree: 0
+ANN: stats: 0.0880
+Parlay time: 1363.1096
+Writing graph...Writing graph with 10000000 points and max degree 64
+ done
+10M, R=128
+Detected 100000 query points with 76789 unique matches
+Detected 10000000 points with dimension 256
+Detected 100000 points with dimension 256
+Medoid ID: 6245143
+alpha 1.2
+ANN: Build index: 293.6256
+For recall above: 0.6
+k = 20, Q = 500, cut = 1.14, slack = 3, throughput = 3374/second
+
+Nonzero recall: 0.6017
+Zero recall: 1
+Combined recall: 0.9664
+
+For nonzero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 19637, 99th percentile dist cmps: 81071
+Average num visited: 1511, 99th percentile num visited: 1729
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 3
+Average dist cmps: 53657, 99th percentile dist cmps: 78018
+Average num visited: 1284, 99th percentile num visited: 1663
+
+
+For recall above: 0.7
+k = 9904561, Q = -161431232, cut = 4.566e-41, slack = 3.976e-308, throughput = 5.046e-39/second
+
+Nonzero recall: 2.962e-309
+Zero recall: 6.914e-310
+Combined recall: 5.483e-308
+
+For nonzero entries: 
+Average rounds: -56417072, 99th percentile rounds: 32583, max rounds: 7037258
+Average dist cmps: 7269040, 99th percentile dist cmps: -35595424
+Average num visited: 32583, 99th percentile num visited: 9996952
+
+For zero entries: 
+Average rounds: 7919503, 99th percentile rounds: -56324064, max rounds: 32583
+Average dist cmps: 6060824, 99th percentile dist cmps: 7874107
+Average num visited: -155056096, 99th percentile num visited: 32583
+
+
+For recall above: 0.8
+k = 6009516, Q = -109992208, cut = 4.566e-41, slack = 2.789e-306, throughput = 8.874e-39/second
+
+Nonzero recall: 0
+Zero recall: 6.914e-310
+Combined recall: 1.591e-308
+
+For nonzero entries: 
+Average rounds: -15716608, 99th percentile rounds: 32583, max rounds: 406559
+Average dist cmps: 6793619, 99th percentile dist cmps: -26970928
+Average num visited: 32583, 99th percentile num visited: 664822
+
+For zero entries: 
+Average rounds: 1954077, 99th percentile rounds: 0, max rounds: 0
+Average dist cmps: -1665163464, 99th percentile dist cmps: 32582
+Average num visited: -48249536, 99th percentile num visited: 32583
+
+
+For recall above: 0.9
+k = 9904561, Q = -161431232, cut = 4.566e-41, slack = 3.976e-308, throughput = 5.046e-39/second
+
+Nonzero recall: 0
+Zero recall: 6.914e-310
+Combined recall: 5.483e-308
+
+For nonzero entries: 
+Average rounds: -56417072, 99th percentile rounds: 32583, max rounds: 7037258
+Average dist cmps: 7269040, 99th percentile dist cmps: -35595424
+Average num visited: 32583, 99th percentile num visited: 9996952
+
+For zero entries: 
+Average rounds: 7919503, 99th percentile rounds: -56324064, max rounds: 32583
+Average dist cmps: 6060824, 99th percentile dist cmps: 7874107
+Average num visited: -155056096, 99th percentile num visited: 32583
+
+
+ANN: Searching: 1077.4595
+Average graph out-degree = 55
+Max out-degree: 64, Min out-degree: 0
+ANN: stats: 0.0833
+Parlay time: 1371.1692
+Writing graph...Writing graph with 10000000 points and max degree 64
+ done
+make: *** No rule to make target '../bench/testInputs', needed by 'testInputs'.  Stop.
+10M, R=64
+Detected 100000 query points with 76789 unique matches
+Detected 100000 points with dimension 256
+Detected 10000000 points with dimension 256
+Medoid ID: 6245143
+ANN: Find medoid: 0.1190
+For recall above: 0.4
+k = 100, Q = 75, cut = 1.14, slack = 3, throughput = 3.419e+04/second
+
+Nonzero recall: 0.4193
+Zero recall: 1
+Combined recall: 0.9511
+
+For nonzero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 12143, 99th percentile dist cmps: 18003
+Average num visited: 244, 99th percentile num visited: 346
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 3, max rounds: 4
+Average dist cmps: 14221, 99th percentile dist cmps: 33113
+Average num visited: 314, 99th percentile num visited: 656
+
+
+For recall above: 0.5
+k = 10, Q = 500, cut = 1.14, slack = 1, throughput = 1.199e+04/second
+
+Nonzero recall: 0.5357
+Zero recall: 1
+Combined recall: 0.9609
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: -22654, 99th percentile dist cmps: 31092
+Average num visited: 503, 99th percentile num visited: 659
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 17012, 99th percentile dist cmps: 40547
+Average num visited: 385, 99th percentile num visited: 968
+
+
+For recall above: 0.6
+k = 20, Q = 500, cut = 1.14, slack = 3, throughput = 3313/second
+
+Nonzero recall: 0.6017
+Zero recall: 1
+Combined recall: 0.9664
+
+For nonzero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 19637, 99th percentile dist cmps: 81071
+Average num visited: 1511, 99th percentile num visited: 1729
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 3
+Average dist cmps: 53657, 99th percentile dist cmps: 78018
+Average num visited: 1284, 99th percentile num visited: 1663
+
+
+For recall above: 0.7
+No results found 
+
+
+For recall above: 0.8
+No results found 
+
+
+For recall above: 0.9
+No results found 
+
+
+ANN: Searching: 1087.5519
+Average graph out-degree = 55
+Max out-degree: 64, Min out-degree: 0
+ANN: stats: 0.1696
+Parlay time: 1087.8412
+10M, R=128
+Detected 100000 query points with 76789 unique matches
+Detected 10000000 points with dimension 256
+Detected 100000 points with dimension 256
+Medoid ID: 6245143
+alpha 1.2
+ANN: Build index: 1557.6225
+For recall above: 0.4
+k = 100, Q = 50, cut = 1.14, slack = 1, throughput = 6.572e+04/second
+
+Nonzero recall: 0.4743
+Zero recall: 1
+Combined recall: 0.9557
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 6686, 99th percentile dist cmps: 11180
+Average num visited: 57, 99th percentile num visited: 94
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 7534, 99th percentile dist cmps: 12502
+Average num visited: 74, 99th percentile num visited: 182
+
+
+For recall above: 0.5
+k = 10, Q = 75, cut = 1.14, slack = 1, throughput = 4.175e+04/second
+
+Nonzero recall: 0.5587
+Zero recall: 1
+Combined recall: 0.9628
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 9614, 99th percentile dist cmps: 15432
+Average num visited: 84, 99th percentile num visited: 133
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 9460, 99th percentile dist cmps: 21987
+Average num visited: 90, 99th percentile num visited: 206
+
+
+For recall above: 0.6
+k = 100, Q = 100, cut = 1.14, slack = 1, throughput = 3.037e+04/second
+
+Nonzero recall: 0.6463
+Zero recall: 1
+Combined recall: 0.9702
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: 12311, 99th percentile dist cmps: 19154
+Average num visited: 110, 99th percentile num visited: 169
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 12491, 99th percentile dist cmps: 19986
+Average num visited: 125, 99th percentile num visited: 319
+
+
+For recall above: 0.7
+k = 20, Q = 75, cut = 1.14, slack = 2, throughput = 1.451e+04/second
+
+Nonzero recall: 0.7044
+Zero recall: 1
+Combined recall: 0.9751
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: -20660, 99th percentile dist cmps: 37614
+Average num visited: 227, 99th percentile num visited: 333
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 3, max rounds: 3
+Average dist cmps: 28965, 99th percentile dist cmps: 68971
+Average num visited: 276, 99th percentile num visited: 622
+
+
+For recall above: 0.8
+k = 50, Q = 250, cut = 1.14, slack = 1, throughput = 1.161e+04/second
+
+Nonzero recall: 0.8022
+Zero recall: 1
+Combined recall: 0.9833
+
+For nonzero entries: 
+Average rounds: 1, 99th percentile rounds: 1, max rounds: 1
+Average dist cmps: -18503, 99th percentile dist cmps: 36781
+Average num visited: 261, 99th percentile num visited: 338
+
+For zero entries: 
+Average rounds: 1, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 25868, 99th percentile dist cmps: 43044
+Average num visited: 260, 99th percentile num visited: 557
+
+
+For recall above: 0.9
+k = 50, Q = 500, cut = 1.14, slack = 3, throughput = 1601/second
+
+Nonzero recall: 0.9082
+Zero recall: 1
+Combined recall: 0.9923
+
+For nonzero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 3543, 99th percentile dist cmps: 165193
+Average num visited: 1507, 99th percentile num visited: 1580
+
+For zero entries: 
+Average rounds: 2, 99th percentile rounds: 2, max rounds: 2
+Average dist cmps: 129631, 99th percentile dist cmps: 162181
+Average num visited: 1417, 99th percentile num visited: 1566
+
+
+ANN: Searching: 2509.6064
+Average graph out-degree = 126.6
+Max out-degree: 128, Min out-degree: 0
+ANN: stats: 0.1514
+Parlay time: 4067.3809
+Writing graph...Writing graph with 10000000 points and max degree 128
+ done
