@@ -28,14 +28,14 @@
 #include <set>
 
 template<typename T>
-void graph_stats(parlay::sequence<Tvec_point<T>*> &v){
+std::pair<double, int> graph_stats(parlay::sequence<Tvec_point<T>*> &v){
 	auto od = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return size_of(v[i]->out_nbh);});
   	size_t j = parlay::max_element(od) - od.begin();
   	int maxDegree = od[j];
   	size_t k = parlay::min_element(od) - od.begin();
   	size_t sum1 = parlay::reduce(od);
-  	std::cout << "Average graph out-degree = " << sum1/((double) v.size()) << std::endl;
-  	std::cout << "Max out-degree: " << maxDegree << ", Min out-degree: " << od[k] << std::endl;  
+	double avg_deg = sum1/((double) v.size());
+  	return std::make_pair(avg_deg, maxDegree);
 }
 
 template<typename T>

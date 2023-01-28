@@ -3,7 +3,7 @@
 make 
 # ./neighbors -a 1000 -R 3 -L 20 -k 200 -Q 250 -b 1 -o /ssd1/ANN/sift/1M_3_20 /ssd1/ANN/sift/sift1M.bvecs
 # ./neighbors -a 1000 -R 3 -L 20 -k 200 -Q 250 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -g /ssd1/ANN/sift/1M_3_20 -c /ssd1/ANN/sift/idx_1M.ivecs /ssd1/ANN/sift/sift1M.bvecs
-./neighbors -a 1000 -R 3 -L 20 -k 200 -Q 250 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -c /ssd1/ANN/sift/idx_1M.ivecs /ssd1/ANN/sift/sift1M.bvecs
+./neighbors -a 1000 -R 3 -L 20 -k 200 -Q 250 -b 1 -q /ssd1/ANN/sift/bigann_query.bvecs -c /ssd1/ANN/sift/idx_1M.ivecs -res hcnng_res.csv /ssd1/ANN/sift/sift1M.bvecs
 
 # make clean all
 # echo ""
