@@ -370,7 +370,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     verlib::with_snapshot([&] {
       kNN nn(p,k);
       nn.k_nearest_rec(tree.load()); //this is passing in a pointer to the o_tree root
-      if (report_stats) p->counter = nn.internal_cnt;
+      if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
       for (int i=0; i < k; i++)
         p->ngh[i] = nn[i];
     });

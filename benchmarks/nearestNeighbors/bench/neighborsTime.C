@@ -46,6 +46,7 @@ struct vertex {
   vertex* ngh[KK];    // the list of neighbors
   vertex(pointT p, int id) : pt(p), identifier(id) {}
   size_t counter;
+  size_t counter2; 
 };
 
 // *************************************************************
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]) {
   int k = P.getOptionIntValue("-k",1);
   int d = P.getOptionIntValue("-d",2);
   algorithm_version = P.getOptionIntValue("-t",algorithm_version);
-  if (k > 100 || k < 1) P.badArgument();
+  if (k < 1 || k>100) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 
   if (d == 2) {
