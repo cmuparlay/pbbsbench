@@ -96,13 +96,9 @@ struct oct_tree {
     box Box() {return b;}
     size_t size() {return n;} //NOT ALWAYS ACCURATE
     bool is_leaf() {return (L.load() == nullptr) && (R.load() == nullptr);}
-    bool is_root() {return parent==nullptr;}
     node* Left() {return L.load();}
     node* Right() {return R.load();}
-    node* Parent() {return parent;}
     leaf_seq& Vertices() {return P;}
-
-    void set_parent(node* Parent){parent = Parent;}
 
     void set_size(size_t s){n=s;}
 
@@ -124,7 +120,6 @@ struct oct_tree {
     // construct a leaf node with a sequence of points directly in it
     node(slice_t Pts, int currentBit) : removed(false) { 
       n = Pts.size();
-      parent = nullptr;
 
       // strips off the integer tag, no longer needed
       P = leaf_seq(n);
@@ -141,7 +136,6 @@ struct oct_tree {
 
     // construct an internal binary node
     node(node* L, node* R, int currentBit) : removed(false), L(L), R(R) { 
-      parent = nullptr;
       b = box(L->b.first.minCoords(R->b.first),
 	      L->b.second.maxCoords(R->b.second));
       n = L->size() + R->size();
@@ -150,35 +144,27 @@ struct oct_tree {
     }
 
     node(node* L, node* R, int currentBit, box B) : removed(false), L(L), R(R) { 
-      parent = nullptr;
       b = B;
       n = L->size() + R->size();
       set_center();
       bit = currentBit;
     }
     
-    static node* new_leaf(slice_t Pts, int currentBit, node* P = nullptr) {
+    static node* new_leaf(slice_t Pts, int currentBit) {
       node* r = alloc_node();
       new (r) node(Pts, currentBit);
-      if(P != nullptr) r->parent = P;
       return r;
     }
 
-    static node* new_node(node* L, node* R, int currentBit, node* P = nullptr) {
+    static node* new_node(node* L, node* R, int currentBit) {
       node* nd = alloc_node();
       new (nd) node(L, R, currentBit);
-      // both children point to this node as their parent
-      L->parent = R->parent = nd;
-      if(P != nullptr) nd->parent = P;
       return nd;
     }
 
-    static node* new_node(node* L, node* R, int currentBit, box B, node* P = nullptr) {
+    static node* new_node(node* L, node* R, int currentBit, box B) {
       node* nd = alloc_node();
       new (nd) node(L, R, currentBit, B);
-      // both children point to this node as their parent
-      L->parent = R->parent = nd;
-      if(P != nullptr) nd->parent = P;
       return nd;
     }
     
@@ -246,7 +232,6 @@ struct oct_tree {
   private:
 
     size_t n; //NOT ALWAYS ACCURATE
-    node* parent;
     verlib::versioned_ptr<node> L;
     verlib::versioned_ptr<node> R;
     box b;

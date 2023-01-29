@@ -64,15 +64,15 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     
     //build tree with bounding box
     t.next("setup benchmark");
-    knn_tree T(v, whole_box);
+    knn_tree T(v1, whole_box);
     t.next("build tree");
 
     //prelims for insert  
     int dims = v[0]->pt.dimension();
     box_delta bd = T.get_box_delta(dims);
 
-    // for(int j = 0; j < v2.size(); j++)
-    //   T.insert_point(v2[j], bd.first, bd.second); 
+    for(int j = 0; j < v2.size(); j++)
+      T.insert_point(v2[j], bd.first, bd.second); 
 
    
     
@@ -82,47 +82,35 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //   }
     // }, 1, true);
 
-    // t.next("single inserts");
+    t.next("single inserts");
 
-    //EXAMPLE OF EQUALITY CHECKING
+    // // EXAMPLE OF EQUALITY CHECKING
     // knn_tree R(v, whole_box);
     // T.are_equal(R.tree.load(), dims);
     // t.next("equality check");
-    //END EXAMPLE
+    // // END EXAMPLE
 
     
 
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
 
-    // if (algorithm_version == 0) { // this is for starting from root 
 
-    //   // find nearest k neighbors for each point
-    //   size_t n = v.size();
-    //   parlay::parallel_for (0, n, [&] (size_t i) {
-	  //      T.k_nearest(v[i], k);
-    //   }, 1);
+    // find nearest k neighbors for each point
+    // size_t n = v.size();
+    parlay::parallel_for (0, n, [&] (size_t i) {
+        T.k_nearest(v[i], k);
+    }, 1);
     
-    // } else {
-
-    //     int dims = (v[0]->pt).dimension();  
-    //     node* root = T.tree.load(); 
-    //     box_delta bd = T.get_box_delta(dims);
-    //     size_t n = v.size();
-    //     parlay::parallel_for(0, n, [&] (size_t i) {
-    //       T.k_nearest_leaf(v[i], T.find_leaf(v[i]->pt, root, bd.first, bd.second), k);
-    //     }
-    //     );
-    // }
 
     //Example to get a search to visit every vertex
-    parlay::sequence<double> coords = {0.0, 0.0, 0.0};
-    point test_point = point(parlay::make_slice(coords));
-    vtx test_vtx = vtx(test_point, 0);
-    vtx* tv = &test_vtx;
-    T.k_nearest(tv, k);
-    std::cout << tv->counter << std::endl;
-    std::cout << tv->counter2 << std::endl;
+    // parlay::sequence<double> coords = {0.0, 0.0, 0.0};
+    // point test_point = point(parlay::make_slice(coords));
+    // vtx test_vtx = vtx(test_point, 0);
+    // vtx* tv = &test_vtx;
+    // T.k_nearest(tv, k);
+    // std::cout << tv->counter << std::endl;
+    // std::cout << tv->counter2 << std::endl;
     //End Example
 
     t.next("try all");

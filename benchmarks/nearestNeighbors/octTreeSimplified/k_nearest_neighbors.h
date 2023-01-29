@@ -115,7 +115,6 @@ struct k_nearest_neighbors {
     // generates the search structure
   k_nearest_neighbors(parlay::sequence<vtx*> &V) {
     tree = o_tree::build(V); 
-    // node* root = tree.get();
     set_box(tree.load()->Box());
   }
 
@@ -235,29 +234,6 @@ struct k_nearest_neighbors {
     double distance(node* T) {
       return (T->center() - vertex->pt).sqLength();
     }
-
-   
-
-    // sorted backwards
-    void merge(kNN &L, kNN &R) {
-      int i = k-1;
-      int j = k-1;
-      int r = k-1;
-      while (r >= 0) {
-        if (L.distances[i] < R.distances[j]) {
-          distances[r] = L.distances[i];
-          neighbors[r] = L.neighbors[i];
-          i--; 
-        } else {
-          distances[r] = R.distances[j];
-          neighbors[r] = R.neighbors[j];
-          // same neighbor could appear in both lists
-          if (L.neighbors[i] == R.neighbors[j]) i--;
-          j--;
-        }
-        r--;
-      }
-    }
     
     // looks for nearest neighbors for pt in Tree node T
     void k_nearest_rec(node* T) {
@@ -274,12 +250,6 @@ struct k_nearest_neighbors {
                 update_nearest_queue(Vtx[i]);
             }
           } 
-        } else if (T->size() > 10000 && algorithm_version != 0 && k < queue_cutoff) { 
-          auto L = *this; // make copies of the distances
-          auto R = *this; // so safe to call in parallel
-          parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
-                 [&] () {R.k_nearest_rec(T->Right());});
-          merge(L,R); // merge the results
         } else if (distance(T->Left()) < distance(T->Right())) {
           k_nearest_rec(T->Left());
           k_nearest_rec(T->Right());
@@ -289,31 +259,6 @@ struct k_nearest_neighbors {
         }
       }
     }
-
-  void k_nearest_fromLeaf(node* T) {
-    node* current = T; //this will be the node that node*T points to
-    if (current -> is_leaf()){
-      if (report_stats) leaf_cnt++;
-      auto &Vtx = T->Vertices();
-      for (int i = 0; i < T->size(); i++)
-        if (Vtx[i] != vertex){
-          if (k < queue_cutoff){
-            update_nearest(Vtx[i]);
-          } else{
-            update_nearest_queue(Vtx[i]);
-          }
-        }
-    } 
-    while((not within_epsilon_box(current, -sqrt(max_distance))) and (current -> Parent() != nullptr)){ 
-      node* parent = (current -> Parent());
-      if (current == parent -> Right()){
-        k_nearest_rec(parent -> Left());
-      } else{
-        k_nearest_rec(parent -> Right());
-      }
-      current = parent;  
-    }
-  }
 
 }; // this ends the knn structure
 
@@ -482,10 +427,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
               node* R = node::new_leaf(parlay::make_slice(points), cur_bit-1);
               //new parent node should replace T as G's child
               node* P;
-              if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit, G);
-              else P = node::new_node(T, R, cur_bit, G);
-              T->set_parent(P);
-              R->set_parent(P);
+              if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit);
+              else P = node::new_node(T, R, cur_bit);
               if(G != nullptr){
                 bool left = false;
                 if(T == G->Left()) left = true;
@@ -506,10 +449,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           node* R = T->Right();
           box b = T->Box();
           box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
-          node* N = node::new_node(L, R, T->bit, bigger, P);
+          node* N = node::new_node(L, R, T->bit, bigger);
           return N->lck.with_lock([=] {
-            L->set_parent(N);
-            R->set_parent(N);
             if(P != nullptr){
               if(T==P->Left()) P->set_child(N, true);
               else P->set_child(N, false);
@@ -548,7 +489,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       //split into an internal node and two leaf children
       if(T->size() + 1 < o_tree::node_cutoff || T->bit == 0){
         //case 1
-        node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
+        node* N = node::new_leaf(parlay::make_slice(points), T->bit);
         if(G != nullptr) G->set_child(N, left);
         if(tree.load() == T) {
           // std::cout << "root changed (leaf: insert)" << std::endl; 
@@ -576,7 +517,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           new_bit--;
         }
         if(new_bit == 0){
-          node* N = node::new_leaf(parlay::make_slice(points), T->bit, G);
+          node* N = node::new_leaf(parlay::make_slice(points), T->bit);
           if(G != nullptr) G->set_child(N, left);
           if(tree.load() == T) {
             // std::cout << "root changed (leaf: split and insert)" << std::endl; 
@@ -587,9 +528,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
           node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
           node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
-          node* P = node::new_node(L, R, T->bit, G);
-          L->set_parent(P);
-          R->set_parent(P);
+          node* P = node::new_node(L, R, T->bit);
           if(G != nullptr) G->set_child(P, left);
           if(T == tree.load()){
             // std::cout << "root changed (leaf: split and insert)" << std::endl; 
