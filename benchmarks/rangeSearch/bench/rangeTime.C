@@ -28,7 +28,7 @@
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
-#include "parseRange.h"
+#include "../utils/parse_files.h"
 
 
 
@@ -100,16 +100,6 @@ int main(int argc, char* argv[]) {
   int algoOpt = P.getOptionIntValue("-b", 0);
   double radius = P.getOptionDoubleValue("-rad", 96237);
 
-
-  if(gFile != NULL){
-    parlay::sequence<ivec_point> groundTruth;
-    if (cFile != nullptr)	groundTruth = parse_rangeres(cFile);
-    parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_uint8bin(qFile, 0);
-    auto[maxDeg, points] = parse_uint8bin_with_graph(iFile, gFile);
-
-    timeRange<uint8_t>(points, qpoints, k, R, L, Q, delta,
-          alpha, radius, oFile, groundTruth, maxDeg, true);
-  }else{
     int maxDeg;
     if(algoOpt == 1) maxDeg = L*R;
     else if(algoOpt == 2) maxDeg = 2*R;
@@ -118,11 +108,12 @@ int main(int argc, char* argv[]) {
     parlay::sequence<ivec_point> groundTruth;
     if (cFile != nullptr)	groundTruth = parse_rangeres(cFile);
 
-    parlay::sequence<Tvec_point<uint8_t>> points = parse_uint8bin(iFile, maxDeg);
-    parlay::sequence<Tvec_point<uint8_t>> qpoints = parse_uint8bin(qFile, 0);
+    auto [md, points] = parse_uint8bin(iFile, gFile, maxDeg);
+    maxDeg = md; 
+    auto [fd, qpoints] = parse_uint8bin(qFile, NULL, 0);
     timeRange<uint8_t>(points, qpoints, k, R, L, Q, delta,
           alpha, radius, oFile, groundTruth, maxDeg);
-  }
+
   
 
 }
