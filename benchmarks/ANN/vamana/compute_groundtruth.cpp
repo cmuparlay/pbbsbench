@@ -11,25 +11,26 @@ using pid = std::pair<int, float>;
 
 
 template<typename T>
-void compute_groundtruth(parlay::sequence<Tvec_point<T>> &B, parlay::sequence<Tvec_point<T>> &Q, int k, 
-    parlay::sequence<parlay::sequence<pid>> &result){
-    
+parlay::sequence<parlay::sequence<pid>> compute_groundtruth(parlay::sequence<Tvec_point<T>> &B, 
+  parlay::sequence<Tvec_point<T>> &Q, int k){
     unsigned d = (B[0].coordinates).size();
-    parlay::parallel_for(0, Q.size(), [&] (size_t i){
-        float topdist;
+    size_t q = Q.size();
+    size_t b = B.size();
+    auto answers = parlay::tabulate(q, [&] (size_t i){        
+        float topdist = 0;
         int toppos;
         parlay::sequence<pid> topk;
-        for(size_t j=0; j<B.size(); j++){
+        for(size_t j=0; j<b; j++){
             float dist = distance((Q[i].coordinates).begin(), (B[j].coordinates).begin(), d);
+            // float dist = 1.0;
             if(topk.size() < k){
                 if(dist > topdist){
-                    topdist = dist;
+                    topdist = dist;   
                     toppos = topk.size();
                 }
                 topk.push_back(std::make_pair((int) j, dist));
-                continue;
             }
-            if(dist < topdist){
+            else if(dist < topdist){
                 float new_topdist=0;
                 int new_toppos=0;
                 topk[toppos] = std::make_pair((int) j, dist);
@@ -43,8 +44,10 @@ void compute_groundtruth(parlay::sequence<Tvec_point<T>> &B, parlay::sequence<Tv
                 toppos = new_toppos;
             }
         }
-        result[i] = topk;
+        return topk;
     });
+    std::cout << "Done computing groundtruth" << std::endl;
+    return answers;
 }
 
 void write_ivecs(parlay::sequence<parlay::sequence<pid>> &result, const std::string outFile, int k){
@@ -128,7 +131,7 @@ int main(int argc, char* argv[]) {
 
   int maxDeg = 0;
 
-  parlay::sequence<parlay::sequence<pid>> result;
+  parlay::sequence<parlay::sequence<pid>> answers;
 
   if(ft == "vec"){
     if(tp == "float"){
@@ -137,18 +140,16 @@ int main(int argc, char* argv[]) {
       auto [fd, Q] = parse_fvecs(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      result = parlay::sequence<parlay::sequence<pid>>(Q.size());
-      compute_groundtruth<float>(B, Q, k, result);
+      answers = compute_groundtruth<float>(B, Q, k);
     }else if(tp == "uint8"){
       std::cout << "Detected uint8 coordinates" << std::endl;
       auto [md, B] = parse_bvecs(argv[1], NULL, maxDeg);
       auto [fd, Q] = parse_bvecs(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      result = parlay::sequence<parlay::sequence<pid>>(Q.size());
-      compute_groundtruth<uint8_t>(B, Q, k, result);
+      answers = compute_groundtruth<uint8_t>(B, Q, k);
     }
-    write_ivecs(result, std::string(argv[4]), k);
+    write_ivecs(answers, std::string(argv[6]), k);
   } else if(ft == "bin"){
     if(tp == "float"){
       std::cout << "Detected float coordinates" << std::endl;
@@ -156,25 +157,23 @@ int main(int argc, char* argv[]) {
       auto [fd, Q] = parse_fbin(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      result = parlay::sequence<parlay::sequence<pid>>(Q.size());
-      compute_groundtruth<float>(B, Q, k, result);
+      answers = compute_groundtruth<float>(B, Q, k);
     }else if(tp == "uint8"){
       std::cout << "Detected uint8 coordinates" << std::endl;
       auto [md, B] = parse_uint8bin(argv[1], NULL, maxDeg);
       auto [fd, Q] = parse_uint8bin(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      result = parlay::sequence<parlay::sequence<pid>>(Q.size());
-      compute_groundtruth<uint8_t>(B, Q, k, result);
+      answers = compute_groundtruth<uint8_t>(B, Q, k);
     }else if(tp == "int8"){
       std::cout << "Detected int8 coordinates" << std::endl;
       auto [md, B] = parse_int8bin(argv[1], NULL, maxDeg);
       auto [fd, Q] = parse_int8bin(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      result = parlay::sequence<parlay::sequence<pid>>(Q.size());
-      compute_groundtruth<int8_t>(B, Q, k, result);
+      answers = compute_groundtruth<int8_t>(B, Q, k);
     }
+    write_ibin(answers, std::string(argv[6]), k);
   }
 
   
