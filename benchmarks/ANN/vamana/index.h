@@ -25,7 +25,6 @@
 #include "parlay/primitives.h"
 #include "parlay/random.h"
 #include "../utils/indexTools.h"
-#include "../../nearestNeighbors/Chan05/counter.h"
 #include "common/geometry.h"
 #include <random>
 #include <set>
