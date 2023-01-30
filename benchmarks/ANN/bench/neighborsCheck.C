@@ -30,7 +30,7 @@
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
-#include "benchUtils.h"
+#include "../utils/parse_files.h"
 
 
 using namespace benchIO;
