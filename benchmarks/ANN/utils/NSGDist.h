@@ -348,7 +348,27 @@ float distance(uint8_t *p, uint8_t *q, unsigned d){
   return (float) result;
 }
 
+float distance(int8_t *p, int8_t *q, unsigned d){
+  // if(report_stats) efanna2e::distance_calls.update_value(1);
+  int result = 0;
+  for(int i=0; i<d; i++){
+    result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
+                  ((int32_t)((int16_t) q[i] - (int16_t) p[i]));
+  }
+  return (float) result;
+}
+
 float distance(float *q, uint8_t *p, unsigned d){
+  // if(report_stats) efanna2e::distance_calls.update_value(1);
+  float result = 0;
+  for(int i=0; i<d; i++){
+    result += (q[i] - (float) p[i]) *
+                  (q[i] - (float) p[i]);
+  }
+  return result;
+}
+
+float distance(float *q, int8_t *p, unsigned d){
   // if(report_stats) efanna2e::distance_calls.update_value(1);
   float result = 0;
   for(int i=0; i<d; i++){

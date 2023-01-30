@@ -131,7 +131,7 @@ struct nn_result{
 };
 
 template<typename res>
-parlay::sequence<nn_result> parse_result(parlay::sequence<res> results, parlay::sequence<float> buckets){
+parlay::sequence<res> parse_result(parlay::sequence<res> results, parlay::sequence<float> buckets){
   parlay::sequence<res> retval;
   for(float b : buckets){
     std::cout << "For recall above: " << b << std::endl;
