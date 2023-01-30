@@ -13,7 +13,6 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "common/geometry.h"
-#include "../../nearestNeighbors/Chan05/counter.h"
 
 extern bool report_stats;
 
