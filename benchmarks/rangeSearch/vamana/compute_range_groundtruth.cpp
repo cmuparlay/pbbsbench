@@ -5,7 +5,7 @@
 #include "parlay/io.h"
 #include "../utils/types.h"
 #include "../utils/NSGDist.h"
-#include "../bench/parseRange.h"
+#include "../utils/parse_files.h"
 // #include "../bench/benchUtils.h"
 
 using pid = std::pair<int, float>;
@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
   if(filename[n-5] == 'b') fvecs = false;
 
   int maxDeg = 0;
-  auto B = parse_uint8bin(argv[1], maxDeg);
-  auto Q = parse_uint8bin(argv[2], maxDeg);
+  auto [md, B] = parse_uint8bin(argv[1], NULL, maxDeg);
+  auto [fd, Q] = parse_uint8bin(argv[2], NULL, maxDeg);
   parlay::sequence<parlay::sequence<pid>> result(Q.size());
   compute_groundtruth(B, Q, rad, result);
 
