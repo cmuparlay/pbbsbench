@@ -134,7 +134,7 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
     results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, start_point));
 
     parlay::sequence<float> buckets = {.1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .99, .999};
-    parlay::sequence<nn_result> res = parse_result(results, buckets);
-    if(res_file != NULL) write_to_csv(std::string(res_file), buckets, res, G);
+    auto [res, ret_buckets] = parse_result(results, buckets);
+    if(res_file != NULL) write_to_csv(std::string(res_file), ret_buckets, res, G);
 }
 
