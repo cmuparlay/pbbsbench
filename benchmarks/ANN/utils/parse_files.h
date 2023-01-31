@@ -198,9 +198,33 @@ auto parse_fbin(const char* filename, const char* gFile, int maxDeg){
     return std::make_pair(maxDeg, points);
 }
 
-//this is a hack that does some copying, but the sequences are short so it's ok
-//it also won't work if there is overflow but we're doing <1 billion points 
-//please make sure that this is accurate to your specific use case
+// //this is a hack that does some copying, but the sequences are short so it's ok
+// //it also won't work if there is overflow but we're doing <1 billion points 
+// //please make sure that this is accurate to your specific use case
+// auto parse_ibin(const char* filename){
+//     auto [fileptr, length] = mmapStringFromFile(filename);
+
+//     int num_vectors = *((int*) fileptr);
+//     int d = *((int*) (fileptr+4));
+
+//     std::cout << "Detected " << num_vectors << " points with number of results " << d << std::endl;
+
+//     parlay::sequence<int> &groundtruth = *new parlay::sequence<int>(d*num_vectors);
+//     parlay::parallel_for(0, d*num_vectors, [&] (size_t i){
+//       long int* p = (long int*)(fileptr+8+8*i);
+//       long int j = *(p);
+//       groundtruth[i] = static_cast<int>(j);
+//     });
+//     parlay::sequence<ivec_point> points(num_vectors);
+
+//     parlay::parallel_for(0, num_vectors, [&] (size_t i) {
+//         points[i].id = i; 
+//         points[i].coordinates = parlay::make_slice(groundtruth.begin()+d*i, groundtruth.begin()+d*(i+1));
+//     });
+
+//     return points;
+// }
+
 auto parse_ibin(const char* filename){
     auto [fileptr, length] = mmapStringFromFile(filename);
 
@@ -208,18 +232,14 @@ auto parse_ibin(const char* filename){
     int d = *((int*) (fileptr+4));
 
     std::cout << "Detected " << num_vectors << " points with number of results " << d << std::endl;
-
-    parlay::sequence<int> &groundtruth = *new parlay::sequence<int>(d*num_vectors);
-    parlay::parallel_for(0, d*num_vectors, [&] (size_t i){
-      long int* p = (long int*)(fileptr+8+8*i);
-      long int j = *(p);
-      groundtruth[i] = static_cast<int>(j);
-    });
     parlay::sequence<ivec_point> points(num_vectors);
 
     parlay::parallel_for(0, num_vectors, [&] (size_t i) {
         points[i].id = i; 
-        points[i].coordinates = parlay::make_slice(groundtruth.begin()+d*i, groundtruth.begin()+d*(i+1));
+
+        int* start = (int*)(fileptr + 8 + 4*i*d); //8 bytes at the start for size + dimension
+        int* end = start + d;
+        points[i].coordinates = parlay::make_slice(start, end);
     });
 
     return points;

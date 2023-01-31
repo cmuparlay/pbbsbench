@@ -85,23 +85,23 @@ void write_ibin(parlay::sequence<parlay::sequence<pid>> &result, const std::stri
     parlay::sequence<int> preamble = {static_cast<int>(result.size()), static_cast<int>(result[0].size())};
     size_t n = result.size();
     auto vects = parlay::tabulate(result.size(), [&] (size_t i){
-        parlay::sequence<long int> data;
+        parlay::sequence<int> data;
 
         auto sorted = parlay::sort(result[i], less);
         for(int j=0; j<k; j++){
-          data.push_back(static_cast<long int>(sorted[j].first));
+          data.push_back(static_cast<int>(sorted[j].first));
         }
         return data;
     });
 
-    parlay::sequence<long int> to_write = parlay::flatten(vects);
+    parlay::sequence<int> to_write = parlay::flatten(vects);
 
     auto pr = preamble.begin();
     auto data = to_write.begin();
     std::ofstream writer;
     writer.open(outFile, std::ios::binary | std::ios::out);
     writer.write((char *) pr, 2*sizeof(int));
-    writer.write((char *) data, n * k * sizeof(long int));
+    writer.write((char *) data, n * k * sizeof(int));
     writer.close();
 }
 
