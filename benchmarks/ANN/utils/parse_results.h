@@ -133,20 +133,27 @@ struct nn_result{
 template<typename res>
 parlay::sequence<res> parse_result(parlay::sequence<res> results, parlay::sequence<float> buckets){
   parlay::sequence<res> retval;
-  for(float b : buckets){
-    std::cout << "For recall above: " << b << std::endl;
+  for(int i=0; i<buckets.size(); i++){
+    float b = buckets[i];
     auto pred = [&] (res R) {return R.recall >= b;};
-    auto candidates = parlay::filter(results, pred);
+    parlay::sequence<res> candidates;
+    auto temp_candidates = parlay::filter(results, pred);
+    if(i == buckets.size()-1){
+      candidates = temp_candidates;
+    }else{
+      float c = buckets[i+1];
+      auto pred2 = [&] (res R) {return R.recall <= c;};
+      candidates = parlay::filter(temp_candidates, pred2);
+    }
     if(candidates.size() != 0){
       auto less = [&] (res R, res S) {return R.QPS < S.QPS;};
       res M = *(parlay::max_element(candidates, less));
+      std::cout << "For recall above: " << b << std::endl;
       M.print();
       retval.push_back(M);
-    } else{
-      std::cout << "No results found " << std::endl;
+      std::cout << std::endl;
+      std::cout << std::endl;
     }
-    std::cout << std::endl;
-    std::cout << std::endl;
   }
   return retval;
 }

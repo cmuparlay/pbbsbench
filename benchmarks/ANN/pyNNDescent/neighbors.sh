@@ -3,7 +3,7 @@
 make 
 # ./neighbors -R 40 -L 1000 -a 10 -d 1.2 -Q 250 -k 200 -b 2 -o /ssd1/ANN/sift/1M_40 /ssd1/ANN/sift/sift1M.bvecs
 # ./neighbors -R 40 -L 1000 -a 10 -d 1.2 -Q 250 -k 200 -b 2 -q /ssd1/ANN/sift/bigann_query.bvecs -g /ssd1/ANN/sift/1M_40 -c /ssd1/ANN/sift/idx_1M.ivecs /ssd1/ANN/sift/sift1M.bvecs
-./neighbors -R 40 -L 1000 -a 10 -d 1.2 -Q 250 -k 200 -b 2 -q /ssd1/ANN/sift/bigann_query.bvecs -c /ssd1/ANN/sift/idx_1M.ivecs -res pyn_res.csv /ssd1/ANN/sift/sift1M.bvecs
+./neighbors -R 40 -L 1000 -a 10 -d 1.2 -Q 250 -k 200 -b 2 -q /ssd1/ANN/sift/bigann_query.bvecs -c /ssd1/ANN/sift/idx_1M.ivecs -res pyn_res.csv -f vec -t uint8 /ssd1/ANN/sift/sift1M.bvecs
 
 
 # ./neighbors -R 40 -L 1000 -a 10 -d 1.2 -Q 250 -k 200 -b 2 -q /ssd1/ANN/yandex/yandex_query.fvecs -o outFile -c /ssd1/ANN/yandex/yandex_groundtruth.ivecs /ssd1/ANN/yandex/yandex_1M.fvecs

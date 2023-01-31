@@ -108,6 +108,8 @@ void write_to_csv(std::string csv_filename, parlay::sequence<float> buckets,
     csv << N.num_queries << buckets[i] << N.recall << N.QPS << N.avg_cmps << N.tail_cmps <<  
       N.avg_visited << N.tail_visited << N.k << N.beamQ << N.cut << endrow;
   }
+  csv << endrow;
+  csv << endrow;
 
 }
 
@@ -131,7 +133,7 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
     // check "best accuracy"
     results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, start_point));
 
-    parlay::sequence<float> buckets = {.8, .9, .95, .99, .999};
+    parlay::sequence<float> buckets = {.1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .99, .999};
     parlay::sequence<nn_result> res = parse_result(results, buckets);
     if(res_file != NULL) write_to_csv(std::string(res_file), buckets, res, G);
 }
