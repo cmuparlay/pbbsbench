@@ -131,7 +131,8 @@ struct nn_result{
 };
 
 template<typename res>
-parlay::sequence<res> parse_result(parlay::sequence<res> results, parlay::sequence<float> buckets){
+auto parse_result(parlay::sequence<res> results, parlay::sequence<float> buckets){
+  parlay::sequence<float> ret_buckets;
   parlay::sequence<res> retval;
   for(int i=0; i<buckets.size(); i++){
     float b = buckets[i];
@@ -151,9 +152,10 @@ parlay::sequence<res> parse_result(parlay::sequence<res> results, parlay::sequen
       std::cout << "For recall above: " << b << std::endl;
       M.print();
       retval.push_back(M);
+      ret_buckets.push_back(b);
       std::cout << std::endl;
       std::cout << std::endl;
     }
   }
-  return retval;
+  return std::make_pair(retval, ret_buckets);
 }
