@@ -9,20 +9,34 @@
 
 using pid = std::pair<int, float>;
 
+template<typename T>
+float mips_distance(T* p, T* q, unsigned d){
+  // std::cout << "here1" << std::endl;
+  float result = 0;
+  for(int i=0; i<d; i++){
+    float a = *(p+i);
+    float b = *(p+i);
+    result -= a*b;
+  }
+  // std::cout << "here" << std::endl; 
+  return result;
+}
 
 template<typename T>
 parlay::sequence<parlay::sequence<pid>> compute_groundtruth(parlay::sequence<Tvec_point<T>> &B, 
-  parlay::sequence<Tvec_point<T>> &Q, int k){
+  parlay::sequence<Tvec_point<T>> &Q, int k, bool mips=false){
     unsigned d = (B[0].coordinates).size();
     size_t q = Q.size();
     size_t b = B.size();
-    auto answers = parlay::tabulate(q, [&] (size_t i){        
+    auto answers = parlay::tabulate(q, [&] (size_t i){  
         float topdist = 0;
+        if(mips) topdist = -std::numeric_limits<float>::max();     
         int toppos;
         parlay::sequence<pid> topk;
         for(size_t j=0; j<b; j++){
-            float dist = distance((Q[i].coordinates).begin(), (B[j].coordinates).begin(), d);
-            // float dist = 1.0;
+            float dist;
+            if(mips) dist = mips_distance<T>((Q[i].coordinates).begin(), (B[j].coordinates).begin(), d);
+            else dist = distance((Q[i].coordinates).begin(), (B[j].coordinates).begin(), d);
             if(topk.size() < k){
                 if(dist > topdist){
                     topdist = dist;   
@@ -107,11 +121,14 @@ void write_ibin(parlay::sequence<parlay::sequence<pid>> &result, const std::stri
 
 
 int main(int argc, char* argv[]) {
-  if (argc != 7) {
-    std::cout << "usage: compute_groundtruth <base> <query> <filetype> <vectype> <k> <oFile>" << std::endl;
+  if (argc != 8) {
+    std::cout << "usage: compute_groundtruth <base> <query> <filetype> <vectype> <k> <mips> <oFile>" << std::endl;
     return 1;
   }
   int k = std::atoi(argv[5]);
+  int mips_choice = std::atoi(argv[6]);
+  bool mips=false;
+  if(mips_choice==1) mips=true;
   std::string ft = std::string(argv[3]);
   std::string tp = std::string(argv[4]);
 
@@ -142,16 +159,16 @@ int main(int argc, char* argv[]) {
       auto [fd, Q] = parse_fvecs(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      answers = compute_groundtruth<float>(B, Q, k);
+      answers = compute_groundtruth<float>(B, Q, k, mips);
     }else if(tp == "uint8"){
       std::cout << "Detected uint8 coordinates" << std::endl;
       auto [md, B] = parse_bvecs(argv[1], NULL, maxDeg);
       auto [fd, Q] = parse_bvecs(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      answers = compute_groundtruth<uint8_t>(B, Q, k);
+      answers = compute_groundtruth<uint8_t>(B, Q, k, mips);
     }
-    write_ivecs(answers, std::string(argv[6]), k);
+    write_ivecs(answers, std::string(argv[7]), k);
   } else if(ft == "bin"){
     if(tp == "float"){
       std::cout << "Detected float coordinates" << std::endl;
@@ -159,23 +176,23 @@ int main(int argc, char* argv[]) {
       auto [fd, Q] = parse_fbin(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      answers = compute_groundtruth<float>(B, Q, k);
+      answers = compute_groundtruth<float>(B, Q, k, mips);
     }else if(tp == "uint8"){
       std::cout << "Detected uint8 coordinates" << std::endl;
       auto [md, B] = parse_uint8bin(argv[1], NULL, maxDeg);
       auto [fd, Q] = parse_uint8bin(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      answers = compute_groundtruth<uint8_t>(B, Q, k);
+      answers = compute_groundtruth<uint8_t>(B, Q, k, mips);
     }else if(tp == "int8"){
       std::cout << "Detected int8 coordinates" << std::endl;
       auto [md, B] = parse_int8bin(argv[1], NULL, maxDeg);
       auto [fd, Q] = parse_int8bin(argv[2], NULL, maxDeg);
       std::cout << "Base file size " << B.size() << std::endl;
       std::cout << "Query file size " << Q.size() << std::endl;
-      answers = compute_groundtruth<int8_t>(B, Q, k);
+      answers = compute_groundtruth<int8_t>(B, Q, k, mips);
     }
-    write_ibin(answers, std::string(argv[6]), k);
+    write_ibin(answers, std::string(argv[7]), k);
   }
 
   
