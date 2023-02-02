@@ -64,6 +64,9 @@ range_result checkRecall(
   int num_nonzero=0;
   int num_zero=0;
 
+  float num_entries=0;
+  float num_reported=0;
+
   size_t n = q.size();
   int numCorrect = 0;
   for(int i=0; i<n; i++){
@@ -75,6 +78,8 @@ range_result checkRecall(
       num_nonzero += 1;
       int num_real_results = groundTruth[i].coordinates.size();
       int num_correctly_reported = q[i]->ngh.size();
+      num_entries += (float) num_real_results;
+      num_reported += (float) num_correctly_reported;
       nonzero_correct += static_cast<float>(num_correctly_reported)/static_cast<float>(num_real_results);
     }
   }
@@ -83,11 +88,13 @@ range_result checkRecall(
   float zero_recall = zero_correct/static_cast<float>(num_zero);
   float total_recall = (nonzero_correct + zero_correct)/static_cast<float>(num_nonzero + num_zero);
 
+  float alt_recall = num_reported/num_entries;
+
   float QPS = q.size()/query_time;
 
   auto res = range_query_stats(q);
 
-  range_result R(nonzero_recall, zero_recall, total_recall, res, QPS, k, beamQ, cut, slack);
+  range_result R(nonzero_recall, zero_recall, total_recall, alt_recall, res, QPS, k, beamQ, cut, slack);
   return R;
 }
 
@@ -97,9 +104,12 @@ void search_and_parse(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<Tvec
     unsigned d = v[0]->coordinates.size();
 
     parlay::sequence<range_result> R;
-    std::vector<float> slacks = {1.0, 1.5, 2.0, 3.0};
-    std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
-    std::vector<int> allk = {10, 15, 20, 30, 50, 100};
+    // std::vector<float> slacks = {1.0, 1.5, 2.0, 3.0};
+    // std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
+    // std::vector<int> allk = {10, 15, 20, 30, 50, 100};
+    std::vector<float> slacks = {1.5};
+    std::vector<int> beams = {15, 50, 100, 250, 500};
+    std::vector<int> allk = {10, 30, 50, 100};
     for(float slack : slacks){
         for(float Q : beams){
             for(float K : allk){
@@ -111,6 +121,6 @@ void search_and_parse(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<Tvec
     // check "best accuracy"
     R.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, rad, 5.0, random, start_point));
 
-    parlay::sequence<float> buckets = {.4, .5, .6, .7, .8, .9};
+    parlay::sequence<float> buckets = {.1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .99, .999};
     parse_result(R, buckets);
 }

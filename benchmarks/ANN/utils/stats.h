@@ -52,12 +52,12 @@ auto range_query_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto pred1 = [&] (Tvec_point<T>* p) {return !pred(p);};
 	auto zero_queries = parlay::filter(q, pred);
 	auto nonzero_queries = parlay::filter(q, pred1);
-	parlay::sequence<int> vz = visited_stats(nonzero_queries);
-	parlay::sequence<int> dz = distance_stats(nonzero_queries);
-	parlay::sequence<int> rz = rounds_stats(nonzero_queries);
-	parlay::sequence<int> vn = visited_stats(zero_queries);
-	parlay::sequence<int> dn = distance_stats(zero_queries);
-	parlay::sequence<int> rn = rounds_stats(zero_queries);
+	parlay::sequence<int> vn = visited_stats(nonzero_queries);
+	parlay::sequence<int> dn = distance_stats(nonzero_queries);
+	parlay::sequence<int> rn = rounds_stats(nonzero_queries);
+	parlay::sequence<int> vz = visited_stats(zero_queries);
+	parlay::sequence<int> dz = distance_stats(zero_queries);
+	parlay::sequence<int> rz = rounds_stats(zero_queries);
 	auto result = {rn, dn, vn, rz, dz, vz};
 	return parlay::flatten(result);
 }

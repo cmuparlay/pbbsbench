@@ -31,6 +31,7 @@ struct range_result{
   double recall;
   double zero_recall;
   double overall_recall;
+  double alt_recall;
 
   int avg_rounds;
   int tail_rounds;
@@ -59,8 +60,8 @@ struct range_result{
   float cut;
   double slack;
 
-  range_result(double nzr, double zr, double r, parlay::sequence<int> stats, float qps, int K, int Q, float c, float s) : recall(nzr), zero_recall(zr), 
-    overall_recall(r), QPS(qps), k(K), beamQ(Q), cut(c), slack(s) {
+  range_result(double nzr, double zr, double r, double r2, parlay::sequence<int> stats, float qps, int K, int Q, float c, float s) : recall(nzr), zero_recall(zr), 
+    overall_recall(r), alt_recall(r2), QPS(qps), k(K), beamQ(Q), cut(c), slack(s) {
 
     if(stats.size() != 14) abort();
 
@@ -79,6 +80,7 @@ struct range_result{
     std::cout << "Nonzero recall: " << recall << std::endl; 
     std::cout << "Zero recall: " << zero_recall << std::endl;
     std::cout << "Combined recall: " << overall_recall << std::endl;
+    std::cout << "Alternate recall: " << alt_recall;
     std::cout << std::endl;
     std::cout << "For nonzero entries: " << std::endl;
     std::cout << "Average rounds: " << avg_rounds << ", 99th percentile rounds: " << tail_rounds << 
