@@ -31,24 +31,6 @@
 #include "beamSearch.h"
 #include "csvfile.h"
 
-struct Graph{
-  std::string name;
-  std::string params;
-  long size;
-  double avg_deg;
-  int max_deg;
-  double time;
-
-  Graph(std::string n, std::string p, long s, double ad, int md, double t) : name(n), 
-    params(p), size(s), avg_deg(ad), max_deg(md), time(t) {}
-  
-  void print(){
-    std::cout << name << " graph built with " << size << " points and parameters " << params << std::endl;
-    std::cout << "Graph has average degree " << avg_deg << " and maximum degree " << max_deg << std::endl;
-    std::cout << "Graph built in " << time << " seconds" << std::endl;
-  }
-};
-
 template<typename T>
 nn_result checkRecall(
         parlay::sequence<Tvec_point<T>*> &v,

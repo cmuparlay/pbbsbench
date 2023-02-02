@@ -27,7 +27,28 @@
 #include "indexTools.h"
 #include <set>
 
+struct Graph{
+  std::string name;
+  std::string params;
+  long size;
+  double avg_deg;
+  int max_deg;
+  double time;
+
+  Graph(std::string n, std::string p, long s, double ad, int md, double t) : name(n), 
+    params(p), size(s), avg_deg(ad), max_deg(md), time(t) {}
+  
+  void print(){
+    std::cout << name << " graph built with " << size << " points and parameters " << params << std::endl;
+    std::cout << "Graph has average degree " << avg_deg << " and maximum degree " << max_deg << std::endl;
+    std::cout << "Graph built in " << time << " seconds" << std::endl;
+  }
+};
+
 struct range_result{
+  int num_queries;
+  int num_nonzero_queries;
+
   double recall;
   double zero_recall;
   double overall_recall;
@@ -60,7 +81,9 @@ struct range_result{
   float cut;
   double slack;
 
-  range_result(double nzr, double zr, double r, double r2, parlay::sequence<int> stats, float qps, int K, int Q, float c, float s) : recall(nzr), zero_recall(zr), 
+  range_result(int nq, int nnq, double nzr, double zr, double r, double r2, parlay::sequence<int> stats, 
+  float qps, int K, int Q, float c, float s) : 
+    num_queries(nq), num_nonzero_queries(nnq), recall(nzr), zero_recall(zr), 
     overall_recall(r), alt_recall(r2), QPS(qps), k(K), beamQ(Q), cut(c), slack(s) {
 
     if(stats.size() != 14) abort();
@@ -77,6 +100,7 @@ struct range_result{
     std::cout << "k = " << k << ", Q = " << beamQ << ", cut = " << cut << ", slack = " << slack
 	    << ", throughput = " << QPS << "/second" << std::endl;
     std::cout << std::endl;
+    std::cout << "Num nonzero queries: " << num_nonzero_queries << std::endl;
     std::cout << "Nonzero recall: " << recall << std::endl; 
     std::cout << "Zero recall: " << zero_recall << std::endl;
     std::cout << "Combined recall: " << overall_recall << std::endl;
