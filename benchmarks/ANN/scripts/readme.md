@@ -8,7 +8,7 @@ It assumes that you have an SSD mounted and named /ssd1 (at least 4 TB needed). 
 
 Now that you've done all this, you can get started running scripts in this repo. 
 
-First, run "download_datasets.sh." It is isolated in its own script because in my experience the downloads sometimes fail. It may need to be re-ran two or three times. 
+First, run "download_datasets.sh." It is isolated in its own script because in my experience the downloads sometimes fail. It may need to be re-ran two or three times.  This needs 2TB for data prep, 4TB for all indices.  
 
 Now there are four more scripts contained in "all_experiments.sh." 
 
