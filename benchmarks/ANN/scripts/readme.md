@@ -14,5 +14,5 @@ Now there are four more scripts contained in "all_experiments.sh."
 
 First, "prepare_datasets.sh" computes groundtruth files for all the 1M slices, since they are not contained in big-ann-benchmarks. It also computes the bigann-1M slice. 
 
-Three files of experiments follow: "vamana.sh," "hcnng.sh," and "pynndescent.sh." Each experiment builds a graph, queries it, and then writes the graph to disk in /ssd1/results. It also writes a CSV of statistics (QPS, recall, etc.) to /ssd1/results. If you don't want to store the graph, you can remove this option by removing the path in "-o" in each command. 
+Three files of experiments follow: "vamana.sh," "hcnng.sh," and "pynndescent.sh." Each experiment builds a number of ANN graphs (6 billion scale builds per script, with the exception of pynndescent which only goes to 100 million) graph, queries it, and then writes the graph to disk in /ssd1/results. It also writes a CSV of statistics (QPS, recall, etc.) to /ssd1/results. If you don't want to store the graph, you can remove this option by removing the path in "-o" in each command. 
 
