@@ -52,7 +52,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //and one to later insert point by point
     size_t n = v.size();
     // node_allocator<vtx>.shuffle(n); 
-    size_t init = n/2;
+    size_t init = 1;
     size_t ins = n-init;
     parlay::sequence<vtx*> v1(init);
     parlay::sequence<vtx*> v2(ins);
@@ -71,16 +71,17 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     int dims = v[0]->pt.dimension();
     box_delta bd = T.get_box_delta(dims);
 
-    for(int j = 0; j < v2.size(); j++)
-      T.insert_point(v2[j], bd.first, bd.second); 
+    // insert v2 sequentially
+    // for(int j = 0; j < v2.size(); j++)
+    //   T.insert_point(v2[j], bd.first, bd.second); 
 
    
-    
-    // parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-    //   for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
-    //     T.insert_point(v2[j], bd.first, bd.second); 
-    //   }
-    // }, 1, true);
+    // insert v2 in parallel
+    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
+      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
+        T.insert_point(v2[j], bd.first, bd.second); 
+      }
+    }, 1, true);
 
     t.next("single inserts");
 
