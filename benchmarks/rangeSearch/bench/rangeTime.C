@@ -51,7 +51,7 @@ void timeRange(parlay::sequence<Tvec_point<T>> &pts,
 		   parlay::sequence<Tvec_point<T>> &qpoints,
 		   int k, int R, int beamSize,
 		   int beamSizeQ, double delta, double alpha, double rad, char* outFile,
-		   parlay::sequence<ivec_point>& groundTruth, int maxDeg, bool graph_built=false)
+		   parlay::sequence<ivec_point>& groundTruth, int maxDeg, char* rFile, bool graph_built=false)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -64,7 +64,7 @@ void timeRange(parlay::sequence<Tvec_point<T>> &pts,
     time_loop(1, 0,
       [&] () {},
       [&] () {
-        RNG<T>(v, k, R, beamSize, beamSizeQ, alpha, delta, rad, qpts, groundTruth, graph_built);
+        RNG<T>(v, k, R, beamSize, beamSizeQ, alpha, delta, rad, qpts, groundTruth, rFile, graph_built);
       },
       [&] () {});
 
@@ -80,13 +80,14 @@ void timeRange(parlay::sequence<Tvec_point<T>> &pts,
 int main(int argc, char* argv[]) {
     commandLine P(argc,argv,
     "[-a <alpha>] [-d <delta>] [-R <deg>]"
-        "[-L <bm>] [-k <k> ] [-Q <bmq>] [-q <qF>] [-g <gF>] [-o <oF>] [-r <rnds>] [-b <algoOpt>] [-rad <radius>] <inFile>");
+        "[-L <bm>] [-k <k> ] [-Q <bmq>] [-q <qF>] [-g <gF>] [-o <oF>] [-r <rnds>] [-res [result]] [-b <algoOpt>] [-rad <radius>] <inFile>");
 
   char* iFile = P.getArgument(0);
   char* qFile = P.getOptionValue("-q");
   char* cFile = P.getOptionValue("-c");
   char* gFile = P.getOptionValue("-g");
   char* oFile = P.getOptionValue("-o");
+  char* rFile = P.getOptionValue("-res");
   int R = P.getOptionIntValue("-R", 5);
   if (R < 1) P.badArgument();
   int L = P.getOptionIntValue("-L", 10);
@@ -111,8 +112,9 @@ int main(int argc, char* argv[]) {
     auto [md, points] = parse_uint8bin(iFile, gFile, maxDeg);
     maxDeg = md; 
     auto [fd, qpoints] = parse_uint8bin(qFile, NULL, 0);
+    bool graph_built = (gFile != NULL);
     timeRange<uint8_t>(points, qpoints, k, R, L, Q, delta,
-          alpha, radius, oFile, groundTruth, maxDeg);
+          alpha, radius, oFile, groundTruth, maxDeg, rFile, graph_built);
 
   
 

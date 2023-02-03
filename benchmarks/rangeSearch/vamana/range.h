@@ -41,25 +41,29 @@ template<typename T>
 void RNG(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 int beamSize, int beamSizeQ, double alpha, double dummy, double rad,
 	 parlay::sequence<Tvec_point<T>*> &q,
-	 parlay::sequence<ivec_point> groundTruth, bool graph_built) {
+	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats);
   // gt_stats(groundTruth);
   unsigned d = (v[0]->coordinates).size();
   using findex = knn_index<T>;
   findex I(maxDeg, beamSize, alpha, d);
+  double idx_time;
   if(graph_built){
     I.find_approx_medoid(v);
     t.next("Find medoid");
+    idx_time = 0;
   } else{
     parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
 					    return static_cast<int>(i);});
     I.build_index(v, inserts);
-    t.next("Build index");
+    idx_time = t.next_time();
   }
   int medoid = I.get_medoid();
-  search_and_parse(v, q, groundTruth, rad, false, medoid);
+  std::string name = "Vamana";
+  std::string params = "R = " + std::to_string(maxDeg) + ", L = " + std::to_string(beamSize);
+  auto [avg_deg, max_deg] = graph_stats(v);
+  Graph G(name, params, v.size(), avg_deg, max_deg, idx_time);
+  G.print();
+  search_and_parse(G, v, q, groundTruth, rad, res_file, false, medoid);
   t.next("Searching");
-  graph_stats(v);
-  t.next("stats");
-
 }

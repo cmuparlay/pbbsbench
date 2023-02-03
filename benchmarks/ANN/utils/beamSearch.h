@@ -245,7 +245,7 @@ std::set<int> range_search(Tvec_point<T>* q, parlay::sequence<Tvec_point<T>*>& v
   int rounds = 0;
   int num_visited = 0;
   int dist_calls = 0;
-  while((max_rad <= slack*r)){
+  while((max_rad <= slack*r)&& rounds<1){
     auto [pairElts, dist_cmps] = beam_search(q, v, start_points, beam, d, K, cut);
     auto [neighbors, visited] = pairElts;
 
