@@ -4,7 +4,7 @@ PREREQUISITES:
 This assumes that you have the repos for pbbsbench and big-ann-benchmarks pulled from github.
 For big-ann-benchmarks, use [these instructions](https://github.com/harsha-simhadri/big-ann-benchmarks).
 For pbbsbench, use [these instructions](https://cmuparlay.github.io/pbbsbench/).
-It assumes that you have an SSD mounted and named /ssd1 (at least 4 TB needed). In big-ann-benchmarks, the "data" folder should be a symlink to /ssd1/data. You should also create a directory /ssd1/results where CSV results and graphs will be stored, or you can modify the paths in the script as needed.
+It assumes that you have an SSD mounted and named /ssd1 (at least 4 TB needed). In big-ann-benchmarks, the "data" folder should be a symlink to /ssd1/data. You should also create a directory /ssd1/results and create a directory with the name of each dataset (bigann, MSSPACEV1B, text2image1B, FB_ssnpp). This is where the CSV file results and graphs wil be stored. 
 
 Now that you've done all this, you can get started running scripts in this repo. 
 
