@@ -1,8 +1,10 @@
 #calculate groundtruth files for all 1M slices
 cd ~/pbbsbench/benchmarks/ANN/vamana
 make compute_groundtruth
+make crop_sift
 P=/ssd1/data
 BP=$P/bigann
+./crop_sift $BP/base.1B.u8bin.crop_nb_10000000 $BP/base.1B.u8bin.crop_nb_1000000
 ./compute_groundtruth $BP/base.1B.u8bin.crop_nb_1000000 $BP/query.public.10K.u8bin "bin" "uint8" 100 0 $BP/bigann-1M
 SP=$P/MSSPACEV1B
 ./compute_groundtruth $SP/spacev1b_base.i8bin.crop_nb_1000000 $SP/query.i8bin "bin" "int8" 100 0 $SP/msspacev-1M
