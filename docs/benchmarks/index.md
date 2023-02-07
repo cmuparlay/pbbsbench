@@ -21,7 +21,7 @@ Returns the histogram for a sequence of integers.
 - [integerSort](integerSort.html) (ISORT)  
 Sorts a sequence of integers, possibly with tag-along values. 
 
-- [removeDuplicates](removeDuplicates) (DDUP)  
+- [removeDuplicates](removeDuplicates.html) (DDUP)  
 Returns the input sequence with duplicates removed.
 
 ### Graph Algorithms
