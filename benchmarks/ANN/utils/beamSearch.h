@@ -237,51 +237,16 @@ std::set<int> range_search(Tvec_point<T>* q, parlay::sequence<Tvec_point<T>*>& v
   double max_rad = 0;
 
   std::set<int> nbh;
-  int K = k;
-  int beam = beamSize;
-  parlay::sequence<Tvec_point<T>*> start_points = {start_point};
 
+  auto [pairElts, dist_cmps] = beam_search(q, v, start_point, beamSize, d, k, cut);
+  auto [neighbors, visited] = pairElts;
 
-  int rounds = 0;
-  int num_visited = 0;
-  int dist_calls = 0;
-  while((max_rad <= slack*r)&& rounds<1){
-    auto [pairElts, dist_cmps] = beam_search(q, v, start_points, beam, d, K, cut);
-    auto [neighbors, visited] = pairElts;
-
-    rounds += 1;
-    num_visited += visited.size();
-    dist_calls += dist_cmps;
-    
-    bool new_nbh = false;
-    for(auto p : visited){
-      if((p.second <= r) && (nbh.find(p.first) == nbh.end())){
-        new_nbh = true;
-        nbh.insert(p.first);
-      }
-    }
-    if(new_nbh == false && rounds != 1) break;
-
-    parlay::sequence<Tvec_point<T>*> new_start_points;
-    if(nbh.size() == 0) new_start_points = {start_point};
-    else for(auto p : nbh) new_start_points.push_back(v[p]);
-    
-    start_points = new_start_points;
-
-    double new_rad = neighbors[neighbors.size()-1].second;
-    if((rounds != 1) && (new_rad >= max_rad)) break;
-    else max_rad = new_rad;
-
-    beam *= 2;
-    K *= 2;
-    
-    
-    
+  q->visited = visited.size();
+  q->dist_calls = dist_cmps;
+  
+  for(auto p : visited){
+    if((p.second <= r)) nbh.insert(p.first);
   }
-
-  q->dist_calls = dist_calls;
-  q->rounds = rounds;
-  q->visited = num_visited;
 
   return nbh;
 

@@ -93,37 +93,29 @@ range_result checkRecall(
 
   float QPS = q.size()/query_time;
 
-  auto res = range_query_stats(q);
+  auto res = query_stats(q);
 
-  range_result R(q.size(), num_nonzero, nonzero_recall, zero_recall, total_recall, alt_recall, res, QPS, k, beamQ, cut, slack);
+  range_result R(q.size(), num_nonzero, nonzero_recall, alt_recall, res, QPS, k, beamQ, cut, slack);
   return R;
 }
 
 void write_to_csv(std::string csv_filename, parlay::sequence<float> buckets, 
   parlay::sequence<range_result> results, Graph G){
-  std::cout << "here1" << std::endl;
   csvfile csv(csv_filename);
   csv << "GRAPH" << "Parameters" << "Size" << "Build time" << "Avg degree" << "Max degree" << endrow;
   csv << G.name << G.params << G.size << G.time << G.avg_deg << G.max_deg << endrow;
   csv << endrow;
-  std::cout << "here2" << std::endl;
   csv << "Num queries" << "Num nonzero queries" << "Target recall" << "Actual recall" << 
-  "Alternative recall" << "QPS" << "Average zero Cmps" << "Tail zero cmps" << "Average Zero visited" <<
-  "Tail zero visited" << 
-  "Average zero rounds" << "Tail zero rounds" << "Average nonzero cmps" << "Tail nonzero cmps" << 
-  "Average nonzero visited" << "Tail nonzero visited" << "Average nonzero rounds" << 
-  "Tail nonzero rounds" << "k" << "Q" << "cut" << "slack" << endrow;
-  std::cout << "here3" << std::endl;
+  "Alternative recall" << "QPS" << "Average cmps" << "Tail cmps" << "Average visited" <<
+  "Tail visited" <<  "k" << "Q" << "cut" << "slack" << endrow;
   for(int i=0; i<results.size(); i++){
     range_result R = results[i];
     csv << R.num_queries << R.num_nonzero_queries << buckets[i] << R.recall <<
-    R.alt_recall << R.QPS << R.avg_z_cmps << R.tail_z_cmps << R.avg_z_visited << R.tail_z_visited <<
-    R.avg_z_rounds << R.tail_z_rounds << R.avg_cmps << R.tail_cmps << R.avg_visited << 
-    R.tail_visited << R.avg_rounds << R.tail_rounds << R.k << R.beamQ << R.cut << R.slack << endrow;
+    R.alt_recall << R.QPS << R.avg_cmps << R.tail_cmps << R.avg_visited << R.tail_visited <<
+    R.k << R.beamQ << R.cut << R.slack << endrow;
   }
   csv << endrow;
   csv << endrow; 
-  std::cout << "here4" << std::endl;
 }
 
 template<typename T>
@@ -133,11 +125,11 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
 
     parlay::sequence<range_result> R;
     // std::vector<float> slacks = {1.0, 1.5, 2.0, 3.0};
-    // std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
-    // std::vector<int> allk = {10, 15, 20, 30, 50, 100};
+    std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
+    std::vector<int> allk = {10, 15, 20, 30, 50, 100};
     std::vector<float> slacks = {1.5};
-    std::vector<int> beams = {500};
-    std::vector<int> allk = {100};
+    // std::vector<int> beams = {100};
+    // std::vector<int> allk = {20};
     for(float slack : slacks){
         for(float Q : beams){
             for(float K : allk){
@@ -146,11 +138,14 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
         }
     }
 
-    // check "best accuracy"
-    R.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, rad, 5.0, random, start_point));
+    // check "high accuracy accuracy"
+    std::vector<int> highbeams = {1000, 2000, 5000, 10000};
+    for(float Q : highbeams){
+      R.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, rad, 5.0, random, start_point));
+    }
+    
 
     parlay::sequence<float> buckets = {.1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .99, .999};
     auto [results, res_buckets] = parse_result(R, buckets);
-    std::cout << "here" << std::endl;
     if(res_file != NULL) write_to_csv(std::string(res_file), res_buckets, results, G);
 }

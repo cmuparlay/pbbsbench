@@ -50,29 +50,13 @@ struct range_result{
   int num_nonzero_queries;
 
   double recall;
-  double zero_recall;
-  double overall_recall;
   double alt_recall;
-
-  int avg_rounds;
-  int tail_rounds;
-  int max_rounds;
 
   int avg_cmps;
   int tail_cmps;
 
   int avg_visited;
   int tail_visited;
-
-  int avg_z_rounds;
-  int tail_z_rounds;
-  int max_z_rounds;
-
-  int avg_z_cmps;
-  int tail_z_cmps;
-
-  int avg_z_visited;
-  int tail_z_visited;
 
   float QPS;
 
@@ -81,19 +65,14 @@ struct range_result{
   float cut;
   double slack;
 
-  range_result(int nq, int nnq, double nzr, double zr, double r, double r2, parlay::sequence<int> stats, 
+  range_result(int nq, int nnq, double r, double r2, parlay::sequence<int> stats, 
   float qps, int K, int Q, float c, float s) : 
-    num_queries(nq), num_nonzero_queries(nnq), recall(nzr), zero_recall(zr), 
-    overall_recall(r), alt_recall(r2), QPS(qps), k(K), beamQ(Q), cut(c), slack(s) {
+    num_queries(nq), num_nonzero_queries(nnq), recall(r), alt_recall(r2), QPS(qps), k(K), beamQ(Q), cut(c), slack(s) {
 
-    if(stats.size() != 14) abort();
+    if(stats.size() != 4) abort();
 
-    avg_rounds = stats[0]; tail_rounds = stats[1]; max_rounds = stats[2];
-    avg_cmps = stats[3]; tail_cmps = stats[4];
-    avg_visited = stats[5]; tail_visited = stats[6];
-    avg_z_rounds = stats[7]; tail_z_rounds = stats[8]; max_z_rounds = stats[9];
-    avg_z_cmps = stats[10]; tail_z_cmps = stats[11];
-    avg_z_visited = stats[12]; tail_z_visited = stats[13];
+    avg_cmps = stats[0]; tail_cmps = stats[1];
+    avg_visited = stats[2]; tail_visited = stats[3];
   }
 
   void print(){
@@ -102,21 +81,10 @@ struct range_result{
     std::cout << std::endl;
     std::cout << "Num nonzero queries: " << num_nonzero_queries << std::endl;
     std::cout << "Nonzero recall: " << recall << std::endl; 
-    std::cout << "Zero recall: " << zero_recall << std::endl;
-    std::cout << "Combined recall: " << overall_recall << std::endl;
     std::cout << "Alternate recall: " << alt_recall;
     std::cout << std::endl;
-    std::cout << "For nonzero entries: " << std::endl;
-    std::cout << "Average rounds: " << avg_rounds << ", 99th percentile rounds: " << tail_rounds << 
-		  ", max rounds: " << max_rounds << std::endl;
   	std::cout << "Average dist cmps: " << avg_cmps << ", 99th percentile dist cmps: " << tail_cmps << std::endl;
   	std::cout << "Average num visited: " << avg_visited << ", 99th percentile num visited: " << tail_visited << std::endl;
-    std::cout << std::endl; 
-    std::cout << "For zero entries: " << std::endl;
-    std::cout << "Average rounds: " << avg_z_rounds << ", 99th percentile rounds: " << tail_z_rounds << 
-		  ", max rounds: " << max_z_rounds << std::endl;
-  	std::cout << "Average dist cmps: " << avg_z_cmps << ", 99th percentile dist cmps: " << tail_z_cmps << std::endl;
-  	std::cout << "Average num visited: " << avg_z_visited << ", 99th percentile num visited: " << tail_z_visited << std::endl;
   }
 };
 
@@ -165,7 +133,7 @@ auto parse_result(parlay::sequence<res> results, parlay::sequence<float> buckets
     auto pred = [&] (res R) {return R.recall >= b;};
     parlay::sequence<res> candidates;
     auto temp_candidates = parlay::filter(results, pred);
-    if(i == buckets.size()-1){
+    if((i == buckets.size()-1) || (temp_candidates.size() == 0)){
       candidates = temp_candidates;
     }else{
       float c = buckets[i+1];

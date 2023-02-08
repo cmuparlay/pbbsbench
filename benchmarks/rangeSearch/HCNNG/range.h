@@ -31,6 +31,7 @@
 #include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
+#include "../utils/parse_results.h"
 #include "../utils/check_range_recall.h"
 
 extern bool report_stats;
@@ -38,23 +39,22 @@ extern bool report_stats;
 template<typename T>
 void RNG(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
 	 int num_clusters, int beamSizeQ, double cluster_size, double dummy, double rad,
-	 parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth, 
+	 parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth, char* res_file,
    bool graph_built) {
-
     parlay::internal::timer t("ANN",report_stats); 
-    unsigned d = (v[0]->coordinates).size();
     using findex = hcnng_index<T>;
+    unsigned d = (v[0]->coordinates).size();
+    double idx_time;
     if(!graph_built){
       findex I(mstDeg, d);
       parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
-                              return static_cast<int>(i);});
+                return static_cast<int>(i);});
       I.build_index(v, num_clusters, cluster_size);
-      t.next("Built index");
-    }
-    
-
-    search_and_parse(v, q, groundTruth, rad);
-
-    graph_stats(v);
-    t.next("stats");
+      idx_time = t.next_time();
+    } else{idx_time=0;}
+    std::string name = "HCNNG";
+    std::string params = "Trees = " + std::to_string(num_clusters);
+    auto [avg_deg, max_deg] = graph_stats(v);
+    Graph G(name, params, v.size(), avg_deg, max_deg, idx_time);
+    search_and_parse(G, v, q, groundTruth, rad, res_file);
 }

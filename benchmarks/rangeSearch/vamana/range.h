@@ -43,7 +43,7 @@ void RNG(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 parlay::sequence<Tvec_point<T>*> &q,
 	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built) {
   parlay::internal::timer t("ANN",report_stats);
-  // gt_stats(groundTruth);
+  // range_gt_stats(groundTruth);
   unsigned d = (v[0]->coordinates).size();
   using findex = knn_index<T>;
   findex I(maxDeg, beamSize, alpha, d);
