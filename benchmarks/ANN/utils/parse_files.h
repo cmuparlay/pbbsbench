@@ -239,7 +239,10 @@ auto parse_ibin(const char* filename){
 
         int* start = (int*)(fileptr + 8 + 4*i*d); //8 bytes at the start for size + dimension
         int* end = start + d;
+        float* dist_start = (float*)(fileptr+ 8 + num_vectors*4*d + 4*i*d);
+        float* dist_end = dist_start+d; 
         points[i].coordinates = parlay::make_slice(start, end);
+        points[i].distances = parlay::make_slice(dist_start, dist_end);
     });
 
     return points;

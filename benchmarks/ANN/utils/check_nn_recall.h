@@ -57,17 +57,40 @@ nn_result checkRecall(
     query_time = t.next_time();
   }
   float recall = 0.0;
-  if (groundTruth.size() > 0) {
+  bool dists_present = (groundTruth[0].distances.size() != 0);
+  if (groundTruth.size() > 0 && !dists_present) {
     size_t n = q.size();
     int numCorrect = 0;
     for(int i=0; i<n; i++){
       std::set<int> reported_nbhs;
-      for(int l=0; l<r; l++)
-	reported_nbhs.insert((q[i]->ngh)[l]);
-      for(int l=0; l<r; l++)
-	if (reported_nbhs.find((groundTruth[i].coordinates)[l])
-	    != reported_nbhs.end())
-	  numCorrect += 1;
+      for(int l=0; l<r; l++) reported_nbhs.insert((q[i]->ngh)[l]);
+      for(int l=0; l<r; l++){
+	      if (reported_nbhs.find((groundTruth[i].coordinates)[l]) != reported_nbhs.end()){
+          numCorrect += 1;
+      }
+      }
+    }
+    recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
+  }else if(groundTruth.size() > 0 && dists_present){
+    size_t n = q.size();
+    int numCorrect = 0;
+    for(int i=0; i<n; i++){
+      parlay::sequence<int> results_with_ties;
+      for(int l=0; l<r; l++) results_with_ties.push_back(groundTruth[i].coordinates[l]);
+      float last_dist = groundTruth[i].distances[r-1];
+      for(int l=r; l<groundTruth[i].coordinates.size(); l++){
+        if(groundTruth[i].distances[l] == last_dist){ 
+          results_with_ties.push_back(groundTruth[i].coordinates[l]);
+        }
+      }
+      std::set<int> reported_nbhs;
+      for(int l=0; l<r; l++) reported_nbhs.insert((q[i]->ngh)[l]);
+
+      for(int l=0; l<results_with_ties.size(); l++){
+	      if (reported_nbhs.find(results_with_ties[l]) != reported_nbhs.end()){
+          numCorrect += 1;
+      }
+      }
     }
     recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
   }

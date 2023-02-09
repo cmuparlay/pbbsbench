@@ -125,23 +125,24 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
 
     parlay::sequence<range_result> R;
     // std::vector<float> slacks = {1.0, 1.5, 2.0, 3.0};
-    std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
-    std::vector<int> allk = {10, 15, 20, 30, 50, 100};
-    std::vector<float> slacks = {1.5};
-    // std::vector<int> beams = {100};
-    // std::vector<int> allk = {20};
-    for(float slack : slacks){
-        for(float Q : beams){
-            for(float K : allk){
-                if(Q>K) R.push_back(checkRecall(v, q, groundTruth, K, Q, 1.14, rad, slack, random, start_point));
-            }
-        }
-    }
+    // std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
+    // std::vector<int> allk = {10, 15, 20, 30, 50, 100};
+    // std::vector<float> slacks = {1.5};
+    // // std::vector<int> beams = {100};
+    // // std::vector<int> allk = {20};
+    // for(float slack : slacks){
+    //     for(float Q : beams){
+    //         for(float K : allk){
+    //             if(Q>K) R.push_back(checkRecall(v, q, groundTruth, K, Q, 1.14, rad, slack, random, start_point));
+    //         }
+    //     }
+    // }
 
     // check "high accuracy accuracy"
-    std::vector<int> highbeams = {1000, 2000, 5000, 10000};
+    // std::vector<int> highbeams = {1000, 2000, 5000, 10000};
+    std::vector<int> highbeams = {1000};
     for(float Q : highbeams){
-      R.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, rad, 5.0, random, start_point));
+      R.push_back(checkRecall(v, q, groundTruth, 100, Q, 10.0, rad, 5.0, random, start_point));
     }
     
 

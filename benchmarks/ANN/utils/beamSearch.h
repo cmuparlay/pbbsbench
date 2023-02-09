@@ -80,11 +80,11 @@ std::pair<std::pair<parlay::sequence<pid>, parlay::sequence<pid>>, int> beam_sea
 
 // updated version by Guy
 template <typename T>
-std::pair<std::pair<parlay::sequence<pid>, parlay::sequence<pid>>, int> beam_search(
+std::pair<std::pair<parlay::sequence<pid>, parlay::sequence<pid>>, size_t> beam_search(
     Tvec_point<T>* p, parlay::sequence<Tvec_point<T>*>& v,
     parlay::sequence<Tvec_point<T>*> starting_points, int beamSize, unsigned d, int k=0, float cut=1.14) {
   // initialize data structures
-  int dist_cmps = 0;
+  size_t dist_cmps = 0;
   auto vvc = v[0]->coordinates.begin();
   long stride = v[1]->coordinates.begin() - v[0]->coordinates.begin();
   std::vector<pid> visited;

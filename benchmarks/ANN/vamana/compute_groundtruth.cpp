@@ -98,24 +98,34 @@ void write_ibin(parlay::sequence<parlay::sequence<pid>> &result, const std::stri
     auto less = [&] (pid a, pid b) {return a.second < b.second;};
     parlay::sequence<int> preamble = {static_cast<int>(result.size()), static_cast<int>(result[0].size())};
     size_t n = result.size();
-    auto vects = parlay::tabulate(result.size(), [&] (size_t i){
+    parlay::parallel_for(0, result.size(), [&] (size_t i){
+      parlay::sort_inplace(result[i], less);
+    });
+    auto ids = parlay::tabulate(result.size(), [&] (size_t i){
         parlay::sequence<int> data;
-
-        auto sorted = parlay::sort(result[i], less);
         for(int j=0; j<k; j++){
-          data.push_back(static_cast<int>(sorted[j].first));
+          data.push_back(static_cast<int>(result[i][j].first));
         }
         return data;
     });
-
-    parlay::sequence<int> to_write = parlay::flatten(vects);
+    auto distances = parlay::tabulate(result.size(), [&] (size_t i){
+        parlay::sequence<float> data;
+        for(int j=0; j<k; j++){
+          data.push_back(static_cast<float>(result[i][j].second));
+        }
+        return data;
+    });
+    parlay::sequence<int> flat_ids = parlay::flatten(ids);
+    parlay::sequence<float> flat_dists = parlay::flatten(distances);
 
     auto pr = preamble.begin();
-    auto data = to_write.begin();
+    auto id_data = flat_ids.begin();
+    auto dist_data = flat_dists.begin();
     std::ofstream writer;
     writer.open(outFile, std::ios::binary | std::ios::out);
     writer.write((char *) pr, 2*sizeof(int));
-    writer.write((char *) data, n * k * sizeof(int));
+    writer.write((char *) id_data, n * k * sizeof(int));
+    writer.write((char *) dist_data, n * k * sizeof(float));
     writer.close();
 }
 

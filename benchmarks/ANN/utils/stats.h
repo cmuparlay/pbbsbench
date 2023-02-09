@@ -40,8 +40,8 @@ std::pair<double, int> graph_stats(parlay::sequence<Tvec_point<T>*> &v){
 
 template<typename T>
 auto query_stats(parlay::sequence<Tvec_point<T>*> &q){
-	parlay::sequence<int> vs = visited_stats(q);
-	parlay::sequence<int> ds = distance_stats(q);
+	parlay::sequence<size_t> vs = visited_stats(q);
+	parlay::sequence<size_t> ds = distance_stats(q);
 	auto result = {ds, vs};
 	return parlay::flatten(result);
 }
@@ -63,34 +63,34 @@ auto range_query_stats(parlay::sequence<Tvec_point<T>*> &q){
 }
 
 template<typename T> 
-parlay::sequence<int> visited_stats(parlay::sequence<Tvec_point<T>*> &q){
+parlay::sequence<size_t> visited_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto visited_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->visited;});
 	parlay::sort_inplace(visited_stats);
-	int avg_visited = (int) parlay::reduce(visited_stats)/((double) q.size());
+	size_t avg_visited = (int) parlay::reduce(visited_stats)/((double) q.size());
 	size_t tail_index = .99*((float) q.size());
-	int tail_visited = visited_stats[tail_index];
+	size_t tail_visited = visited_stats[tail_index];
 	auto result = {avg_visited, tail_visited};
 	return result;
 }
 
 template<typename T> 
-parlay::sequence<int> distance_stats(parlay::sequence<Tvec_point<T>*> &q){
+parlay::sequence<size_t> distance_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto dist_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->dist_calls;});
 	parlay::sort_inplace(dist_stats);
-	int avg_dist = (int) parlay::reduce(dist_stats)/((double) q.size());
+	size_t avg_dist = (size_t) parlay::reduce(dist_stats)/((double) q.size());
 	size_t tail_index = .99*((float) q.size());
-	int tail_dist = dist_stats[tail_index];
+	size_t tail_dist = dist_stats[tail_index];
 	auto result = {avg_dist, tail_dist};
 	return result;
 }
 
 template<typename T> 
-parlay::sequence<int> rounds_stats(parlay::sequence<Tvec_point<T>*> &q){
+parlay::sequence<size_t> rounds_stats(parlay::sequence<Tvec_point<T>*> &q){
 	auto exp_stats = parlay::tabulate(q.size(), [&] (size_t i) {return q[i]->rounds;});
 	parlay::sort_inplace(exp_stats);
-	int avg_exps = (int) parlay::reduce(exp_stats)/((double) q.size());
+	size_t avg_exps = (size_t) parlay::reduce(exp_stats)/((double) q.size());
 	size_t tail_index = .99*((float) q.size());
-	int tail_exps = exp_stats[tail_index];
+	size_t tail_exps = exp_stats[tail_index];
 	auto result = {avg_exps, tail_exps, exp_stats[exp_stats.size()-1]};
 	return result;
 }

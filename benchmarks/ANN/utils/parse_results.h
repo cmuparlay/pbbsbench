@@ -52,11 +52,11 @@ struct range_result{
   double recall;
   double alt_recall;
 
-  int avg_cmps;
-  int tail_cmps;
+  size_t avg_cmps;
+  size_t tail_cmps;
 
-  int avg_visited;
-  int tail_visited;
+  size_t avg_visited;
+  size_t tail_visited;
 
   float QPS;
 
@@ -65,7 +65,7 @@ struct range_result{
   float cut;
   double slack;
 
-  range_result(int nq, int nnq, double r, double r2, parlay::sequence<int> stats, 
+  range_result(int nq, int nnq, double r, double r2, parlay::sequence<size_t> stats, 
   float qps, int K, int Q, float c, float s) : 
     num_queries(nq), num_nonzero_queries(nnq), recall(r), alt_recall(r2), QPS(qps), k(K), beamQ(Q), cut(c), slack(s) {
 
@@ -91,11 +91,11 @@ struct range_result{
 struct nn_result{
   double recall;
 
-  int avg_cmps;
-  int tail_cmps;
+  size_t avg_cmps;
+  size_t tail_cmps;
 
-  int avg_visited;
-  int tail_visited;
+  size_t avg_visited;
+  size_t tail_visited;
 
   float QPS;
 
@@ -105,7 +105,7 @@ struct nn_result{
 
   long num_queries;
 
-  nn_result(double r, parlay::sequence<int> stats, float qps, int K, int Q, float c, long q) : recall(r), 
+  nn_result(double r, parlay::sequence<size_t> stats, float qps, int K, int Q, float c, long q) : recall(r), 
     QPS(qps), k(K), beamQ(Q), cut(c), num_queries(q) {
 
     if(stats.size() != 4) abort();
