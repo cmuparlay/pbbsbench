@@ -56,6 +56,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
   std::string params = "Trees = " + std::to_string(num_clusters);
   auto [avg_deg, max_deg] = graph_stats(v);
   Graph G(name, params, v.size(), avg_deg, max_deg, idx_time);
+  G.print();
   search_and_parse(G, v, q, groundTruth, res_file);
 
 }
