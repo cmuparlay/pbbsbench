@@ -1,0 +1,453 @@
+bigann-10M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ64_128,IVF65536,PQ64",
+              "two_level_clustering": false
+                }]
+          query-args: |
+                  ["nprobe=1,ht=162",
+                  "nprobe=2,ht=198",
+                  "nprobe=2,ht=256",
+                  "nprobe=4,ht=254",
+                  "nprobe=4,ht=256",
+                  "nprobe=8,ht=512",
+                  "nprobe=32,ht=512",
+                  "nprobe=64,ht=512",
+                  "nprobe=256,ht=512",
+                  "nprobe=512,ht=248",
+                  "nprobe=512,ht=252",       
+                  "nprobe=1024,ht=248",
+                  "nprobe=4096,ht=512"]
+bigann-100M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ64_128,IVF65536_HNSW32,PQ64",
+              "two_level_clustering": false
+                }]
+          query-args: |
+            ["nprobe=1,quantizer_efSearch=4,ht=106",
+            "nprobe=1,quantizer_efSearch=4,ht=204",
+            "nprobe=1,quantizer_efSearch=16,ht=234",
+            "nprobe=2,quantizer_efSearch=4,ht=230",
+            "nprobe=2,quantizer_efSearch=16,ht=226",
+            "nprobe=2,quantizer_efSearch=16,ht=234",
+            "nprobe=2,quantizer_efSearch=8,ht=254",
+            "nprobe=4,quantizer_efSearch=32,ht=228",
+            "nprobe=4,quantizer_efSearch=32,ht=244",
+            "nprobe=8,quantizer_efSearch=64,ht=222",
+            "nprobe=8,quantizer_efSearch=32,ht=244",
+            "nprobe=8,quantizer_efSearch=128,ht=256",
+            "nprobe=16,quantizer_efSearch=64,ht=232",
+            "nprobe=16,quantizer_efSearch=32,ht=246",
+            "nprobe=16,quantizer_efSearch=256,ht=246",
+            "nprobe=32,quantizer_efSearch=32,ht=232",
+            "nprobe=32,quantizer_efSearch=32,ht=246",
+            "nprobe=32,quantizer_efSearch=128,ht=512",
+            "nprobe=64,quantizer_efSearch=32,ht=234",
+            "nprobe=64,quantizer_efSearch=512,ht=256",
+            "nprobe=128,quantizer_efSearch=64,ht=246",
+            "nprobe=256,quantizer_efSearch=32,ht=512",
+            "nprobe=512,quantizer_efSearch=512,ht=248",
+            "nprobe=512,quantizer_efSearch=512,ht=512",
+            "nprobe=4096,quantizer_efSearch=512,ht=512"]
+bigann-1B:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ64x4fsr",
+                "two_level_clustering": false
+                }]
+          query-args: |             
+            ["nprobe=1,quantizer_efSearch=4,ht=56",
+            "nprobe=1,quantizer_efSearch=4,ht=202",
+            "nprobe=1,quantizer_efSearch=4,ht=232",
+            "nprobe=1,quantizer_efSearch=16,ht=228",
+            "nprobe=4,quantizer_efSearch=4,ht=218",
+            "nprobe=2,quantizer_efSearch=8,ht=230",
+            "nprobe=4,quantizer_efSearch=4,ht=228",
+            "nprobe=4,quantizer_efSearch=16,ht=236",
+            "nprobe=8,quantizer_efSearch=8,ht=242",
+            "nprobe=16,quantizer_efSearch=32,ht=224",
+            "nprobe=16,quantizer_efSearch=32,ht=232",
+            "nprobe=16,quantizer_efSearch=16,ht=246",
+            "nprobe=16,quantizer_efSearch=64,ht=234",
+            "nprobe=16,quantizer_efSearch=128,ht=236",
+            "nprobe=32,quantizer_efSearch=32,ht=230",
+            "nprobe=32,quantizer_efSearch=32,ht=234",
+            "nprobe=32,quantizer_efSearch=16,ht=250",
+            "nprobe=32,quantizer_efSearch=128,ht=240",
+            "nprobe=32,quantizer_efSearch=256,ht=250",
+            "nprobe=64,quantizer_efSearch=256,ht=236",
+            "nprobe=64,quantizer_efSearch=64,ht=250",
+            "nprobe=64,quantizer_efSearch=256,ht=246",
+            "nprobe=128,quantizer_efSearch=64,ht=236",
+            "nprobe=128,quantizer_efSearch=64,ht=238",
+            "nprobe=128,quantizer_efSearch=64,ht=250",
+            "nprobe=128,quantizer_efSearch=256,ht=256",
+            "nprobe=256,quantizer_efSearch=256,ht=240",
+            "nprobe=512,quantizer_efSearch=128,ht=240",
+            "nprobe=512,quantizer_efSearch=128,ht=242",
+            "nprobe=1024,quantizer_efSearch=256,ht=240",
+            "nprobe=2048,quantizer_efSearch=512,ht=250"]
+ssnpp-10M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32",
+                "two_level_clustering": false
+                }]
+          query-args: |
+              ["nprobe=1,quantizer_efSearch=4,ht=92",
+              "nprobe=1,quantizer_efSearch=4,ht=98",
+              "nprobe=1,quantizer_efSearch=4,ht=104",
+              "nprobe=1,quantizer_efSearch=4,ht=112",
+              "nprobe=1,quantizer_efSearch=8,ht=96",
+              "nprobe=1,quantizer_efSearch=8,ht=108",
+              "nprobe=1,quantizer_efSearch=16,ht=98",
+              "nprobe=1,quantizer_efSearch=16,ht=114",
+              "nprobe=1,quantizer_efSearch=16,ht=116",
+              "nprobe=1,quantizer_efSearch=32,ht=98",
+              "nprobe=1,quantizer_efSearch=32,ht=110",
+              "nprobe=1,quantizer_efSearch=32,ht=112",
+              "nprobe=1,quantizer_efSearch=32,ht=120",
+              "nprobe=4,quantizer_efSearch=16,ht=256",
+              "nprobe=4,quantizer_efSearch=32,ht=104",
+              "nprobe=4,quantizer_efSearch=32,ht=112",
+              "nprobe=4,quantizer_efSearch=32,ht=256",
+              "nprobe=8,quantizer_efSearch=32,ht=112",
+              "nprobe=4,quantizer_efSearch=64,ht=256",
+              "nprobe=8,quantizer_efSearch=64,ht=116",
+              "nprobe=8,quantizer_efSearch=64,ht=128",
+              "nprobe=16,quantizer_efSearch=32,ht=256",
+              "nprobe=16,quantizer_efSearch=64,ht=118",
+              "nprobe=32,quantizer_efSearch=64,ht=256",
+              "nprobe=64,quantizer_efSearch=256,ht=116",
+              "nprobe=32,quantizer_efSearch=512,ht=256",
+              "nprobe=64,quantizer_efSearch=512,ht=126",
+              "nprobe=256,quantizer_efSearch=256,ht=128",
+              "nprobe=512,quantizer_efSearch=512,ht=128",
+              "nprobe=1024,quantizer_efSearch=512,ht=128",
+              "nprobe=4096,quantizer_efSearch=512,ht=128"]
+ssnpp-100M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32",
+                "two_level_clustering": false
+                }]
+          query-args: |
+              ["nprobe=1,quantizer_efSearch=4,ht=92",
+              "nprobe=1,quantizer_efSearch=4,ht=98",
+              "nprobe=1,quantizer_efSearch=4,ht=104",
+              "nprobe=1,quantizer_efSearch=4,ht=112",
+              "nprobe=1,quantizer_efSearch=8,ht=96",
+              "nprobe=1,quantizer_efSearch=8,ht=108",
+              "nprobe=1,quantizer_efSearch=16,ht=98",
+              "nprobe=1,quantizer_efSearch=16,ht=114",
+              "nprobe=1,quantizer_efSearch=16,ht=116",
+              "nprobe=1,quantizer_efSearch=32,ht=98",
+              "nprobe=1,quantizer_efSearch=32,ht=110",
+              "nprobe=1,quantizer_efSearch=32,ht=112",
+              "nprobe=1,quantizer_efSearch=32,ht=120",
+              "nprobe=4,quantizer_efSearch=16,ht=256",
+              "nprobe=4,quantizer_efSearch=32,ht=104",
+              "nprobe=4,quantizer_efSearch=32,ht=112",
+              "nprobe=4,quantizer_efSearch=32,ht=256",
+              "nprobe=8,quantizer_efSearch=32,ht=112",
+              "nprobe=4,quantizer_efSearch=64,ht=256",
+              "nprobe=8,quantizer_efSearch=64,ht=116",
+              "nprobe=8,quantizer_efSearch=64,ht=128",
+              "nprobe=16,quantizer_efSearch=32,ht=256",
+              "nprobe=16,quantizer_efSearch=64,ht=118",
+              "nprobe=32,quantizer_efSearch=64,ht=256",
+              "nprobe=64,quantizer_efSearch=256,ht=116",
+              "nprobe=32,quantizer_efSearch=512,ht=256",
+              "nprobe=64,quantizer_efSearch=512,ht=126",
+              "nprobe=256,quantizer_efSearch=256,ht=128",
+              "nprobe=512,quantizer_efSearch=512,ht=128",
+              "nprobe=1024,quantizer_efSearch=512,ht=128",
+              "nprobe=4096,quantizer_efSearch=512,ht=128"]
+ssnpp-1B:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ32_128,IVF1048576_HNSW32,PQ32",
+                "two_level_clustering": false
+                }]
+          query-args: |
+              ["nprobe=1,quantizer_efSearch=4,ht=92",
+              "nprobe=1,quantizer_efSearch=4,ht=98",
+              "nprobe=1,quantizer_efSearch=4,ht=104",
+              "nprobe=1,quantizer_efSearch=4,ht=112",
+              "nprobe=1,quantizer_efSearch=8,ht=96",
+              "nprobe=1,quantizer_efSearch=8,ht=108",
+              "nprobe=1,quantizer_efSearch=16,ht=98",
+              "nprobe=1,quantizer_efSearch=16,ht=114",
+              "nprobe=1,quantizer_efSearch=16,ht=116",
+              "nprobe=1,quantizer_efSearch=32,ht=98",
+              "nprobe=1,quantizer_efSearch=32,ht=110",
+              "nprobe=1,quantizer_efSearch=32,ht=112",
+              "nprobe=1,quantizer_efSearch=32,ht=120",
+              "nprobe=4,quantizer_efSearch=16,ht=256",
+              "nprobe=4,quantizer_efSearch=32,ht=104",
+              "nprobe=4,quantizer_efSearch=32,ht=112",
+              "nprobe=4,quantizer_efSearch=32,ht=256",
+              "nprobe=8,quantizer_efSearch=32,ht=112",
+              "nprobe=4,quantizer_efSearch=64,ht=256",
+              "nprobe=8,quantizer_efSearch=64,ht=116",
+              "nprobe=8,quantizer_efSearch=64,ht=128",
+              "nprobe=16,quantizer_efSearch=32,ht=256",
+              "nprobe=16,quantizer_efSearch=64,ht=118",
+              "nprobe=32,quantizer_efSearch=64,ht=256",
+              "nprobe=64,quantizer_efSearch=256,ht=116",
+              "nprobe=32,quantizer_efSearch=512,ht=256",
+              "nprobe=64,quantizer_efSearch=512,ht=126",
+              "nprobe=256,quantizer_efSearch=256,ht=128",
+              "nprobe=512,quantizer_efSearch=512,ht=128",
+              "nprobe=1024,quantizer_efSearch=512,ht=128",
+              "nprobe=4096,quantizer_efSearch=512,ht=128"]
+text2image-10M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ32_128,IVF65536,PQ32",
+              "two_level_clustering": false
+                }]
+          query-args: |
+                  ["nprobe=1,ht=162",
+                  "nprobe=2,ht=198",
+                  "nprobe=2,ht=256",
+                  "nprobe=4,ht=254",
+                  "nprobe=4,ht=256",
+                  "nprobe=8,ht=512",
+                  "nprobe=32,ht=512",
+                  "nprobe=64,ht=512",
+                  "nprobe=256,ht=512",
+                  "nprobe=512,ht=248",
+                  "nprobe=512,ht=252",       
+                  "nprobe=1024,ht=248",
+                  "nprobe=4096,ht=512"]
+text2image-100M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32",
+              "two_level_clustering": false
+                }]
+          query-args: |
+            ["nprobe=1,quantizer_efSearch=4,ht=106",
+            "nprobe=1,quantizer_efSearch=4,ht=204",
+            "nprobe=1,quantizer_efSearch=16,ht=234",
+            "nprobe=2,quantizer_efSearch=4,ht=230",
+            "nprobe=2,quantizer_efSearch=16,ht=226",
+            "nprobe=2,quantizer_efSearch=16,ht=234",
+            "nprobe=2,quantizer_efSearch=8,ht=254",
+            "nprobe=4,quantizer_efSearch=32,ht=228",
+            "nprobe=4,quantizer_efSearch=32,ht=244",
+            "nprobe=8,quantizer_efSearch=64,ht=222",
+            "nprobe=8,quantizer_efSearch=32,ht=244",
+            "nprobe=8,quantizer_efSearch=128,ht=256",
+            "nprobe=16,quantizer_efSearch=64,ht=232",
+            "nprobe=16,quantizer_efSearch=32,ht=246",
+            "nprobe=16,quantizer_efSearch=256,ht=246",
+            "nprobe=32,quantizer_efSearch=32,ht=232",
+            "nprobe=32,quantizer_efSearch=32,ht=246",
+            "nprobe=32,quantizer_efSearch=128,ht=512",
+            "nprobe=64,quantizer_efSearch=32,ht=234",
+            "nprobe=64,quantizer_efSearch=512,ht=256",
+            "nprobe=128,quantizer_efSearch=64,ht=246",
+            "nprobe=256,quantizer_efSearch=32,ht=512",
+            "nprobe=512,quantizer_efSearch=512,ht=248",
+            "nprobe=512,quantizer_efSearch=512,ht=512",
+            "nprobe=1024,quantizer_efSearch=512,ht=512"
+            "nprobe=4096,quantizer_efSearch=512,ht=512"]
+text2image-1B:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ32_128,IVF1048576_HNSW32,PQ32",
+                "two_level_clustering": false
+                }]
+          # Trying all combinations of nprobe x efSearch
+          query-args: | 
+              ["nprobe=1,quantizer_efSearch=4,ht=106",
+              "nprobe=1,quantizer_efSearch=16,ht=114",
+              "nprobe=1,quantizer_efSearch=16,ht=116",
+              "nprobe=2,quantizer_efSearch=16,ht=110",
+              "nprobe=4,quantizer_efSearch=8,ht=118",
+              "nprobe=4,quantizer_efSearch=32,ht=256",
+              "nprobe=8,quantizer_efSearch=16,ht=114",
+              "nprobe=4,quantizer_efSearch=64,ht=118",
+              "nprobe=4,quantizer_efSearch=64,ht=122",
+              "nprobe=8,quantizer_efSearch=32,ht=116",
+              "nprobe=8,quantizer_efSearch=64,ht=116",
+              "nprobe=8,quantizer_efSearch=64,ht=126",
+              "nprobe=16,quantizer_efSearch=64,ht=256",
+              "nprobe=16,quantizer_efSearch=256,ht=118",
+              "nprobe=16,quantizer_efSearch=512,ht=256",
+              "nprobe=32,quantizer_efSearch=512,ht=128",
+              "nprobe=64,quantizer_efSearch=128,ht=126",
+              "nprobe=128,quantizer_efSearch=512,ht=256",
+              "nprobe=256,quantizer_efSearch=512,ht=120",
+              "nprobe=256,quantizer_efSearch=512,ht=122",
+              "nprobe=512,quantizer_efSearch=512,ht=122",
+              "nprobe=1024,quantizer_efSearch=512,ht=122",
+              "nprobe=4096,quantizer_efSearch=512,ht=122"]
+msspacev-10M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ64_128,IVF65536,PQ64x4fsr",
+                "two_level_clustering": false,
+                "query_bs": 4096
+                }]
+          query-args: |
+              ["nprobe=1",
+                "nprobe=2",
+                "nprobe=2",
+                "nprobe=4",
+                "nprobe=4",
+                "nprobe=8",
+                "nprobe=32",
+                "nprobe=64",
+                "nprobe=256",
+                "nprobe=512",
+                "nprobe=512",       
+                "nprobe=1024",
+                "nprobe=4096"]
+msspacev-100M:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ64_128,IVF131072_HNSW32,PQ64x4fsr",
+                "two_level_clustering": false,
+                "query_bs": 4096
+                }]
+          query-args: |
+              ["nprobe=1,quantizer_efSearch=4",
+              "nprobe=1,quantizer_efSearch=8",
+              "nprobe=1,quantizer_efSearch=16",
+              "nprobe=2,quantizer_efSearch=8",
+              "nprobe=2,quantizer_efSearch=16",
+              "nprobe=4,quantizer_efSearch=16",
+              "nprobe=4,quantizer_efSearch=32",
+              "nprobe=4,quantizer_efSearch=64",
+              "nprobe=8,quantizer_efSearch=32",
+              "nprobe=8,quantizer_efSearch=64",
+              "nprobe=16,quantizer_efSearch=32",
+              "nprobe=8,quantizer_efSearch=128",
+              "nprobe=16,quantizer_efSearch=64",
+              "nprobe=16,quantizer_efSearch=128",
+              "nprobe=32,quantizer_efSearch=64",
+              "nprobe=32,quantizer_efSearch=128",
+              "nprobe=32,quantizer_efSearch=256",
+              "nprobe=64,quantizer_efSearch=128",
+              "nprobe=64,quantizer_efSearch=256",
+              "nprobe=64,quantizer_efSearch=512",
+              "nprobe=128,quantizer_efSearch=128",
+              "nprobe=128,quantizer_efSearch=256",
+              "nprobe=128,quantizer_efSearch=512",
+              "nprobe=256,quantizer_efSearch=256",
+              "nprobe=256,quantizer_efSearch=512",
+              "nprobe=512, quantizer_efSearch=512",
+              "nprobe=1024, quantizer_efSearch=512",
+              "nprobe=4096, quantizer_efSearch=512"]
+msspacev-1B:
+    faiss-t1:
+      docker-tag: billion-scale-benchmark-faissconda
+      module: benchmark.algorithms.faiss_t1
+      constructor: Faiss
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ64x4fsr",
+                "two_level_clustering": false,
+                "query_bs": 4096
+                }]
+          query-args: |
+              ["nprobe=1,quantizer_efSearch=4",
+              "nprobe=1,quantizer_efSearch=8",
+              "nprobe=1,quantizer_efSearch=16",
+              "nprobe=2,quantizer_efSearch=8",
+              "nprobe=2,quantizer_efSearch=16",
+              "nprobe=4,quantizer_efSearch=16",
+              "nprobe=4,quantizer_efSearch=32",
+              "nprobe=4,quantizer_efSearch=64",
+              "nprobe=8,quantizer_efSearch=32",
+              "nprobe=8,quantizer_efSearch=64",
+              "nprobe=16,quantizer_efSearch=32",
+              "nprobe=8,quantizer_efSearch=128",
+              "nprobe=16,quantizer_efSearch=64",
+              "nprobe=16,quantizer_efSearch=128",
+              "nprobe=32,quantizer_efSearch=64",
+              "nprobe=32,quantizer_efSearch=128",
+              "nprobe=32,quantizer_efSearch=256",
+              "nprobe=64,quantizer_efSearch=128",
+              "nprobe=64,quantizer_efSearch=256",
+              "nprobe=64,quantizer_efSearch=512",
+              "nprobe=128,quantizer_efSearch=128",
+              "nprobe=128,quantizer_efSearch=256",
+              "nprobe=128,quantizer_efSearch=512",
+              "nprobe=256,quantizer_efSearch=256",
+              "nprobe=256,quantizer_efSearch=512",
+              "nprobe=512, quantizer_efSearch=512",
+              "nprobe=1024, quantizer_efSearch=512",
+              "nprobe=4096, quantizer_efSearch=512"]
