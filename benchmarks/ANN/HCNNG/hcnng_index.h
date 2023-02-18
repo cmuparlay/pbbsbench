@@ -29,6 +29,7 @@
 #include <random>
 #include <set>
 #include <math.h>
+#include <queue>
 
 extern bool report_stats;
 
@@ -142,22 +143,69 @@ struct hcnng_index{
 		//preprocessing for Kruskal's
 		int N = active_indices.size();
 		DisjointSet *disjset = new DisjointSet(N);
-		parlay::sequence<labelled_edge> labelled_edges(N*(N-1)/2);
-		parlay::parallel_for(0, N, [&] (size_t i) {
-			size_t start = generate_index(N, i);
-			parlay::parallel_for(i+1, N, [&] (size_t j) {
-				float dist_ij = distance(v[active_indices[i]]->coordinates.begin(), v[active_indices[j]]->coordinates.begin(), dim);
-				labelled_edges[start+j-(i+1)] = std::make_pair(std::make_pair(i,j), dist_ij);
-			});
+		// parlay::sequence<labelled_edge> labelled_edges(N*(N-1)/2);
+		// parlay::parallel_for(0, N, [&] (size_t i) {
+		// 	size_t start = generate_index(N, i);
+		// 	parlay::parallel_for(i+1, N, [&] (size_t j) {
+		// 		float dist_ij = distance(v[active_indices[i]]->coordinates.begin(), v[active_indices[j]]->coordinates.begin(), dim);
+		// 		labelled_edges[start+j-(i+1)] = std::make_pair(std::make_pair(i,j), dist_ij);
+		// 	});
 			
-		});
+		// });
+		size_t m = 10;
 		auto less = [&] (labelled_edge a, labelled_edge b) {return a.second < b.second;};
-		auto sorted_edges = parlay::sort(labelled_edges, less);
+		parlay::sequence<parlay::sequence<labelled_edge>> pre_labelled(N);
+		parlay::parallel_for(0, N, [&] (size_t i){
+			std::priority_queue<labelled_edge, std::vector<labelled_edge>, decltype(less)> Q(less);
+			for(int j=0; j<N; j++){
+				if(j!=i){
+					float dist_ij = distance(v[active_indices[i]]->coordinates.begin(), v[active_indices[j]]->coordinates.begin(), dim);
+					if(Q.size() >= m){
+						float topdist = Q.top().second;
+						if(dist_ij < topdist){
+							labelled_edge e;
+							if(i<j) e = std::make_pair(std::make_pair(i,j), dist_ij);
+							else e = std::make_pair(std::make_pair(j, i), dist_ij);
+							Q.pop();
+							Q.push(e);
+						}
+					}else{
+						labelled_edge e;
+						if(i<j) e = std::make_pair(std::make_pair(i,j), dist_ij);
+						else e = std::make_pair(std::make_pair(j, i), dist_ij);
+						Q.push(e);
+					}
+				}
+			}
+			parlay::sequence<labelled_edge> edges(m);
+			for(int j=0; j<m; j++){edges[j] = Q.top(); Q.pop();}
+			pre_labelled[i] = edges;
+		});
+		auto flat_edges = parlay::flatten(pre_labelled);
+		// std::cout << flat_edges.size() << std::endl;
+		auto less_dup = [&] (labelled_edge a, labelled_edge b){
+			auto dist_a = a.second;
+			auto dist_b = b.second;
+			if(dist_a == dist_b){
+				int i_a = a.first.first;
+				int j_a = a.first.second;
+				int i_b = b.first.first;
+				int j_b = b.first.second;
+				if((i_a==i_b) && (j_a==j_b)){
+					return true;
+				} else{
+					if(i_a != i_b) return i_a < i_b;
+					else return j_a < j_b;
+				}
+			}else return (dist_a < dist_b);
+		};
+		auto labelled_edges = parlay::remove_duplicates_ordered(flat_edges, less_dup);
+		// parlay::sort_inplace(labelled_edges, less);
 		auto degrees = parlay::tabulate(active_indices.size(), [&] (size_t i) {return 0;});
 		parlay::sequence<edge> MST_edges = parlay::sequence<edge>();
 		//modified Kruskal's algorithm
-		for(int i=0; i<sorted_edges.size(); i++){
-			labelled_edge e_l = sorted_edges[i];
+		for(int i=0; i<labelled_edges.size(); i++){
+			labelled_edge e_l = labelled_edges[i];
 			edge e = e_l.first;
 			if((disjset->find(e.first) != disjset->find(e.second)) && (degrees[e.first]<K) && (degrees[e.second]<K)){
 				MST_edges.push_back(std::make_pair(active_indices[e.first], active_indices[e.second]));
