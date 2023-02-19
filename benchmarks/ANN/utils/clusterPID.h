@@ -73,6 +73,15 @@ struct clusterPID{
             intermediate_sizes[index] = max_size;
 		});
 	}
+	
+	bool tvec_equal(tvec_point* a, tvec_point* b, unsigned d){
+		for(int i=0; i<d; i++){
+			if(a->coordinates[i] != b->coordinates[i]){
+				return false;
+			}
+		}
+		return true;
+	}
 
 	void random_clustering(parlay::sequence<tvec_point*> &v, parlay::sequence<size_t> &active_indices,
 		parlay::random& rnd, size_t cluster_size, unsigned dim, int K, parlay::sequence<pid> &intermediate_edges, 
@@ -84,38 +93,52 @@ struct clusterPID{
     		tvec_point* first = v[f];
     		tvec_point* second = v[s];
 
-    		// Split points based on which of the two points are closer.
-		    auto closer_first = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
-		      tvec_point* p = v[ind];
-		      float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-		      float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
-		      return dist_first <= dist_second;
+			auto left_rnd = rnd.fork(0);
+			auto right_rnd = rnd.fork(1);
 
-		    });
 
-		    auto closer_second = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
-		      tvec_point* p = v[ind];
-		      float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-		      float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
-		      return dist_second < dist_first;
-		    });
-
-		    auto left_rnd = rnd.fork(0);
-		    auto right_rnd = rnd.fork(1);
-
-			parlay::sequence<edge> left_edges;
-			parlay::sequence<edge> right_edges;
-			if(closer_first.size() == 1) {
-				random_clustering(v, closer_second, right_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);
-			}
-			else if(closer_second.size() == 1){
-				random_clustering(v, closer_first, left_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);
-			}
-			else{
+			if(tvec_equal(first, second, dim)){
+				std::cout << "Equal points selected, splitting evenly" << std::endl;
+				parlay::sequence<size_t> closer_first;
+				parlay::sequence<size_t> closer_second;
+				for(int i=0; i<active_indices.size(); i++){
+					if(i<active_indices.size()/2) closer_first.push_back(active_indices[i]);
+					else closer_second.push_back(active_indices[i]);
+				}
+				auto left_rnd = rnd.fork(0);
+				auto right_rnd = rnd.fork(1);
 				parlay::par_do(
 					[&] () {random_clustering(v, closer_first, left_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);}, 
 					[&] () {random_clustering(v, closer_second, right_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);}
 				);
+			} else{
+				// Split points based on which of the two points are closer.
+				auto closer_first = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
+					tvec_point* p = v[ind];
+					float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
+					float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
+					return dist_first <= dist_second;
+				});
+
+				auto closer_second = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
+					tvec_point* p = v[ind];
+					float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
+					float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
+					return dist_second < dist_first;
+				});
+
+				if(closer_first.size() == 1) {
+					random_clustering(v, closer_second, right_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);
+				}
+				else if(closer_second.size() == 1){
+					random_clustering(v, closer_first, left_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);
+				}
+				else{
+					parlay::par_do(
+						[&] () {random_clustering(v, closer_first, left_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);}, 
+						[&] () {random_clustering(v, closer_second, right_rnd, cluster_size, dim, K, intermediate_edges, intermediate_sizes);}
+					);
+				}
 			}
 		}
 	}
