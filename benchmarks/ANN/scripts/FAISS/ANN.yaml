@@ -7,8 +7,7 @@ bigann-10M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF65536,PQ64",
-              "two_level_clustering": false
+              [{"indexkey": "OPQ64_128,IVF65536,PQ64"
                 }]
           query-args: |
                   ["nprobe=1,ht=162",
@@ -33,8 +32,7 @@ bigann-100M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF65536_HNSW32,PQ64",
-              "two_level_clustering": false
+              [{"indexkey": "OPQ64_128,IVF65536_HNSW32,PQ64"
                 }]
           query-args: |
             ["nprobe=1,quantizer_efSearch=4,ht=106",
@@ -71,8 +69,7 @@ bigann-1B:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ64x4fsr",
-                "two_level_clustering": false
+              [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ64x4fsr"
                 }]
           query-args: |             
             ["nprobe=1,quantizer_efSearch=4,ht=56",
@@ -115,8 +112,7 @@ ssnpp-10M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32",
-                "two_level_clustering": false
+              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32"
                 }]
           query-args: |
               ["nprobe=1,quantizer_efSearch=4,ht=92",
@@ -159,8 +155,7 @@ ssnpp-100M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32",
-                "two_level_clustering": false
+              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32"
                 }]
           query-args: |
               ["nprobe=1,quantizer_efSearch=4,ht=92",
@@ -203,8 +198,7 @@ ssnpp-1B:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ32_128,IVF1048576_HNSW32,PQ32",
-                "two_level_clustering": false
+              [{"indexkey": "OPQ32_128,IVF1048576_HNSW32,PQ32"
                 }]
           query-args: |
               ["nprobe=1,quantizer_efSearch=4,ht=92",
@@ -247,8 +241,7 @@ text2image-10M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ32_128,IVF65536,PQ32",
-              "two_level_clustering": false
+              [{"indexkey": "OPQ32_128,IVF65536,PQ32"
                 }]
           query-args: |
                   ["nprobe=1,ht=162",
@@ -273,8 +266,7 @@ text2image-100M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32",
-              "two_level_clustering": false
+              [{"indexkey": "OPQ32_128,IVF65536_HNSW32,PQ32"
                 }]
           query-args: |
             ["nprobe=1,quantizer_efSearch=4,ht=106",
@@ -312,8 +304,7 @@ text2image-1B:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ32_128,IVF1048576_HNSW32,PQ32",
-                "two_level_clustering": false
+              [{"indexkey": "OPQ32_128,IVF1048576_HNSW32,PQ32"
                 }]
           # Trying all combinations of nprobe x efSearch
           query-args: | 
@@ -349,8 +340,7 @@ msspacev-10M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF65536,PQ64x4fsr",
-                "two_level_clustering": false,
+              [{"indexkey": "OPQ64_128,IVF65536,PQ64x4fsr"
                 "query_bs": 4096
                 }]
           query-args: |
@@ -376,8 +366,7 @@ msspacev-100M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF131072_HNSW32,PQ64x4fsr",
-                "two_level_clustering": false,
+              [{"indexkey": "OPQ64_128,IVF131072_HNSW32,PQ64x4fsr"
                 "query_bs": 4096
                 }]
           query-args: |
@@ -419,7 +408,6 @@ msspacev-1B:
         base:
           args: |
               [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ64x4fsr",
-                "two_level_clustering": false,
                 "query_bs": 4096
                 }]
           query-args: |
