@@ -41,19 +41,20 @@ nn_result checkRecall(
         float cut,
         unsigned d,
         bool random = true,
+        int limit = -1,
         int start_point = 0) {
   parlay::internal::timer t;
   int r = 10;
   float query_time;
   if(random){
-    beamSearchRandom(q, v, beamQ, k, d, cut);
+    beamSearchRandom(q, v, beamQ, k, d, cut, limit);
     t.next_time();
-    beamSearchRandom(q, v, beamQ, k, d, cut);
+    beamSearchRandom(q, v, beamQ, k, d, cut, limit);
     query_time = t.next_time();
   }else{
-    searchAll(q, v, beamQ, k, d, v[start_point], cut);
+    searchAll(q, v, beamQ, k, d, v[start_point], cut, limit);
     t.next_time();
-    searchAll(q, v, beamQ, k, d, v[start_point], cut);
+    searchAll(q, v, beamQ, k, d, v[start_point], cut, limit);
     query_time = t.next_time();
   }
   float recall = 0.0;
@@ -115,7 +116,15 @@ void write_to_csv(std::string csv_filename, parlay::sequence<float> buckets,
   }
   csv << endrow;
   csv << endrow;
+}
 
+parlay::sequence<int> calculate_limits(size_t avg_visited){
+  parlay::sequence<int> L(9);
+  for(float i=1; i<10; i++){
+    L[i-1] = (int) (i *((float) avg_visited) * .1);
+  }
+  auto limits = parlay::remove_duplicates(L);
+  return limits;
 }
 
 template<typename T>
@@ -129,16 +138,22 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
     std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
     for (float cut : cuts)
       for (float Q : beams) 
-        results.push_back(checkRecall(v, q, groundTruth, 10, Q, cut, d, random, start_point));
+        results.push_back(checkRecall(v, q, groundTruth, 10, Q, cut, d, random, -1, start_point));
 
     for (float cut : cuts)
       for (int kk : allk)
-        results.push_back(checkRecall(v, q, groundTruth, kk, 500, cut, d, random, start_point));
+        results.push_back(checkRecall(v, q, groundTruth, kk, 500, cut, d, random, -1, start_point));
+
+    // check "limited accuracy"
+    parlay::sequence<int> limits = calculate_limits(results[0].avg_visited);
+    for(int l : limits){
+      results.push_back(checkRecall(v, q, groundTruth, 10, 15, 1.14, d, random, l, start_point));
+    }
 
     // check "best accuracy"
-    results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, start_point));
+    results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, -1, start_point));
 
-    parlay::sequence<float> buckets = {.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .73, .75, .77, .8, .83, .85, .87, .9, .93, .95, .97, .99, .995 .999};
+    parlay::sequence<float> buckets = {.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .73, .75, .77, .8, .83, .85, .87, .9, .93, .95, .97, .99, .995, .999};
     auto [res, ret_buckets] = parse_result(results, buckets);
     if(res_file != NULL) write_to_csv(std::string(res_file), ret_buckets, res, G);
 }
