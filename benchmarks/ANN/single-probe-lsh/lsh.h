@@ -8,12 +8,6 @@
 
 namespace grann {
 
-  static const uint64_t MAX_SIZE_OF_STREAMBUF = 2LL * 1024 * 1024 * 1024;
-
-  enum Metric { L2 = 0, INNER_PRODUCT = 1, FAST_L2 = 2, PQ = 3 };
-
-
-
   const int                       BITSET_MAX = 64;
   typedef std::bitset<BITSET_MAX> bitstring;
 
@@ -167,7 +161,7 @@ namespace grann {
   class LSHIndex {
    public:
 
-     LSHIndex(parlay::sequence<Tvec_point<T>*> &v, Metric m) : v(v) {
+     LSHIndex(parlay::sequence<Tvec_point<T>*> &v) : v(v) {
        num_tables = 0;
        table_size = 0;
        vector_dim = 0;
@@ -198,7 +192,6 @@ namespace grann {
         std::cout << "Building table: " << j << std::endl;
         for (int64_t i = 0; i < (int64_t) v.size(); ++i) {
           const T* cur_vec = v[i]->coordinates.begin();
-//          const T * cur_vec = this->_data + (i * (uint64_t) this->_aligned_dim);
           bitstring cur_vec_hash = table.get_hash(cur_vec);
           table.add_vector(cur_vec_hash, i);
         }
@@ -221,9 +214,6 @@ namespace grann {
   uint32_t search(T *query, uint32_t dim, uint32_t res_count,
                            const Parameters &search_params, uint32_t *indices,
                            float *distances) {
-    float *query_float = new float[dim];
-    convert_types(query, query_float, 1, dim);
-
     std::vector<uint32_t> candidates;
     for (auto &table : tables) {
       bitstring         query_hash = table.get_hash(query);
@@ -251,7 +241,6 @@ namespace grann {
       }
     }
 
-    delete[] query_float;
     return res_count;
   }
 

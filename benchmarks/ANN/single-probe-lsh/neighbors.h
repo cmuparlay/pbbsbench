@@ -179,7 +179,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built) {
   std::cout << "Here" << std::endl;
 
-  grann::LSHIndex<T> I(v, grann::L2);
+  grann::LSHIndex<T> I(v);
 
   grann::Parameters params;
   // Hackily overload graph-based parameters:
