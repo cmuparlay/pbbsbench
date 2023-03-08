@@ -76,7 +76,7 @@ nn_result checkRecall(
   int r = 10;
   float query_time;
 
-//  searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists);
+  searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists);
   t.next_time();
   searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists);
   query_time = t.next_time();
@@ -129,6 +129,7 @@ nn_result checkRecall(
   float QPS = q.size()/query_time;
   auto stats = query_stats(q);
   std::cout << "recall = " << recall << " QPS = " << QPS << " k = " << k << std::endl;
+  // Q, c are just some dummy values.
   nn_result N(recall, stats, QPS, k, 500, 500, q.size());
   return N;
 }
@@ -160,12 +161,8 @@ void search_and_parse(I& index, parlay::sequence<Tvec_point<T>*> &v, parlay::seq
     std::vector<int> allk = {10, 15, 20, 30, 50, 100};
     std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
 
-    for (float cut : cuts)
-      for (int kk : allk)
-        results.push_back(checkRecall(index, q, groundTruth, kk, d));
-
-    // check "best accuracy"
-    // results.push_back(checkRecall(index, v, q, groundTruth, 100, 1000, 10.0, d, random, start_point));
+    for (int kk : allk)
+      results.push_back(checkRecall(index, q, groundTruth, kk, d));
 
     parlay::sequence<float> buckets = {.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .73, .75, .77, .8, .83, .85, .87, .9, .93, .95, .97, .99, .995, .999};
     auto [res, ret_buckets] = parse_result(results, buckets);
@@ -185,8 +182,9 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   grann::LSHIndex<T> I(v, grann::L2);
 
   grann::Parameters params;
-  params.Set<uint32_t>("num_tables", 4);
-  params.Set<uint32_t>("table_size", 16);
+  // Hackily overload graph-based parameters:
+  params.Set<uint32_t>("num_tables", maxDeg);
+  params.Set<uint32_t>("table_size", beamSize);
 
   parlay::internal::timer t("ANN",report_stats);
   I.build(params);
