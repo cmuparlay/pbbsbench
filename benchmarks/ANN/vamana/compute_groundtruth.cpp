@@ -15,7 +15,7 @@ float mips_distance(T* p, T* q, unsigned d){
   float result = 0;
   for(int i=0; i<d; i++){
     float a = *(p+i);
-    float b = *(p+i);
+    float b = *(q+i);
     result -= a*b;
   }
   // std::cout << "here" << std::endl; 
@@ -46,6 +46,7 @@ parlay::sequence<parlay::sequence<pid>> compute_groundtruth(parlay::sequence<Tve
             }
             else if(dist < topdist){
                 float new_topdist=0;
+                if(mips) new_topdist = -std::numeric_limits<float>::max();   
                 int new_toppos=0;
                 topk[toppos] = std::make_pair((int) j, dist);
                 for(size_t l=0; l<topk.size(); l++){
