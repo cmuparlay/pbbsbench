@@ -27,7 +27,7 @@
 #include "common/geometry.h"
 #include "../utils/NSGDist.h"  
 #include "../utils/types.h"
-#include "pynn_index2.h"
+#include "pynn_index.h"
 #include "../utils/beamSearch.h"  
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
