@@ -36,51 +36,15 @@
 
 extern bool report_stats;
 
-// template<typename T>
-// nn_result checkRecall(knn_index<T>& I,
-// 		  parlay::sequence<Tvec_point<T>*> &v,
-// 		  parlay::sequence<Tvec_point<T>*> &q,
-// 		  parlay::sequence<ivec_point> groundTruth,
-// 		  int k,
-// 		  int beamQ,
-// 		  float cut) {
-//   parlay::internal::timer t;
-//   int r = 10;
-//   unsigned d = (v[0]->coordinates).size();
-//   I.searchNeighbors(q, v, beamQ, k, cut);
-//   t.next_time();
-//   I.searchNeighbors(q, v, beamQ, k, cut);
-//   float query_time = t.next_time();
-//   float recall = 0.0;
-//   if (groundTruth.size() > 0) {
-//     size_t n = q.size();
-//     int numCorrect = 0;
-//     for(int i=0; i<n; i++){
-//       std::set<int> reported_nbhs;
-//       for(int l=0; l<r; l++)
-// 	reported_nbhs.insert((q[i]->ngh)[l]);
-//       for(int l=0; l<r; l++)
-// 	if (reported_nbhs.find((groundTruth[i].coordinates)[l])
-// 	    != reported_nbhs.end())
-// 	  numCorrect += 1;
-//     }
-//     recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
-//   }
-//   float QPS = q.size()/query_time;
-//   parlay::sequence<int> stats = query_stats(q);
-//   nn_result N(recall, stats, QPS, k, beamQ, cut);
-//   return N;
-// }
-
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 int beamSize, int beamSizeQ, double alpha, double dummy,
 	 parlay::sequence<Tvec_point<T>*> &q,
-	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built) {
+	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built, bool mips) {
   parlay::internal::timer t("ANN",report_stats);
   unsigned d = (v[0]->coordinates).size();
   using findex = knn_index<T>;
-  findex I(maxDeg, beamSize, alpha, d);
+  findex I(maxDeg, beamSize, alpha, d, mips);
   double idx_time;
   if(graph_built){
     I.find_approx_medoid(v);
@@ -98,18 +62,18 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   auto [avg_deg, max_deg] = graph_stats(v);
   Graph G(name, params, v.size(), avg_deg, max_deg, idx_time);
   G.print();
-  search_and_parse(G, v, q, groundTruth, res_file, false, medoid);
+  search_and_parse(G, v, q, groundTruth, res_file, mips, false, medoid);
   
 }
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy, bool graph_built) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy, bool graph_built, bool mips) {
   parlay::internal::timer t("ANN",report_stats);
   {
     unsigned d = (v[0]->coordinates).size();
     using findex = knn_index<T>;
-    findex I(maxDeg, beamSize, alpha, d);
+    findex I(maxDeg, beamSize, alpha, d, mips);
     if(graph_built) I.find_approx_medoid(v);
     else{
       parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
