@@ -38,11 +38,17 @@
 template<typename T>
 struct clusterPID{
 	unsigned d; 
+	bool mips;
 	using tvec_point = Tvec_point<T>;
 	using edge = std::pair<int, int>;
     using pid = std::pair<int, float>;
 
-	clusterPID(unsigned dim): d(dim){}
+	clusterPID(unsigned dim, bool m): d(dim), mips(m){}
+
+	float Distance(T* p, T* q, unsigned d){
+		if(mips) return mips_distance(p, q, d);
+		else return distance(p, q, d);
+	}
 
     parlay::sequence<parlay::sequence<pid>> intermediate_edges;
 
@@ -56,7 +62,7 @@ struct clusterPID{
 			//tabulate all-pairs distances between the elements in the leaf
 			for(int j=0; j<n; j++){
                 if(j != i){
-                    float dist = distance(v[index]->coordinates.begin(), v[active_indices[j]]->coordinates.begin(), dim);
+                    float dist = Distance(v[index]->coordinates.begin(), v[active_indices[j]]->coordinates.begin(), dim);
                     pid e = std::make_pair(active_indices[j], dist);
 					if(Q.size() >= maxK){
 						float topdist = Q.top().second;
@@ -117,15 +123,15 @@ struct clusterPID{
 				// Split points based on which of the two points are closer.
 				auto closer_first = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
 					tvec_point* p = v[ind];
-					float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-					float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
+					float dist_first = Distance(p->coordinates.begin(), first->coordinates.begin(), d);
+					float dist_second = Distance(p->coordinates.begin(), second->coordinates.begin(), d);
 					return dist_first <= dist_second;
 				});
 
 				auto closer_second = parlay::filter(parlay::make_slice(active_indices), [&] (size_t ind) {
 					tvec_point* p = v[ind];
-					float dist_first = distance(p->coordinates.begin(), first->coordinates.begin(), d);
-					float dist_second = distance(p->coordinates.begin(), second->coordinates.begin(), d);
+					float dist_first = Distance(p->coordinates.begin(), first->coordinates.begin(), d);
+					float dist_second = Distance(p->coordinates.begin(), second->coordinates.begin(), d);
 					return dist_second < dist_first;
 				});
 

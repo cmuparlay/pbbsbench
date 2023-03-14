@@ -40,21 +40,22 @@ nn_result checkRecall(
         int beamQ,
         float cut,
         unsigned d,
-        bool random = true,
-        int limit = -1,
-        int start_point = 0) {
+        bool random,
+        int limit,
+        int start_point,
+        bool mips) {
   parlay::internal::timer t;
   int r = 10;
   float query_time;
   if(random){
-    beamSearchRandom(q, v, beamQ, k, d, cut, limit);
+    beamSearchRandom(q, v, beamQ, k, d, mips, cut, limit);
     t.next_time();
-    beamSearchRandom(q, v, beamQ, k, d, cut, limit);
+    beamSearchRandom(q, v, beamQ, k, d, mips, cut, limit);
     query_time = t.next_time();
   }else{
-    searchAll(q, v, beamQ, k, d, v[start_point], cut, limit);
+    searchAll(q, v, beamQ, k, d, v[start_point], mips, cut, limit);
     t.next_time();
-    searchAll(q, v, beamQ, k, d, v[start_point], cut, limit);
+    searchAll(q, v, beamQ, k, d, v[start_point], mips, cut, limit);
     query_time = t.next_time();
   }
   float recall = 0.0;
@@ -125,33 +126,33 @@ parlay::sequence<int> calculate_limits(size_t avg_visited){
   }
   auto limits = parlay::remove_duplicates(L);
   return limits;
-}
+}    
 
 template<typename T>
 void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<Tvec_point<T>*> &q, 
-    parlay::sequence<ivec_point> groundTruth, char* res_file, bool random=true, int start_point=0){
+    parlay::sequence<ivec_point> groundTruth, char* res_file, bool mips, bool random=true, int start_point=0){
     unsigned d = v[0]->coordinates.size();
 
     parlay::sequence<nn_result> results;
     std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
     std::vector<int> allk = {10, 15, 20, 30, 50, 100};
     std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
-    for (float cut : cuts)
-      for (float Q : beams) 
-        results.push_back(checkRecall(v, q, groundTruth, 10, Q, cut, d, random, -1, start_point));
+    // for (float cut : cuts)
+    //   for (float Q : beams) 
+    //     results.push_back(checkRecall(v, q, groundTruth, 10, Q, cut, d, random, -1, start_point, mips));
 
-    for (float cut : cuts)
-      for (int kk : allk)
-        results.push_back(checkRecall(v, q, groundTruth, kk, 500, cut, d, random, -1, start_point));
+    // for (float cut : cuts)
+    //   for (int kk : allk)
+    //     results.push_back(checkRecall(v, q, groundTruth, kk, 500, cut, d, random, -1, start_point, mips));
 
-    // check "limited accuracy"
-    parlay::sequence<int> limits = calculate_limits(results[0].avg_visited);
-    for(int l : limits){
-      results.push_back(checkRecall(v, q, groundTruth, 10, 15, 1.14, d, random, l, start_point));
-    }
+    // // check "limited accuracy"
+    // parlay::sequence<int> limits = calculate_limits(results[0].avg_visited);
+    // for(int l : limits){
+    //   results.push_back(checkRecall(v, q, groundTruth, 10, 15, 1.14, d, random, l, start_point, mips));
+    // }
 
     // check "best accuracy"
-    results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, -1, start_point));
+    results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, -1, start_point, mips));
 
     parlay::sequence<float> buckets = {.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .73, .75, .77, .8, .83, .85, .87, .9, .93, .95, .97, .99, .995, .999};
     auto [res, ret_buckets] = parse_result(results, buckets);
