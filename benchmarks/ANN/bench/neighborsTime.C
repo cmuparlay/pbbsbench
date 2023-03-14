@@ -49,7 +49,7 @@ bool report_stats = true;
 
 template<typename T>
 void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
-  int rounds, int R, int beamSize, double delta, double alpha, char* outFile, int maxDeg, bool graph_built = false)
+  int rounds, int R, int beamSize, double delta, double alpha, char* outFile, int maxDeg, bool graph_built = false, bool df=false)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -58,7 +58,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
   time_loop(rounds, 0,
   [&] () {},
   [&] () {
-    ANN<T>(v, R, beamSize, alpha, delta, graph_built);
+    ANN<T>(v, R, beamSize, alpha, delta, graph_built, df);
   },
   [&] () {});
 
@@ -76,7 +76,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
 		   parlay::sequence<Tvec_point<T>> &qpoints,
 		   int k, int rounds, int R, int beamSize,
 		   int beamSizeQ, double delta, double alpha, char* outFile,
-		   parlay::sequence<ivec_point>& groundTruth, int maxDeg, char* res_file, bool graph_built = false)
+		   parlay::sequence<ivec_point>& groundTruth, int maxDeg, char* res_file, bool graph_built = false, bool df=false)
 {
   size_t n = pts.size();
   auto v = parlay::tabulate(n, [&] (size_t i) -> Tvec_point<T>* {
@@ -89,7 +89,7 @@ void timeNeighbors(parlay::sequence<Tvec_point<T>> &pts,
     time_loop(rounds, 0,
       [&] () {},
       [&] () {
-        ANN<T>(v, k, R, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth, res_file, graph_built);
+        ANN<T>(v, k, R, beamSize, beamSizeQ, alpha, delta, qpts, groundTruth, res_file, graph_built, df);
       },
       [&] () {});
 
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
     commandLine P(argc,argv,
     "[-a <alpha>] [-d <delta>] [-R <deg>]"
         "[-L <bm>] [-k <k> ] [-Q <bmq>] [-q <qF>]"
-        "[-g <gF>] [-o <oF>] [-res <rF>] [-r <rnds>] [-b <algoOpt>] [-f <ft>] [-t <tp>] <inFile>");
+        "[-g <gF>] [-o <oF>] [-res <rF>] [-r <rnds>] [-b <algoOpt>] [-f <ft>] [-t <tp>] [-D <df>] <inFile>");
 
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
@@ -129,6 +129,10 @@ int main(int argc, char* argv[]) {
   double alpha = P.getOptionDoubleValue("-a", 1.2);
   double delta = P.getOptionDoubleValue("-d", .01);
   int algoOpt = P.getOptionIntValue("-b", 0);
+  int dfc = P.getOptionIntValue("-D", 0);
+  if(dfc < 0 | dfc > 1) P.badArgument();
+
+  bool df = (dfc == 1);
 
   std::string ft = std::string(filetype);
   std::string tp = std::string(vectype);
@@ -165,9 +169,9 @@ int main(int argc, char* argv[]) {
       if(qFile != NULL){
         auto [fd, qpoints] = parse_fvecs(qFile, NULL, 0);
         timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q,
-          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built);
+          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built, df);
       }
-      else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built);
+      else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built, df);
     }
     else if(tp == "uint8"){
       auto [md, points] = parse_bvecs(iFile, gFile, maxDeg);
@@ -175,9 +179,9 @@ int main(int argc, char* argv[]) {
       if(qFile != NULL){
         auto [fd, qpoints] = parse_bvecs(qFile, NULL, 0);
         timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q,
-          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built);
+          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built, df);
       }
-      else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built);
+      else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built, df);
     }
   }else if(ft == "bin"){
     if(cFile != NULL) groundTruth = parse_ibin(cFile);
@@ -187,27 +191,27 @@ int main(int argc, char* argv[]) {
       if(qFile != NULL){
         auto [fd, qpoints] = parse_fbin(qFile, NULL, 0);
         timeNeighbors<float>(points, qpoints, k, rounds, R, L, Q,
-          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built);
+          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built, df);
       }
-      else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built);
+      else timeNeighbors<float>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built, df);
     } else if(tp == "uint8"){
       auto [md, points] = parse_uint8bin(iFile, gFile, maxDeg);
       maxDeg = md;
       if(qFile != NULL){
         auto [fd, qpoints] = parse_uint8bin(qFile, NULL, 0);
         timeNeighbors<uint8_t>(points, qpoints, k, rounds, R, L, Q,
-          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built);
+          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built, df);
       }
-      else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built);
+      else timeNeighbors<uint8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built, df);
     } else if(tp == "int8"){
       auto [md, points] = parse_int8bin(iFile, gFile, maxDeg);
       maxDeg = md;
       if(qFile != NULL){
         auto [fd, qpoints] = parse_int8bin(qFile, NULL, 0);
         timeNeighbors<int8_t>(points, qpoints, k, rounds, R, L, Q,
-          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built);
+          delta, alpha, oFile, groundTruth, maxDeg, rFile, graph_built, df);
       }
-      else timeNeighbors<int8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built);
+      else timeNeighbors<int8_t>(points, rounds, R, L, delta, alpha, oFile, maxDeg, graph_built, df);
     }
   }
 }
