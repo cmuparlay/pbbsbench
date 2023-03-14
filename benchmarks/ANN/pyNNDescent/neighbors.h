@@ -39,7 +39,7 @@ extern bool report_stats;
 
 template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, int beamSizeQ, double num_clusters, double alpha,
-  parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built) {
+  parlay::sequence<Tvec_point<T>*> &q, parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built, bool mips) {
   parlay::internal::timer t("ANN",report_stats); 
   {
     
@@ -47,7 +47,7 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
     using findex = pyNN_index<T>;
     double idx_time;
     if(!graph_built){
-      findex I(K, d, .05);
+      findex I(K, d, .05, mips);
       std::cout << "Degree bound K " << K << std::endl;
       std::cout << "Cluster size " << cluster_size << std::endl;
       std::cout << "Number of clusters " << num_clusters << std::endl;
@@ -60,19 +60,19 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
     auto [avg_deg, max_deg] = graph_stats(v);
     Graph G(name, params, v.size(), avg_deg, max_deg, idx_time);
     G.print();
-    search_and_parse(G, v, q, groundTruth, res_file);
+    search_and_parse(G, v, q, groundTruth, res_file, mips);
   };
 }
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double num_clusters, double alpha, bool graph_built) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int K, int cluster_size, double num_clusters, double alpha, bool graph_built, bool mips) {
   parlay::internal::timer t("ANN",report_stats); 
   { 
     unsigned d = (v[0]->coordinates).size();
     using findex = pyNN_index<T>;
     if(!graph_built){
-       findex I(K, d, .05);
+       findex I(K, d, .05, mips);
       I.build_index(v, cluster_size, (int) num_clusters, alpha);
       t.next("Built index");
     }
