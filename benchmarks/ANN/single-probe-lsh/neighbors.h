@@ -176,7 +176,7 @@ template<typename T>
 void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 	 int beamSize, int beamSizeQ, double alpha, double dummy,
 	 parlay::sequence<Tvec_point<T>*> &q,
-	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built) {
+	 parlay::sequence<ivec_point> groundTruth, char* res_file, bool graph_built, bool mips) {
   std::cout << "Here" << std::endl;
 
   grann::LSHIndex<T> I(v);
@@ -203,6 +203,6 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
 
 
 template<typename T>
-void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy, bool graph_built) {
+void ANN(parlay::sequence<Tvec_point<T>*> v, int maxDeg, int beamSize, double alpha, double dummy, bool graph_built, bool mips) {
 }
 
