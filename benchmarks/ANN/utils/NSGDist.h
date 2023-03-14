@@ -335,10 +335,52 @@ namespace efanna2e{
   };
 }
 
+float mips_distance(uint8_t *p, uint8_t *q, unsigned d){
+  int result = 0;
+  for(int i=0; i<d; i++){
+    result += ((int32_t) q[i]) *
+                  ((int32_t) p[i]);
+  }
+  return -((float) result);
+}
 
+float mips_distance(int8_t *p, int8_t *q, unsigned d){
+  int result = 0;
+  for(int i=0; i<d; i++){
+    result += ((int32_t) q[i]) *
+                  ((int32_t) p[i]);
+  }
+  return -((float) result);
+}
+
+float mips_distance(float *q, uint8_t *p, unsigned d){
+  float result = 0;
+  for(int i=0; i<d; i++){
+    result += (q[i]) *
+                  ((float) p[i]);
+  }
+  return -result;
+}
+
+float mips_distance(float *q, int8_t *p, unsigned d){
+  float result = 0;
+  for(int i=0; i<d; i++){
+    result += (q[i]) *
+                  ((float) p[i]);
+  }
+  return -result;
+}
+
+float mips_distance(float *p, float *q, unsigned d){
+    efanna2e::DistanceL2 distfunc;
+    float result = 0;
+    for(int i=0; i<d; i++){
+      result += (q[i]) * (p[i]);
+    }
+    return -result;
+}
 
 float distance(uint8_t *p, uint8_t *q, unsigned d){
-  // if(report_stats) efanna2e::distance_calls.update_value(1);
   int result = 0;
   for(int i=0; i<d; i++){
     result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
@@ -348,7 +390,6 @@ float distance(uint8_t *p, uint8_t *q, unsigned d){
 }
 
 float distance(int8_t *p, int8_t *q, unsigned d){
-  // if(report_stats) efanna2e::distance_calls.update_value(1);
   int result = 0;
   for(int i=0; i<d; i++){
     result += ((int32_t)((int16_t) q[i] - (int16_t) p[i])) *
@@ -358,7 +399,6 @@ float distance(int8_t *p, int8_t *q, unsigned d){
 }
 
 float distance(float *q, uint8_t *p, unsigned d){
-  // if(report_stats) efanna2e::distance_calls.update_value(1);
   float result = 0;
   for(int i=0; i<d; i++){
     result += (q[i] - (float) p[i]) *
@@ -368,7 +408,6 @@ float distance(float *q, uint8_t *p, unsigned d){
 }
 
 float distance(float *q, int8_t *p, unsigned d){
-  // if(report_stats) efanna2e::distance_calls.update_value(1);
   float result = 0;
   for(int i=0; i<d; i++){
     result += (q[i] - (float) p[i]) *
@@ -378,7 +417,6 @@ float distance(float *q, int8_t *p, unsigned d){
 }
 
 float distance(float *p, float *q, unsigned d){
-    // if(report_stats) efanna2e::distance_calls.update_value(1);
     efanna2e::DistanceL2 distfunc;
     return distfunc.compare(p, q, d);
 }
