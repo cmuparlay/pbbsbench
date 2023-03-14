@@ -24,6 +24,7 @@
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "parlay/random.h"
+#include "parlay/internal/get_time.h"
 #include "common/geometry.h"
 #include <random>
 #include <set>
@@ -91,9 +92,11 @@ struct pyNN_index{
     void nn_descent_chunk(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &changed, 
 		parlay::sequence<int> &new_changed, std::pair<int, parlay::sequence<int>> *begin, 
 		std::pair<int, parlay::sequence<int>> *end){
+      parlay::internal::timer t;
+      t.start();
         size_t stride = end - begin;
-		auto less = [&] (pid a, pid b) {return a.second < b.second;};
-        auto grouped_labelled = parlay::tabulate(stride, [&] (size_t i){
+	auto less = [&] (pid a, pid b) {return a.second < b.second;};
+	auto grouped_labelled = parlay::tabulate(stride, [&] (size_t i){
             int index = (begin+i)->first;
             std::set<int> to_filter;
             to_filter.insert(index);
@@ -102,31 +105,40 @@ struct pyNN_index{
             }
             auto f = [&] (int a) {return (to_filter.find(a) == to_filter.end());};
             auto filtered_candidates = parlay::filter((begin+i)->second, f);
-			parlay::sequence<labelled_edge> edges = parlay::sequence<labelled_edge>();
-			for(int l=0; l<filtered_candidates.size(); l++){
+	    parlay::sequence<labelled_edge> edges;
+	    edges.reserve(K*2);
+	    for(int l=0; l<filtered_candidates.size(); l++){
                 int j=filtered_candidates[l];
-				for(int m=l+1; m<filtered_candidates.size(); m++){
+		float j_max = old_neighbors[j][old_neighbors[j].size()-1].second;
+		for(int m=l+1; m<filtered_candidates.size(); m++){
                     int k=filtered_candidates[m];
+		    if (changed[j] || changed[k]) {
+		      float dist = Distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
+		      float k_max = old_neighbors[k][old_neighbors[k].size()-1].second;
+		      if(dist < j_max) edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
+		      if(dist < k_max) edges.push_back(std::make_pair(k, std::make_pair(j, dist)));
+		    }
+		}
+	    }
+            for(int l=0; l<old_neighbors[index].size(); l++){
+                int j = old_neighbors[index][l].first;
+                for(const int& k : filtered_candidates){
+		  if (changed[index] || changed[k]) {
                     float dist = Distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
                     float j_max = old_neighbors[j][old_neighbors[j].size()-1].second;
                     float k_max = old_neighbors[k][old_neighbors[k].size()-1].second;
                     if(dist < j_max) edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
                     if(dist < k_max) edges.push_back(std::make_pair(k, std::make_pair(j, dist)));
-				}
-			}
-            for(int l=0; l<old_neighbors[index].size(); l++){
-                int j = old_neighbors[index][l].first;
-                for(const int& k : filtered_candidates){
-                    float dist = Distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
-                    float j_max = old_neighbors[j][old_neighbors[j].size()-1].second;
-                    float k_max = old_neighbors[k][old_neighbors[k].size()-1].second;
-                    if(dist < j_max) edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
-                    if(dist < k_max) edges.push_back(std::make_pair(k, std::make_pair(j, dist)));                   
+		  }
                 }
             }
 			return edges;
-		});
-        auto candidates = parlay::group_by_key(parlay::flatten(grouped_labelled));
+								 }, 1);
+		t.next("big tab");
+		auto x = parlay::flatten(grouped_labelled);
+		std::cout << "x size = " << x.size() << std::endl;
+		auto candidates = parlay::group_by_key(x);
+	t.next("group by");
         parlay::parallel_for(0, candidates.size(), [&] (size_t i){
             auto less2 = [&] (pid a, pid b) {
                 if(a.second < b.second) return true;
@@ -151,6 +163,7 @@ struct pyNN_index{
                 old_neighbors[index]=new_edges;
             }
         });
+	t.next("sort");
     }
 
     parlay::sequence<std::pair<int, parlay::sequence<int>>> reverse_graph(){
