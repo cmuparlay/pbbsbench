@@ -38,15 +38,20 @@ struct pyNN_index{
 	int K;
 	unsigned d;
 	float delta;
+    bool mips; 
 	using tvec_point = Tvec_point<T>;
 	using edge = std::pair<int, int>;
     using pid = std::pair<int,float>;
     using labelled_edge = std::pair<int, pid>;
 
+    float Distance(T* p, T* q, unsigned d){
+		if(mips) return mips_distance(p, q, d);
+		else return distance(p, q, d);
+	}
 
     static constexpr auto less = [] (edge a, edge b) {return a.second < b.second;};
 
-    pyNN_index(int md, unsigned dim, float Delta) : K(md), d(dim), delta(Delta) {}
+    pyNN_index(int md, unsigned dim, float Delta, bool m) : K(md), d(dim), delta(Delta), mips(m) {}
 
     parlay::sequence<parlay::sequence<pid>> old_neighbors;
 
@@ -102,7 +107,7 @@ struct pyNN_index{
                 int j=filtered_candidates[l];
 				for(int m=l+1; m<filtered_candidates.size(); m++){
                     int k=filtered_candidates[m];
-                    float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
+                    float dist = Distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
                     float j_max = old_neighbors[j][old_neighbors[j].size()-1].second;
                     float k_max = old_neighbors[k][old_neighbors[k].size()-1].second;
                     if(dist < j_max) edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
@@ -112,7 +117,7 @@ struct pyNN_index{
             for(int l=0; l<old_neighbors[index].size(); l++){
                 int j = old_neighbors[index][l].first;
                 for(const int& k : filtered_candidates){
-                    float dist = distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
+                    float dist = Distance(v[j]->coordinates.begin(), v[k]->coordinates.begin(), d);
                     float j_max = old_neighbors[j][old_neighbors[j].size()-1].second;
                     float k_max = old_neighbors[k][old_neighbors[k].size()-1].second;
                     if(dist < j_max) edges.push_back(std::make_pair(j, std::make_pair(k, dist)));
@@ -200,7 +205,7 @@ struct pyNN_index{
             auto filtered = parlay::remove_duplicates(undirected_graph[i].second);
             auto undirected_pids = parlay::tabulate(filtered.size(), [&] (size_t j){
                 int indexU = filtered[j];
-                float dist = distance(v[index]->coordinates.begin(), v[indexU]->coordinates.begin(), d);
+                float dist = Distance(v[index]->coordinates.begin(), v[indexU]->coordinates.begin(), d);
                 return std::make_pair(indexU, dist);
             });
             parlay::sort_inplace(undirected_pids, less);
@@ -216,7 +221,7 @@ struct pyNN_index{
 					float dist_p = j.second;
 					bool add = true;
 					for(const int& k : new_out){
-						float dist = distance(v[j.first]->coordinates.begin(), v[k]->coordinates.begin(), d);
+						float dist = Distance(v[j.first]->coordinates.begin(), v[k]->coordinates.begin(), d);
 						if(dist_p > alpha*dist) {add = false; break;}
 					}
 					if(add) new_out.push_back(j.first);
@@ -236,8 +241,9 @@ struct pyNN_index{
 	}
 
     void build_index(parlay::sequence<tvec_point*> &v, size_t cluster_size, int num_clusters, double alpha){
+        std::cout << "Mips: " << mips << std::endl;
 		clear(v);
-		clusterPID<T> C(d);
+		clusterPID<T> C(d, mips);
         old_neighbors = parlay::sequence<parlay::sequence<pid>>(v.size());
 		C.multiple_clustertrees(v, cluster_size, num_clusters, d, K, old_neighbors);
 		nn_descent_wrapper(v);
