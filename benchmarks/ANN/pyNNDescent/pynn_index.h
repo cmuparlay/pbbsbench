@@ -75,7 +75,7 @@ struct pyNN_index{
         parlay::random_generator gen;
         size_t n=v.size();
         std::uniform_int_distribution<int> dis(0, n-1);
-        int batch_size = 1000000;
+        int batch_size = 100000;
         std::pair<int, parlay::sequence<int>> *begin;
 		std::pair<int, parlay::sequence<int>> *end = rev.begin();
 		int counter = 0;
@@ -92,8 +92,6 @@ struct pyNN_index{
     void nn_descent_chunk(parlay::sequence<tvec_point*> &v, parlay::sequence<int> &changed, 
 		parlay::sequence<int> &new_changed, std::pair<int, parlay::sequence<int>> *begin, 
 		std::pair<int, parlay::sequence<int>> *end){
-      parlay::internal::timer t;
-      t.start();
         size_t stride = end - begin;
 	auto less = [&] (pid a, pid b) {return a.second < b.second;};
 	auto grouped_labelled = parlay::tabulate(stride, [&] (size_t i){
@@ -134,11 +132,7 @@ struct pyNN_index{
             }
 			return edges;
 								 }, 1);
-		t.next("big tab");
-		auto x = parlay::flatten(grouped_labelled);
-		std::cout << "x size = " << x.size() << std::endl;
-		auto candidates = parlay::group_by_key(x);
-	t.next("group by");
+		auto candidates = parlay::group_by_key(parlay::flatten(grouped_labelled));
         parlay::parallel_for(0, candidates.size(), [&] (size_t i){
             auto less2 = [&] (pid a, pid b) {
                 if(a.second < b.second) return true;
@@ -163,7 +157,6 @@ struct pyNN_index{
                 old_neighbors[index]=new_edges;
             }
         });
-	t.next("sort");
     }
 
     parlay::sequence<std::pair<int, parlay::sequence<int>>> reverse_graph(){
@@ -192,7 +185,8 @@ struct pyNN_index{
 		auto changed = parlay::tabulate(n, [&] (size_t i) {return 1;});
 		int rounds = 0;
         int max_rounds = std::max(10, (int) log2(d));
-		while(parlay::reduce(changed) >= delta*n && rounds < 10){
+        if(d==256) max_rounds=20; //hack for ssnpp
+		while(parlay::reduce(changed) >= delta*n && rounds < max_rounds){
 			std::cout << "Round " << rounds << std::endl; 
 			auto new_changed = nn_descent(v, changed);
 			changed = new_changed;
@@ -212,7 +206,9 @@ struct pyNN_index{
             }
             return e; 
         });
+        std::cout << "collected edges" << std::endl;
         auto undirected_graph = parlay::group_by_key_ordered(parlay::flatten(to_group));
+        std::cout << "flattened and grouped" << std::endl;
         parlay::parallel_for(0, undirected_graph.size(), [&] (size_t i){
             int index = undirected_graph[i].first;
             auto filtered = parlay::remove_duplicates(undirected_graph[i].second);
@@ -225,6 +221,7 @@ struct pyNN_index{
             auto merged_pids = seq_union(old_neighbors[index], undirected_pids);
             old_neighbors[index] = merged_pids;
         });
+        std::cout << "merged and sorted" << std::endl;
         parlay::parallel_for(0, v.size(), [&] (size_t i){
             parlay::sequence<int> new_out = parlay::sequence<int>();
 			for(const pid& j : old_neighbors[i]){
@@ -242,6 +239,7 @@ struct pyNN_index{
 			}
 			add_out_nbh(new_out, v[i]);
         });
+        std::cout << "assigned edges" << std::endl;
     }
 
     void assign_edges(parlay::sequence<tvec_point*> &v){
