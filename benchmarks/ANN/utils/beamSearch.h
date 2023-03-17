@@ -158,7 +158,7 @@ template <typename T>
 void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, bool mips, double cut = 1.14, int limit=-1) {
-  std::cout << "Mips: " << mips << std::endl;
+  // std::cout << "Mips: " << mips << std::endl;
   if ((k + 1) > beamSizeQ) {
     std::cout << "Error: beam search parameter Q = " << beamSizeQ
               << " same size or smaller than k = " << k << std::endl;
@@ -189,7 +189,7 @@ template <typename T>
 void searchAll(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, Tvec_point<T>* starting_point, bool mips, float cut, int limit) {
-    std::cout << "Mips: " << mips <<  std::endl;
+    // std::cout << "Mips: " << mips <<  std::endl;
     parlay::sequence<Tvec_point<T>*> start_points;
     start_points.push_back(starting_point);
     searchAll(q, v, beamSizeQ, k, d, start_points, mips, cut, limit);
@@ -199,7 +199,7 @@ template <typename T>
 void searchAll(parlay::sequence<Tvec_point<T>*>& q,
                       parlay::sequence<Tvec_point<T>*>& v, int beamSizeQ, int k,
                       unsigned d, parlay::sequence<Tvec_point<T>*> starting_points, bool mips, float cut, int limit) {
-  std::cout << "Mips: " << mips << std::endl;
+  // std::cout << "Mips: " << mips << std::endl;
   if ((k + 1) > beamSizeQ) {
     std::cout << "Error: beam search parameter Q = " << beamSizeQ
               << " same size or smaller than k = " << k << std::endl;
