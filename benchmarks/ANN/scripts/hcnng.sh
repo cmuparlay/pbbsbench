@@ -23,7 +23,7 @@ SG=$G/MSSPACEV1B
 # #TEXT2IMAGE: two settings
 TP=$P/text2image1B
 TG=$G/text2image1B
-./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/1M_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-1M -res $TG/HCNNG_res3.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_1000000
-./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/10M_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-10M -res $TG/HCNNG_res3.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_10000000
-./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/100M_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-100M -res $TG/HCNNG_res3.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_100000000
+./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/1M_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-1M -res $TG/HCNNG_res.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_1000000
+./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/10M_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-10M -res $TG/HCNNG_res.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_10000000
+./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/100M_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-100M -res $TG/HCNNG_res.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_100000000
 ./neighbors -a 1000 -R 3 -L 30 -b 1 -o $TG/1B_HCNNG_30 -q $TP/query.public.100K.fbin -c $TP/text2image-1B -res $TG/HCNNG_res.csv -f bin -t float -D 1 $TP/base.1B.fbin
