@@ -24,6 +24,6 @@ make clean all
 T=/ssd1/data/FB_ssnpp
 U=/ssd1/results/FB_ssnpp
 ./range -R 60 -L 1000 -a 20 -d 1.4 -q $T/FB_ssnpp_public_queries.u8bin -o $U/1M_60 -c $T/ssnpp-1M -res $U/pynn_res.csv $T/FB_ssnpp_database.u8bin.crop_nb_1000000
-./range -R 60 -L 1000 -a 20 -d 1.4 -q $T/FB_ssnpp_public_queries.u8bin -o $U/10M_60 -c $T/ssnpp-10M -res $U/pynn_res2.csv $T/FB_ssnpp_database.u8bin.crop_nb_10000000
-./range -R 60 -L 1000 -a 20 -d 1.4 -q $T/FB_ssnpp_public_queries.u8bin -o $U/100M_60 -c $T/ssnpp-100M -res $U/pynn_res2.csv $T/FB_ssnpp_database.u8bin.crop_nb_100000000
+./range -R 60 -L 1000 -a 20 -d 1.4 -q $T/FB_ssnpp_public_queries.u8bin -o $U/10M_60 -c $T/ssnpp-10M -res $U/pynn_res.csv $T/FB_ssnpp_database.u8bin.crop_nb_10000000
+./range -R 60 -L 1000 -a 20 -d 1.4 -q $T/FB_ssnpp_public_queries.u8bin -o $U/100M_60 -c $T/ssnpp-100M -res $U/pynn_res.csv $T/FB_ssnpp_database.u8bin.crop_nb_100000000
 
