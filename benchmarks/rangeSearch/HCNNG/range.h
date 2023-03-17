@@ -45,8 +45,9 @@ void RNG(parlay::sequence<Tvec_point<T>*> &v, int k, int mstDeg,
     using findex = hcnng_index<T>;
     unsigned d = (v[0]->coordinates).size();
     double idx_time;
+    bool mips=false;
     if(!graph_built){
-      findex I(mstDeg, d);
+      findex I(mstDeg, d, mips);
       parlay::sequence<int> inserts = parlay::tabulate(v.size(), [&] (size_t i){
                 return static_cast<int>(i);});
       I.build_index(v, num_clusters, cluster_size);
