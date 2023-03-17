@@ -27,7 +27,7 @@
 #include "common/geometry.h"
 #include "../utils/NSGDist.h"
 #include "../utils/types.h"
-#include "pyNNDescent/pynn_index2.h"
+#include "pyNNDescent/pynn_index.h"
 #include "../utils/beamSearch.h"
 #include "../utils/indexTools.h"
 #include "../utils/stats.h"
@@ -44,8 +44,9 @@ void RNG(parlay::sequence<Tvec_point<T>*> &v, int k, int K, int cluster_size, in
     unsigned d = (v[0]->coordinates).size();
     using findex = pyNN_index<T>;
     double idx_time;
+    bool mips=false;
     if(!graph_built){
-      findex I(K, d, .05);
+      findex I(K, d, .05, mips);
       std::cout << "Degree bound K " << K << std::endl;
       std::cout << "Cluster size " << cluster_size << std::endl;
       std::cout << "Number of clusters " << num_clusters << std::endl;
