@@ -46,7 +46,8 @@ void RNG(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   // range_gt_stats(groundTruth);
   unsigned d = (v[0]->coordinates).size();
   using findex = knn_index<T>;
-  findex I(maxDeg, beamSize, alpha, d);
+  bool mips=false;
+  findex I(maxDeg, beamSize, alpha, d, mips);
   double idx_time;
   if(graph_built){
     I.find_approx_medoid(v);
