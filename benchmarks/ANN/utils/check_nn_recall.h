@@ -137,19 +137,19 @@ void search_and_parse(Graph G, parlay::sequence<Tvec_point<T>*> &v, parlay::sequ
     std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
     std::vector<int> allk = {10, 15, 20, 30, 50, 100};
     std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
-    // for (float cut : cuts)
-    //   for (float Q : beams) 
-    //     results.push_back(checkRecall(v, q, groundTruth, 10, Q, cut, d, random, -1, start_point, mips));
+    for (float cut : cuts)
+      for (float Q : beams) 
+        results.push_back(checkRecall(v, q, groundTruth, 10, Q, cut, d, random, -1, start_point, mips));
 
-    // for (float cut : cuts)
-    //   for (int kk : allk)
-    //     results.push_back(checkRecall(v, q, groundTruth, kk, 500, cut, d, random, -1, start_point, mips));
+    for (float cut : cuts)
+      for (int kk : allk)
+        results.push_back(checkRecall(v, q, groundTruth, kk, 500, cut, d, random, -1, start_point, mips));
 
-    // // check "limited accuracy"
-    // parlay::sequence<int> limits = calculate_limits(results[0].avg_visited);
-    // for(int l : limits){
-    //   results.push_back(checkRecall(v, q, groundTruth, 10, 15, 1.14, d, random, l, start_point, mips));
-    // }
+    // check "limited accuracy"
+    parlay::sequence<int> limits = calculate_limits(results[0].avg_visited);
+    for(int l : limits){
+      results.push_back(checkRecall(v, q, groundTruth, 10, 15, 1.14, d, random, l, start_point, mips));
+    }
 
     // check "best accuracy"
     results.push_back(checkRecall(v, q, groundTruth, 100, 1000, 10.0, d, random, -1, start_point, mips));

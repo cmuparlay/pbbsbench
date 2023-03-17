@@ -274,7 +274,7 @@ struct cluster{
     		tvec_point* second = v[s];
 
 			if(tvec_equal(first, second, dim)){
-				std::cout << "Equal points selected, splitting evenly" << std::endl;
+				// std::cout << "Equal points selected, splitting evenly" << std::endl;
 				parlay::sequence<size_t> closer_first;
 				parlay::sequence<size_t> closer_second;
 				for(int i=0; i<active_indices.size(); i++){
