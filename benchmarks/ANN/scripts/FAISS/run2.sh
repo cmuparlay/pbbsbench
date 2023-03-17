@@ -1,7 +1,7 @@
 #!/bin/bash
 cd ~/big-ann-benchmarks
 P=~/pbbsbench/benchmarks/ANN/scripts/FAISS
-R=/ssd1/results/FAISSresults
+R=/ssd1/results/FAISSresults2
 
 nohup python3 run.py --definitions $P/ANN2.yaml --algorithm faiss-t1 --dataset "bigann-10M" > $R/bigann-10M2.log
 nohup python3 run.py --definitions $P/ANN2.yaml --algorithm faiss-t1 --dataset "msspacev-10M" > $R/msspacev-10M2.log

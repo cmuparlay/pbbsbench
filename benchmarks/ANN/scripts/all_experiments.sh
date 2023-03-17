@@ -9,8 +9,8 @@ bash pynndescent.sh
 #FAISS with better strings for all datasets: est 16 hours
 cd ~/big-ann-benchmarks
 rm results
-mkdir /ssd1/results/FAISS_results_2
-ln -s /ssd1/results/FAISS_results_2 results
+mkdir /ssd1/results/FAISSresults2
+ln -s /ssd1/results/FAISSresults2 results
 cd ~/pbbsbench/benchmarks/ANN/scripts/FAISS
 bash run2.sh
 #HCNNG: mostly queries, one billion scale build: est 24 h
