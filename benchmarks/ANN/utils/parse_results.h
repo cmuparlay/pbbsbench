@@ -45,6 +45,21 @@ struct Graph{
   }
 };
 
+struct LSH{
+  std::string name;
+  std::string params;
+  long size;
+  double time;
+
+  LSH(std::string n, std::string p, long s, double t) : name(n), 
+    params(p), size(s), time(t) {}
+  
+  void print(){
+    std::cout << name << " LSH tables built with " << size << " points and parameters " << params << std::endl;
+    std::cout << "Tables built in " << time << " seconds" << std::endl;
+  }
+};
+
 struct range_result{
   int num_queries;
   int num_nonzero_queries;
@@ -121,6 +136,34 @@ struct nn_result{
     std::cout << "Recall: " << recall << std::endl; 
   	std::cout << "Average dist cmps: " << avg_cmps << ", 99th percentile dist cmps: " << tail_cmps << std::endl;
   	std::cout << "Average num visited: " << avg_visited << ", 99th percentile num visited: " << tail_visited << std::endl;
+  }
+};
+
+struct lsh_result{
+  double recall;
+
+  size_t avg_cmps;
+  size_t tail_cmps;
+
+  float QPS;
+
+  int k;
+  int num_tables;
+  long num_queries;
+
+  lsh_result(double r, parlay::sequence<size_t> stats, float qps, int K, int n, long q) : recall(r), 
+    QPS(qps), k(K), num_tables(n), num_queries(q) {
+
+    if(stats.size() != 2) abort();
+    avg_cmps = stats[0]; tail_cmps = stats[1];
+  }
+
+  void print(){
+    std::cout << "Over " << num_queries << " queries" << std::endl;
+    std::cout << "k = " << k << ", tables = " << num_tables
+	    << ", throughput = " << QPS << "/second" << std::endl;
+    std::cout << "Recall: " << recall << std::endl; 
+  	std::cout << "Average dist cmps: " << avg_cmps << ", 99th percentile dist cmps: " << tail_cmps << std::endl;
   }
 };
 
