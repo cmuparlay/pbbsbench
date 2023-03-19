@@ -32,7 +32,8 @@
 #include "../utils/stats.h"
 #include "../utils/parse_results.h"
 
-#include "lsh.h"
+//#include "lsh.h"
+#include "parallel_lsh.h"
 #include "../utils/csvfile.h"
 
 extern bool report_stats;
@@ -57,7 +58,7 @@ void searchAll(I& index, parlay::sequence<Tvec_point<T>*>& q, int k, unsigned di
         query_result_dists.begin() + i * k,
         query_result_comps.begin() + i);
     query_result_size[i] = res_count;
-  });
+  }, 1);
   std::cout << "Finished searches" << std::endl;
 
 }
