@@ -213,7 +213,7 @@ namespace grann {
   // Returns the number of neighbors retrieved.
   uint32_t search(T *query, uint32_t dim, uint32_t res_count,
                            const Parameters &search_params, uint32_t *indices,
-                           float *distances) {
+                           float *distances, size_t* comps) {
     std::vector<uint32_t> candidates;
     for (auto &table : tables) {
       bitstring         query_hash = table.get_hash(query);
@@ -231,7 +231,7 @@ namespace grann {
     process_candidates_into_best_candidates_pool(
         query, dim, candidates, best_candidates, max_size, curr_size, inserted,
         cmps);
-
+    comps[0]=(size_t) cmps;
     res_count = curr_size < res_count ? curr_size : res_count;
     for (uint32_t i = 0; i < res_count; i++) {
       indices[i] = best_candidates[i].id;
