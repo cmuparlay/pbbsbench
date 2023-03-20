@@ -35,9 +35,6 @@ public:
 };
 
 template <typename V>
-using write_once = atomic<V>;
-
-template <typename V>
 struct atomic_write_once {
   std::atomic<V> v;
   atomic_write_once(V initial) : v(initial) {}
@@ -48,10 +45,16 @@ struct atomic_write_once {
   void init(V vv) { v = vv; }
   void store(V vv) { v = vv; }
   bool cas_ni(V exp_v, V new_v) {return v.compare_exchange_strong(exp_v, new_v);}
+  void cam(V old_v, V new_v) {
+    if (v.load() == old_v)
+      v.compare_exchange_strong(old_v,new_v);}
   V operator=(V b) { store(b); return b; }
   // inline operator V() { return load(); } // implicit conversion
 };
 
+template <typename V>
+using atomic_aba_free = atomic_write_once<V>;
+  
 template <typename T>
 using memory_pool = internal::mem_pool<T>;
 

@@ -4,7 +4,18 @@
 #include "timestamps.h"
 
 namespace verlib {
+  using flck::memory_pool;
 
+const TS tbd = std::numeric_limits<TS>::max()/4;
+
+  template <typename F>
+  auto do_now(F f) {return f();}
+
+template <typename T>
+using atomic = flck::atomic<T>;
+using lock = flck::lock;
+using atomic_bool = flck::atomic_write_once<bool>;
+  
 struct versioned {
   flck::atomic_write_once<TS> time_stamp;
   versioned* next_version;
@@ -47,7 +58,7 @@ private:
 #endif
   }
 
-  V* get_ptr(versioned* ptr) {
+  static V* get_ptr(versioned* ptr) {
     versioned* ptr_ = strip_indirect(ptr);
     if (!is_indirect(ptr)) return (V*) ptr_;
     return (V*) ((ver_link*) ptr_)->value;
@@ -202,4 +213,10 @@ public:
 
   V* operator=(V* b) {store(b); return b; }
 };
+
+  template <typename T, typename E>
+  bool validate(flck::lock& lck, T* v, E expected) {
+    return true;
+  }
+
 } // namespace verlib

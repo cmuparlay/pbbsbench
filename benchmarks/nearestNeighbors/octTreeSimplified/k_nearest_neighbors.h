@@ -140,7 +140,9 @@ struct k_nearest_neighbors {
     tree = o_tree::build(V, b); 
   }
 
-
+  ~k_nearest_neighbors() {
+    node::delete_rec(tree.load());
+  }
 
 
   // returns the vertices in the search structure, in an
@@ -391,7 +393,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     if(!parent_locked && (T->is_leaf() || !within_box(T, q.second))) {
       // enter locking mode
       if(parent == nullptr) { // T is root
-        return root_lock.try_lock([=] { return insert_point0(q, parent, T, bit, true); });
+        return root_lock.try_lock([=] { 
+          if(tree.load() != T) return false;
+          else return insert_point0(q, parent, T, bit, true); 
+        });
       } else {
         return parent->lck.try_lock([=] {
           if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
@@ -451,16 +456,26 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
           node* N = node::new_node(L, R, T->bit, bigger);
           return N->lck.with_lock([=] {
+            assert(tree.load() == T || P != nullptr);
             if(P != nullptr){
               if(T==P->Left()) P->set_child(N, true);
               else P->set_child(N, false);
+#ifdef HandOverHand
+              P->lck.unlock();
+#endif
             } 
             if(T == tree.load()) {
               // std::cout << "root changed (internal: updated bounding box)" << std::endl;
               assert(parent == nullptr); 
               set_root(N);
+#ifdef HandOverHand
+              root_lock.unlock();
+#endif
             }
             delete_single(T);
+#ifdef HandOverHand
+            T->lck.unlock();
+#endif
             return insert_internal(q, N, true);
           });
 
@@ -490,6 +505,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       if(T->size() + 1 < o_tree::node_cutoff || T->bit == 0){
         //case 1
         node* N = node::new_leaf(parlay::make_slice(points), T->bit);
+        assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(N, left);
         if(tree.load() == T) {
           // std::cout << "root changed (leaf: insert)" << std::endl; 
@@ -518,6 +534,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         }
         if(new_bit == 0){
           node* N = node::new_leaf(parlay::make_slice(points), T->bit);
+          assert(tree.load() == T || G != nullptr);
           if(G != nullptr) G->set_child(N, left);
           if(tree.load() == T) {
             // std::cout << "root changed (leaf: split and insert)" << std::endl; 
@@ -529,6 +546,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
           node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
           node* P = node::new_node(L, R, T->bit);
+          assert(tree.load() == T || G != nullptr);
           if(G != nullptr) G->set_child(P, left);
           if(T == tree.load()){
             // std::cout << "root changed (leaf: split and insert)" << std::endl; 

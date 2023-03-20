@@ -32,6 +32,12 @@ int algorithm_version = 0;
 #include "common/geometry.h"
 #include "k_nearest_neighbors.h"
 
+/* compile with debug flags:
+g++-11 -DHOMEGROWN -pthread -mcx16 -g -std=c++17 -I .  -include neighbors.h -o neighbors_debug ../bench/neighborsTime.C -fsanitize=address -fsanitize=undefined -DHOMEGROWN -pthread -ldl -L/usr/local/lib -ljemalloc
+
+ASAN_OPTIONS=detect_leaks=0 PARLAY_NUM_THREADS=72 numactl -i all ./neighbors_debug -d 2 -k 1 -o oFile ../geometryData/data/2DinCube_10M
+*/
+
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
 template <int max_k, class vtx>
@@ -51,7 +57,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //split initial vertices into two sequences: one to build the tree with
     //and one to later insert point by point
     size_t n = v.size();
-    // node_allocator<vtx>.shuffle(n); 
+    node_allocator<vtx>.shuffle(n); 
     size_t init = 1;
     size_t ins = n-init;
     parlay::sequence<vtx*> v1(init);
