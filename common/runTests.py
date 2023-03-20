@@ -14,12 +14,13 @@ def onPprocessors(command,p) :
   
 def shellGetOutput(str) :
   process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             text=True)
   output, err = process.communicate()
   
   if (len(err) > 0):
       raise NameError(str+"\n"+output+err)
-  return output.decode("utf-8")
+  return output
 
 def stripFloat(val) :
   trunc = float(int(val*1000))/1000
