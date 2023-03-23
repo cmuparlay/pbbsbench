@@ -5,6 +5,9 @@
 namespace flck {
 namespace internal {
 
+// a flag to indicate that currently helping
+static thread_local bool helping = false;
+
 // default log length.  Will grow if needed.
 constexpr int Log_Len = 8;
 using log_entry = std::atomic<void*>;

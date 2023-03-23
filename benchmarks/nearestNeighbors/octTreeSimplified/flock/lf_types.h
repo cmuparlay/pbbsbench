@@ -84,7 +84,31 @@ public:
   }
 };
 
-// cannot store the value 0
+template <typename V>
+struct atomic_aba_free {
+private:
+   constexpr static unsigned long set_bit= (1ul << 63);
+public:
+  std::atomic<V> v;
+  atomic_aba_free(V initial) : v(initial) {}
+  atomic_aba_free() {}
+  V load() { // set then mask high bit to ensure not zero
+    size_t x = internal::lg.commit_value((size_t) v.load() | set_bit).first;
+    return (V) (x & ~set_bit);
+  }
+  void init(V vv) { v = vv; }
+  void store(V vv) {
+    V old_v = load();
+    v.compare_exchange_strong(old_v, vv);
+  }
+  void cam(V expected, V new_v) {
+    V old_v = load();
+    if (expected == old_v)
+      v.compare_exchange_strong(old_v, new_v);
+  }
+  V operator=(V b) { store(b); return b; }
+};
+
 template <typename V>
 struct atomic_write_once {
 private:
@@ -125,16 +149,19 @@ struct memory_pool {
   
   void acquire(T* p) { pool.acquire(p);}
   
-  void retire(T* p) {
+  bool* retire(T* p) {
     assert(p != nullptr);
-    auto x = internal::lg.commit_value_safe(p);
-    if (x.second) // only retire if first try
-      internal::with_empty_log([&] {pool.retire(p);}); 
+    if (!internal::helping)
+      return internal::with_empty_log([&] {return pool.retire(p);});
+    else return nullptr;
+    //auto x = internal::lg.commit_value_safe(p);
+    //if (x.second) // only retire if first try
+    //  internal::with_empty_log([&] {pool.retire(p);}); 
   }
 
-  void retire_ni(T* p) {
+  bool* retire_ni(T* p) {
     assert(p != nullptr);
-    internal::with_empty_log([&] {pool.retire(p);});
+    return internal::with_empty_log([&] {return pool.retire(p);});
   }
 	      
   void destruct(T* p) {

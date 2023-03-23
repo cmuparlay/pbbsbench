@@ -30,7 +30,9 @@ struct acquired_pool {
   void stats() { pool.stats();}
   void clear() { pool.clear();}
   void destruct(T* ptr) { pool.destruct(ptr); }
-  void acquire(T* ptr) { ptr->acquired = true; }
+  void acquire(T* ptr) {
+    if (ptr->acquired == false)
+      ptr->acquired = true; }
   template <typename ... Args>
   T* new_obj(Args... args) { return pool.new_obj(args...);} 
 

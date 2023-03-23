@@ -1,3 +1,5 @@
+#pragma once
+
 // The flock library.
 
 // Public interface for lock:
@@ -46,7 +48,6 @@
 //    reserve()
 //    clear()
 
-#define NoHelp
 
 #ifdef NoHelp  // use regular locks
 #include "spin_lock.h"
@@ -85,5 +86,38 @@ std::vector<internal::lock> lock::locks{1ul << bucket_bits};
 #else 
  using lock = internal::lock;
 #endif
+  thread_local long try_time_taken = -1;
+
+  template <typename F>
+  auto try_loop(const F& f, int delay = 200, const int max_multiplier = 10) {
+    int multiplier = 1;
+    int cnt = 0;
+    while (true)  {
+      if (cnt++ == 1000000000/(delay*max_multiplier)) {
+	std::cout << "problably in an infinite retry loop" << std::endl;
+	abort(); 
+	//deadlock = true;
+      }
+      auto r = f();
+      //if (try_time_taken != -1) delay = try_time_taken;
+      if (r.has_value()) return *r;
+      multiplier = std::min(2*multiplier, max_multiplier);
+      for (volatile int i=0; i < delay * multiplier; i++);
+    }
+  }
+
+  template <typename F>
+  auto try_loop_(int rounds, const F& f, int delay = 200, const int max_multiplier = 10) {
+    int multiplier = 1;
+    int cnt = 0;
+    while (cnt++ < rounds)  {
+      auto r = f();
+      if (r.has_value()) return r;
+      multiplier = std::min(2*multiplier, max_multiplier);
+      for (volatile int i=0; i < delay * multiplier; i++);
+    }
+    using RT = decltype(f());
+    return RT();
+  }
 
 } // namespace flck

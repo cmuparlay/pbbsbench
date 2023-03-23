@@ -21,9 +21,6 @@ namespace internal {
 // used for reentrant locks
 static thread_local size_t current_id = parlay::worker_id();
 
-// a flag to indicate that currently helping
-static thread_local bool helping = false;
-
 // user facing lock
 using lock_entry_ = size_t;
 struct lock; // for back reference
@@ -102,6 +99,11 @@ private:
       // true indicates this is ABA free since current cannot
       // be reused until all helpers are done with it.
       Tag::cas(lck, current, nullptr, true);
+  }
+
+  void unlock() {
+    lock_entry current = load();
+    Tag::cas(lck, current, nullptr, true);
   }
 
   bool is_locked_(lock_entry le) { return Tag::value(le) != nullptr;}

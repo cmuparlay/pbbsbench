@@ -32,7 +32,8 @@
 #include "../utils/stats.h"
 #include "../utils/parse_results.h"
 
-#include "lsh.h"
+//#include "lsh.h"
+#include "parallel_lsh.h"
 #include "../utils/csvfile.h"
 
 extern bool report_stats;
@@ -45,7 +46,8 @@ template <typename T, typename I>
 void searchAll(I& index, parlay::sequence<Tvec_point<T>*>& q, int k, unsigned dim,
   parlay::sequence<uint32_t>& query_result_size,
   parlay::sequence<uint32_t>& query_result_ids,
-  parlay::sequence<float>&    query_result_dists) {
+  parlay::sequence<float>&    query_result_dists,
+  parlay::sequence<size_t>&   query_result_comps) {
 
   grann::Parameters search_params;
 
@@ -53,15 +55,16 @@ void searchAll(I& index, parlay::sequence<Tvec_point<T>*>& q, int k, unsigned di
 	parlay::parallel_for(0, q.size(), [&] (size_t i) {
     uint32_t res_count = index.search(q[i]->coordinates.begin(), dim, k, search_params,
         query_result_ids.begin() + i * k,
-        query_result_dists.begin() + i * k);
+        query_result_dists.begin() + i * k,
+        query_result_comps.begin() + i);
     query_result_size[i] = res_count;
-  });
+  }, 1);
   std::cout << "Finished searches" << std::endl;
 
 }
 
 template<typename T, typename I>
-nn_result checkRecall(
+lsh_result checkRecall(
         I& index,
         parlay::sequence<Tvec_point<T>*> &q,
         parlay::sequence<ivec_point> groundTruth,
@@ -71,18 +74,20 @@ nn_result checkRecall(
   parlay::sequence<uint32_t>    query_result_size(q.size());
   parlay::sequence<uint32_t> query_result_ids(q.size() * k);
   parlay::sequence<float>    query_result_dists(q.size() * k);
+  parlay::sequence<size_t> query_result_comps(q.size());
 
   parlay::internal::timer t;
   int r = 10;
   float query_time;
 
-  searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists);
+  searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists, query_result_comps);
   t.next_time();
-  searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists);
+  searchAll(index, q, k, d, query_result_size, query_result_ids, query_result_dists, query_result_comps);
   query_time = t.next_time();
 
   for (size_t i=0; i<q.size(); ++i) {
     q[i]->ngh.resize(query_result_size[i]);
+    q[i]->dist_calls = query_result_comps[i];
     for (size_t j=0; j<query_result_size[i]; ++j) {
       q[i]->ngh[j] = query_result_ids[i*k + j];
     }
@@ -127,25 +132,25 @@ nn_result checkRecall(
     recall = static_cast<float>(numCorrect)/static_cast<float>(r*n);
   }
   float QPS = q.size()/query_time;
-  auto stats = query_stats(q);
+  auto stats = distance_stats(q);
   std::cout << "recall = " << recall << " QPS = " << QPS << " k = " << k << std::endl;
-  // Q, c are just some dummy values.
-  nn_result N(recall, stats, QPS, k, 500, 500, q.size());
+  int num_tables=0; //dummy param, we'll add varying tables later
+  lsh_result N(recall, stats, QPS, k, num_tables, q.size());
   return N;
 }
 
 void write_to_csv(std::string csv_filename, parlay::sequence<float> buckets,
-  parlay::sequence<nn_result> results){
+  parlay::sequence<lsh_result> results, LSH L){
   csvfile csv(csv_filename);
-  //csv << "GRAPH" << "Parameters" << "Size" << "Build time" << "Avg degree" << "Max degree" << endrow;
-  //csv << G.name << G.params << G.size << G.time << G.avg_deg << G.max_deg << endrow;
+  csv << "LSH" << "Parameters" << "Size" << "Build time"  << endrow;
+  csv << L.name << L.params << L.size << L.time << endrow;
   csv << endrow;
   csv << "Num queries" << "Target recall" << "Actual recall" << "QPS" << "Average Cmps" <<
-    "Tail Cmps" << "Average Visited" << "Tail Visited" << "k" << "Q" << "cut" << endrow;
+    "Tail Cmps" << "k" << "Tables" << endrow;
   for(int i=0; i<results.size(); i++){
-    nn_result N = results[i];
-    csv << N.num_queries << buckets[i] << N.recall << N.QPS << N.avg_cmps << N.tail_cmps <<
-      N.avg_visited << N.tail_visited << N.k << N.beamQ << N.cut << endrow;
+    lsh_result N = results[i];
+    csv << N.num_queries << buckets[i] << N.recall << N.QPS << N.avg_cmps 
+    << N.tail_cmps << N.k << N.num_tables << endrow;
   }
   csv << endrow;
   csv << endrow;
@@ -153,20 +158,18 @@ void write_to_csv(std::string csv_filename, parlay::sequence<float> buckets,
 
 template<typename T, typename I>
 void search_and_parse(I& index, parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<Tvec_point<T>*> &q,
-    parlay::sequence<ivec_point> groundTruth, char* res_file) {
+    parlay::sequence<ivec_point> groundTruth, char* res_file, LSH L) {
     unsigned d = v[0]->coordinates.size();
 
-    parlay::sequence<nn_result> results;
-    std::vector<int> beams = {15, 20, 30, 50, 75, 100, 125, 250, 500};
+    parlay::sequence<lsh_result> results;
     std::vector<int> allk = {10, 15, 20, 30, 50, 100};
-    std::vector<float> cuts = {1.1, 1.125, 1.15, 1.175, 1.2, 1.25};
 
     for (int kk : allk)
       results.push_back(checkRecall(index, q, groundTruth, kk, d));
 
     parlay::sequence<float> buckets = {.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .73, .75, .77, .8, .83, .85, .87, .9, .93, .95, .97, .99, .995, .999};
     auto [res, ret_buckets] = parse_result(results, buckets);
-    if(res_file != NULL) write_to_csv(std::string(res_file), ret_buckets, res);
+    if(res_file != NULL) write_to_csv(std::string(res_file), ret_buckets, res, L);
 }
 
 }  // namespace recall
@@ -190,15 +193,15 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   I.build(params);
   double idx_time = t.next_time();
 
-  // std::string name = "Single-Probe-LSH";
-  // std::string params = "NumTables = " + std::to_string(maxDeg) + ", TableSize = " + std::to_string(beamSize);
+  std::string name = "Single-Probe-LSH";
+  std::string params_string = "NumTables = " + std::to_string(maxDeg) + ", TableSize = " + std::to_string(beamSize);
 
-  parlay::sequence<uint32_t> query_result_ids(q.size() * k);
-  parlay::sequence<float>    query_result_dists(q.size() * k);
+  LSH L(name, params_string, v.size(), idx_time);
+  L.print();
 
   uint32_t dim = q[0]->coordinates.size();
 
-  recall::search_and_parse(I, v, q, groundTruth, res_file);
+  recall::search_and_parse(I, v, q, groundTruth, res_file, L);
 }
 
 

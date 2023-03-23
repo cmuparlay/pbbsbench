@@ -7,7 +7,8 @@
 // indirection, but pointers to objects (ptr_type) must be "recorded
 // once" as described in the paper.
 #pragma once
-
+#include <parlay/parallel.h>
+#include <parlay/sequence.h>
 #include "flock/flock.h"
 
 #ifdef Versioned
@@ -17,6 +18,8 @@
 #include "versioned_recorded_once.h"
 #elif FullyIndirect
 #include "versioned_indirect.h"
+#elif Transactional
+#include "versioned_transaction.h"
 #else
 #include "versioned_hybrid.h"
 #endif
@@ -40,7 +43,4 @@ namespace verlib {
 
 namespace verlib {
   using flck::with_epoch;
-  using flck::memory_pool;
 }
-
-

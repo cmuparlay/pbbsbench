@@ -40,7 +40,7 @@ namespace grann {
     }
     ~HashTable() {}
 
-    void generate_hps() {
+    void generate_hps(size_t i) {
       std::random_device              r;
       std::default_random_engine      rng{r()};
       std::normal_distribution<float> gaussian_dist;
@@ -55,8 +55,11 @@ namespace grann {
       }
     }
 
-    std::vector<uint32_t>& get_bucket(bitstring bucket_id) {
-      return hashed_vectors[(size_t) bucket_id.to_ulong()];
+    parlay::sequence<uint32_t>& get_bucket(bitstring bucket_id) {
+      auto seq = parlay::delayed_seq<size_t>(buckets.size(), [&] (size_t i) { return buckets[i].first; });
+      size_t index = parlay::internal::binary_search(seq, bucket_id.to_ulong(), std::less<size_t>());
+      assert(bucket_id.to_ulong() == buckets[index].first);
+      return buckets[index].second;
     }
 
     template<typename T>
@@ -79,19 +82,19 @@ namespace grann {
       return input_bits;
     }
 
-  void add_vector(bitstring vector_hash, uint32_t vector_id) {
-    hashed_vectors[(size_t) vector_hash.to_ulong()].push_back(vector_id);
-  }
-
   void add_hp(std::vector<float> hp) {
     random_hps.push_back(hp);
+  }
+
+  void set_buckets(parlay::sequence<std::pair<size_t, parlay::sequence<uint32_t>>>&& B) {
+    buckets = std::move(B);
   }
 
    protected:
     uint32_t vector_dim;  // dimension of points stored/each hp vector
     uint32_t table_size;  // number of hyperplanes
     std::vector<std::vector<float>>     random_hps;
-    std::map<size_t, std::vector<uint32_t>> hashed_vectors;
+    parlay::sequence<std::pair<size_t, parlay::sequence<uint32_t>>> buckets;
   };
 
 
@@ -170,9 +173,6 @@ namespace grann {
      ~LSHIndex() {
      }
 
-//    void save(const char *filename);
-//    void load(const char *filename);
-
     void build(const Parameters &params) {
       num_tables = params.Get<uint32_t>("num_tables");
       table_size = params.Get<uint32_t>("table_size");
@@ -183,32 +183,26 @@ namespace grann {
       // 1. generate hyperplanes for the table
       for (size_t i = 0; i < num_tables; i++) {
         HashTable table = HashTable(table_size, dim);
-        table.generate_hps();
+        table.generate_hps(i);
         tables.push_back(table);
       }
 
       size_t j = 0;
       for (auto &table : tables) {
         std::cout << "Building table: " << j << std::endl;
-        for (int64_t i = 0; i < (int64_t) v.size(); ++i) {
+
+        auto hash_ids = parlay::sequence<std::pair<size_t, uint32_t>>::from_function(v.size(), [&] (size_t i) {
           const T* cur_vec = v[i]->coordinates.begin();
           bitstring cur_vec_hash = table.get_hash(cur_vec);
-          table.add_vector(cur_vec_hash, i);
-        }
+          return std::make_pair(cur_vec_hash.to_ulong(), i);
+        });
+        auto buckets = parlay::group_by_key_ordered(hash_ids);
+
+        table.set_buckets(std::move(buckets));
+
         ++j;
       }
     }
-
-  template<typename InType, typename OutType>
-  void convert_types(const InType* srcmat, OutType* destmat, uint64_t npts,
-                     uint64_t dim) {
-// #pragma omp parallel for schedule(static, 65536)
-    for (int64_t i = 0; i < (int64_t) npts; i++) {
-      for (uint64_t j = 0; j < dim; j++) {
-        destmat[i * dim + j] = (OutType) srcmat[i * dim + j];
-      }
-    }
-  }
 
   // Returns the number of neighbors retrieved.
   uint32_t search(T *query, uint32_t dim, uint32_t res_count,
@@ -217,7 +211,7 @@ namespace grann {
     std::vector<uint32_t> candidates;
     for (auto &table : tables) {
       bitstring         query_hash = table.get_hash(query);
-      std::vector<uint32_t>& curr_bucket = table.get_bucket(query_hash);
+      parlay::sequence<uint32_t>& curr_bucket = table.get_bucket(query_hash);
       candidates.insert(candidates.end(), curr_bucket.begin(),
                         curr_bucket.end());
     }
@@ -232,6 +226,7 @@ namespace grann {
         query, dim, candidates, best_candidates, max_size, curr_size, inserted,
         cmps);
     comps[0]=(size_t) cmps;
+
     res_count = curr_size < res_count ? curr_size : res_count;
     for (uint32_t i = 0; i < res_count; i++) {
       indices[i] = best_candidates[i].id;
@@ -240,6 +235,9 @@ namespace grann {
         distances[i] = best_candidates[i].distance;
       }
     }
+
+    // TODO
+    *comps = 0;
 
     return res_count;
   }

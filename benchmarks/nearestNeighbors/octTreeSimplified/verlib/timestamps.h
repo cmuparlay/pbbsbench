@@ -10,14 +10,14 @@ namespace verlib {
 thread_local int read_delay = 1;
 thread_local int write_delay = 1;
 
-struct alignas(64) timestamp_hw {
-
   TS rdtsc(){
       unsigned int lo,hi;
       __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
       return (TS) (((uint64_t)(hi & ~(1<<31)) << 32) | lo);
   }
 
+  // Use hardware clock with update ensured on read
+struct alignas(64) timestamp_read_hw {
   TS get_stamp() {return rdtsc();}
   TS get_read_stamp() {
     TS ts = rdtsc();
@@ -28,7 +28,22 @@ struct alignas(64) timestamp_hw {
   TS get_write_stamp() {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     return rdtsc();}
-  timestamp_hw() {}
+  timestamp_read_hw() {}
+};
+
+  // Use hardware clock with update ensured on write
+struct alignas(64) timestamp_write_hw {
+  TS get_stamp() {return rdtsc();}
+  TS get_read_stamp() {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    return rdtsc();}
+  TS get_write_stamp() {
+    TS ts = rdtsc();
+    while(ts == rdtsc()) {}
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    return ts+1;
+  }
+  timestamp_write_hw() {}
 };
 
 
@@ -111,7 +126,7 @@ struct alignas(64) timestamp_write {
     }
     return ts+1;
   }
-  timestamp_write() : stamp(1) {
+  timestamp_write() : stamp(2) {
     auto cstr = std::getenv("WRITE_DELAY");
     if(cstr != nullptr)
       delay = atoi(cstr);
@@ -275,14 +290,15 @@ timestamp_read global_stamp{100};
 #elif WriteStamp
 timestamp_write global_stamp;
 #elif HWStamp
-timestamp_hw global_stamp;
+timestamp_read_hw global_stamp;
+#elif HWWriteStamp
+timestamp_write_hw global_stamp;
 #elif NoIncStamp
 timestamp_no_inc global_stamp;
 #else
 timestamp_read_write global_stamp;
 #endif
 
-const TS tbd = std::numeric_limits<TS>::max();
 const TS zero_stamp = 1;
 thread_local TS local_stamp{-1};
 
@@ -319,6 +335,8 @@ auto with_snapshot_internal(F f) {
   });
 }
 
+thread_local bool aborted = false;
+
 #ifndef LazyStamp
 template <typename F>
 auto with_snapshot(F f, bool unused_parameter=false) {
@@ -335,7 +353,6 @@ auto with_snapshot(F f, bool unused_parameter=false) {
   });
 }
 #else
-thread_local bool aborted = false;
 thread_local bool speculative = false;
 parlay::sequence<long> num_retries(parlay::num_workers()*16, 0);
 void print_retries() {

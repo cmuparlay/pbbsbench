@@ -78,13 +78,7 @@ struct oct_tree {
     return (final);
   }
 
-  struct node { 
-
-  //WARNING!!!!!!!
-  //the "size" field of a node is by design not always accurate
-  //it should always be updated before being used in any function
-  //this is for concurrency reasons
-  //WARNING!!!!!!!
+  struct node : verlib::versioned { 
 
   public:
     int bit;
@@ -118,14 +112,19 @@ struct oct_tree {
 
 
     // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts, int currentBit) : removed(false) { 
-      n = Pts.size();
-
+    node(slice_t Pts, int currentBit) : removed(false), n(Pts.size()) { 
       // strips off the integer tag, no longer needed
       P = leaf_seq(n);
       indexed_pts = parlay::sequence<indexed_point>(n);
       for (int i = 0; i < n; i++) {
-        P[i] = Pts[i].second;
+        if(P.size() < n) {
+          std::stringstream ss;
+          ss << "n = " << n << std::endl << "P.size() = " << P.size() << std::endl;
+          std::cout << ss.str() << std::endl;
+          exit(1);
+        }
+        auto x = Pts[i].second;
+        P[i] = x;
         indexed_pts[i] = Pts[i];  
       }
       L = R = nullptr;
@@ -149,9 +148,20 @@ struct oct_tree {
       set_center();
       bit = currentBit;
     }
-    
+
+    // recursively frees the tree
+    static void delete_rec(node* T) {
+      if (T != nullptr) {
+        parlay::par_do_if(T->n > 1000,
+         [&] () { delete_rec(T->L.load());},
+         [&] () { delete_rec(T->R.load());});
+        node::free_node(T);
+      }
+    }
+
     static node* new_leaf(slice_t Pts, int currentBit) {
       node* r = alloc_node();
+      assert(Pts.begin() != nullptr);
       new (r) node(Pts, currentBit);
       return r;
     }
@@ -168,12 +178,12 @@ struct oct_tree {
       return nd;
     }
     
-    ~node() {
-      // need to collect in parallel
-      parlay::par_do_if(n > 1000,
-			[&] () { delete_tree(L);},
-			[&] () { delete_tree(R);});
-    }
+    // ~node() {
+    //   // need to collect in parallel
+    //   parlay::par_do_if(n > 1000,
+		// 	[&] () { delete_tree(L.load());},
+		// 	[&] () { delete_tree(R.load());});
+    // }
 
     parlay::sequence<vtx*> flatten() {
       parlay::sequence<vtx*> r(n);
@@ -206,14 +216,6 @@ struct oct_tree {
 			  [&] () {l = L.load()->depth();},
 			  [&] () {r = R.load()->depth();});
 	return 1 + std::max(l,r);
-      }
-    }
-
-    // recursively frees the tree
-    static void delete_tree(node* T) {
-      if (T != nullptr) {
-        T->~node();
-        node::free_node(T);
       }
     }
 
@@ -255,8 +257,6 @@ struct oct_tree {
       }
     }
   }; // end struct node
-
-
 
   // build a tree given a sequence of pointers to points
   template <typename Seq>
@@ -371,13 +371,12 @@ private:
       }
     }
   }
-
 }; //end octTree structure 
 
   // uses the parlay memory manager, could be replaced will alloc/free
 
 template <typename vtx>
-verlib::memory_pool<typename oct_tree<vtx>::node> node_allocator;
+flck::memory_pool<typename oct_tree<vtx>::node> node_allocator;
 
 template <typename vtx>
 typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node() { return node_allocator<vtx>.new_obj();}
