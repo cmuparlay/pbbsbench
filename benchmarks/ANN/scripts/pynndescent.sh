@@ -20,9 +20,9 @@ SG=$G/MSSPACEV1B
 ./neighbors -R 60 -L 100 -a 10 -d 1.2 -g $SG/100M_pynn_60 -q $SP/query.i8bin -c $SP/msspacev-100M -res $O/spacev_pynn.csv -f bin -t int8 $SP/spacev1b_base.i8bin.crop_nb_100000000
 
 # # #TEXT2IMAGE: two settings
-# TP=$P/text2image1B
-# TG=$G/text2image1B
-# ./neighbors -R 60 -L 100 -a 10 -d .9 -o $TG/1M_pynn_60 -q $TP/query.public.100K.fbin -c $TP/text2image-1M -res $TG/pynn_res.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_1000000
-# ./neighbors -R 60 -L 100 -a 10 -d .9 -o $TG/10M_pynn_60 -q $TP/query.public.100K.fbin -c $TP/text2image-10M -res $TG/pynn_res.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_10000000
-# ./neighbors -R 60 -L 100 -a 10 -d .9 -o $TG/100M_pynn_60 -q $TP/query.public.100K.fbin -c $TP/text2image-100M -res $TG/pynn_res.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_100000000
+TP=$P/text2image1B
+TG=$G/text2image1B
+./neighbors -R 60 -L 100 -a 10 -d .9 -g $TG/1M_pynn_60 -q $TP/query.public.100K.fbin -c $TP/text2image-1M -res $O/t2i_pynn.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_1000000
+./neighbors -R 60 -L 100 -a 10 -d .9 -g $TG/10M_pynn_60 -q $TP/query.public.100K.fbin -c $TP/text2image-10M -res $O/t2i_pynn.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_10000000
+./neighbors -R 60 -L 100 -a 10 -d .9 -g $TG/100M_pynn_60 -q $TP/query.public.100K.fbin -c $TP/text2image-100M -res $O/t2i_pynn.csv -f bin -t float -D 1 $TP/base.1B.fbin.crop_nb_100000000
 
