@@ -343,7 +343,7 @@ msspacev-100M:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF65536_HNSW32,PQ64x4fsr",
+              [{"indexkey": "OPQ64_128,IVF65536_HNSW32,PQ128x4fsr",
                 "query_bs": 4096
                 }]
           query-args: |
@@ -384,7 +384,7 @@ msspacev-1B:
       run-groups:
         base:
           args: |
-              [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ64x4fsr",
+              [{"indexkey": "OPQ64_128,IVF1048576_HNSW32,PQ128x4fsr",
                 "query_bs": 4096
                 }]
           query-args: |

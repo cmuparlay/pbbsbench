@@ -17,9 +17,9 @@ BG=$G/bigann
 SP=$P/MSSPACEV1B
 SG=$G/MSSPACEV1B
 # ./neighbors -a 1000 -R 3 -L 50 -b 1 -g $SG/1M_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-1M -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin.crop_nb_1000000
-# ./neighbors -a 1000 -R 3 -L 50 -b 1 -g $SG/10M_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-10M -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin.crop_nb_10000000
-# ./neighbors -a 1000 -R 3 -L 50 -b 1 -g $SG/100M_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-100M -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin.crop_nb_100000000
-./neighbors -a 1000 -R 3 -L 50 -b 1 -o $SG/1B_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-1B -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin
+./neighbors -a 1000 -R 3 -L 50 -b 1 -o $SG/10M_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-10M -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin.crop_nb_10000000
+./neighbors -a 1000 -R 3 -L 50 -b 1 -o $SG/100M_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-100M -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin.crop_nb_100000000
+# ./neighbors -a 1000 -R 3 -L 50 -b 1 -o $SG/1B_HCNNG_50 -q $SP/query.i8bin -c $SP/msspacev-1B -res $O/spacev_HCNNG.csv -f bin -t int8 $SP/spacev1b_base.i8bin
 
 # # #TEXT2IMAGE: two settings
 # TP=$P/text2image1B
