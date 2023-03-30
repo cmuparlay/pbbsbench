@@ -1,6 +1,5 @@
 #!/bin/bash
-
-# cd ~/big-ann-benchmarks
+cd ~/big-ann-benchmarks
 # # download datasets
 # #may need to be run a couple times, occasionally the connection returns an error
 python3 create_dataset.py --dataset bigann-10M 
