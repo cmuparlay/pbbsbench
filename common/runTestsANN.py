@@ -25,7 +25,8 @@ def onPprocessors(command,p) :
   
 def shellGetOutput(str) :
   process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             text=True)
   output, err = process.communicate()
   
   if (len(err) > 0):
