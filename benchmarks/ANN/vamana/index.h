@@ -35,12 +35,12 @@ extern bool report_stats;
 
 template<typename T>
 struct knn_index{
-	int maxDeg;
-	int beamSize;
-	double r2_alpha; //alpha parameter for round 2 of robustPrune
-	unsigned d;
-	bool mips;
-	std::set<int> delete_set; 
+	int maxDeg; // maximum out-degree of a vertex in the graph
+	int beamSize; // beam size for beam search during querying and construction
+	double r2_alpha; // alpha parameter for round 2 of robustPrune (or if there's no round 2, for round 1)
+	unsigned d; // the dimension of the points
+	bool mips; // whether the search is maximum inner product search as opposed to minimal euclidean distance
+	std::set<int> delete_set; // for use in lazy deletion of points
 	using tvec_point = Tvec_point<T>;
 	using fvec_point = Tvec_point<float>;
 	tvec_point* medoid;
@@ -51,11 +51,25 @@ struct knn_index{
 
 	knn_index(int md, int bs, double a, unsigned dim, bool m=false) : maxDeg(md), beamSize(bs), r2_alpha(a), d(dim), mips(m) {}
 
+	/* 
+	function for computing the distance between two points in the dataset
+
+	@param p: pointer to the first point
+	@param q: pointer to the second point
+	@param d: dimension of the points
+	*/
 	float Distance(T* p, T* q, unsigned d){
 		if(mips) return mips_distance(p, q, d);
 		else return distance(p, q, d);
 	}
 
+	/* 
+	function for computing the distance between a query and an element of the dataset 
+	
+	@param p: pointer to the query
+	@param q: pointer to the point to be compared to the query
+	@param d: dimension of the points
+	*/
 	float CDistance(float* p, T* q, unsigned d){
 		if(mips) return mips_distance(p, q, d);
 		else return distance(p, q, d);
@@ -124,43 +138,51 @@ struct knn_index{
 		std::cout << "]" << std::endl;
 	}
 
-	//robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
-	//is added to the field new_nbhs instead of directly replacing the out_nbh of p
+	
+	/* 
+	robustPrune routine as found in DiskANN paper, with the exception that the new candidate set
+	is added to the field new_nbhs instead of directly replacing the out_nbh of p to allow concurrent pruning without locks.
+
+	@param p: the point whose out_nbh is being pruned/updated
+	@param candidates: the candidate set, consisting of pid pairs with indices of vectors and their distance to p (per the paper, all points visited in beam search from medoid to p over the existing graph). Not expected to contain the neighbors of p iff add is false. If add is false and the neighbors are not contained in the candidate set, all current neighbors of p will be removed (or at least the ones not incidentally in the candidate set).
+	@param v: the dataset, a sequence containing pointers to the tvec_point objects which represent the vectors/graph vertices
+	@param alpha: the pruning parameter
+	@param add: whether or not to add the out neighbors of p to the candidate set (see candidates)
+	*/
 	void robustPrune(tvec_point* p, parlay::sequence<pid> candidates, parlay::sequence<tvec_point*> &v, double alpha, bool add = true) {
     // add out neighbors of p to the candidate set.
     if(add){
-    	for (size_t i=0; i<size_of(p->out_nbh); i++) {
+    	for (size_t i=0; i < size_of(p->out_nbh); i++) {
 				candidates.push_back(std::make_pair(p->out_nbh[i],
 					Distance(v[p->out_nbh[i]]->coordinates.begin(), p->coordinates.begin(), d)));
 			}
     }
 		
-
 		// Sort the candidate set in reverse order according to distance from p.
 		auto less = [&] (pid a, pid b) {return a.second < b.second;};
 		parlay::sort_inplace(candidates, less);
 
-		parlay::sequence<int> new_nbhs = parlay::sequence<int>();
+		parlay::sequence<int> new_nbhs = parlay::sequence<int>(); // new neighbors of p
     // new_nbhs.reserve(maxDeg);
 
-    size_t candidate_idx = 0;
+    size_t candidate_idx = 0; // index of the candidate to be considered in the sorted sequence
 		while (new_nbhs.size() < maxDeg && candidate_idx < candidates.size()) {
       // Don't need to do modifications.
-      int p_star = candidates[candidate_idx].first;
+      int p_star = candidates[candidate_idx].first; // the id of the candidate to be considered
       candidate_idx++;
-      if (p_star == p->id || p_star == -1) {
+      if (p_star == p->id || p_star == -1) { // if the candidate is p itself or has been pruned
         continue;
       }
 
-      new_nbhs.push_back(p_star);
-
+      new_nbhs.push_back(p_star); // add current best candidate to new_nbhs
+	  // Prune the candidate set.
       for (size_t i = candidate_idx; i < candidates.size(); i++) {
         int p_prime = candidates[i].first;
         if (p_prime != -1) {
           float dist_starprime = Distance(v[p_star]->coordinates.begin(), v[p_prime]->coordinates.begin(), d);
           float dist_pprime = candidates[i].second;
           if (alpha * dist_starprime <= dist_pprime) {
-            candidates[i].first = -1;
+            candidates[i].first = -1; // pruned candidates have -1 as their id in the candidate set
           }
         }
       }
@@ -169,8 +191,14 @@ struct knn_index{
 	}
 
 
-	//wrapper to allow calling robustPrune on a sequence of candidates 
-	//that do not come with precomputed distances
+	/* 
+	wrapper to allow calling robustPrune on a sequence of candidates that do not come with precomputed distances 
+
+	@param p: the point whose out_nbh is being pruned/updated
+	@param candidates: the candidate set, consisting of indices of vectors (per the paper, all points visited in beam search from medoid to p over the existing graph). Not expected to contain the neighbors of p iff add is false. If add is false and the neighbors are not contained in the candidate set, all current neighbors of p will be removed (or at least the ones not incidentally in the candidate set).
+	@param v: the sequence containing all points already in the graph
+	@param alpha: the pruning parameter
+	*/
 	void robustPrune(Tvec_point<T>* p, parlay::sequence<int> candidates, parlay::sequence<Tvec_point<T>*> &v, double alpha, bool add = true){
     parlay::sequence<pid> cc;
     cc.reserve(candidates.size() + size_of(p->out_nbh));
@@ -180,6 +208,9 @@ struct knn_index{
     return robustPrune(p, std::move(cc), v, alpha, add);
 	}
 
+	/*
+	constructs the graph with dataset v, with inserts describing the elements of the dataset to be inserted into the graph.
+	*/
 	void build_index(parlay::sequence<Tvec_point<T>*> &v, parlay::sequence<int> inserts, bool two_pass=false){
 		std::cout << "Mips: " << mips << std::endl;
 		clear(v);
@@ -192,6 +223,9 @@ struct knn_index{
 		batch_insert(inserts, v, true, r2_alpha, 2, .02,  two_pass);
 	}
 
+	/* 
+	Adds a sequence of indices representing points to the delete_set, which will exclude them from query results until consolidate_deletes() is called and they're actually removed from the graph
+	*/
 	void lazy_delete(parlay::sequence<int> deletes, parlay::sequence<Tvec_point<T>*> &v){
 		for(int p : deletes){
 			if(p < 0 || p > (int) v.size() ){
@@ -203,6 +237,9 @@ struct knn_index{
 		} 
 	}
 
+	/*
+	adds an index representing a point to the delete_set, which will exclude it from query results until consolidate_deletes() is called and it's actually removed from the graph
+	*/
 	void lazy_delete(int p, parlay::sequence<Tvec_point<T>*> &v){
 		if(p < 0 || p > (int) v.size()){
 			std::cout << "ERROR: invalid point " << p << " given to lazy_delete" << std::endl; 
@@ -215,52 +252,56 @@ struct knn_index{
 		delete_set.insert(p);
 	}
 
+	/* 
+	The Delete algorithm described in Algorithm 4 of the FreshDiskANN paper. Updates the graph to remove all points in the delete_set (while preserving the alpha-RNG property), and then clears the delete_set.
+	*/
 	void consolidate_deletes(parlay::sequence<Tvec_point<T>*> &v){
 		//clear deleted neighbors out of delete set for preprocessing
-
-		parlay::parallel_for(0, v.size(), [&] (size_t i){
-			if(delete_set.find(i) != delete_set.end()){
+		parlay::parallel_for(0, v.size(), [&] (size_t i){ // for each point i in the graph
+			if(delete_set.find(i) != delete_set.end()){ // if i is in the delete set
 				parlay::sequence<int> new_edges; 
-				for(int j=0; j<size_of(v[i]->out_nbh); j++){
-					if(delete_set.find(v[i]->out_nbh[j]) == delete_set.end()) new_edges.push_back(v[i]->out_nbh[j]);
+				for(int j=0; j<size_of(v[i]->out_nbh); j++){ // for each neighbor of i
+					if(delete_set.find(v[i]->out_nbh[j]) == delete_set.end()) new_edges.push_back(v[i]->out_nbh[j]); // if said neighbor is not in the delete set, add it to new_edges (the new out_nbh); don't delete it
 				}
-				if(new_edges.size() < size_of(v[i]->out_nbh)) add_out_nbh(new_edges, v[i]); 
+				if(new_edges.size() < size_of(v[i]->out_nbh)) add_out_nbh(new_edges, v[i]); // if the neighborhood has changed (neighbors were deleted), update it
 			}
 		});
 
-		parlay::parallel_for(0, v.size(), [&] (size_t i){
-			if(delete_set.find(i) == delete_set.end() && size_of(v[i]->out_nbh) != 0){
+		parlay::parallel_for(0, v.size(), [&] (size_t i){ // for each point i in the graph (again)
+			if(delete_set.find(i) == delete_set.end() && size_of(v[i]->out_nbh) != 0){ // if i is not in the delete set and has a non-empty out_nbh
 				std::set<int> new_edges;
 				bool modify = false;
-				for(int j=0; j<size_of(v[i]->out_nbh); j++){
-					if(delete_set.find(v[i]->out_nbh[j]) == delete_set.end()){
-						new_edges.insert(v[i]->out_nbh[j]);
-					} else{
-						modify = true;
-						int index = v[i]->out_nbh[j];
-						for(int k=0; k<size_of(v[index]->out_nbh); k++) new_edges.insert(v[index]->out_nbh[k]);
+				for(int j=0; j<size_of(v[i]->out_nbh); j++){ // for each neighbor j of i
+					int index = v[i]->out_nbh[j]; // (moved this from the else -Ben)
+					if(delete_set.find(index) == delete_set.end()){ 
+						new_edges.insert(index); // if j is not in the delete set add j to new_edges
+					} else{ 
+						modify = true; // now that we're deleting a neighbor the neighborhood will need to be replaced by new_edges
+						for(int k=0; k<size_of(v[index]->out_nbh); k++) new_edges.insert(v[index]->out_nbh[k]); // add all of j's neighbors to new_edges
 					}
 				}
 				//TODO only prune if overflow happens
 				//TODO modify in separate step with new memory initialized in one block
 				if(modify){ 
-					parlay::sequence<int> candidates;
-					for(int j : new_edges) candidates.push_back(j);
-					parlay::sequence<int> new_neighbors(maxDeg, -1);
+					parlay::sequence<int> candidates; 
+					for(int j : new_edges) candidates.push_back(j); // add all new_edges to candidates (this is essentially just converting the new_edges set to a sequence, but it's not obvious why the set would be faster than a preallocated sequence (size_of(v[i]->out_nbh)) to begin with if this is the only time the values are accessed)
+					parlay::sequence<int> new_neighbors(maxDeg, -1); // constructs a sequence of size maxDeg with all elements -1
 					v[i]->new_nbh = parlay::make_slice(new_neighbors.begin(), new_neighbors.end());
-					robustPrune(v[i], candidates, v, r2_alpha, false);
+					robustPrune(v[i], candidates, v, r2_alpha, false); // prune candidates to get i's new neighbors
 					synchronize(v[i]);
 				}
 				
 			} 
 		});
+		// for every point i in the graph, if it's in the delete set set all its out neighbors to -1
+		// is it actually faster to iterate in parallel over the whole graph than to iterate over the delete set?
 		parlay::parallel_for(0, v.size(), [&] (size_t i){
 			if(delete_set.find(i) != delete_set.end()){
 				clear(v[i]);
 			} 
 		});
  
-		delete_set.clear();
+		delete_set.clear(); // clear the delete set
 
 	}
 
@@ -269,28 +310,30 @@ struct knn_index{
 
 		double alpha = 1.2;
 
-		size_t floor = 0;
-		size_t ceiling = inserts.size();
-
+		size_t floor = 0; // I don't think either of these are actually reassigned within this function, which I think makes at least floor redundant
+		size_t ceiling = inserts.size(); 
+		
+		// does this actually shuffle the sequence? This seems like a good use for parlay::random_permutation
 		auto shuffled_inserts = parlay::tabulate(inserts.size(), [&] (size_t i){return inserts[i];});
 
-		parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
+		parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1); // this is a sequence of size maxDeg*(ceiling-floor) with all elements -1
 		//search for each node starting from the medoid, then call
 		//robustPrune with the visited list as its candidate set
 		parlay::parallel_for(floor, ceiling, [&] (size_t i){
 			size_t index = shuffled_inserts[i];
-			v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor));
-			parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d, mips)).first.second;
+			v[index]->new_nbh = parlay::make_slice(new_out.begin()+maxDeg*(i-floor), new_out.begin()+maxDeg*(i+1-floor)); // initializing new_nbh to a slice of new_out, which are for all intents and purposes random vertices
+			parlay::sequence<pid> visited = (beam_search(v[index], v, medoid, beamSize, d, mips)).first.second; // this signature of beam_search returns a pair with a pair of sequences as first and an int as second, with the pair of sequences being the candidate list and visited list, so this ultimately returns the visited list
 			if(report_stats) v[index]->visited = visited.size();
 			robustPrune(v[index], visited, v, alpha);
 		});
+
 		//make each edge bidirectional by first adding each new edge
 		//(i,j) to a sequence, then semisorting the sequence by key values
 		auto to_flatten = parlay::tabulate(ceiling-floor, [&] (size_t i){
 			int index = shuffled_inserts[i+floor];
 			auto edges = parlay::tabulate(size_of(v[index]->new_nbh), [&] (size_t j){
 				return std::make_pair((v[index]->new_nbh)[j], index);
-			});
+			}); // is there a performance penalty for nesting these parlay functions when the length of the outer tabulate is >> p? There are earlier places where it seems these nested parallel calls are avoided.
 			return edges;
 		});
 
@@ -320,7 +363,17 @@ struct knn_index{
 			}
 		});	
 	}
+	/* 
+	Inserts a set of points into the graph in batches of exponentially increasing size, allowing for an efficient lock-less parallel construction as a batch of points only considers the points that are already in the graph (1/base of all the points in the graph up to that point) while constructing its own out edges.
 
+	@param inserts: a sequence of indices of points to insert into the graph
+	@param v: a sequence of pointers to the points of the dataset/ vertices of the graph
+	@param random_order: if true, the points are inserted in a random order
+	@param alpha: the alpha parameter for robustPrune
+	@param base: the base of the exponential batch size increase
+	@param max_fraction: the maximum fraction of the points in the full dataset that can be inserted in a single batch
+	@param two_pass: whether this is the second pass of a two-pass construction
+	*/
 	void batch_insert(parlay::sequence<int> &inserts, parlay::sequence<Tvec_point<T>*> &v, bool random_order = false, double alpha = 1.2, double base = 2,
 		double max_fraction = .02, bool two_pass = false){
 		std::cout << "alpha " << alpha << std::endl; 
@@ -344,13 +397,13 @@ struct knn_index{
 		while(count < m){
 			size_t floor;
 			size_t ceiling;
-			if(pow(base,inc) <= max_batch_size){
-				floor = static_cast<size_t>(pow(base, inc))-1;
-				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), m)-1;
-				count = std::min(static_cast<size_t>(pow(base, inc+1)), m)-1;
+			if(pow(base,inc) <= max_batch_size){ // batch size increases exponentially 
+				floor = static_cast<size_t>(pow(base, inc)) - 1;
+				ceiling = std::min(static_cast<size_t>(pow(base, inc+1)), m) - 1;
+				count = std::min(static_cast<size_t>(pow(base, inc+1)), m) - 1;
 			} else{
 				floor = count;
-				ceiling = std::min(count + static_cast<size_t>(max_batch_size), m)-1;
+				ceiling = std::min(count + static_cast<size_t>(max_batch_size), m) - 1;
 				count += static_cast<size_t>(max_batch_size);
 			}
 			parlay::sequence<int> new_out = parlay::sequence<int>(maxDeg*(ceiling-floor), -1);
@@ -372,6 +425,7 @@ struct knn_index{
 				});
 				return edges;
 			});
+			// below, the new_nbh field replaces the old neighbors of the vertex, applying the updates determined previously
 			parlay::parallel_for(floor, ceiling, [&] (size_t i) {synchronize(v[shuffled_inserts[i]]);} );
 			auto grouped_by = parlay::group_by_key(parlay::flatten(to_flatten));
 			//finally, add the bidirectional edges; if they do not make
@@ -393,12 +447,18 @@ struct knn_index{
 		}
 	}
 
+	/* 
+	Inserts a single point into the graph
+	*/
 	void batch_insert(int p, parlay::sequence<Tvec_point<T>*> &v){
 		parlay::sequence<int> inserts;
 		inserts.push_back(p);
 		batch_insert(inserts, v, true);
 	}
 
+	/* 
+	Confirms that a point has been deleted from the graph by checking that it is not itself in the graph or a neighbor of any other point
+	*/
 	void check_index(parlay::sequence<Tvec_point<T>*> &v){
 		parlay::parallel_for(0, v.size(), [&] (size_t i){
       if(v[i]->id > 1000000 && v[i]->id != medoid->id){
