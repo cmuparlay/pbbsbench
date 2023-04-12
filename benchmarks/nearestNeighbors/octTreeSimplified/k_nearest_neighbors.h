@@ -73,6 +73,7 @@ struct k_nearest_neighbors {
   void are_equal_rec(node* V, node* T, int d){
     if(T->bit != V->bit){
       std::cout << "UNEQUAL: bit" << std::endl;
+      std::cout << "Inserted tree has bit " << V->bit << " while regular tree has bit " << T->bit << std::endl;
     }
     if(!box_eq(T->Box(), V->Box(), d)){
       std::cout << "UNEQUAL: box" << std::endl;
@@ -85,8 +86,9 @@ struct k_nearest_neighbors {
     else if(T->is_leaf() && V->is_leaf()){
       if(T->size() != V->size()){
         std::cout << "UNEQUAL: leaf size" << std::endl;
+        std::cout << "Inserted tree has leaf size " << V->size() << " while regular tree has leaf size " << T->size() << std::endl;
+        std::cout << "Leaves have bit " << V->bit << std::endl;
       } //not a true eq check
-     
       return;
     } else{
       std::cout << "UNEQUAL: internal node vs leaf node" << std::endl;
@@ -281,7 +283,7 @@ struct k_nearest_neighbors {
   int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
     size_t val = ((size_t) 1) << (pos - 1);
     size_t mask = (pos == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << pos);
-    if ((interleave_integer & mask) <= val){
+    if ((interleave_integer & mask) < val){
       return 0;
     } else{
       return 1;
@@ -355,8 +357,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       bool result = true;
       for (int i = 0; i < dimensions; i++) {
     result = (result &&
-          (box.first[i] < vertex->pt[i]) &&
-          (box.second[i] > vertex->pt[i]));
+          (box.first[i] <= vertex->pt[i]) &&
+          (box.second[i] >= vertex->pt[i]));
       }
       return result;
     }
@@ -373,9 +375,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   //takes in a single point and a pointer to the root of the tree
   //as well as a bounding box and its largest side length
   //assumes integer coordinates
-  void insert_point(vtx* p, box b, double Delta){
+  void insert_point(vtx* p){
     verlib::with_epoch([&] {
       int dims = p->pt.dimension();
+      auto [b, Delta] = get_box_delta(dims);
       size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
       indexed_point q = std::make_pair(interleave_int, p);
       while(true) {
@@ -423,8 +426,11 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           while(!(Q->is_leaf())){node* L = Q->Right(); Q=L;}
           indexed_point s = Q->indexed_pts[0];
           int cur_bit = bit;
-          while(cur_bit != T->bit) {
+          assert(cur_bit >= T->bit);
+          if(parent != nullptr) assert(cur_bit < G->bit);
+          while(cur_bit > T->bit) {
             if(lookup_bit(q.first, cur_bit) != lookup_bit(s.first, cur_bit)){
+              // std::cout << "case 1" << std::endl;
               //we know we are in case 1
               //form leaf
               node* G = parent;
@@ -446,6 +452,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
               return true;
             } else cur_bit--;
           }
+          // std::cout << "case 2" << std::endl;
           //case 2
           //calculate new box around T, and create new internal node
           //with corrected box
@@ -504,6 +511,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       //split into an internal node and two leaf children
       if(T->size() + 1 < o_tree::node_cutoff || T->bit == 0){
         //case 1
+        // std::cout << "regular insert" << std::endl;
+        // std::cout << T->bit << std::endl;
         node* N = node::new_leaf(parlay::make_slice(points), T->bit);
         assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(N, left);
@@ -513,8 +522,6 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         }
         delete_single(T);
       } else {
-        //case 2
-
         //sort points in leaf by interleave order
         int cut_point = 0;
         auto less_sort = [&] (indexed_point a, indexed_point b){
@@ -532,20 +539,24 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           cut_point = parlay::internal::binary_search(points, less);
           new_bit--;
         }
-        if(new_bit == 0){
-          node* N = node::new_leaf(parlay::make_slice(points), T->bit);
-          assert(tree.load() == T || G != nullptr);
-          if(G != nullptr) G->set_child(N, left);
-          if(tree.load() == T) {
-            // std::cout << "root changed (leaf: split and insert)" << std::endl; 
-            set_root(N);
-          }
-          delete_single(T);
-        } else{
+        // if(new_bit == 0){
+        //   // TODO is this right????
+        //   // std::cout << "Splitting, case 1" << std::endl;
+        //   node* N = node::new_leaf(parlay::make_slice(points), new_bit);
+        //   assert(tree.load() == T || G != nullptr);
+        //   if(G != nullptr) G->set_child(N, left);
+        //   if(tree.load() == T) {
+        //     // std::cout << "root changed (leaf: split and insert)" << std::endl; 
+        //     set_root(N);
+        //   }
+        //   delete_single(T);
+        // } else{
+          // std::cout << "Splitting, case 2" << std::endl;
           parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
+          if(new_bit == T->bit) abort();
           node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
           node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
-          node* P = node::new_node(L, R, T->bit);
+          node* P = node::new_node(L, R, new_bit+1);
           assert(tree.load() == T || G != nullptr);
           if(G != nullptr) G->set_child(P, left);
           if(T == tree.load()){
@@ -553,7 +564,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             set_root(P);
           }
           delete_single(T);
-        }
+        // }
       }
       return true;
   }
