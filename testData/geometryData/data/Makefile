@@ -55,6 +55,9 @@ cubes_% : ../randPoints
 2DinCube_10M : ../randPoints
 	../randPoints -d 2 10000000 $@
 
+2DinCube_100K : ../randPoints
+	../randPoints -d 2 100000 $@
+
 2DinCube_% : ../randPoints
 	../randPoints -d 2  $(subst 2DinCube_,,$@) $@
 
