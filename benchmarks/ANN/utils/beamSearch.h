@@ -33,6 +33,7 @@
 #include "types.h"
 #include "indexTools.h"
 #include <functional>
+#include <random>
 
 extern bool report_stats;
 
@@ -166,8 +167,15 @@ void beamSearchRandom(parlay::sequence<Tvec_point<T>*>& q,
   }
   // use a random shuffle to generate random starting points for each query
   size_t n = v.size();
-  auto indices =
-      parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+  // auto indices = parlay::random_permutation<int>(static_cast<int>(n), time(NULL));
+
+  parlay::random_generator gen;
+  std::uniform_int_distribution<long> dis(0, n-1);
+  auto indices = parlay::tabulate(q.size(), [&](size_t i) {
+    auto r = gen[i];
+    return dis(r);
+  });
+
   parlay::parallel_for(0, q.size(), [&](size_t i) {
     parlay::sequence<int> neighbors = parlay::sequence<int>(k);
     size_t index = indices[i];
