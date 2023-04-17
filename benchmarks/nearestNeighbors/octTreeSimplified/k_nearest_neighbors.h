@@ -350,18 +350,17 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
   using indexed_point = typename o_tree::indexed_point; 
 
-  //TODO this doesn't seem to properly deal with border cases
   bool within_box(node* T, vtx* vertex) {
       int dimensions = vertex->pt.dimension();
       auto box = T->Box();
       bool result = true;
       for (int i = 0; i < dimensions; i++) {
-    result = (result &&
+        result = (result &&
           (box.first[i] <= vertex->pt[i]) &&
           (box.second[i] >= vertex->pt[i]));
       }
       return result;
-    }
+  }
 
   //strips a point of its child pointers before deleting
   //to ensure child pointers are not deleted
@@ -539,34 +538,216 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           cut_point = parlay::internal::binary_search(points, less);
           new_bit--;
         }
-        // if(new_bit == 0){
-        //   // TODO is this right????
-        //   // std::cout << "Splitting, case 1" << std::endl;
-        //   node* N = node::new_leaf(parlay::make_slice(points), new_bit);
-        //   assert(tree.load() == T || G != nullptr);
-        //   if(G != nullptr) G->set_child(N, left);
-        //   if(tree.load() == T) {
-        //     // std::cout << "root changed (leaf: split and insert)" << std::endl; 
-        //     set_root(N);
-        //   }
-        //   delete_single(T);
-        // } else{
-          // std::cout << "Splitting, case 2" << std::endl;
-          parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
-          if(new_bit == T->bit) abort();
-          node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
-          node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
-          node* P = node::new_node(L, R, new_bit+1);
-          assert(tree.load() == T || G != nullptr);
-          if(G != nullptr) G->set_child(P, left);
-          if(T == tree.load()){
-            // std::cout << "root changed (leaf: split and insert)" << std::endl; 
-            set_root(P);
-          }
-          delete_single(T);
-        // }
+        parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
+        if(new_bit == T->bit) abort();
+        node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
+        node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
+        node* P = node::new_node(L, R, new_bit+1);
+        assert(tree.load() == T || G != nullptr);
+        if(G != nullptr) G->set_child(P, left);
+        if(T == tree.load()){
+          // std::cout << "root changed (leaf: split and insert)" << std::endl; 
+          set_root(P);
+        }
+        delete_single(T);
       }
       return true;
+  }
+
+  //should membership checking be part of deletion?
+  //probably not bc can't differentiate between a deletion "in error"
+  //vs a deletion that errors bc another concurrent process already deleted
+  void delete_point(vtx* p){
+    int dims = p->pt.dimension();
+    auto [b, Delta] = get_box_delta(dims);
+    size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
+    indexed_point q = std::make_pair(interleave_int, p);
+    node* R = tree.load();
+    assert(R != nullptr);
+    if(R->is_leaf()) {
+      delete_from_leaf(q, nullptr, nullptr, R);
+    }
+    else delete_point0(q, nullptr, nullptr, R);
+  }
+
+  bool on_box_border(node* T, vtx* p){
+    int dimensions = p->pt.dimension();
+    auto box = T->Box();
+    for (int i = 0; i < dimensions; i++) {
+      if(box.first[i] == p->pt[i]) return true;
+      if(box.second[i] == p->pt[i]) return true;
+    }
+    return false;
+  }
+
+  bool boxes_equal(box b1, box b2){
+    int dims = b1.first.dimension();
+    bool result = true;
+    for(int i=0; i<dims; i++){
+      result = result && (b1.first[i] == b2.first[i] && b1.second[i] == b2.second[i]);
+    }
+    return result;
+  }
+
+  bool delete_point0(indexed_point q, node* parent, node* grandparent, node* T){
+    bool T_deleted = delete_internal(q, T, parent);
+    if(!T_deleted){
+      //three cases:
+      // (1) no change needed
+      // (2) box needs to be made smaller
+      // (3) delete has cascaded upwards and another node needs deleting
+
+      //case 3
+      if(T->Right()->is_leaf() && T->Left()->is_leaf() && 
+        (T->Left()->size() + T->Right()->size() < o_tree::node_cutoff)){
+        // std::cout << "Internal delete, case 3" << std::endl;
+        parlay::sequence<indexed_point> pts;
+        for(indexed_point p : T->Left()->indexed_pts) pts.push_back(p);
+        for(indexed_point p : T->Right()->indexed_pts) pts.push_back(p);
+        int bit;
+        int dims = q.second->pt.dimension();
+        if(parent != nullptr) bit = parent->bit-1;
+        else bit = (o_tree::key_bits/dims)*dims;
+        node* N = node::new_leaf(parlay::make_slice(pts), bit);
+        if(parent != nullptr){
+          if(T == parent->Left()) parent->set_child(N, true);
+          else parent->set_child(N, false);
+        } else if(T == tree.load()){ 
+          std::cout << "root changed (internal)" << std::endl;
+          set_root(N);
+        }
+        delete_single(T->Left());
+        delete_single(T->Right());
+        delete_single(T);
+        return true;
+      } else if(on_box_border(T, q.second)){ //case 2
+        // std::cout << "Internal delete, case 2" << std::endl;
+        node* L = T->Left();
+        node* R = T->Right();
+        box b = box(L->Box().first.minCoords(R->Box().first),
+          L->Box().second.maxCoords(R->Box().second));
+        if(!boxes_equal(T->Box(), b)){
+          node* N = node::new_node(L, R, T->bit);
+          if(parent != nullptr){
+            if(T == parent->Left()) parent->set_child(N, true);
+            else parent->set_child(N, false);
+          } else if(T == tree.load()){ 
+            std::cout << "root changed (internal, box change)" << std::endl;
+            set_root(N);
+          }
+          delete_single(T);
+        }
+        return false;
+      }
+      else {return false;} //case 1
+    } else {
+      // std::cout << "internal delete, case 4" << std::endl; 
+      return false;
+    } //if T has already been deleted, continue up the stack
+  }
+
+  bool delete_internal(indexed_point q, node* T, node* parent){
+    assert(T->Right() != nullptr && T->Left() != nullptr);
+    node* N;
+    if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
+    else N = T->Right();
+    if(N->is_leaf()) return delete_from_leaf(q, T, parent, N);
+    else return delete_point0(q, T, parent, N);
+  }
+
+  bool points_equal(point p, point q){
+    int dims = p.dimension();
+    bool result = true;
+    for(int i=0; i<dims; i++){
+      result = result && (p[i] == q[i]);
+    }
+    return result;
+  }
+
+  bool delete_from_leaf(indexed_point q, node* parent, node* grandparent, node* T){
+    parlay::sequence<indexed_point> pts;
+    for(indexed_point p : T->indexed_pts){
+      if(!points_equal(p.second->pt, q.second->pt)){
+        pts.push_back(p);
+      }
+    }
+    node* sibling;
+    int sib_size = 0;
+    if(parent != nullptr){
+      if(T == parent->Left()) sibling = parent->Right();
+      else sibling = parent->Left();
+    }
+    if(sibling->is_leaf() && sibling->size() + pts.size() < o_tree::node_cutoff && 
+      parent != nullptr){
+      // std::cout << "Deletion from leaf, case 2" << std::endl;
+      for(indexed_point p : sibling->indexed_pts){
+        pts.push_back(p);
+      }
+      int bit;
+      int dims = q.second->pt.dimension();
+      if(grandparent != nullptr) bit = grandparent->bit-1;
+      else bit = (o_tree::key_bits/dims)*dims;
+      node* Leaf = node::new_leaf(parlay::make_slice(pts), bit);
+      if(grandparent != nullptr){
+        if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
+        else grandparent->set_child(Leaf, false);
+      } else if(parent == tree.load()){ 
+        std::cout << "root changed (leaf)" << std::endl;
+        set_root(Leaf);
+      }
+      delete_single(parent->Left());
+      delete_single(parent->Right());
+      delete_single(parent);
+      return true;
+    }
+    else{
+      if(pts.size() > 0){
+        // std::cout << "Deletion from leaf, case 1" << std::endl;
+        node* Leaf = node::new_leaf(parlay::make_slice(pts), T->bit);
+        if(parent != nullptr){
+          if(T == parent->Left()) parent->set_child(Leaf, true);
+          else parent->set_child(Leaf, false);
+        } else if(T == tree.load()){ 
+          std::cout << "root changed (leaf was already root)" << std::endl;
+          set_root(Leaf);
+        }
+        delete_single(T);
+        return false;
+      }
+      else{
+        // std::cout << "Deletion from leaf, case 3" << std::endl;
+        if(parent == nullptr){
+          std::cout << "ERROR: deleting entire tree not permitted" << std::endl;
+          abort();
+        }
+        if(sibling->is_leaf()){
+          if(grandparent != nullptr){
+            int bit = grandparent->bit-1;
+            node* Leaf = node::new_leaf(parlay::make_slice(sibling->indexed_pts), bit);
+            if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
+            else grandparent->set_child(Leaf, false);
+          }else{ //sibling becomes the root
+            int dims = q.second->pt.dimension();
+            int bit = dims*(o_tree::key_bits/dims);
+            node* Leaf = node::new_leaf(parlay::make_slice(sibling->indexed_pts), bit);
+            std::cout << "Root changed: sibling promoted to root" << std::endl;
+            set_root(Leaf);
+          }
+          delete_single(sibling);
+        } else{
+          if(grandparent != nullptr){
+            if(parent == grandparent->Left()) grandparent->set_child(sibling, true);
+            else grandparent->set_child(sibling, false);
+          } else{ 
+            std::cout << "Root changed: sibling promoted to root" << std::endl;
+            set_root(sibling);
+          } 
+        }
+        delete_single(parent);
+        delete_single(T);
+        return true;
+      }
+    }
   }
 
 }; //this ends the k_nearest_neighbors structure
