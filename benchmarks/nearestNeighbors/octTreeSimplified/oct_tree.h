@@ -359,7 +359,7 @@ private:
 
       // if all points are on one side, then move onto the next bit
       if (pos == 0 || pos == n) 
-	return build_recursive(Pts, bit - 1);
+	      return build_recursive(Pts, bit - 1);
 
       // otherwise recurse on the two parts, also moving to next bit
       else {
@@ -367,7 +367,7 @@ private:
 	parlay::par_do_if(n > 1000,
            [&] () {L = build_recursive(Pts.cut(0, pos), bit - 1);},
 	   [&] () {R = build_recursive(Pts.cut(pos, n), bit - 1);});
-	return node::new_node(L,R, bit); 
+	return node::new_node(L, R, bit); 
       }
     }
   }
