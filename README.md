@@ -14,6 +14,6 @@ Information on the organization and on how to run PBBS can be found on
 
 A paper outlining the benchmarks:
 
-[The problem-based benchmark suite (PBBS), V2](https://dl.acm.org/doi/10.1145/3503221.3508422)
-Daniel Anderson, Guy E. Blelloch, Laxman Dhulipala, Magdalen Dobson, and Yihan Sun
+[The problem-based benchmark suite (PBBS), V2](https://dl.acm.org/doi/10.1145/3503221.3508422)<br>
+Daniel Anderson, Guy E. Blelloch, Laxman Dhulipala, Magdalen Dobson, and Yihan Sun<br>
 ACM SIGPLAN Symposium on Principles & Practice of Parallel Programming (PPoPP), 2022
