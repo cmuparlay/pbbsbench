@@ -9,10 +9,13 @@ shared-memory multicore machines, although we would be delighted if
 others implemented versions on GPUs or distributed machines and made
 comparisons.
 
-Information on the organization and on how to run PBBS can be found on
-[this page](https://cmuparlay.github.io/pbbsbench).
+A list of the benchmarks can be found on
+[here](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html)
 
-A paper outlining the benchmarks:
+Information on the organization and on how to run PBBS can be found on
+[here](https://cmuparlay.github.io/pbbsbench).
+
+And here is a paper outlining the benchmarks:
 
 [The problem-based benchmark suite (PBBS), V2](https://dl.acm.org/doi/10.1145/3503221.3508422)<br>
 Daniel Anderson, Guy E. Blelloch, Laxman Dhulipala, Magdalen Dobson, and Yihan Sun<br>
