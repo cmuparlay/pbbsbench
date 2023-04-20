@@ -10,7 +10,7 @@ others implemented versions on GPUs or distributed machines and made
 comparisons.
 
 A list of the benchmarks can be found on
-[here](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html)
+[here](https://cmuparlay.github.io/pbbsbench/benchmarks/index.html).
 
 Information on the organization and on how to run PBBS can be found on
 [here](https://cmuparlay.github.io/pbbsbench).
