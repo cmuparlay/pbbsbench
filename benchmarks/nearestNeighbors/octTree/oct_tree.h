@@ -507,7 +507,7 @@ struct oct_tree {
   }
 
 private:
-  constexpr static int key_bits = 60;
+  constexpr static int key_bits = 64;
  
 
   // tags each point (actually a pointer to it), with an interger

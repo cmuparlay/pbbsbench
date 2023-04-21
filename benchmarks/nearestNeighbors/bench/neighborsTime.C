@@ -65,7 +65,7 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
       return &vv[i];});
 
   // run once for warmup
-  time_loop(rounds, 0.0,
+  time_loop(rounds, 1.0,
 	    [&] () {},
 	    [&] () {ANN<maxK>(v, k);},
 	    [&] () {});
