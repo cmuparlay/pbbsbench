@@ -241,19 +241,30 @@ struct k_nearest_neighbors {
     
     // looks for nearest neighbors for pt in Tree node T
     void k_nearest_rec(node* T) {
+      box b;
+      b = T->Box();
+      // node::print_point(b.first);
+      // node::print_point(b.second);
+      // std::cout << max_distance << std::endl;
       if (within_epsilon_box(T, sqrt(max_distance))) { 
+        // std::cout << "here" << std::endl;    
         if (report_stats) internal_cnt++;
         if (T->is_leaf()) {
           if (report_stats) leaf_cnt++;
-          auto &Vtx = T->Vertices();
-          for (int i = 0; i < T->size(); i++)
-            if (Vtx[i] != vertex) { 
+          auto &Vtx = T->Indexed_Pts();
+          for (int i = 0; i < T->size(); i++){
+            // std::cout << T->size() << std::endl;
+            // std::cout << Vtx.size() << std::endl;
+            if (Vtx[i].second != vertex) { 
+              // std::cout << "here" << std::endl;
               if (k < queue_cutoff){
-                update_nearest(Vtx[i]);
+                update_nearest(Vtx[i].second);
               } else{
-                update_nearest_queue(Vtx[i]);
+                update_nearest_queue(Vtx[i].second);
             }
           } 
+          }
+          // abort();
         } else if (distance(T->Left()) < distance(T->Right())) {
           k_nearest_rec(T->Left());
           k_nearest_rec(T->Right());
@@ -291,18 +302,21 @@ struct k_nearest_neighbors {
   }
 
 //This finds the leaf in the search structure that p is located in
-node* find_leaf(point p, node* T, box b, double Delta){ //takes in a point since interleave_bits() takes in a point
+node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a point
   //first, we use code copied over from oct_tree to go from a point to an interleave integer
   node* current = T;
-  size_t searchInt = o_tree::interleave_bits(p, b.first, Delta); //calling interleave_bits from oct_tree
   //then, we use this interleave integer to find the correct leaf
-  while (not (current->is_leaf())){
-    if(lookup_bit(searchInt, current -> bit) == 0){ 
+  while (!(current->is_leaf())){
       current = current->Left(); 
-    } else{
-      current = current->Right();
-    }
-  };
+  }
+  std::cout << current->Indexed_Pts().size() << std::endl;
+  std::cout << current->size() << std::endl;
+  auto &Vtx = current->Indexed_Pts();
+  for (int i = 0; i < current->size(); i++){
+    // std::cout << Vtx[i].first << std::endl;
+    std::cout << Vtx[i].second->identifier << std::endl;
+
+  }
   return current;
 }
 
@@ -423,7 +437,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           //iterate until either make a leaf or bits match
           node* Q = T;
           while(!(Q->is_leaf())){node* L = Q->Right(); Q=L;}
-          indexed_point s = Q->indexed_pts[0];
+          indexed_point s = Q->Indexed_Pts()[0];
           int cur_bit = bit;
           assert(cur_bit >= T->bit);
           if(parent != nullptr) assert(cur_bit < G->bit);
@@ -500,8 +514,9 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   }
 
   bool insert_into_leaf(indexed_point q, node* parent, node* T){
-      parlay::sequence<indexed_point> points = T->indexed_pts;
-      points.push_back(q);
+      parlay::sequence<indexed_point> points(T->size()+1);
+      for(int i=0; i<T->size(); i++) points[i] = T->Indexed_Pts()[i];
+      points[T->size()] = q;
       node* G = parent;
       bool left;
       if(G != nullptr) left = (G->Left() == T);
@@ -512,7 +527,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         //case 1
         // std::cout << "regular insert" << std::endl;
         // std::cout << T->bit << std::endl;
-        node* N = node::new_leaf(parlay::make_slice(points), T->bit);
+        node* N = node::new_leaf(std::move(points), T->bit);
         assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(N, left);
         if(tree.load() == T) {
@@ -539,9 +554,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           new_bit--;
         }
         parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
-        if(new_bit == T->bit) abort();
-        node* L = node::new_leaf(pts.cut(0, cut_point), new_bit);
-        node* R = node::new_leaf(pts.cut(cut_point, points.size()), new_bit);
+        auto left_s = parlay::tabulate(cut_point, [&] (size_t i) {return points[i];});
+        auto right_s = parlay::tabulate(points.size()-cut_point, [&] (size_t i) {return points[cut_point+i];});
+        node* L = node::new_leaf(std::move(left_s), new_bit);
+        node* R = node::new_leaf(std::move(right_s), new_bit);
         node* P = node::new_node(L, R, new_bit+1);
         assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(P, left);
@@ -589,38 +605,34 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     return result;
   }
 
-  bool delete_point0(indexed_point q, node* parent, node* grandparent, node* T){
-    bool T_deleted = delete_internal(q, T, parent);
+  //returns pair of bools
+  //first indicates whether q present in the data structure
+  //second indicates whether the child node was changed--if not,
+  //can end recursion early
+  std::pair<bool, bool> delete_point0(indexed_point q, node* parent, node* grandparent, node* T){
+    bool q_present; bool T_deleted = false; bool child_changed = true;
+    node* N;
+    if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
+    else N = T->Right();
+    if(N->is_leaf()) {
+      auto [a,b] = delete_from_leaf(q, T, parent, N);
+      q_present=a;
+      T_deleted=b;
+    } else{ 
+      auto [a,b] =  delete_point0(q, T, parent, N);
+      q_present=a;
+      child_changed=b;
+    }
+
+    //if the point wasn't present, no change needed
+    //if child wasn't changed, no more changes needed, can end early
+    if(!q_present || !child_changed) {return std::make_pair(q_present, false);}
+    
     if(!T_deleted){
-      //three cases:
+      //two cases:
       // (1) no change needed
       // (2) box needs to be made smaller
-      // (3) delete has cascaded upwards and another node needs deleting
-
-      //case 3
-      if(T->Right()->is_leaf() && T->Left()->is_leaf() && 
-        (T->Left()->size() + T->Right()->size() < o_tree::node_cutoff)){
-        // std::cout << "Internal delete, case 3" << std::endl;
-        parlay::sequence<indexed_point> pts;
-        for(indexed_point p : T->Left()->indexed_pts) pts.push_back(p);
-        for(indexed_point p : T->Right()->indexed_pts) pts.push_back(p);
-        int bit;
-        int dims = q.second->pt.dimension();
-        if(parent != nullptr) bit = parent->bit-1;
-        else bit = (o_tree::key_bits/dims)*dims;
-        node* N = node::new_leaf(parlay::make_slice(pts), bit);
-        if(parent != nullptr){
-          if(T == parent->Left()) parent->set_child(N, true);
-          else parent->set_child(N, false);
-        } else if(T == tree.load()){ 
-          std::cout << "root changed (internal)" << std::endl;
-          set_root(N);
-        }
-        delete_single(T->Left());
-        delete_single(T->Right());
-        delete_single(T);
-        return true;
-      } else if(on_box_border(T, q.second)){ //case 2
+      if(on_box_border(T, q.second)){ //case 2
         // std::cout << "Internal delete, case 2" << std::endl;
         node* L = T->Left();
         node* R = T->Right();
@@ -637,22 +649,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           }
           delete_single(T);
         }
-        return false;
+        return std::make_pair(q_present, true);
       }
-      else {return false;} //case 1
-    } else {
-      // std::cout << "internal delete, case 4" << std::endl; 
-      return false;
-    } //if T has already been deleted, continue up the stack
-  }
-
-  bool delete_internal(indexed_point q, node* T, node* parent){
-    assert(T->Right() != nullptr && T->Left() != nullptr);
-    node* N;
-    if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
-    else N = T->Right();
-    if(N->is_leaf()) return delete_from_leaf(q, T, parent, N);
-    else return delete_point0(q, T, parent, N);
+      else return std::make_pair(q_present, false); //case 1
+    } else return std::make_pair(q_present, true);
   }
 
   bool points_equal(point p, point q){
@@ -664,30 +664,40 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     return result;
   }
 
-  bool delete_from_leaf(indexed_point q, node* parent, node* grandparent, node* T){
+  std::pair<bool, bool> delete_from_leaf(indexed_point q, node* parent, node* grandparent, node* T){
     parlay::sequence<indexed_point> pts;
-    for(indexed_point p : T->indexed_pts){
-      if(!points_equal(p.second->pt, q.second->pt)){
-        pts.push_back(p);
-      }
+    bool cont = false;
+    bool q_present = false;
+    for(indexed_point p : T->Indexed_Pts()){
+      if(cont) pts.push_back(p);
+      else{
+        if(points_equal(p.second->pt, q.second->pt)){
+          q_present = true;
+          cont = true;
+        } else pts.push_back(p);    
+      } 
     }
+    if(!q_present) {return std::make_pair(false, false);}
     node* sibling;
-    int sib_size = 0;
+    int sib_size=0;
+    bool sib_is_leaf=false;
     if(parent != nullptr){
       if(T == parent->Left()) sibling = parent->Right();
       else sibling = parent->Left();
+      sib_size = sibling->size();
+      if(sibling->is_leaf()) sib_is_leaf=true;
     }
-    if(sibling->is_leaf() && sibling->size() + pts.size() < o_tree::node_cutoff && 
+    if(sib_is_leaf && sib_size + pts.size() < o_tree::node_cutoff && 
       parent != nullptr){
       // std::cout << "Deletion from leaf, case 2" << std::endl;
-      for(indexed_point p : sibling->indexed_pts){
+      for(indexed_point p : sibling->Indexed_Pts()){
         pts.push_back(p);
       }
       int bit;
       int dims = q.second->pt.dimension();
       if(grandparent != nullptr) bit = grandparent->bit-1;
       else bit = (o_tree::key_bits/dims)*dims;
-      node* Leaf = node::new_leaf(parlay::make_slice(pts), bit);
+      node* Leaf = node::new_leaf(std::move(pts), bit);
       if(grandparent != nullptr){
         if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
         else grandparent->set_child(Leaf, false);
@@ -698,12 +708,12 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       delete_single(parent->Left());
       delete_single(parent->Right());
       delete_single(parent);
-      return true;
+      return std::make_pair(q_present, true);
     }
     else{
       if(pts.size() > 0){
         // std::cout << "Deletion from leaf, case 1" << std::endl;
-        node* Leaf = node::new_leaf(parlay::make_slice(pts), T->bit);
+        node* Leaf = node::new_leaf(std::move(pts), T->bit);
         if(parent != nullptr){
           if(T == parent->Left()) parent->set_child(Leaf, true);
           else parent->set_child(Leaf, false);
@@ -712,7 +722,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           set_root(Leaf);
         }
         delete_single(T);
-        return false;
+        return std::make_pair(q_present, false);
       }
       else{
         // std::cout << "Deletion from leaf, case 3" << std::endl;
@@ -723,13 +733,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         if(sibling->is_leaf()){
           if(grandparent != nullptr){
             int bit = grandparent->bit-1;
-            node* Leaf = node::new_leaf(parlay::make_slice(sibling->indexed_pts), bit);
+            node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
             if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
             else grandparent->set_child(Leaf, false);
           }else{ //sibling becomes the root
             int dims = q.second->pt.dimension();
             int bit = dims*(o_tree::key_bits/dims);
-            node* Leaf = node::new_leaf(parlay::make_slice(sibling->indexed_pts), bit);
+            node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
             std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(Leaf);
           }
@@ -745,7 +755,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         }
         delete_single(parent);
         delete_single(T);
-        return true;
+        return std::make_pair(q_present, true);
       }
     }
   }
