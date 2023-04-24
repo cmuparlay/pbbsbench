@@ -64,8 +64,7 @@ struct oct_tree {
 
   // generates a box consisting of a lower left corner,
   // and an upper right corner.
-  template <typename Seq>
-  static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
+  static box get_box(parlay::sequence<vtx*> &V) { // parlay::sequence<vtx*> &V) {
     size_t n = V.size();
     auto minmax = [&] (box x, box y) {
       return box(x.first.minCoords(y.first),
@@ -78,21 +77,39 @@ struct oct_tree {
     return (final);
   }
 
+    // generates a box consisting of a lower left corner,
+  // and an upper right corner.
+  static box get_box(parlay::sequence<indexed_point> &V) { // parlay::sequence<vtx*> &V) {
+    size_t n = V.size();
+    // std::cout << n << std::endl;
+    auto minmax = [&] (box x, box y) {
+      return box(x.first.minCoords(y.first),
+     x.second.maxCoords(y.second));};
+    // uses a delayed sequence to avoid making a copy
+    auto pts = parlay::delayed_seq<box>(n, [&] (size_t i) {
+      return box(V[i].second->pt, V[i].second->pt);});
+    box identity = pts[0];  
+    box final = parlay::reduce(pts, parlay::make_monoid(minmax, identity));
+    // node::print_point(final.first);
+    // node::print_point(final.second);
+    return (final);
+  }
+
   struct node : verlib::versioned { 
 
   public:
     int bit;
-    parlay::sequence<indexed_point> indexed_pts;
     flck::atomic_write_once<bool> removed;
     flck::lock lck;
-    using leaf_seq = parlay::sequence<vtx*>;
+    // using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
     size_t size() {return n;} //NOT ALWAYS ACCURATE
     bool is_leaf() {return (L.load() == nullptr) && (R.load() == nullptr);}
     node* Left() {return L.load();}
     node* Right() {return R.load();}
-    leaf_seq& Vertices() {return P;}
+    parlay::sequence<indexed_point>& Indexed_Pts(){return indexed_pts;}
+    // leaf_seq& Vertices() {return P;}
 
     void set_size(size_t s){n=s;}
 
@@ -110,25 +127,32 @@ struct oct_tree {
       std::cout << "\n";
     }
 
+    // construct a leaf node with a sequence of points directly in it
+    node(parlay::sequence<indexed_point> &Pts, int currentBit) : removed(false), n(Pts.size()) { 
+      // strips off the integer tag, no longer needed
+      indexed_pts = std::move(Pts);
+      L = R = nullptr;
+      b = get_box(indexed_pts);
+      set_center();
+      bit = currentBit;
+    }
+
 
     // construct a leaf node with a sequence of points directly in it
     node(slice_t Pts, int currentBit) : removed(false), n(Pts.size()) { 
       // strips off the integer tag, no longer needed
-      P = leaf_seq(n);
       indexed_pts = parlay::sequence<indexed_point>(n);
       for (int i = 0; i < n; i++) {
-        if(P.size() < n) {
+        if(indexed_pts.size() < n) {
           std::stringstream ss;
-          ss << "n = " << n << std::endl << "P.size() = " << P.size() << std::endl;
+          ss << "n = " << n << std::endl << "P.size() = " << indexed_pts.size() << std::endl;
           std::cout << ss.str() << std::endl;
           exit(1);
         }
-        auto x = Pts[i].second;
-        P[i] = x;
         indexed_pts[i] = Pts[i];  
       }
       L = R = nullptr;
-      b = get_box(P);
+      b = get_box(indexed_pts);
       set_center();
       bit = currentBit;
     }
@@ -160,6 +184,13 @@ struct oct_tree {
     }
 
     static node* new_leaf(slice_t Pts, int currentBit) {
+      node* r = alloc_node();
+      assert(Pts.begin() != nullptr);
+      new (r) node(Pts, currentBit);
+      return r;
+    }
+
+    static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit) {
       node* r = alloc_node();
       assert(Pts.begin() != nullptr);
       new (r) node(Pts, currentBit);
@@ -199,7 +230,7 @@ struct oct_tree {
     template <typename F>
     void map(F f) { 
       if (is_leaf())
-	for (int i=0; i < size(); i++) f(P[i],this);
+	for (int i=0; i < size(); i++) f(indexed_pts[i].second,this);
       else {
 	parlay::par_do_if(n > 1000,
 			  [&] () {L.load()->map(f);},
@@ -238,7 +269,8 @@ struct oct_tree {
     verlib::versioned_ptr<node> R;
     box b;
     point centerv;
-    leaf_seq P;
+    parlay::sequence<indexed_point> indexed_pts;
+    // leaf_seq P;
 
     void set_center() {			   
       centerv = b.first + (b.second-b.first)/2;

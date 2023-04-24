@@ -70,24 +70,24 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     
     //build tree with bounding box
     t.next("setup benchmark");
-    knn_tree T(v, whole_box);
+    knn_tree T(v1, whole_box);
     t.next("build tree");
 
     //prelims for insert  
     int dims = v[0]->pt.dimension();
 
-    // delete v2 sequentially
-    for(int j = v2.size()-1; j >= 0; j--){
-      // std::cout << j << std::endl;
-      T.delete_point(v2[j]);
-    }
+    // // delete v2 sequentially
+    // for(int j = v2.size()-1; j >= 0; j--){
+    //   // std::cout << j << std::endl;
+    //   T.delete_point(v2[j]);
+    // }
 
     // t.next("deletes");
 
-    // // re-insert v2
-    // for(int j=0; j<v2.size(); j++){
-    //   T.insert_point(v2[j]);
-    // }
+    // re-insert v2
+    for(int j=0; j<v2.size(); j++){
+      T.insert_point(v2[j]);
+    }
 
    
     // // insert v2 in parallel
