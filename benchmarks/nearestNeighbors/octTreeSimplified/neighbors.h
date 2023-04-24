@@ -58,7 +58,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //and one to later insert point by point
     size_t n = v.size();
     node_allocator<vtx>.shuffle(n); 
-    size_t init = n/2;
+    size_t init = 1;
     size_t ins = n-init;
     parlay::sequence<vtx*> v1(init);  
     parlay::sequence<vtx*> v2(ins);
@@ -70,45 +70,47 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     
     //build tree with bounding box
     t.next("setup benchmark");
-    knn_tree T(v1, whole_box);
+    knn_tree T(v, whole_box);
     t.next("build tree");
 
     //prelims for insert  
     int dims = v[0]->pt.dimension();
 
-    // // delete v2 sequentially
-    // for(int j = v2.size()-1; j >= 0; j--){
-    //   // std::cout << j << std::endl;
-    //   T.delete_point(v2[j]);
-    // }
+    // delete v2 sequentially
+    for(int j = v2.size()-1; j >= 0; j--){
+      // std::cout << j << std::endl;
+      T.delete_point(v2[j]);
+    }
 
-    t.next("deletes");
+    // t.next("deletes");
 
-    // //re-insert v2
+    // // re-insert v2
     // for(int j=0; j<v2.size(); j++){
     //   T.insert_point(v2[j]);
     // }
 
    
-    // insert v2 in parallel
-    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
-        T.insert_point(v2[j]); 
-      }
-    }, 1, true);
+    // // insert v2 in parallel
+    // parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
+    //   for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
+    //     T.insert_point(v2[j]); 
+    //   }
+    // }, 1, true);
 
     t.next("inserts");
 
-    // EXAMPLE OF EQUALITY CHECKING
-    knn_tree R(v, whole_box);
-    T.are_equal(R.tree.load(), dims);    
-    t.next("equality check");
-    // END EXAMPLE
+    // // EXAMPLE OF EQUALITY CHECKING
+    // knn_tree R(v, whole_box);
+    // T.are_equal(R.tree.load(), dims);    
+    // t.next("equality check");
+    // // END EXAMPLE
 
     
 
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
+
+    // T.find_leaf(T.tree.load());
 
 
     // find nearest k neighbors for each point
