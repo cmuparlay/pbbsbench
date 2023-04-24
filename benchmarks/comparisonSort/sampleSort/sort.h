@@ -1,9 +1,9 @@
-#include "parlay/internal/sample_sort.h"
+#include "sample_sort.h"
 
-constexpr bool INPLACE = false;
+constexpr bool INPLACE = true;
 
 template <class T, class BinPred>
-parlay::sequence<T> compSort(parlay::sequence<T> const &A, const BinPred& f) {
-  return parlay::internal::sample_sort(parlay::make_slice(A), f);
+void compSort(parlay::sequence<T> &A, const BinPred& f) {
+  sample_sort(A, f);
 }
 
