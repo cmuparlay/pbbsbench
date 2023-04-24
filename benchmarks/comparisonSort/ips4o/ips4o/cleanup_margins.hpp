@@ -6,7 +6,7 @@
  ******************************************************************************
  * BSD 2-Clause License
  *
- * Copyright © 2017, Michael Axtmann <michael.axtmann@kit.edu>
+ * Copyright © 2017, Michael Axtmann <michael.axtmann@gmail.com>
  * Copyright © 2017, Daniel Ferizovic <daniel.ferizovic@student.kit.edu>
  * Copyright © 2017, Sascha Witt <sascha.witt@kit.edu>
  * All rights reserved.
@@ -56,7 +56,7 @@ std::pair<int, typename Cfg::difference_type> Sorter<Cfg>::saveMargins(int last_
     const diff_t end = Cfg::alignToNextBlock(tail);
 
     // Don't need to do anything if there is no overlap, or we are in the overflow case
-    if (tail == end || end >= (end_ - begin_))
+    if (tail == end || end > (end_ - begin_))
         return {-1, 0};
 
     // Find bucket this last block belongs to
@@ -117,7 +117,7 @@ void Sorter<Cfg>::writeMargins(const int first_bucket, const int last_bucket,
             remaining = std::numeric_limits<diff_t>::max();
 
             // Write remaining elements into tail
-            dst = begin_ + bwrite - Cfg::kBlockSize;
+            dst = begin_ + (bwrite - Cfg::kBlockSize);
             dst = std::move(src, src + tail_size, dst);
 
             overflow_->reset(Cfg::kBlockSize);

@@ -1,0 +1,150 @@
+HOSTNAME: aware.aladdin.cs.cmu.edu
+running on 144 threads
+
+cd benchmarks/integerSort/parallelRadixSort ; make -s
+cd benchmarks/integerSort/parallelRadixSort ; numactl -i all ./testInputs -r 5 -p 144 -x
+randomSeq_100M_int : -b 27 -r 5 : '0.035', '0.036', '0.036', '0.036', '0.036', geomean = 0.036
+exptSeq_100M_int : -b 27 -r 5 : '0.037', '0.037', '0.037', '0.037', '0.038', geomean = 0.037
+randomSeq_100M_int_pair_int : -b 27 -r 5 : '0.07', '0.069', '0.069', '0.071', '0.069', geomean = 0.069
+randomSeq_100M_256_int_pair_int : -b 8 -r 5 : '0.025', '0.025', '0.025', '0.025', '0.025', geomean = 0.025
+parallelRadixSort : 144 : geomean of mins = 0.039, geomean of geomeans = 0.039
+
+cd benchmarks/comparisonSort/sampleSort ; make -s
+cd benchmarks/comparisonSort/sampleSort ; numactl -i all ./testInputs -r 5 -p 144 -x
+randomSeq_100M_double :  -r 5 : '0.144', '0.145', '0.143', '0.143', '0.145', geomean = 0.144
+exptSeq_100M_double :  -r 5 : '0.116', '0.116', '0.115', '0.116', '0.116', geomean = 0.116
+almostSortedSeq_100M_double :  -r 5 : '0.111', '0.11', '0.11', '0.112', '0.112', geomean = 0.111
+randomSeq_100M_double_pair_double :  -r 5 : '0.185', '0.185', '0.187', '0.184', '0.185', geomean = 0.185
+trigramSeq_100M :  -r 5 : '0.291', '0.292', '0.289', '0.29', '0.29', geomean = 0.29
+sampleSort : 144 : geomean of mins = 0.157, geomean of geomeans = 0.158
+
+cd benchmarks/removeDuplicates/parlayhash ; make -s
+cd benchmarks/removeDuplicates/parlayhash ; numactl -i all ./testInputs -r 5 -p 144 -x
+randomSeq_100M_int :  -r 5 : '0.069', '0.068', '0.069', '0.068', '0.074', geomean = 0.07
+exptSeq_100M_int :  -r 5 : '0.054', '0.049', '0.052', '0.05', '0.049', geomean = 0.05
+trigramSeq_100M :  -r 5 : '0.151', '0.153', '0.148', '0.15', '0.149', geomean = 0.15
+parlayhash : 144 : geomean of mins = 0.079, geomean of geomeans = 0.081
+
+cd benchmarks/histogram/parallel ; make -s
+cd benchmarks/histogram/parallel ; numactl -i all ./testInputs -r 5 -p 144 -x
+randomSeq_100M_256_int : -b 256 -r 5 : '0.004', '0.004', '0.004', '0.004', '0.004', geomean = 0.004
+randomSeq_100M_100K_int : -b 100000 -r 5 : '0.022', '0.022', '0.022', '0.022', '0.023', geomean = 0.022
+randomSeq_100M_int : -b 100000000 -r 5 : '0.062', '0.067', '0.063', '0.065', '0.066', geomean = 0.065
+exptSeq_100M_int : -b 100000000 -r 5 : '0.048', '0.043', '0.049', '0.043', '0.043', geomean = 0.045
+almostEqualSeq_100000000 : -b 100000000 -r 5 : '0.05', '0.05', '0.051', '0.05', '0.05', geomean = 0.05
+parallel : 144 : geomean of mins = 0.026, geomean of geomeans = 0.026
+
+cd benchmarks/wordCounts/histogram ; make -s
+cd benchmarks/wordCounts/histogram ; numactl -i all ./testInputs -r 5 -p 144 -x
+trigramString_250000000 :  -r 5 : '0.118', '0.116', '0.111', '0.112', '0.112', geomean = 0.114
+etext99 :  -r 5 : '0.053', '0.048', '0.044', '0.045', '0.046', geomean = 0.047
+wikipedia250M.txt :  -r 5 : '0.099', '0.098', '0.099', '0.098', '0.097', geomean = 0.098
+histogram : 144 : geomean of mins = 0.078, geomean of geomeans = 0.081
+
+cd benchmarks/invertedIndex/parallel ; make -s
+cd benchmarks/invertedIndex/parallel ; numactl -i all ./testInputs -r 5 -p 144 -x
+wikisamp.xml :  -r 5 : '0.049', '0.047', '0.046', '0.047', '0.046', geomean = 0.047
+wikipedia250M.txt :  -r 5 : '0.159', '0.158', '0.16', '0.157', '0.159', geomean = 0.159
+parallel : 144 : geomean of mins = 0.085, geomean of geomeans = 0.086
+
+cd benchmarks/suffixArray/parallelRange ; make -s
+cd benchmarks/suffixArray/parallelRange ; numactl -i all ./testInputs -r 5 -p 144 -x
+trigramString_100000000 :  -r 5 : '0.459', '0.439', '0.434', '0.433', '0.435', geomean = 0.44
+chr22.dna :  -r 5 : '0.221', '0.217', '0.222', '0.215', '0.22', geomean = 0.219
+etext99 :  -r 5 : '0.83', '0.845', '0.829', '0.835', '0.828', geomean = 0.833
+wikisamp.xml :  -r 5 : '0.933', '0.93', '0.915', '0.927', '0.923', geomean = 0.926
+parallelRange : 144 : geomean of mins = 0.515, geomean of geomeans = 0.522
+
+cd benchmarks/longestRepeatedSubstring/doubling ; make -s
+cd benchmarks/longestRepeatedSubstring/doubling ; numactl -i all ./testInputs -r 5 -p 144 -x
+chr22.dna :  -r 5 : '0.313', '0.288', '0.291', '0.293', '0.29', geomean = 0.295
+etext99 :  -r 5 : '1.282', '1.275', '1.24', '1.224', '1.238', geomean = 1.252
+wikisamp.xml :  -r 5 : '1.181', '1.189', '1.209', '1.197', '1.191', geomean = 1.194
+doubling : 144 : geomean of mins = 0.747, geomean of geomeans = 0.761
+
+cd benchmarks/classify/decisionTree ; make -s
+cd benchmarks/classify/decisionTree ; numactl -i all ./testInputs -r 5 -p 144 -x
+covtype.data :  -r 5 : '0.225', '0.22', '0.218', '0.221', '0.216', geomean = 0.22
+kddcup.data :  -r 5 : '0.171', '0.172', '0.17', '0.169', '0.17', geomean = 0.17
+decisionTree : 144 : geomean of mins = 0.191, geomean of geomeans = 0.194
+
+cd benchmarks/minSpanningForest/parallelFilterKruskal ; make -s
+cd benchmarks/minSpanningForest/parallelFilterKruskal ; numactl -i all ./testInputs -r 5 -p 144 -x
+randLocalGraph_WE_10_20000000 :  -r 5 : '0.671', '0.675', '0.701', '0.701', '0.709', geomean = 0.691
+rMatGraph_WE_12_16000000 :  -r 5 : '0.505', '0.492', '0.505', '0.512', '0.5', geomean = 0.503
+2Dgrid_WE_64000000 :  -r 5 : '1.02', '1.028', '1.026', '1.022', '1.019', geomean = 1.023
+parallelFilterKruskal : 144 : geomean of mins = 0.695, geomean of geomeans = 0.708
+
+cd benchmarks/spanningForest/ndST ; make -s
+cd benchmarks/spanningForest/ndST ; numactl -i all ./testInputs -r 5 -p 144 -x
+randLocalGraph_E_10_20000000 :  -r 5 : '0.213', '0.212', '0.211', '0.212', '0.213', geomean = 0.212
+rMatGraph_E_12_16000000 :  -r 5 : '0.152', '0.151', '0.151', '0.156', '0.152', geomean = 0.152
+2Dgrid_E_64000000 :  -r 5 : '0.353', '0.355', '0.359', '0.356', '0.355', geomean = 0.355
+ndST : 144 : geomean of mins = 0.224, geomean of geomeans = 0.226
+
+cd benchmarks/breadthFirstSearch/backForwardBFS ; make -s
+cd benchmarks/breadthFirstSearch/backForwardBFS ; numactl -i all ./testInputs -r 5 -p 144 -x
+randLocalGraph_J_10_20000000 :  -r 5 : '0.046', '0.046', '0.047', '0.046', '0.046', geomean = 0.046
+rMatGraph_J_12_16000000 :  -r 5 : '0.054', '0.047', '0.043', '0.043', '0.043', geomean = 0.046
+3Dgrid_J_64000000 :  -r 5 : '0.491', '0.484', '0.481', '0.537', '0.483', geomean = 0.495
+backForwardBFS : 144 : geomean of mins = 0.098, geomean of geomeans = 0.102
+
+cd benchmarks/maximalMatching/incrementalMatching ; make -s
+cd benchmarks/maximalMatching/incrementalMatching ; numactl -i all ./testInputs -r 5 -p 144 -x
+randLocalGraph_E_10_20000000 :  -r 5 : '0.149', '0.14', '0.139', '0.14', '0.139', geomean = 0.141
+rMatGraph_E_10_20000000 :  -r 5 : '0.207', '0.209', '0.208', '0.206', '0.208', geomean = 0.208
+2Dgrid_E_64000000 :  -r 5 : '0.308', '0.309', '0.309', '0.309', '0.317', geomean = 0.31
+incrementalMatching : 144 : geomean of mins = 0.206, geomean of geomeans = 0.209
+
+cd benchmarks/maximalIndependentSet/incrementalMIS ; make -s
+cd benchmarks/maximalIndependentSet/incrementalMIS ; numactl -i all ./testInputs -r 5 -p 144 -x
+randLocalGraph_JR_10_20000000 :  -r 5 : '0.045', '0.044', '0.054', '0.043', '0.042', geomean = 0.045
+rMatGraph_JR_12_16000000 :  -r 5 : '0.031', '0.035', '0.034', '0.04', '0.035', geomean = 0.035
+3Dgrid_JR_64000000 :  -r 5 : '0.106', '0.106', '0.108', '0.119', '0.113', geomean = 0.11
+incrementalMIS : 144 : geomean of mins = 0.052, geomean of geomeans = 0.056
+
+cd benchmarks/nearestNeighbors/octTree ; make -s
+cd benchmarks/nearestNeighbors/octTree ; numactl -i all ./testInputs -r 5 -p 144 -x
+2DinCube_10M : -d 2 -k 1 -r 5 : '0.393', '0.172', '0.187', '0.188', '0.182', geomean = 0.212
+octTree : 144 : geomean of mins = 0.172, geomean of geomeans = 0.212
+
+cd benchmarks/rayCast/kdTree ; make -s
+cd benchmarks/rayCast/kdTree ; numactl -i all ./testInputs -r 5 -p 144 -x
+happyTriangles happyRays :  -r 5 : '0.175', '0.159', '0.191', '0.181', '0.162', geomean = 0.173
+angelTriangles angelRays :  -r 5 : '0.077', '0.066', '0.063', '0.067', '0.062', geomean = 0.067
+dragonTriangles dragonRays :  -r 5 : '0.119', '0.117', '0.146', '0.138', '0.119', geomean = 0.127
+kdTree : 144 : geomean of mins = 0.105, geomean of geomeans = 0.114
+
+cd benchmarks/convexHull/quickHull ; make -s
+cd benchmarks/convexHull/quickHull ; numactl -i all ./testInputs -r 5 -p 144 -x
+2DinSphere_100000000 :  -r 5 : '0.177', '0.186', '0.175', '0.174', '0.176', geomean = 0.177
+2Dkuzmin_100000000 :  -r 5 : '0.064', '0.064', '0.064', '0.064', '0.064', geomean = 0.064
+2DonSphere_100000000 :  -r 5 : '2.283', '2.282', '2.278', '2.262', '2.28', geomean = 2.277
+quickHull : 144 : geomean of mins = 0.293, geomean of geomeans = 0.296
+
+cd benchmarks/delaunayTriangulation/incrementalDelaunay ; make -s
+cd benchmarks/delaunayTriangulation/incrementalDelaunay ; numactl -i all ./testInputs -r 5 -p 144 -x
+2DinCube_10M :  -r 5 : '1.048', '1.005', '1.01', '1.012', '0.994', geomean = 1.014
+2Dkuzmin_10M :  -r 5 : '1.211', '1.217', '1.221', '1.191', '1.228', geomean = 1.214
+incrementalDelaunay : 144 : geomean of mins = 1.088, geomean of geomeans = 1.109
+
+cd benchmarks/delaunayRefine/incrementalRefine ; make -s
+cd benchmarks/delaunayRefine/incrementalRefine ; numactl -i all ./testInputs -r 5 -p 144 -x
+2DinCubeDelaunay_5000000 :  -r 5 : '1.523', '1.566', '1.537', '1.535', '1.524', geomean = 1.537
+2DkuzminDelaunay_5000000 :  -r 5 : '1.527', '1.539', '1.517', '1.538', '1.517', geomean = 1.528
+incrementalRefine : 144 : geomean of mins = 1.52, geomean of geomeans = 1.532
+
+cd benchmarks/rangeQuery2d/parallelPlaneSweep ; make -s
+cd benchmarks/rangeQuery2d/parallelPlaneSweep ; numactl -i all ./testInputs -r 5 -p 144 -x
+2DinCube_10M :  -r 5 : '0.849', '0.857', '0.841', '0.898', '0.862', geomean = 0.861
+2Dkuzmin_10M :  -r 5 : '0.852', '0.846', '0.833', '0.867', '0.876', geomean = 0.855
+parallelPlaneSweep : 144 : geomean of mins = 0.837, geomean of geomeans = 0.858
+
+cd benchmarks/nBody/parallelCK ; make -s
+cd benchmarks/nBody/parallelCK ; numactl -i all ./testInputs -r 5 -p 144 -x
+3DonSphere_1000000 :  -r 5 : '0.559', '0.506', '0.506', '0.551', '0.507', geomean = 0.525
+3DinCube_1000000 :  -r 5 : '1.111', '1.09', '1.049', '1.038', '1.043', geomean = 1.066
+3Dplummer_1000000 :  -r 5 : '2.121', '2.03', '2.217', '2.145', '1.996', geomean = 2.1
+parallelCK : 144 : geomean of mins = 1.016, geomean of geomeans = 1.055
+Not Checking
+Parallel Only

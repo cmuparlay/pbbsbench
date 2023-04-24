@@ -21,7 +21,7 @@ Returns the histogram for a sequence of integers.
 - [integerSort](integerSort.html) (ISORT)  
 Sorts a sequence of integers, possibly with tag-along values. 
 
-- [removeDuplicates](removeDuplicates) (DDUP)  
+- [removeDuplicates](removeDuplicates.html) (DDUP)  
 Returns the input sequence with duplicates removed.
 
 ### Graph Algorithms
@@ -77,7 +77,7 @@ Returns the k nearest neighbors for points in 2d and 3d.
 For a set of rays and a set of triangles returns the first triangle 
 each ray intersects. 
 
-- [rangeQuery2d](rangeQuery2d) (RQ)  
+- [rangeQuery2d](rangeQuery2d.html) (RQ)  
 For a set of points and a set of rectangles, returns a count of the number of 
 points in each rectangle. 
 
