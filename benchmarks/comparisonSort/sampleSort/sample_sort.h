@@ -18,29 +18,35 @@
 // then sorting them.
 // It then puts the keys into buckets depending on which pivots
 // they fall between and recursively sorts within the buckets.
-// Makes use of a parlaylib bucket sort for the bucketing,
-// and std::sort for the base case and sorting the pivots.
+// Makes use of a parlaylib bucket sort for the bucketing.
 //
-// This is taken from parlaylib/examples/samplesort.h with slight modifications
+// This is taken from parlaylib/examples/samplesort.h with some optimizations.
+// In particular this uses uninitialized sequences and relocation, which
+// avoids copying the keys.  Useful for strings.
+// Also uses parlay's internal quicksort (faster for strings)
 // **************************************************************
 
 template <typename assignment_tag, typename Range, typename Less>
-void sample_sort_(Range in, Range out, Less less, int level=1) {
+void sample_sort_(Range in, Range out, Less less, bool stable=false, int level=1) {
   long n = in.size();
   using T = typename Range::value_type;
+  using bucket_key_t = unsigned short;
   
-  // for the base case (small or recursion level greater than 2) use std::sort
-  long cutoff = 256;
-  if (n <= cutoff || level > 2) {
+  // for the base case (small or recursion level greater than 2)
+  long cutoff = 1024;
+  if (n <= cutoff || (level > 1 && n <= 1 << 17)) {
     if (in.begin() != out.begin())
       parlay::uninitialized_relocate_n(out.begin(), in.begin(), n);
-    //parlay::copy(in, out);
-    parlay::internal::quicksort(out.begin(), n, less);
+    if (stable)
+      std::stable_sort(out.begin(), out.end(), less);
+    else
+      parlay::internal::quicksort(out.begin(), n, less);
+    //std::sort(out.begin(), out.end(), less);
     return;
   }
 
   // number of bits in bucket count (e.g. 8 would mean 256 buckets)
-  int bits = std::min<long>(8, parlay::log2_up(n)-parlay::log2_up(cutoff)+1);
+  int bits = std::min<long>(10, parlay::log2_up(n)-parlay::log2_up(cutoff)+1);
   long num_buckets = 1 << bits;
 
   // over-sampling ratio: keeps the buckets more balanced
@@ -65,21 +71,20 @@ void sample_sort_(Range in, Range out, Less less, int level=1) {
   
   // put pivots into efficient search tree and find buckets id for the input keys
   heap_tree ss(pivots);
-  parlay::sequence<unsigned char> bucket_ids;
+  parlay::sequence<bucket_key_t> bucket_ids;
   if (duplicates)
     // if duplicates put keys equal to a pivot in next bucket
     // this ensures all keys equaling a duplicate are in a bucket by themselves
-    bucket_ids = parlay::tabulate(n, [&] (long i) -> unsigned char {
+    bucket_ids = parlay::tabulate(n, [&] (long i) -> bucket_key_t {
 			  auto b = ss.find(in[i], less);
-			  return b + ((b < num_buckets-1) && !less(in[i],pivots[b]));});
+			  return b + ((b < num_buckets-1) && !less(in[i],pivots[b]));}, 1000);
   else
-    bucket_ids = parlay::tabulate(n, [&] (long i) -> unsigned char {
-			  return ss.find(in[i], less);});
+    bucket_ids = parlay::tabulate(n, [&] (long i) -> bucket_key_t {
+				       return ss.find(in[i], less);}, 1000);
   
   // sort into the buckets
   auto keys = parlay::internal::uninitialized_sequence<T>(n);
   auto keys_slice = parlay::make_slice(keys);
-  //auto keys = parlay::sequence<T>(n);
   auto offsets = parlay::internal::count_sort<assignment_tag>(in, keys_slice,
 							      parlay::make_slice(bucket_ids), num_buckets).first;
 
@@ -90,16 +95,36 @@ void sample_sort_(Range in, Range out, Less less, int level=1) {
     if (last-first == 0) return; // empty
     // if duplicate keys among pivots don't sort all-equal buckets
     if (i == 0 || i == num_buckets - 1 || less(pivots[i-1], pivots[i]))
-      sample_sort_<assignment_tag>(keys_slice.cut(first,last), out.cut(first,last), less, level+1);
-    //else parlay::uninitialized_relocate_n(keys_slice.begin(), out.begin(), last-first);
+      sample_sort_<parlay::uninitialized_relocate_tag>(keys_slice.cut(first,last), out.cut(first,last),
+						       less, stable, level+1);
     else parlay::uninitialized_relocate_n(out.begin()+first, keys_slice.begin()+first, last-first);
-      //parlay::copy(keys_slice.cut(first,last), out.cut(first,last));
   }, 1);
 }
 
-//  A wraper that calls sample_sort_
+// A version that returns sequence in the input.
+// It does use O(n) temporary memory.
 template <typename Range, typename Less = std::less<>>
-void sample_sort(Range& in, Less less = {}) {
+void sample_sort_inplace(Range& in, Less less = {}) {
   auto ins = parlay::make_slice(in);
   sample_sort_<parlay::uninitialized_relocate_tag>(ins, ins, less);
+}
+
+//  A version that does not destroy the input
+template <typename Range, typename Less = std::less<>>
+auto sample_sort(const Range& in, Less less = {}) {
+  using T = typename Range::value_type;
+  auto ins = parlay::make_slice(in);
+  auto outs = parlay::sequence<T>::uninitialized(ins.size());
+  sample_sort_<parlay::uninitialized_copy_tag>(ins, parlay::make_slice(outs), less);
+  return outs;
+}
+
+//  A version that does not destroy the input
+template <typename Range, typename Less = std::less<>>
+auto stable_sort(const Range& in, Less less = {}) {
+  using T = typename Range::value_type;
+  auto ins = parlay::make_slice(in);
+  auto outs = parlay::sequence<T>::uninitialized(ins.size());
+  sample_sort_<parlay::uninitialized_copy_tag>(ins, parlay::make_slice(outs), less, true);
+  return outs;
 }
