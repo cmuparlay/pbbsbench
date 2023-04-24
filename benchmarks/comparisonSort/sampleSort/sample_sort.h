@@ -7,6 +7,7 @@
 #include <parlay/random.h>
 #include <parlay/slice.h>
 #include <parlay/utilities.h>
+#include <parlay/internal/uninitialized_sequence.h>
 
 #include "heap_tree.h"
 
@@ -23,14 +24,17 @@
 // This is taken from parlaylib/examples/samplesort.h with slight modifications
 // **************************************************************
 
-template <typename Range, typename Less>
+template <typename assignment_tag, typename Range, typename Less>
 void sample_sort_(Range in, Range out, Less less, int level=1) {
   long n = in.size();
-
+  using T = typename Range::value_type;
+  
   // for the base case (small or recursion level greater than 2) use std::sort
   long cutoff = 256;
   if (n <= cutoff || level > 2) {
-    parlay::copy(in, out);
+    if (in.begin() != out.begin())
+      parlay::uninitialized_relocate_n(out.begin(), in.begin(), n);
+    //parlay::copy(in, out);
     parlay::internal::quicksort(out.begin(), n, less);
     return;
   }
@@ -73,7 +77,11 @@ void sample_sort_(Range in, Range out, Less less, int level=1) {
 			  return ss.find(in[i], less);});
   
   // sort into the buckets
-  auto [keys,offsets] = parlay::internal::count_sort(in, bucket_ids, num_buckets);
+  auto keys = parlay::internal::uninitialized_sequence<T>(n);
+  auto keys_slice = parlay::make_slice(keys);
+  //auto keys = parlay::sequence<T>(n);
+  auto offsets = parlay::internal::count_sort<assignment_tag>(in, keys_slice,
+							      parlay::make_slice(bucket_ids), num_buckets).first;
 
   // now recursively sort each bucket
   parlay::parallel_for(0, num_buckets, [&, &keys = keys, &offsets = offsets] (long i) {
@@ -82,8 +90,10 @@ void sample_sort_(Range in, Range out, Less less, int level=1) {
     if (last-first == 0) return; // empty
     // if duplicate keys among pivots don't sort all-equal buckets
     if (i == 0 || i == num_buckets - 1 || less(pivots[i-1], pivots[i]))
-      sample_sort_(keys.cut(first,last), out.cut(first,last), less, level+1);
-    else parlay::copy(keys.cut(first,last), out.cut(first,last));
+      sample_sort_<assignment_tag>(keys_slice.cut(first,last), out.cut(first,last), less, level+1);
+    //else parlay::uninitialized_relocate_n(keys_slice.begin(), out.begin(), last-first);
+    else parlay::uninitialized_relocate_n(out.begin()+first, keys_slice.begin()+first, last-first);
+      //parlay::copy(keys_slice.cut(first,last), out.cut(first,last));
   }, 1);
 }
 
@@ -91,5 +101,5 @@ void sample_sort_(Range in, Range out, Less less, int level=1) {
 template <typename Range, typename Less = std::less<>>
 void sample_sort(Range& in, Less less = {}) {
   auto ins = parlay::make_slice(in);
-  sample_sort_(ins, ins, less);
+  sample_sort_<parlay::uninitialized_relocate_tag>(ins, ins, less);
 }

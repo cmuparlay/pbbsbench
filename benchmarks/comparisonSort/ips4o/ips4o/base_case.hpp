@@ -1,12 +1,12 @@
 /******************************************************************************
- * ips4o/utils.hpp
+ * ips4o/base_case.hpp
  *
  * In-place Parallel Super Scalar Samplesort (IPS⁴o)
  *
  ******************************************************************************
  * BSD 2-Clause License
  *
- * Copyright © 2017, Michael Axtmann <michael.axtmann@kit.edu>
+ * Copyright © 2017, Michael Axtmann <michael.axtmann@gmail.com>
  * Copyright © 2017, Daniel Ferizovic <daniel.ferizovic@student.kit.edu>
  * Copyright © 2017, Sascha Witt <sascha.witt@kit.edu>
  * All rights reserved.
@@ -35,21 +35,74 @@
 
 #pragma once
 
-#define IPS4O_ASSUME_NOT(c) if (c) __builtin_unreachable()
-
-#include <limits>
+#include <algorithm>
+#include <cstddef>
+#include <utility>
 
 #include "ips4o_fwd.hpp"
+#include "utils.hpp"
 
 namespace ips4o {
 namespace detail {
 
 /**
- * Compute the logarithm to base 2, rounded down.
+ * Insertion sort.
  */
-inline constexpr unsigned long log2(unsigned long n) {
-    return (std::numeric_limits<unsigned long>::digits - 1 - __builtin_clzl(n));
+template <class It, class Comp>
+void insertionSort(const It begin, const It end, Comp comp) {
+    IPS4O_ASSUME_NOT(begin >= end);
+
+    for (It it = begin + 1; it < end; ++it) {
+        typename std::iterator_traits<It>::value_type val = std::move(*it);
+        if (comp(val, *begin)) {
+            std::move_backward(begin, it, it + 1);
+            *begin = std::move(val);
+        } else {
+            auto cur = it;
+            for (auto next = it - 1; comp(val, *next); --next) {
+                *cur = std::move(*next);
+                cur = next;
+            }
+            *cur = std::move(val);
+        }
+    }
 }
+
+/**
+ * Wrapper for base case sorter, for easier swapping.
+ */
+template <class It, class Comp>
+inline void baseCaseSort(It begin, It end, Comp&& comp) {
+    if (begin == end) return;
+    detail::insertionSort(std::move(begin), std::move(end), std::forward<Comp>(comp));
+}
+
+template <class It, class Comp>
+inline bool sortedCaseSort(It begin, It end, Comp&& comp) {
+  if (begin == end) {
+    return true;
+  }
+  
+  // If last element is not smaller than first element,
+  // test if input is sorted (input is not reverse sorted).
+  if (!comp(*(end - 1), *begin)) {
+    if (std::is_sorted(begin, end, comp)) {
+      return true;
+    }
+  } else {
+    // Check whether the input is reverse sorted.
+    for (It it = begin; (it + 1) != end; ++it) {
+      if (comp(*it , *(it + 1))) {
+        return false;
+      }
+    }
+    std::reverse(begin, end);
+    return true;
+  }
+
+  return false;
+}
+
 
 }  // namespace detail
 }  // namespace ips4o
