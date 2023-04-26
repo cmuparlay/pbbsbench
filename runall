@@ -163,19 +163,19 @@ maxcpus = detectCPUs()
 
 def getProcessors() :
     if maxcpus <= 16:
-        processors = [1]+range(2,maxcpus+1,2)
+        processors = [1,4,8,16]
     elif maxcpus <= 32:
-        processors = [1,2]+range(4,maxcpus+1,4)
+        processors = [1,4,16,32]
     elif maxcpus <= 40:
-        processors = [1,4,16,20,40]
+        processors = [1,4,10,20,40]
     elif maxcpus <= 64:
-        processors = [1,2,4]+range(8,maxcpus+1,8)
+        processors = [1,4,16,32,64]
     elif maxcpus == 144:
-        processors = [1,4,16,32,72,144]
+        processors = [1,4,16,36,72,144]
     elif maxcpus == 256:
         processors = [1,4,16,32,64,128,256]
     else:
-        processors = [1,2,4,8]+range(16,maxcpus+1,16)
+        processors = [1,4]+list(range(16,maxcpus+1,16))
     print(processors)
     return processors
 
@@ -189,7 +189,7 @@ def compiletest(sdir) :
     os.system("echo \"" + ss + "\"")
     os.system(ss)
 
-def runtest(test,procs,check) :
+def runtest(test,procs,check, keep) :
     if (procs==1) : rounds = 1
     elif (procs < 16) : rounds = 3
     elif (procs < 64) : rounds = 3
@@ -203,7 +203,7 @@ def runtest(test,procs,check) :
         options =  options + " -p " + repr(procs)
     if not(check):
         options = options + " -x"
-    if keep_tmp_files:
+    if keep:
         options = options + " -k"        
     if numactl:
         sc = "cd " + dir + " ; numactl -i all " + testInputs + " " + options
@@ -215,7 +215,9 @@ def runtest(test,procs,check) :
         raise NameError("  " + sc)
 
 try :
-    if scale : processors = getProcessors()
+    if scale :
+        processors = getProcessors()
+        processors.reverse()
     else : os.system("echo " + "\"running on " + repr(maxcpus) + " threads\"")
     for test in tests :
         isParallel = test[1]
@@ -224,15 +226,16 @@ try :
             compiletest(test[0])
             if not(noTime) :
                 if (not(isParallel)) :
-                    runtest(test, 1, not(noCheck))
+                    runtest(test, 1, not(noCheck), keep_tmp_files)
                 elif (not(scale)) :
-                    runtest(test, maxcpus, not(noCheck))
+                    runtest(test, maxcpus, not(noCheck), keep_tmp_files)
                 else :
                     n = len(processors)
+                    # all but the last do not check and keep the temp files
                     for p in processors[0:n-1] :
-                        runtest(test, p, False)
+                        runtest(test, p, False, True)
                         os.system("echo")
-                    runtest(test, processors[n-1], not(noCheck))
+                    runtest(test, processors[n-1], not(noCheck), keep_tmp_files)
 
 except NameError as x:
   print("TEST TERMINATED ABNORMALLY:\n"+str(x))
