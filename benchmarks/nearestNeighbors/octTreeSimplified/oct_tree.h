@@ -137,6 +137,29 @@ struct oct_tree {
       bit = currentBit;
     }
 
+    // construct a leaf node with a sequence of points directly in it
+    node(parlay::sequence<indexed_point> &Pts, int currentBit, box &B) : removed(false), n(Pts.size()) { 
+      // strips off the integer tag, no longer needed
+      indexed_pts = std::move(Pts);
+      L = R = nullptr;
+      b = B;
+      set_center();
+      bit = currentBit;
+    }
+
+    // construct a leaf node with a sequence of points directly in it
+    node(slice_t Pts, int currentBit, box &B) : removed(false), n(Pts.size()) { 
+      // strips off the integer tag, no longer needed
+      indexed_pts = parlay::sequence<indexed_point>(n);
+      for (int i = 0; i < n; i++) {
+        indexed_pts[i] = Pts[i];  
+      }
+      L = R = nullptr;
+      b = B;
+      set_center();
+      bit = currentBit;
+    }
+
 
     // construct a leaf node with a sequence of points directly in it
     node(slice_t Pts, int currentBit) : removed(false), n(Pts.size()) { 
@@ -190,10 +213,24 @@ struct oct_tree {
       return r;
     }
 
+    static node* new_leaf(slice_t Pts, int currentBit, box B) {
+      node* r = alloc_node();
+      assert(Pts.begin() != nullptr);
+      new (r) node(Pts, currentBit, B);
+      return r;
+    }
+
     static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit) {
       node* r = alloc_node();
       assert(Pts.begin() != nullptr);
       new (r) node(Pts, currentBit);
+      return r;
+    }
+
+    static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit, box B) {
+      node* r = alloc_node();
+      assert(Pts.begin() != nullptr);
+      new (r) node(Pts, currentBit, B);
       return r;
     }
 

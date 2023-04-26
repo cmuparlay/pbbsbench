@@ -527,7 +527,9 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         //case 1
         // std::cout << "regular insert" << std::endl;
         // std::cout << T->bit << std::endl;
-        node* N = node::new_leaf(std::move(points), T->bit);
+        box b = T->Box();
+        box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
+        node* N = node::new_leaf(std::move(points), T->bit, std::move(bigger));
         assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(N, left);
         if(tree.load() == T) {
@@ -554,8 +556,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           new_bit--;
         }
         parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
-        auto left_s = parlay::tabulate(cut_point, [&] (size_t i) {return points[i];});
-        auto right_s = parlay::tabulate(points.size()-cut_point, [&] (size_t i) {return points[cut_point+i];});
+        auto left_s = parlay::tabulate(cut_point, [&] (size_t i) {return points[i];}, 1000);
+        auto right_s = parlay::tabulate(points.size()-cut_point, [&] (size_t i) {return points[cut_point+i];}, 1000);
         node* L = node::new_leaf(std::move(left_s), new_bit);
         node* R = node::new_leaf(std::move(right_s), new_bit);
         node* P = node::new_node(L, R, new_bit+1);
@@ -697,7 +699,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       int dims = q.second->pt.dimension();
       if(grandparent != nullptr) bit = grandparent->bit-1;
       else bit = (o_tree::key_bits/dims)*dims;
-      node* Leaf = node::new_leaf(std::move(pts), bit);
+      node* Leaf;
+      if(on_box_border(parent, q.second)) Leaf = node::new_leaf(std::move(pts), bit);
+      else Leaf = node::new_leaf(std::move(pts), bit, std::move(parent->Box()));
+      // node* Leaf = node::new_leaf(std::move(pts), bit);
       if(grandparent != nullptr){
         if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
         else grandparent->set_child(Leaf, false);
@@ -713,7 +718,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     else{
       if(pts.size() > 0){
         // std::cout << "Deletion from leaf, case 1" << std::endl;
-        node* Leaf = node::new_leaf(std::move(pts), T->bit);
+        // node* Leaf = node::new_leaf(std::move(pts), T->bit);
+        node* Leaf;
+        if(on_box_border(T, q.second)) Leaf = node::new_leaf(std::move(pts), T->bit);
+        else Leaf = node::new_leaf(std::move(pts), T->bit, std::move(T->Box()));
         if(parent != nullptr){
           if(T == parent->Left()) parent->set_child(Leaf, true);
           else parent->set_child(Leaf, false);
@@ -733,13 +741,16 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         if(sibling->is_leaf()){
           if(grandparent != nullptr){
             int bit = grandparent->bit-1;
-            node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
+            // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
+            // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
+            // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit, sibling->Box());
+            node* Leaf = node::new_leaf(std::move(sibling->Indexed_Pts()), bit, std::move(sibling->Box()));
             if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
             else grandparent->set_child(Leaf, false);
           }else{ //sibling becomes the root
             int dims = q.second->pt.dimension();
             int bit = dims*(o_tree::key_bits/dims);
-            node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
+            node* Leaf = node::new_leaf(std::move(sibling->Indexed_Pts()), bit, std::move(sibling->Box()));
             std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(Leaf);
           }
