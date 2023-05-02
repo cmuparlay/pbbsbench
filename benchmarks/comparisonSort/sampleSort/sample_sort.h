@@ -5,6 +5,7 @@
 #include <parlay/parallel.h>
 #include <parlay/primitives.h>
 #include <parlay/random.h>
+#include <parlay/internal/get_time.h>
 #include <parlay/slice.h>
 #include <parlay/utilities.h>
 #include <parlay/internal/uninitialized_sequence.h>
@@ -29,24 +30,28 @@
 template <typename assignment_tag, typename Range, typename Less>
 void sample_sort_(Range in, Range out, Less less, bool stable=false, int level=1) {
   long n = in.size();
+  parlay::internal::timer t("sample", level==1);
   using T = typename Range::value_type;
   using bucket_key_t = unsigned short;
   
   // for the base case (small or recursion level greater than 2)
   long cutoff = 1024;
-  if (n <= cutoff || (level > 1 && n <= 1 << 17)) {
+  if (n <= cutoff || (level > 2)) { // && n <= 1 << 17)) {
+    //return;
     if (in.begin() != out.begin())
       parlay::uninitialized_relocate_n(out.begin(), in.begin(), n);
     if (stable)
       std::stable_sort(out.begin(), out.end(), less);
     else
-      parlay::internal::quicksort(out.begin(), n, less);
-    //std::sort(out.begin(), out.end(), less);
+      if (sizeof(T) > 8)
+	parlay::internal::quicksort(out.begin(), n, less);
+      else std::sort(out.begin(), out.end(), less);
     return;
   }
 
   // number of bits in bucket count (e.g. 8 would mean 256 buckets)
-  int bits = std::min<long>(10, parlay::log2_up(n)-parlay::log2_up(cutoff)+1);
+  int max_bits = (level == 1) ? 10 : 8;
+  int bits = std::min<long>(max_bits, parlay::log2_up(n)-parlay::log2_up(cutoff)+1);
   long num_buckets = 1 << bits;
 
   // over-sampling ratio: keeps the buckets more balanced
@@ -57,12 +62,12 @@ void sample_sort_(Range in, Range out, Less less, bool stable=false, int level=1
   std::uniform_int_distribution<long> dis(0, n-1);
   auto oversample = parlay::tabulate(num_buckets * over_ratio, [&] (long i) {
     auto r = gen[i];
-    return in[dis(r)];});
-  std::sort(oversample.begin(), oversample.end());
+    return in[dis(r)];}, 1000);
+  std::sort(oversample.begin(), oversample.end(), less);
 
   // sub sample to pick final pivots (num_buckets - 1 of them)
   auto pivots = parlay::tabulate(num_buckets-1, [&] (long i) {
-    return oversample[(i+1)*over_ratio];});
+						  return oversample[(i+1)*over_ratio];}, 1000);
 
   // check if any duplicates among the pivots
   bool duplicates = false;
@@ -81,13 +86,15 @@ void sample_sort_(Range in, Range out, Less less, bool stable=false, int level=1
   else
     bucket_ids = parlay::tabulate(n, [&] (long i) -> bucket_key_t {
 				       return ss.find(in[i], less);}, 1000);
-  
+  t.next("bucket id");
+   
   // sort into the buckets
   auto keys = parlay::internal::uninitialized_sequence<T>(n);
   auto keys_slice = parlay::make_slice(keys);
   auto offsets = parlay::internal::count_sort<assignment_tag>(in, keys_slice,
 							      parlay::make_slice(bucket_ids), num_buckets).first;
-
+  t.next("count sort");
+  
   // now recursively sort each bucket
   parlay::parallel_for(0, num_buckets, [&, &keys = keys, &offsets = offsets] (long i) {
     long first = offsets[i];
