@@ -514,9 +514,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   }
 
   bool insert_into_leaf(indexed_point q, node* parent, node* T){
-      parlay::sequence<indexed_point> points(T->size()+1);
-      for(int i=0; i<T->size(); i++) points[i] = T->Indexed_Pts()[i];
-      points[T->size()] = q;
+      auto points = parlay::tabulate(T->size()+1, [&] (long i) {
+	  return (i == T->size()) ? q : T->Indexed_Pts()[i];}, 1000);
       node* G = parent;
       bool left;
       if(G != nullptr) left = (G->Left() == T);
@@ -543,7 +542,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         auto less_sort = [&] (indexed_point a, indexed_point b){
           return a.first < b.first;
         };
-        parlay::sort_inplace(points, less_sort);
+        std::sort(points.begin(), points.end(), less_sort);
         //search for cut point
         int new_bit = T->bit;
         while((cut_point == 0 | cut_point == points.size()) && new_bit != 0){

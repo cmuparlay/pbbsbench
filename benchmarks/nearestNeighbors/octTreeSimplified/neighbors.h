@@ -84,6 +84,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     // t.next("deletes");
 
+    t.next("hello");
     // re-insert v2
     for(int j=0; j<v2.size(); j++){
       T.insert_point(v2[j]);
