@@ -63,26 +63,7 @@ void write_rangeres(parlay::sequence<parlay::sequence<pid>> &result, const std::
         }       
     });
 
-  //   int i=0;
-  // int j=0;
-  // int cutoff = 10;
-  // while(j<cutoff && i<result.size()){
-  //     if(ids[i].size() > 0){
-  //         std::cout << "The " << i << "th query has " << (ids[i]).size() << " matches" << std::endl;
-  //         std::cout << "The match IDs are " ;
-  //         for(int k=0; k<(ids[i]).size(); k++){
-  //             std::cout << (ids[i])[k] << ", " ;
-  //         }
-  //         j++;
-  //     }
-  //     i++;
-  // }
-
     auto distances_data = parlay::flatten(distances);
-
-    // std::cout << num_matches << std::endl;
-    // std::cout << ids_data.size() << std::endl;
-    // std::cout << distances_data.size() << std::endl;
 
     int* preamble_data = preamble.begin();
     int* offset_data = offsets.begin();

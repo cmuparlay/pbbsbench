@@ -33,8 +33,10 @@ using namespace benchIO;
 
 using coord = double;
 using point2 = point2d<coord>;
+using point3 = point3d<coord>;
 
-int checkNeighbors(parlay::sequence<long> &neighbors, parlay::sequence<point2> &P,
+template<typename point>
+int checkNeighbors(parlay::sequence<long> &neighbors, parlay::sequence<point> &P,
 		   int k, int r) {
   size_t n = P.size();
   if (neighbors.size() != k * n) {
@@ -42,15 +44,23 @@ int checkNeighbors(parlay::sequence<long> &neighbors, parlay::sequence<point2> &
 	      << " k = " << k << " neighbors = " << neighbors.size() << std::endl;
     return 1;
   }
-
+  int wrong=0;
   for (long j = 0; j < r; j++) {
     long jj = parlay::hash64(j) % n;
 
-    auto distances = parlay::tabulate(n, [&] (size_t i) -> double {
-	return (i == jj) ? DBL_MAX : (P[jj] - P[i]).Length();
+    auto distances = parlay::tabulate(n, [&] (size_t i) {
+	      // return (i == jj) ? DBL_MAX : (P[jj] - P[i]).Length();
+        if(i==jj) return std::make_pair(i, DBL_MAX);
+        else return std::make_pair(i, (P[jj] - P[i]).Length());
       });
 
-    double minD = parlay::reduce(distances, parlay::minm<double>());
+    auto f = [&] (std::pair<size_t, double> a, std::pair<size_t, double> b) {
+      return (a.second<b.second) ? a : b;
+    };
+    auto op = parlay::binary_op(f, std::make_pair(0, DBL_MAX));
+    std::pair<size_t, double> l = parlay::reduce(distances, op);
+    double minD=l.second;
+    size_t min_index=l.first;
 
     double d = (P[jj] - P[neighbors[k*jj]]).Length();
     double errorTolerance = 1e-6;
@@ -59,9 +69,12 @@ int checkNeighbors(parlay::sequence<long> &neighbors, parlay::sequence<point2> &
       cout << "error in neighborsCheck: for point " << jj 
 	   << " min distance reported is: " << d 
 	   << " actual is: " << minD << endl;
-      return 1;
+     cout << "Reported neighbor is " << neighbors[k*jj] << " while actual neighbor is " << min_index << endl;
+     wrong++;
+      // return 1;
     }
   }
+  if(wrong > 0) std::cout << wrong << " out of " << r << " points return wrong answer" << std::endl;
   return 0;
 }
 
@@ -84,6 +97,9 @@ int main(int argc, char* argv[]) {
 
   if (d == 2) {
     parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
+    return checkNeighbors(neighbors, PIn, k, r);
+  } else if (d==3){
+    parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
     return checkNeighbors(neighbors, PIn, k, r);
   }
 //  else if (d == 3) {

@@ -60,6 +60,8 @@ void ANN(parlay::sequence<Tvec_point<T>*> &v, int k, int maxDeg,
   std::string name = "Vamana";
   std::string params = "R = " + std::to_string(maxDeg) + ", L = " + std::to_string(beamSize);
   auto [avg_deg, max_deg] = graph_stats(v);
+  auto vv = visited_stats(v);
+  std::cout << "Average visited: " << vv[0] << ", Tail visited: " << vv[1] << std::endl;
   Graph G(name, params, v.size(), avg_deg, max_deg, idx_time);
   G.print();
   search_and_parse(G, v, q, groundTruth, res_file, mips, false, medoid);

@@ -81,13 +81,13 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     if (algorithm_version == 0) { // this is for starting from root 
       // this reorders the vertices for locality
-      parlay::sequence<vtx*> vr = T.vertices();
-      t.next("flatten tree");
+      // parlay::sequence<vtx*> vr = T.vertices();
+      // t.next("flatten tree");
 
       // find nearest k neighbors for each point
-      size_t n = vr.size();
+      size_t n = v.size();
       parlay::parallel_for (0, n, [&] (size_t i) {
-	       T.k_nearest(vr[i], k);
+	       T.k_nearest(v[i], k);
       }, 1);
     
     } else if (algorithm_version == 1) {
