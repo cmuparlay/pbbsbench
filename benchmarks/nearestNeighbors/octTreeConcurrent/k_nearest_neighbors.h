@@ -411,8 +411,12 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   
 
  
-  parlay::sequence<vtx*> z_sort(parlay::sequence<vtx*> v, box b, double Delta){ 
+  parlay::sequence<vtx*> z_sort(parlay::sequence<vtx*> v, box b){ 
     using indexed_point = typename o_tree::indexed_point; 
+    double Delta = 0;
+    int dims = v[0]->pt.dimension();
+    for (int i = 0; i < dims; i++) 
+      Delta = std::max(Delta, b.second[i] - b.first[i]);
     size_t n = v.size();
     parlay::sequence<indexed_point> points;
     points = parlay::sequence<indexed_point>(n);
@@ -430,7 +434,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     parlay::parallel_for(0, n, [&] (size_t i){
       v3[i] = x[i].second; 
     });
-    return v3; 
+    return std::move(v3); 
   }
 
   using indexed_point = typename o_tree::indexed_point; 
@@ -716,7 +720,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             if(T == parent->Left()) parent->set_child(N, true);
             else parent->set_child(N, false);
           } else if(T == tree.load()){ 
-            std::cout << "root changed (internal, box change)" << std::endl;
+            // std::cout << "root changed (internal, box change)" << std::endl;
             set_root(N);
           }
           delete_single(T);
@@ -777,7 +781,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
         else grandparent->set_child(Leaf, false);
       } else if(parent == tree.load()){ 
-        std::cout << "root changed (leaf)" << std::endl;
+        // std::cout << "root changed (leaf)" << std::endl;
         set_root(Leaf);
       }
       delete_single(parent->Left());
@@ -796,7 +800,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           if(T == parent->Left()) parent->set_child(Leaf, true);
           else parent->set_child(Leaf, false);
         } else if(T == tree.load()){ 
-          std::cout << "root changed (leaf was already root)" << std::endl;
+          // std::cout << "root changed (leaf was already root)" << std::endl;
           set_root(Leaf);
         }
         delete_single(T);
@@ -821,7 +825,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             int dims = q.second->pt.dimension();
             int bit = dims*(o_tree::key_bits/dims);
             node* Leaf = node::new_leaf(std::move(sibling->Indexed_Pts()), bit, std::move(sibling->Box()));
-            std::cout << "Root changed: sibling promoted to root" << std::endl;
+            // std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(Leaf);
           }
           delete_single(sibling);
@@ -830,7 +834,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             if(parent == grandparent->Left()) grandparent->set_child(sibling, true);
             else grandparent->set_child(sibling, false);
           } else{ 
-            std::cout << "Root changed: sibling promoted to root" << std::endl;
+            // std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(sibling);
           } 
         }
