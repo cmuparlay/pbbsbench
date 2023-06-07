@@ -5,8 +5,8 @@ cd ~/pbbsbench/benchmarks/ANN/scripts
 #prepare groundtruth for 1M slices
 # bash prepare_datasets.sh
 #nearest neighbor search experiments
-nohup bash vamana.sh >> run_log.out
 nohup bash hcnng.sh >> run_log.out
+nohup bash vamana.sh >> run_log.out
 # bash pynndescent.sh
 #range search experiments
 # cd ~/pbbsbench/benchmarks/rangeSearch/scripts
