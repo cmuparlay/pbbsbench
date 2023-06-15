@@ -69,7 +69,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     std::cout << "using path locking" << std::endl;
 #endif
 
-    std::cout << "threads: " << num_threads << std::endl;
+    //std::cout << "threads: " << num_threads << std::endl;
 
     //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);     
@@ -96,11 +96,11 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //prelims for insert  
     int dims = v[0]->pt.dimension();
 
-    // // delete v2 sequentially
-    // for(int j = v2.size()-1; j >= 0; j--){
-    //   // std::cout << j << std::endl;
-    //   T.delete_point(v2[j]);
-    // }
+    // delete v2 in parallel
+    parlay::parallel_for(0, v2.size(), [&] (size_t j) {
+      // std::cout << j << std::endl;
+      T.delete_point(v2[j]);
+    }, 100, true);
 
     t.next("deletes");
 
