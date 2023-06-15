@@ -96,7 +96,7 @@ struct k_nearest_neighbors {
     }
   }
 
-  void set_box(box b){tree_box = b;}
+  void set_box(box &b){tree_box = b;}
 
   void set_root(node* root){tree.store(root);}
 
@@ -411,7 +411,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   
 
  
-  parlay::sequence<vtx*> z_sort(parlay::sequence<vtx*> v, box b){ 
+  static parlay::sequence<vtx*> z_sort(parlay::sequence<vtx*> v, box b){ 
     using indexed_point = typename o_tree::indexed_point; 
     double Delta = 0;
     int dims = v[0]->pt.dimension();
@@ -422,8 +422,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     points = parlay::sequence<indexed_point>(n);
     parlay::parallel_for(0, n, [&] (size_t i){
       size_t p1 = o_tree::interleave_bits(v[i]->pt, b.first, Delta);
-      indexed_point i1 = std::make_pair(p1, v[i]);
-      points[i] = i1; 
+      points[i] = std::make_pair(p1, v[i]);
     });
     auto less = [&] (indexed_point a, indexed_point b){
       return a.first < b.first;
@@ -434,7 +433,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     parlay::parallel_for(0, n, [&] (size_t i){
       v3[i] = x[i].second; 
     });
-    return std::move(v3); 
+    return v3; 
   }
 
   using indexed_point = typename o_tree::indexed_point; 
@@ -499,8 +498,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     }
 
     if(T->is_leaf()) {
-      assert(parent_locked);
-      return T->lck.with_lock([=] { return insert_into_leaf(q, parent, T); });
+      return insert_into_leaf(q, parent, T);
     } else {
       if(!within_box(T, q.second)) {
         assert(parent_locked);
@@ -515,7 +513,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           indexed_point s = Q->Indexed_Pts()[0];
           int cur_bit = bit;
           assert(cur_bit >= T->bit);
-          if(parent != nullptr) assert(cur_bit < G->bit);
+          // if(parent != nullptr) assert(cur_bit < G->bit);
           while(cur_bit > T->bit) {
             if(lookup_bit(q.first, cur_bit) != lookup_bit(s.first, cur_bit)){
               // std::cout << "case 1" << std::endl;
@@ -575,7 +573,10 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           });
 
         });
-      } else return insert_internal(q, T, false);
+      } else {
+        assert(!parent_locked);
+        return insert_internal(q, T, false);
+      }
     }
   }
 
@@ -603,7 +604,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         // std::cout << T->bit << std::endl;
         box b = T->Box();
         box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
-        node* N = node::new_leaf(std::move(points), T->bit, std::move(bigger));
+        node* N = node::new_leaf(std::move(points), T->bit, bigger);
         assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(N, left);
         if(tree.load() == T) {
@@ -654,12 +655,26 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     auto [b, Delta] = get_box_delta(dims);
     size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
     indexed_point q = std::make_pair(interleave_int, p);
-    node* R = tree.load();
-    assert(R != nullptr);
-    if(R->is_leaf()) {
-      delete_from_leaf(q, nullptr, nullptr, R);
+
+    while(true) {
+      node* R = tree.load();
+      assert(R != nullptr);
+      if(R->is_leaf()) {
+        bool delete_successful = root_lock.try_lock([=] { 
+              if(tree.load() != R) return false;
+              else {
+                delete_from_leaf(q, nullptr, nullptr, R); 
+                return true;
+              }});
+
+        if(delete_successful) break;
+      }
+      else {
+        auto [a,b,locks_successful] = delete_point0(q, nullptr, R);
+        if(locks_successful) break;
+      }
     }
-    else delete_point0(q, nullptr, nullptr, R);
+
   }
 
   bool on_box_border(node* T, vtx* p){
@@ -685,50 +700,84 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   //first indicates whether q present in the data structure
   //second indicates whether the child node was changed--if not,
   //can end recursion early
-  std::pair<bool, bool> delete_point0(indexed_point q, node* parent, node* grandparent, node* T){
-    bool q_present; bool T_deleted = false; bool child_changed = true;
+  //third indicates if it failed to take all the locks
+  std::tuple<bool, bool, bool> delete_point0(indexed_point q, node* parent, node* T, bool parent_locked=false, bool T_locked=false){
+    bool q_present; bool T_deleted = false; bool child_changed = true; bool locks_successful;
     node* N;
+
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
-    if(N->is_leaf()) {
-      auto [a,b] = delete_from_leaf(q, T, parent, N);
-      q_present=a;
-      T_deleted=b;
-    } else{ 
-      auto [a,b] =  delete_point0(q, T, parent, N);
-      q_present=a;
-      child_changed=b;
-    }
 
-    //if the point wasn't present, no change needed
-    //if child wasn't changed, no more changes needed, can end early
-    if(!q_present || !child_changed) {return std::make_pair(q_present, false);}
-    
-    if(!T_deleted){
-      //two cases:
-      // (1) no change needed
-      // (2) box needs to be made smaller
-      if(on_box_border(T, q.second)){ //case 2
-        // std::cout << "Internal delete, case 2" << std::endl;
-        node* L = T->Left();
-        node* R = T->Right();
-        box b = box(L->Box().first.minCoords(R->Box().first),
-          L->Box().second.maxCoords(R->Box().second));
-        if(!boxes_equal(T->Box(), b)){
-          node* N = node::new_node(L, R, T->bit);
-          if(parent != nullptr){
-            if(T == parent->Left()) parent->set_child(N, true);
-            else parent->set_child(N, false);
-          } else if(T == tree.load()){ 
-            // std::cout << "root changed (internal, box change)" << std::endl;
-            set_root(N);
-          }
-          delete_single(T);
-        }
-        return std::make_pair(q_present, true);
+    if(!parent_locked && (on_box_border(T, q.second) || N->is_leaf())) {
+      // enter locking mode
+      if(parent == nullptr) { // T is root
+        // locks_taken_++;
+        auto result = root_lock.try_lock_result([=] { 
+          if(tree.load() != T) return std::make_tuple(false, false, false); // validation failed
+          else return delete_point0(q, parent, T, true, false); 
+        });
+        if(result.has_value()) return result.value();
+        else return std::make_tuple(false, false, false); // locking failed 
+      } else {
+        // locks_taken_++;
+        auto result = parent->lck.try_lock_result([=] {
+          if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
+            // std::cout << "failed valdiation" << std::endl; 
+            return std::make_tuple(false, false, false); // validation failed
+          } else return delete_point0(q, parent, T, true, false); 
+        });
+        if(result.has_value()) return result.value();
+        else return std::make_tuple(false, false, false); // locking failed 
       }
-      else return std::make_pair(q_present, false); //case 1
-    } else return std::make_pair(q_present, true);
+    }
+    else if(parent_locked && !T_locked) {
+      return T->lck.with_lock([=] {
+        return delete_point0(q, parent, T, true, true); 
+      });
+    } else {
+      if(N->is_leaf()) {
+        auto [a,b] = delete_from_leaf(q, T, parent, N);
+        q_present=a;
+        T_deleted=b;
+        locks_successful = true;
+      } else{ 
+        auto [a,b,c] =  delete_point0(q, T, N, parent_locked, false);
+        q_present=a;
+        child_changed=b;
+        locks_successful = c;
+        if(!locks_successful) return std::make_tuple(a,b,c);
+      }
+
+      //if the point wasn't present, no change needed
+      //if child wasn't changed, no more changes needed, can end early
+      if(!q_present || !child_changed) {return std::make_tuple(q_present, false, locks_successful);}
+      
+      if(!T_deleted) {
+        //two cases:
+        // (1) no change needed
+        // (2) box needs to be made smaller
+        if(on_box_border(T, q.second)){ //case 2
+          // std::cout << "Internal delete, case 2" << std::endl;
+          node* L = T->Left();
+          node* R = T->Right();
+          box b = box(L->Box().first.minCoords(R->Box().first),
+            L->Box().second.maxCoords(R->Box().second));
+          if(!boxes_equal(T->Box(), b)){
+            node* N = node::new_node(L, R, T->bit);
+            if(parent != nullptr){
+              if(T == parent->Left()) parent->set_child(N, true);
+              else parent->set_child(N, false);
+            } else if(T == tree.load()){ 
+              // std::cout << "root changed (internal, box change)" << std::endl;
+              set_root(N);
+            }
+            delete_single(T);
+          }
+          return std::make_tuple(q_present, true, locks_successful);
+        }
+        else return std::make_tuple(q_present, false, locks_successful); //case 1
+      } else return std::make_tuple(q_present, true, locks_successful);
+    }
   }
 
   bool points_equal(point p, point q){
@@ -775,7 +824,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       else bit = (o_tree::key_bits/dims)*dims;
       node* Leaf;
       if(on_box_border(parent, q.second)) Leaf = node::new_leaf(std::move(pts), bit);
-      else Leaf = node::new_leaf(std::move(pts), bit, std::move(parent->Box()));
+      else Leaf = node::new_leaf(std::move(pts), bit, parent->Box());
       // node* Leaf = node::new_leaf(std::move(pts), bit);
       if(grandparent != nullptr){
         if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
@@ -795,7 +844,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         // node* Leaf = node::new_leaf(std::move(pts), T->bit);
         node* Leaf;
         if(on_box_border(T, q.second)) Leaf = node::new_leaf(std::move(pts), T->bit);
-        else Leaf = node::new_leaf(std::move(pts), T->bit, std::move(T->Box()));
+        else Leaf = node::new_leaf(std::move(pts), T->bit, T->Box());
         if(parent != nullptr){
           if(T == parent->Left()) parent->set_child(Leaf, true);
           else parent->set_child(Leaf, false);
@@ -818,13 +867,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
             // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
             // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
             // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit, sibling->Box());
-            node* Leaf = node::new_leaf(std::move(sibling->Indexed_Pts()), bit, std::move(sibling->Box()));
+            node* Leaf = node::new_leaf(sibling->Indexed_Pts(), bit, sibling->Box());
             if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
             else grandparent->set_child(Leaf, false);
           }else{ //sibling becomes the root
             int dims = q.second->pt.dimension();
             int bit = dims*(o_tree::key_bits/dims);
-            node* Leaf = node::new_leaf(std::move(sibling->Indexed_Pts()), bit, std::move(sibling->Box()));
+            node* Leaf = node::new_leaf(sibling->Indexed_Pts(), bit, sibling->Box());
             // std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(Leaf);
           }

@@ -51,6 +51,26 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
   
+#ifdef Versioned
+    std::cout << "using multiversioning" << std::endl;
+#else
+    std::cout << "without multiversionng" << std::endl;
+#endif
+
+#ifndef NoHelp
+    std::cout << "using lock-free locks" << std::endl;
+#else
+    std::cout << "using blocking locks" << std::endl;
+#endif
+
+#ifdef HandOverHand
+    std::cout << "using hand-over-hand locking" << std::endl;
+#else
+    std::cout << "using path locking" << std::endl;
+#endif
+
+    std::cout << "threads: " << num_threads << std::endl;
+
     //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);     
 
