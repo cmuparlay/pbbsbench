@@ -243,20 +243,13 @@ struct k_nearest_neighbors {
     void k_nearest_rec(node* T) {
       box b;
       b = T->Box();
-      // node::print_point(b.first);
-      // node::print_point(b.second);
-      // std::cout << max_distance << std::endl;
       if (within_epsilon_box(T, sqrt(max_distance))) { 
-        // std::cout << "here" << std::endl;    
         if (report_stats) internal_cnt++;
         if (T->is_leaf()) {
           if (report_stats) leaf_cnt++;
           auto &Vtx = T->Indexed_Pts();
           for (int i = 0; i < T->size(); i++){
-            // std::cout << T->size() << std::endl;
-            // std::cout << Vtx.size() << std::endl;
             if (Vtx[i].second != vertex) { 
-              // std::cout << "here" << std::endl;
               if (k < queue_cutoff){
                 update_nearest(Vtx[i].second);
               } else{
@@ -264,13 +257,39 @@ struct k_nearest_neighbors {
             }
           } 
           }
-          // abort();
         } else if (distance(T->Left()) < distance(T->Right())) {
           k_nearest_rec(T->Left());
           k_nearest_rec(T->Right());
         } else {
           k_nearest_rec(T->Right());
           k_nearest_rec(T->Left());
+        }
+      }
+    }
+
+    void knn_with_bit(node* T, size_t p1){
+      box b;
+      b = T->Box();
+      if (within_epsilon_box(T, sqrt(max_distance))) { 
+        if (report_stats) internal_cnt++;
+        if (T->is_leaf()) {
+          if (report_stats) leaf_cnt++;
+          auto &Vtx = T->Indexed_Pts();
+          for (int i = 0; i < T->size(); i++){
+            if (Vtx[i].second != vertex) { 
+              if (k < queue_cutoff){
+                update_nearest(Vtx[i].second);
+              } else{
+                update_nearest_queue(Vtx[i].second);
+            }
+          } 
+          }
+        } else if (lookup_bit(p1, T->bit) == 0) {
+          knn_with_bit(T->Left(), p1);
+          knn_with_bit(T->Right(), p1);
+        } else {
+          knn_with_bit(T->Right(), p1);
+          knn_with_bit(T->Left(), p1);
         }
       }
     }
@@ -354,7 +373,7 @@ struct RNG {
 
 
   // takes in an integer and a position in said integer and returns whether the bit at that position is 0 or 1
-  int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
+  static int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
     size_t val = ((size_t) 1) << (pos - 1);
     size_t mask = (pos == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << pos);
     if ((interleave_integer & mask) < val){
@@ -376,7 +395,6 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   std::cout << current->size() << std::endl;
   auto &Vtx = current->Indexed_Pts();
   for (int i = 0; i < current->size(); i++){
-    // std::cout << Vtx[i].first << std::endl;
     std::cout << Vtx[i].second->identifier << std::endl;
 
   }
@@ -396,6 +414,18 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     verlib::with_snapshot([&] {
       kNN nn(p,k);
       nn.k_nearest_rec(tree.load()); //this is passing in a pointer to the o_tree root
+      if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
+      for (int i=0; i < k; i++)
+        p->ngh[i] = nn[i];
+    });
+  }
+
+  void k_nearest_bit(vtx* p, int k){
+    verlib::with_snapshot([&] {
+      auto [b, Delta] = get_box_delta(p->pt.dimension());
+      size_t p1 = o_tree::interleave_bits(p->pt, b.first, Delta);
+      kNN nn(p,k);
+      nn.knn_with_bit(tree.load(), p1); //this is passing in a pointer to the o_tree root
       if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
       for (int i=0; i < k; i++)
         p->ngh[i] = nn[i];
