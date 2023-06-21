@@ -751,7 +751,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       } else {
         // locks_taken_++;
         auto result = parent->lck.try_lock_result([=] {
-          if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
+          if(parent->removed.load() || (parent->Left() != T && parent->Right() != T)) { // if P is removed or P's child isn't T
             // std::cout << "failed valdiation" << std::endl; 
             return std::make_tuple(false, false, false); // validation failed
           } else return delete_point0(q, parent, T, true, false); 
