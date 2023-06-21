@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = true;
-int algorithm_version = 0;
+int algorithm_version = 1;
 // 0=root based, 1=bit based
 
 #include <algorithm>
@@ -54,7 +54,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 #ifdef Versioned
     std::cout << "using multiversioning" << std::endl;
 #else
-    std::cout << "without multiversionng" << std::endl;
+    std::cout << "without multiversioning" << std::endl;
 #endif
 
 #ifndef NoHelp
@@ -68,6 +68,8 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 #else
     std::cout << "using path locking" << std::endl;
 #endif
+    if(algorithm_version == 0) std::cout << "root based algorithm" << std::endl;
+    else if(algorithm_version == 1) std::cout << "bit based algorithm" << std::endl;
 
     //std::cout << "threads: " << num_threads << std::endl;
 
@@ -101,10 +103,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       T.delete_point(v2[j]);
     }, 100, true);
 
-    // for(int i=0; i<v2.size(); i++){
-    //   T.delete_point(v2[i]);
-    // }
-
+    t.next("deletes");
     
     // EXAMPLE OF EQUALITY CHECKING
     knn_tree R(v1, whole_box);
@@ -112,7 +111,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     t.next("equality check");
     // END EXAMPLE
 
-    t.next("deletes");
+    
    
     // insert v2 in parallel
     parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
