@@ -401,31 +401,16 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   return current;
 }
 
-//this instantiates the knn search structure and then calls the function k_nearest_fromLeaf
-void k_nearest_leaf(vtx* p, node* T, int k) { 
-  kNN nn(p, k); 
-  nn.k_nearest_fromLeaf(T);
-  if (report_stats) p->counter = nn.internal_cnt;
-  for (int i=0; i < k; i++)
-    p->ngh[i] = nn[i];
-}
-
   void k_nearest(vtx* p, int k) {
     verlib::with_snapshot([&] {
       kNN nn(p,k);
-      nn.k_nearest_rec(tree.load()); //this is passing in a pointer to the o_tree root
-      if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
-      for (int i=0; i < k; i++)
-        p->ngh[i] = nn[i];
-    });
-  }
-
-  void k_nearest_bit(vtx* p, int k){
-    verlib::with_snapshot([&] {
-      auto [b, Delta] = get_box_delta(p->pt.dimension());
-      size_t p1 = o_tree::interleave_bits(p->pt, b.first, Delta);
-      kNN nn(p,k);
-      nn.knn_with_bit(tree.load(), p1); //this is passing in a pointer to the o_tree root
+      if(!(within_box(tree.load(), p))){
+        nn.k_nearest_rec(tree.load()); 
+      } else{
+        auto [b, Delta] = get_box_delta(p->pt.dimension());
+        size_t p1 = o_tree::interleave_bits(p->pt, b.first, Delta);
+        nn.knn_with_bit(tree.load(), p1); 
+      }
       if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
       for (int i=0; i < k; i++)
         p->ngh[i] = nn[i];
@@ -434,7 +419,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
   parlay::sequence<int> range_search(vtx* p, double rad){
       RNG rn(p,rad);
-      rn.range_search_rec(tree.load()); //this is passing in a pointer to the o_tree root
+      rn.range_search_rec(tree.load());
       if (report_stats) {p->counter = rn.internal_cnt; p->counter2 = rn.leaf_cnt;}
       return std::move(rn.return_answer());
   }
@@ -701,7 +686,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       }
       else {
         auto [a,b,locks_successful] = delete_point0(q, nullptr, R);
-        if(locks_successful) break;
+        if(locks_successful) {assert(a); break;}
       }
     }
 
@@ -737,6 +722,8 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
 
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
+
+    assert(!(T->is_leaf()));
 
     if(!parent_locked && (on_box_border(T, q.second) || N->is_leaf())) {
       // enter locking mode

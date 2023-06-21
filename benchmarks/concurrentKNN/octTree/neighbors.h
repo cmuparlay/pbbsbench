@@ -78,7 +78,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //and one to later insert point by point
     size_t n = v.size();
     node_allocator<vtx>.shuffle(n); 
-    size_t init = n/2;
+    size_t init = 1;
     size_t ins = n-init;
     parlay::sequence<vtx*> v1(init);  
     parlay::sequence<vtx*> v2(ins);
@@ -96,10 +96,14 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //prelims for insert  
     int dims = v[0]->pt.dimension();
 
-    // delete v2 in parallel
+    // // delete v2 in parallel
     parlay::parallel_for(0, v2.size(), [&] (size_t j) {
       T.delete_point(v2[j]);
     }, 100, true);
+
+    // for(int i=0; i<v2.size(); i++){
+    //   T.delete_point(v2[i]);
+    // }
 
     
     // EXAMPLE OF EQUALITY CHECKING
@@ -125,7 +129,7 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       
         // find nearest k neighbors for each point
     parlay::parallel_for (0, n, [&] (size_t i) {
-        T.k_nearest_bit(v[i], k);
+        T.k_nearest(v[i], k);
     }, 1);
 
 
