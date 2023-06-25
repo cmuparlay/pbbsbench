@@ -65,6 +65,17 @@ struct k_nearest_neighbors {
     return (first && second);
   }
 
+	static double dist_sq_to_box(box b, point p){
+    if(within_box(b, p)) return 0;
+		double total=0;
+    int d = p.dimension();
+    for(int i=0; i<d; i++){
+      double dist = std::min(std::fabs(b.first[i]-p[i]), std::fabs(b.second[i]-p[i]));
+      total += dist*dist;
+    }
+    return total;
+	}
+
   void are_equal(node* T, int d){
     node* V = tree.load();
     return are_equal_rec(V, T, d);
@@ -257,39 +268,12 @@ struct k_nearest_neighbors {
             }
           } 
           }
-        } else if (distance(T->Left()) < distance(T->Right())) {
+        } else if (dist_sq_to_box(T->Left()->Box(), vertex->pt) < dist_sq_to_box(T->Right()->Box(), vertex->pt)) {
           k_nearest_rec(T->Left());
           k_nearest_rec(T->Right());
         } else {
           k_nearest_rec(T->Right());
           k_nearest_rec(T->Left());
-        }
-      }
-    }
-
-    void knn_with_bit(node* T, size_t p1){
-      box b;
-      b = T->Box();
-      if (within_epsilon_box(T, sqrt(max_distance))) { 
-        if (report_stats) internal_cnt++;
-        if (T->is_leaf()) {
-          if (report_stats) leaf_cnt++;
-          auto &Vtx = T->Indexed_Pts();
-          for (int i = 0; i < T->size(); i++){
-            if (Vtx[i].second != vertex) { 
-              if (k < queue_cutoff){
-                update_nearest(Vtx[i].second);
-              } else{
-                update_nearest_queue(Vtx[i].second);
-            }
-          } 
-          }
-        } else if (lookup_bit(p1, T->bit) == 0) {
-          knn_with_bit(T->Left(), p1);
-          knn_with_bit(T->Right(), p1);
-        } else {
-          knn_with_bit(T->Right(), p1);
-          knn_with_bit(T->Left(), p1);
         }
       }
     }
@@ -404,13 +388,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   void k_nearest(vtx* p, int k) {
     verlib::with_snapshot([&] {
       kNN nn(p,k);
-      if(!(within_box(tree.load(), p))){
-        nn.k_nearest_rec(tree.load()); 
-      } else{
-        auto [b, Delta] = get_box_delta(p->pt.dimension());
-        size_t p1 = o_tree::interleave_bits(p->pt, b.first, Delta);
-        nn.knn_with_bit(tree.load(), p1); 
-      }
+      nn.k_nearest_rec(tree.load()); 
       if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
       for (int i=0; i < k; i++)
         p->ngh[i] = nn[i];
@@ -453,16 +431,19 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
 
   using indexed_point = typename o_tree::indexed_point; 
 
-  bool within_box(node* T, vtx* vertex) {
-      int dimensions = vertex->pt.dimension();
-      auto box = T->Box();
-      bool result = true;
-      for (int i = 0; i < dimensions; i++) {
-        result = (result &&
-          (box.first[i] <= vertex->pt[i]) &&
-          (box.second[i] >= vertex->pt[i]));
-      }
-      return result;
+  static bool within_box(node* T, vtx* vertex) {
+    return within_box(T->Box(), vertex->pt);
+  }
+
+  static bool within_box(box b, point p){
+    int dimensions = p.dimension();
+    bool result = true;
+    for (int i = 0; i < dimensions; i++) {
+      result = (result &&
+        (b.first[i] <= p[i]) &&
+        (b.second[i] >= p[i]));
+    }
+    return result;
   }
 
   //strips a point of its child pointers before deleting
@@ -654,7 +635,6 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         assert(tree.load() == T || G != nullptr);
         if(G != nullptr) G->set_child(P, left);
         if(T == tree.load()){
-          // std::cout << "root changed (leaf: split and insert)" << std::endl; 
           set_root(P);
         }
         delete_single(T);
