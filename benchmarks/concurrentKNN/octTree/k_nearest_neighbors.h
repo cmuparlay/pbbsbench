@@ -70,7 +70,9 @@ struct k_nearest_neighbors {
 		double total=0;
     int d = p.dimension();
     for(int i=0; i<d; i++){
-      double dist = std::min(std::fabs(b.first[i]-p[i]), std::fabs(b.second[i]-p[i]));
+      auto d1 = b.first[i]-p[i];
+      auto d2 = p[i]-b.second[i];
+      auto dist = std::max(std::max(d1, 0.0), std::max(d2, 0.0));
       total += dist*dist;
     }
     return total;
