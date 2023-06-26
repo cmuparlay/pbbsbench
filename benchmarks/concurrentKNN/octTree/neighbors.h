@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = true;
-int algorithm_version = 0;
+int algorithm_version = 1;
 // 0=root based, 1=bit based
 
 #include <algorithm>
@@ -51,6 +51,28 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
   
+#ifdef Versioned
+    std::cout << "using multiversioning" << std::endl;
+#else
+    std::cout << "without multiversioning" << std::endl;
+#endif
+
+#ifndef NoHelp
+    std::cout << "using lock-free locks" << std::endl;
+#else
+    std::cout << "using blocking locks" << std::endl;
+#endif
+
+#ifdef HandOverHand
+    std::cout << "using hand-over-hand locking" << std::endl;
+#else
+    std::cout << "using path locking" << std::endl;
+#endif
+    if(algorithm_version == 0) std::cout << "root based algorithm" << std::endl;
+    else if(algorithm_version == 1) std::cout << "bit based algorithm" << std::endl;
+
+    //std::cout << "threads: " << num_threads << std::endl;
+
     //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);     
 
@@ -76,62 +98,39 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //prelims for insert  
     int dims = v[0]->pt.dimension();
 
-    // // delete v2 sequentially
-    // for(int j = v2.size()-1; j >= 0; j--){
-    //   // std::cout << j << std::endl;
-    //   T.delete_point(v2[j]);
-    // }
+    // // delete v2 in parallel
+    parlay::parallel_for(0, v2.size(), [&] (size_t j) {
+      T.delete_point(v2[j]);
+    }, 100, true);
 
     t.next("deletes");
+    
+    // EXAMPLE OF EQUALITY CHECKING
+    knn_tree R(v1, whole_box);
+    T.are_equal(R.tree.load(), dims);    
+    t.next("equality check");
+    // END EXAMPLE
 
-    t.next("hello");
-    //sort v2 by z-order
-    auto v3 = T.z_sort(v2, whole_box);
-    t.next("sort");
-    // re-insert v2
-    // for(int j=0; j<v3.size(); j++){
-    //   T.insert_point(v3[j]);
-    // }
-
+    
    
     // insert v2 in parallel
     parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-      for(int j = i; j < v3.size(); j+=parlay::num_workers()) {
-        T.insert_point(v3[j]); 
+      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
+        T.insert_point(v2[j]); 
       }
     }, 1, true);
 
     t.next("inserts");
-
-    // // EXAMPLE OF EQUALITY CHECKING
-    // knn_tree R(v, whole_box);
-    // T.are_equal(R.tree.load(), dims);    
-    // t.next("equality check");
-    // // END EXAMPLE
-
     
 
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
-
-    // T.find_leaf(T.tree.load());
-
-
-    // find nearest k neighbors for each point
+      
+        // find nearest k neighbors for each point
     parlay::parallel_for (0, n, [&] (size_t i) {
         T.k_nearest(v[i], k);
     }, 1);
-    
 
-    //Example to get a search to visit every vertex
-    // parlay::sequence<double> coords = {0.0, 0.0, 0.0};
-    // point test_point = point(parlay::make_slice(coords));
-    // vtx test_vtx = vtx(test_point, 0);
-    // vtx* tv = &test_vtx;
-    // T.k_nearest(tv, k);
-    // std::cout << tv->counter << std::endl;
-    // std::cout << tv->counter2 << std::endl;
-    //End Example
 
     t.next("try all");
     if (report_stats) {

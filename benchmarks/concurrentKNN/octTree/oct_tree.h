@@ -101,6 +101,7 @@ struct oct_tree {
     int bit;
     flck::atomic_write_once<bool> removed;
     flck::lock lck;
+
     // using leaf_seq = parlay::sequence<vtx*>;
     point center() {return centerv;}
     box Box() {return b;}
@@ -189,7 +190,7 @@ struct oct_tree {
       bit = currentBit;
     }
 
-    node(node* L, node* R, int currentBit, box B) : removed(false), L(L), R(R) { 
+    node(node* L, node* R, int currentBit, box &B) : removed(false), L(L), R(R) { 
       b = B;
       n = L->size() + R->size();
       set_center();
@@ -207,42 +208,42 @@ struct oct_tree {
     }
 
     static node* new_leaf(slice_t Pts, int currentBit) {
-      node* r = alloc_node();
+      node* r = alloc_node(Pts, currentBit);
       assert(Pts.begin() != nullptr);
-      new (r) node(Pts, currentBit);
+      // new (r) node();
       return r;
     }
 
     static node* new_leaf(slice_t Pts, int currentBit, box B) {
-      node* r = alloc_node();
+      node* r = alloc_node(Pts, currentBit, B);
       assert(Pts.begin() != nullptr);
-      new (r) node(Pts, currentBit, B);
+      // new (r) node();
       return r;
     }
 
     static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit) {
-      node* r = alloc_node();
+      node* r = alloc_node(Pts, currentBit);
       assert(Pts.begin() != nullptr);
-      new (r) node(Pts, currentBit);
+      // new (r) node();
       return r;
     }
 
     static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit, box B) {
-      node* r = alloc_node();
+      node* r = alloc_node(Pts, currentBit, B);
       assert(Pts.begin() != nullptr);
-      new (r) node(Pts, currentBit, B);
+      // new (r) node();
       return r;
     }
 
     static node* new_node(node* L, node* R, int currentBit) {
-      node* nd = alloc_node();
-      new (nd) node(L, R, currentBit);
+      node* nd = alloc_node(L, R, currentBit);
+      // new (nd) node();
       return nd;
     }
 
     static node* new_node(node* L, node* R, int currentBit, box B) {
-      node* nd = alloc_node();
-      new (nd) node(L, R, currentBit, B);
+      node* nd = alloc_node(L, R, currentBit, B);
+      // new (nd) node();
       return nd;
     }
     
@@ -295,7 +296,8 @@ struct oct_tree {
     node& operator=(node&&) = delete;
     node() { }
 
-    static node* alloc_node();
+    template<typename... Args>
+    static node* alloc_node(Args... args);
     static void free_node(node* T);
     static void retire_node(node* T);
     static void shuffle(size_t n);
@@ -382,7 +384,7 @@ private:
     return x;
   }
 
-    static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V, box b) {
+    static parlay::sequence<indexed_point> tag_points(parlay::sequence<vtx*> &V, box &b) {
     timer t("tag", false); //tag is an arbitrary string, turn to true for printing out
     size_t n = V.size();
     int dims = (V[0]->pt).dimension();
@@ -448,7 +450,8 @@ template <typename vtx>
 flck::memory_pool<typename oct_tree<vtx>::node> node_allocator;
 
 template <typename vtx>
-typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node() { return node_allocator<vtx>.new_obj();}
+template <typename... Args>
+typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node(Args... args) { return node_allocator<vtx>.new_obj(args...);}
 
 template <typename vtx>
 void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.destruct(T);}

@@ -64,6 +64,9 @@ cubes_% : ../randPoints
 3Dplummer_10M : ../randPoints
 	../randPoints -p -d 3 10000000 $@
 
+3Dplummer_100K : ../randPoints
+	../randPoints -p -d 3 100000 $@
+
 3Dplummer_% : ../randPoints
 	../randPoints -p -d 3  $(subst 3Dplummer_,,$@) $@
 

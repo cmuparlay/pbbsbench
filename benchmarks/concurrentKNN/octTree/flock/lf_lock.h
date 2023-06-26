@@ -158,6 +158,22 @@ public:
   bool unchanged(lock_entry le) {return le == load();}
 
   
+  // // This is safe to be used inside of another lock (i.e. it is
+  // // idempotent, kind of).  The key components to making it effectively
+  // // idempotent is using an idempotent new_obj, and checking if it is
+  // // done (my_thunk->done).  It is lock free if no cycles in lock
+  // // ordering, and otherwise can deadlock.
+  // template <typename Thunk>
+  // auto with_lock(Thunk f) {
+  //   using RT = decltype(f());
+  //   std::optional<RT> result = {};
+  //   while(!result.has_value()) {
+  //     result = try_lock_result(f);
+  //   }    
+  //   return result.value();
+  // }
+
+
   // This is safe to be used inside of another lock (i.e. it is
   // idempotent, kind of).  The key components to making it effectively
   // idempotent is using an idempotent new_obj, and checking if it is
