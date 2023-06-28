@@ -82,6 +82,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     //split initial vertices into two sequences: one to build the tree with
     //and one to later insert point by point
     size_t n = v.size();
+    v = parlay::random_shuffle(v);
     node_allocator<vtx>.shuffle(n); 
     size_t init = n/2;
     // size_t ins = n-init;
