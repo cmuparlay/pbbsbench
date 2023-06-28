@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 bool report_stats = true;
-int algorithm_version = 1;
+int algorithm_version = 0;
 // 0=root based, 1=bit based
 
 #include <algorithm>
