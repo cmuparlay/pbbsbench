@@ -73,6 +73,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 
     std::cout << "threads: " << p << std::endl;
     std::cout << "update_percent: " << update_percent << std::endl;
+    std::cout << "query size: " << k << std::endl;
     std::cout << "trial_time: " << trial_time << std::endl;
 
     //calculate bounding box around the whole point set
@@ -120,11 +121,11 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
             return;
           }
         }
-        int op_type = parlay::hash64(cnt*p+i)%3;
+        int op_type = parlay::hash64(cnt*p+i)%100;
         int idx = parlay::hash64(cnt*p+i)%n;
-        if (op_type == 0) { if(T.insert_point(v[idx])) added++; }
-        else if (op_type == 1) { if(T.delete_point(v[idx])) added--; }
-        else if (op_type == 2) { T.k_nearest(v[idx], k); }
+        if (op_type < update_percent/2) { if(T.insert_point(v[idx])) added++; }
+        else if (op_type < update_percent) { if(T.delete_point(v[idx])) added--; }
+        else { T.k_nearest(v[idx], k); }
         cnt++;
         total++;
       }
