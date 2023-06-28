@@ -54,7 +54,7 @@ struct vertex {
 // *************************************************************
 
 template <int maxK, class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile) {
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile, int p, double trial_time, int update_percent, bool do_check) {
   size_t n = pts.size();
   using vtx = vertex<point,maxK>;
   int dimensions = pts[0].dimension();
@@ -67,7 +67,7 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
   // run once for warmup
   time_loop(rounds, 1.0,
 	    [&] () {},
-	    [&] () {ANN<maxK>(v, k);},
+	    [&] () {ANN<maxK>(v, k, p, trial_time, update_percent, do_check);},
 	    [&] () {});
 
   if (outFile != NULL) {
@@ -90,20 +90,26 @@ int main(int argc, char* argv[]) {
   int rounds = P.getOptionIntValue("-r",1);
   int k = P.getOptionIntValue("-k",1);
   int d = P.getOptionIntValue("-d",2);
+
+  int p = P.getOptionIntValue("-p",140);
+  double trial_time = P.getOptionDoubleValue("-t",1.0);
+  int update_percent = P.getOptionIntValue("-u",20);
+  bool do_check = P.getOptionValue("-c");
+  
   algorithm_version = P.getOptionIntValue("-t",algorithm_version);
   if (k < 1 || k>100) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 
   if (d == 2) {
     parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
-    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
-    else timeNeighbors<100>(PIn, k, rounds, oFile);
+    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile, p, trial_time, update_percent, do_check);
+    else timeNeighbors<100>(PIn, k, rounds, oFile, p, trial_time, update_percent, do_check);
   }
 
   if (d == 3) {
     parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
-    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile);
-    else timeNeighbors<100>(PIn, k, rounds, oFile);
+    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile, p, trial_time, update_percent, do_check);
+    else timeNeighbors<100>(PIn, k, rounds, oFile, p, trial_time, update_percent, do_check);
   }
 
 }

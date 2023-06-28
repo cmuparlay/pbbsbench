@@ -460,43 +460,49 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   //takes in a single point and a pointer to the root of the tree
   //as well as a bounding box and its largest side length
   //assumes integer coordinates
-  void insert_point(vtx* p){
-    verlib::with_epoch([&] {
+  bool insert_point(vtx* p){
+    return verlib::with_epoch([&] {
       int dims = p->pt.dimension();
       auto [b, Delta] = get_box_delta(dims);
       size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
       indexed_point q = std::make_pair(interleave_int, p);
       while(true) {
         node* R = tree.load();
-        if(insert_point0(q, nullptr, R, o_tree::key_bits, false)) break;
+        std::pair<bool, bool> result = insert_point0(q, nullptr, R, o_tree::key_bits, false);
+        if(result.second) return result.first;
         // std::cout << "insert attempt failed" << std::endl; 
       }
       // while(!insert_point0(q, nullptr, R, o_tree::key_bits, false)) {} // repeat until success
     });
   }
 
-  bool insert_point0(indexed_point q, node* parent, node* T, int bit, bool parent_locked=false){
+  // return value: <q_added, locks successful>
+  std::pair<bool, bool> insert_point0(indexed_point q, node* parent, node* T, int bit, bool parent_locked=false){
     //lock T
     // assert(false);
     if(!parent_locked && (T->is_leaf() || !within_box(T, q.second))) {
       // enter locking mode
       if(parent == nullptr) { // T is root
-        return root_lock.try_lock([=] { 
-          if(tree.load() != T) return false;
+        auto result = root_lock.try_lock_result([=] { 
+          if(tree.load() != T) return std::make_pair(false, false);
           else return insert_point0(q, parent, T, bit, true); 
         });
+        if(result.has_value()) return result.value();
+        else return std::make_pair(false, false); 
       } else {
-        return parent->lck.try_lock([=] {
+        auto result = parent->lck.try_lock_result([=] {
           if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
             // std::cout << "failed valdiation" << std::endl; 
-            return false;
+            return std::make_pair(false, false);
           } else return insert_point0(q, parent, T, bit, true);
         });
+        if(result.has_value()) return result.value();
+        else return std::make_pair(false, false); 
       }
     }
 
     if(T->is_leaf()) {
-      return insert_into_leaf(q, parent, T);
+      return std::make_pair(insert_into_leaf(q, parent, T), true);
     } else {
       if(!within_box(T, q.second)) {
         assert(parent_locked);
@@ -533,7 +539,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
                 // std::cout << "root changed (internal: added new level)" << std::endl; 
                 set_root(P);
               }
-              return true;
+              return std::make_pair(true, true);
             } else cur_bit--;
           }
           // std::cout << "case 2" << std::endl;
@@ -580,7 +586,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
 
   //assumes lock on T
   //uses q's interleave integer to recurse right or left
-  bool insert_internal(indexed_point q, node* T, bool parent_locked=false){
+  std::pair<bool, bool> insert_internal(indexed_point q, node* T, bool parent_locked=false){
     node* N;
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
@@ -588,8 +594,14 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   }
 
   bool insert_into_leaf(indexed_point q, node* parent, node* T){
+      for(indexed_point p : T->Indexed_Pts()) {
+        if(points_equal(p.second->pt, q.second->pt)){
+          return false;
+        }
+      }
+
       auto points = parlay::tabulate(T->size()+1, [&] (long i) {
-	  return (i == T->size()) ? q : T->Indexed_Pts()[i];}, 1000);
+        return (i == T->size()) ? q : T->Indexed_Pts()[i];}, 1000);
       node* G = parent;
       bool left;
       if(G != nullptr) left = (G->Left() == T);
@@ -647,31 +659,37 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   //should membership checking be part of deletion?
   //probably not bc can't differentiate between a deletion "in error"
   //vs a deletion that errors bc another concurrent process already deleted
-  void delete_point(vtx* p){
-    int dims = p->pt.dimension();
-    auto [b, Delta] = get_box_delta(dims);
-    size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
-    indexed_point q = std::make_pair(interleave_int, p);
+  bool delete_point(vtx* p){
+    return verlib::with_epoch([&] {
+      int dims = p->pt.dimension();
+      auto [b, Delta] = get_box_delta(dims);
+      size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
+      indexed_point q = std::make_pair(interleave_int, p);
 
-    while(true) {
-      node* R = tree.load();
-      assert(R != nullptr);
-      if(R->is_leaf()) {
-        bool delete_successful = root_lock.try_lock([=] { 
-              if(tree.load() != R) return false;
+      while(true) {
+        node* R = tree.load();
+        assert(R != nullptr);
+        if(R->is_leaf()) {
+          auto result = root_lock.try_lock_result([=] { 
+              if(tree.load() != R) return -1; // validation failed
               else {
-                delete_from_leaf(q, nullptr, nullptr, R); 
-                return true;
-              }});
-
-        if(delete_successful) break;
+                bool success = R->lck.with_lock([=] { 
+                  auto res = delete_from_leaf(q, nullptr, nullptr, R);
+                  return res.first ; 
+                });
+                if(success) return 1;
+                else return 0;
+              }
+          });
+          if(result.has_value() && result.value() != -1)
+            return result.value() == 1;
+        }
+        else {
+          auto [a,b,locks_successful] = delete_point0(q, nullptr, R);
+          if(locks_successful) return a;
+        }
       }
-      else {
-        auto [a,b,locks_successful] = delete_point0(q, nullptr, R);
-        if(locks_successful) {assert(a); break;}
-      }
-    }
-
+    });
   }
 
   bool on_box_border(node* T, vtx* p){
@@ -704,7 +722,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
 
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
-
+    
     assert(!(T->is_leaf()));
 
     if(!parent_locked && (on_box_border(T, q.second) || N->is_leaf())) {

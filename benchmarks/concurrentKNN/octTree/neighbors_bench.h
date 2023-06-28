@@ -71,7 +71,9 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     if(algorithm_version == 0) std::cout << "root based algorithm" << std::endl;
     else if(algorithm_version == 1) std::cout << "bit based algorithm" << std::endl;
 
-    //std::cout << "threads: " << num_threads << std::endl;
+    std::cout << "threads: " << p << std::endl;
+    std::cout << "update_percent: " << update_percent << std::endl;
+    std::cout << "trial_time: " << trial_time << std::endl;
 
     //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);     
@@ -80,70 +82,84 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     //and one to later insert point by point
     size_t n = v.size();
     node_allocator<vtx>.shuffle(n); 
-    size_t init = 1;
-    size_t ins = n-init;
-    parlay::sequence<vtx*> v1(init);  
-    parlay::sequence<vtx*> v2(ins);
-    parlay::parallel_for(0, n, [&] (size_t i){
-      if(i<init) v1[i] = v[i];
-      else v2[i-init] = v[i];
-    }, 1
-    );
-    
-    //build tree with bounding box
-    t.next("setup benchmark");
-    knn_tree T(v, whole_box);
-    t.next("build tree");
-
-    //prelims for insert  
-    int dims = v[0]->pt.dimension();
-
-    // // delete v2 in parallel
-    parlay::parallel_for(0, v2.size(), [&] (size_t j) {
-      T.delete_point(v2[j]);
-    }, 100, true);
-
-    t.next("deletes");
-    
-    // EXAMPLE OF EQUALITY CHECKING
-    knn_tree R(v1, whole_box);
-    T.are_equal(R.tree.load(), dims);    
-    t.next("equality check");
-    // END EXAMPLE
-
-    
-   
-    // insert v2 in parallel
-    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
-        T.insert_point(v2[j]); 
-      }
-    }, 1, true);
-
-    t.next("inserts");
-    
-
-    if (report_stats) 
-      std::cout << "depth = " << T.tree.load()->depth() << std::endl;
-      
-        // find nearest k neighbors for each point
-    parlay::parallel_for (0, n, [&] (size_t i) {
-        T.k_nearest(v[i], k);
+    size_t init = n/2;
+    // size_t ins = n-init;
+    parlay::sequence<vtx*> v_init(init);  
+    // parlay::sequence<vtx*> v2(ins);
+    parlay::parallel_for(0, init, [&] (size_t i){
+      v_init[i] = v[i];
     }, 1);
+    
+    parlay::sequence<size_t> totals(p);
+    parlay::sequence<long> addeds(p);
+    
+    // t.next("setup benchmark");
 
+    //build tree with bounding box
+    knn_tree T(v_init, whole_box);
+    // t.next("build tree");
+   
+    // run benchmark
+    t.start();
+    auto start = std::chrono::system_clock::now();
+    std::atomic<bool> finish = false;
 
-    t.next("try all");
-    if (report_stats) {
-      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
-      size_t i = parlay::max_element(s) - s.begin();
-      size_t sum = parlay::reduce(s);
-      std::cout << "max internal = " << s[i] 
-		<< ", average internal = " << sum/((double) v.size()) << std::endl;
-      t.next("stats");
+    parlay::parallel_for(0, p, [&] (size_t i) {
+      int cnt = 0;
+      size_t total = 0;
+      long added = 0;
+      while (true) {
+        // every once in a while check if time is over
+        if (cnt == 100) {
+          cnt = 0;
+          auto current = std::chrono::system_clock::now();
+          double duration = std::chrono::duration_cast<std::chrono::seconds>(current - start).count();
+          if (duration > trial_time || finish) {
+            totals[i] = total;
+            addeds[i] = added;
+            return;
+          }
+        }
+        int op_type = parlay::hash64(cnt*p+i)%3;
+        int idx = parlay::hash64(cnt*p+i)%n;
+        if (op_type == 0) { if(T.insert_point(v[idx])) added++; }
+        else if (op_type == 1) { if(T.delete_point(v[idx])) added--; }
+        else if (op_type == 2) { T.k_nearest(v[idx], k); }
+        cnt++;
+        total++;
+      }
+    }, 1);
+    double duration = t.stop();
+
+    //std::cout << duration << " : " << trial_time << std::endl;
+    size_t num_ops = parlay::reduce(totals);
+    std::cout << "throughput (Mop/s): "
+            << num_ops / (duration * 1e6) << std::endl << std::endl;
+
+    if (do_check) {
+      size_t final_cnt = T.tree.load()->compute_size();
+      long updates = parlay::reduce(addeds);
+      if (init + updates != final_cnt) {
+        std::cout << "bad size: intial size = " << init 
+            << ", added " << updates
+            << ", final size = " << final_cnt 
+            << std::endl;
+      }
+      std::cout << "CHECK PASSED" << std::endl;
     }
-    t.next("delete tree");   
 
+    if (report_stats) {
+      std::cout << "depth = " << T.tree.load()->depth() << std::endl;
+      // TODO: update average and max internal calcs
+      //   auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
+      //   size_t i = parlay::max_element(s) - s.begin();
+      //   size_t sum = parlay::reduce(s);
+      //   std::cout << "max internal = " << s[i] 
+      // << ", average internal = " << sum/((double) v.size()) << std::endl;
+      //   t.next("stats");
+    }
 
+    parlay::parallel_for(1, n, [&] (size_t i) { T.delete_point(v[i]); });
 };
 }
 

@@ -106,7 +106,8 @@ struct oct_tree {
     point center() {return centerv;}
     box Box() {return b;}
     size_t size() {return n;} //NOT ALWAYS ACCURATE
-    bool is_leaf() {return (L.load() == nullptr) && (R.load() == nullptr);}
+    bool is_leaf() {
+      return (L.load() == nullptr) && (R.load() == nullptr);}
     node* Left() {return L.load();}
     node* Right() {return R.load();}
     parlay::sequence<indexed_point>& Indexed_Pts(){return indexed_pts;}
@@ -287,6 +288,18 @@ struct oct_tree {
 	return 1 + std::max(l,r);
       }
     }
+
+    size_t compute_size() {
+      if (is_leaf()) return Indexed_Pts().size();
+      else {
+        size_t l, r;
+        parlay::par_do_if(n > 1000,
+              [&] () {l = L.load()->compute_size();},
+              [&] () {r = R.load()->compute_size();});
+        return l+r;
+      }
+    }
+
 
     // disable copy and move constructors/assignment since
     // they are dangerous with with free.
