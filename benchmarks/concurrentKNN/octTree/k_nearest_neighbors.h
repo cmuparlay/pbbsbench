@@ -387,14 +387,14 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   return current;
 }
 
-  void k_nearest(vtx* p, int k) {
+  int k_nearest(vtx* p, int k) {
+    int vv;
     verlib::with_snapshot([&] {
       kNN nn(p,k);
       nn.k_nearest_rec(tree.load()); 
-      if (report_stats) {p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
-      for (int i=0; i < k; i++)
-        p->ngh[i] = nn[i];
+      vv = nn.internal_cnt;
     });
+    return vv;
   }
 
   parlay::sequence<int> range_search(vtx* p, double rad){

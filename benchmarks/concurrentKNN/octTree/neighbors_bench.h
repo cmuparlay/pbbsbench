@@ -106,6 +106,8 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     auto start = std::chrono::system_clock::now();
     std::atomic<bool> finish = false;
 
+    parlay::sequence<parlay::sequence<int>> visited_stats(p);
+
     parlay::parallel_for(0, p, [&] (size_t i) {
       int cnt = 0;
       size_t total = 0;
@@ -126,7 +128,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
         int idx = parlay::hash64(cnt*p+i)%n;
         if (op_type < update_percent/2) { if(T.insert_point(v[idx])) added++; }
         else if (op_type < update_percent) { if(T.delete_point(v[idx])) added--; }
-        else { T.k_nearest(v[idx], k); }
+        else { visited_stats[i].push_back(T.k_nearest(v[idx], k)); }
         cnt++;
         total++;
       }
@@ -137,6 +139,12 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     size_t num_ops = parlay::reduce(totals);
     std::cout << "throughput (Mop/s): "
             << num_ops / (duration * 1e6) << std::endl << std::endl;
+
+    parlay::sequence<int> s = parlay::flatten(visited_stats);
+    size_t i = parlay::max_element(s) - s.begin();
+    size_t sum = parlay::reduce(s);
+    std::cout << "max internal = " << s[i] << ", average internal = " << sum/((double) s.size()) << std::endl;
+
 
     if (do_check) {
       size_t final_cnt = T.tree.load()->compute_size();
