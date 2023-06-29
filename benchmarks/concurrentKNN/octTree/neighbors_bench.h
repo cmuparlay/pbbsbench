@@ -157,9 +157,9 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     size_t i = parlay::max_element(s) - s.begin();
     size_t sum = parlay::reduce(s);
     std::cout << "max internal = " << s[i] << ", average internal = " << sum/((double) s.size()) << std::endl;
-    // std::cout << "ins failed: " << parlay::reduce(ins_fails) << std::endl;
-    // std::cout << "del failed: " << parlay::reduce(del_fails) << std::endl;
-    // std::cout << "total: " << num_ops << endl;
+    std::cout << "failed ins: " << parlay::reduce(ins_fails) << std::endl;
+    std::cout << "failed del: " << parlay::reduce(del_fails) << std::endl;
+    std::cout << "total ops: " << num_ops << endl;
 
     if (do_check) {
       size_t final_cnt = T.tree.load()->compute_size();
@@ -184,7 +184,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
       //   t.next("stats");
     }
 
-    parlay::parallel_for(1, n-1, [&] (size_t i) { T.delete_point(v[i]); });
+    // parlay::parallel_for(1, n-1, [&] (size_t i) { T.delete_point(v[i]); });
 };
 }
 

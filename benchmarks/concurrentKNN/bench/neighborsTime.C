@@ -70,17 +70,16 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
 	    [&] () {ANN<maxK>(v, k, p, trial_time, update_percent, do_check);},
 	    [&] () {});
 
-  if (outFile != NULL) {
-    int m = n * k;
-    parlay::sequence<int> Pout(m);
-    parlay::parallel_for (0, n-1, [&] (size_t i) {
-
-	for (int j=0; j < k; j++){
-	  Pout[k*i + j] = (v[i]->ngh[j])->identifier;
-  }
-      });
-    writeIntSeqToFile(Pout, outFile);
-  }
+  // if (outFile != NULL) {
+  //   int m = n * k;
+  //   parlay::sequence<int> Pout(m);
+  //   parlay::parallel_for (0, n-1, [&] (size_t i) {
+  //         for (int j=0; j < k; j++){
+  //           Pout[k*i + j] = (v[i]->ngh[j])->identifier;
+  //         }
+  //     });
+  //   writeIntSeqToFile(Pout, outFile);
+  // }
 }
 
 int main(int argc, char* argv[]) {
