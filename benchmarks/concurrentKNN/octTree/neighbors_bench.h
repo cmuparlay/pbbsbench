@@ -31,6 +31,7 @@ int algorithm_version = 0;
 #include "parlay/primitives.h"
 #include "common/geometry.h"
 #include "k_nearest_neighbors.h"
+#include "rand_r_32.h"
 
 /* compile with debug flags:
 g++-11 -DHOMEGROWN -pthread -mcx16 -g -std=c++17 -I .  -include neighbors.h -o neighbors_debug ../bench/neighborsTime.C -fsanitize=address -fsanitize=undefined -DHOMEGROWN -pthread -ldl -L/usr/local/lib -ljemalloc
@@ -91,9 +92,11 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     parlay::parallel_for(0, init, [&] (size_t i){
       v_init[i] = v[i];
     }, 1);
-    
+
     parlay::sequence<size_t> totals(p);
     parlay::sequence<long> addeds(p);
+    parlay::sequence<long> ins_fails(p);
+    parlay::sequence<long> del_fails(p);
     
     // t.next("setup benchmark");
 
@@ -112,6 +115,9 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
       int cnt = 0;
       size_t total = 0;
       long added = 0;
+      long ins_failed = 0;
+      long del_failed = 0;
+      my_rand::init(i);
       while (true) {
         // every once in a while check if time is over
         if (cnt == 100) {
@@ -121,14 +127,21 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
           if (duration > trial_time || finish) {
             totals[i] = total;
             addeds[i] = added;
+            ins_fails[i] = ins_failed;
+            del_fails[i] = del_failed;
             return;
           }
         }
-        int op_type = parlay::hash64(cnt*p+i)%100;
-        int idx = parlay::hash64(cnt*p+i)%n;
-        if (op_type < update_percent/2) { if(T.insert_point(v[idx])) added++; }
-        else if (op_type < update_percent) { if(T.delete_point(v[idx])) added--; }
-        else { visited_stats[i].push_back(T.k_nearest(v[idx], k)); }
+        int op_type = my_rand::get_rand()%100;
+        int idx = my_rand::get_rand()%n;
+        // std::cout << op_type << " " << idx << std::endl;
+        if (op_type < update_percent/2) { 
+          if(T.insert_point(v[idx])) added++;
+          else ins_failed++; 
+        } else if (op_type < update_percent) { 
+          if(T.delete_point(v[idx])) added--;
+          else del_failed++; 
+        } else { visited_stats[i].push_back(T.k_nearest(v[idx], k)); }
         cnt++;
         total++;
       }
@@ -144,7 +157,9 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     size_t i = parlay::max_element(s) - s.begin();
     size_t sum = parlay::reduce(s);
     std::cout << "max internal = " << s[i] << ", average internal = " << sum/((double) s.size()) << std::endl;
-
+    // std::cout << "ins failed: " << parlay::reduce(ins_fails) << std::endl;
+    // std::cout << "del failed: " << parlay::reduce(del_fails) << std::endl;
+    // std::cout << "total: " << num_ops << endl;
 
     if (do_check) {
       size_t final_cnt = T.tree.load()->compute_size();
@@ -155,7 +170,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
             << ", final size = " << final_cnt 
             << std::endl;
       }
-      std::cout << "CHECK PASSED" << std::endl;
+      std::cout << "CHECK PASSED " << std::endl;
     }
 
     if (report_stats) {
@@ -169,7 +184,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
       //   t.next("stats");
     }
 
-    parlay::parallel_for(1, n, [&] (size_t i) { T.delete_point(v[i]); });
+    parlay::parallel_for(1, n-1, [&] (size_t i) { T.delete_point(v[i]); });
 };
 }
 
