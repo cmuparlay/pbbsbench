@@ -45,6 +45,7 @@ struct oct_tree {
   using slice_v = decltype(make_slice(parlay::sequence<vtx*>()));
 
   constexpr static int node_cutoff = 32;
+  constexpr static int node_cutoff_low = 28;
   constexpr static int key_bits = 64;
 
   static size_t interleave_bits(point p, point min_point, double delta) {

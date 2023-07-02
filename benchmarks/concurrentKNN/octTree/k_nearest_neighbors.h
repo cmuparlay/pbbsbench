@@ -829,9 +829,8 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       sib_size = sibling->size();
       if(sibling->is_leaf()) sib_is_leaf=true;
     }
-    if(sib_is_leaf && sib_size + pts.size() < o_tree::node_cutoff && 
+    if(sib_is_leaf && sib_size + pts.size() < o_tree::node_cutoff_low && 
       parent != nullptr){
-      // std::cout << "Deletion from leaf, case 2" << std::endl;
       for(indexed_point p : sibling->Indexed_Pts()){
         pts.push_back(p);
       }
@@ -842,7 +841,6 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       node* Leaf;
       if(on_box_border(parent, q.second)) Leaf = node::new_leaf(std::move(pts), bit);
       else Leaf = node::new_leaf(std::move(pts), bit, parent->Box());
-      // node* Leaf = node::new_leaf(std::move(pts), bit);
       if(grandparent != nullptr){
         if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
         else grandparent->set_child(Leaf, false);
@@ -881,9 +879,6 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         if(sibling->is_leaf()){
           if(grandparent != nullptr){
             int bit = grandparent->bit-1;
-            // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
-            // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit);
-            // node* Leaf = node::new_leaf(parlay::make_slice(sibling->Indexed_Pts()), bit, sibling->Box());
             node* Leaf = node::new_leaf(sibling->Indexed_Pts(), bit, sibling->Box());
             if(parent == grandparent->Left()) grandparent->set_child(Leaf, true);
             else grandparent->set_child(Leaf, false);
@@ -891,7 +886,6 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             int dims = q.second->pt.dimension();
             int bit = dims*(o_tree::key_bits/dims);
             node* Leaf = node::new_leaf(sibling->Indexed_Pts(), bit, sibling->Box());
-            // std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(Leaf);
           }
           delete_single(sibling);
@@ -900,7 +894,6 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             if(parent == grandparent->Left()) grandparent->set_child(sibling, true);
             else grandparent->set_child(sibling, false);
           } else{ 
-            // std::cout << "Root changed: sibling promoted to root" << std::endl;
             set_root(sibling);
           } 
         }
