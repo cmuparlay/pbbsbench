@@ -468,7 +468,12 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       indexed_point q = std::make_pair(interleave_int, p);
       while(true) {
         node* R = tree.load();
-        std::pair<bool, bool> result = insert_point0(q, nullptr, R, o_tree::key_bits, false);
+        // set_root(insert_point_path_copy_helper(q, R, o_tree::key_bits));
+        // return true;
+        std::pair<bool, bool> result = insert_point_path_copy(q, nullptr, R, o_tree::key_bits);
+        // std::pair<bool, bool> result = insert_point0(q, nullptr, R, o_tree::key_bits);
+        // assert(result.second);
+        // assert(result.first);
         if(result.second) return result.first;
         // std::cout << "insert attempt failed" << std::endl; 
       }
@@ -476,10 +481,163 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
     });
   }
 
+  struct link {
+    node* n;
+    bool go_left;
+  };
+
+  std::pair<bool, bool> insert_point_path_copy(indexed_point q, node* parent, node* T, int bit) {
+    // if(true) {
+    if(T->is_leaf() || !within_box(T, q.second)) {
+      // enter locking mode
+      if(parent == nullptr) { // T is root
+        auto result = root_lock.try_lock_result([=] { 
+          if(tree.load() != T) return std::make_pair(false, false);
+          else {
+            std::vector<link> path; path.reserve(4);
+            path.push_back((link){nullptr, false});
+            bool success = insert_point_path_copy_helper(q, T, bit, path);
+            return std::make_pair(success, true);
+          }
+        });
+        if(result.has_value()) return result.value();
+        else return std::make_pair(false, false); 
+      } else {
+        auto result = parent->lck.try_lock_result([=] {
+          if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
+            // std::cout << "failed valdiation" << std::endl; 
+            return std::make_pair(false, false);
+          } else {
+            std::vector<link> path; path.reserve(4);
+            bool left_child = (parent->Left() == T);
+            path.push_back((link){parent, left_child});
+            bool success = insert_point_path_copy_helper(q, T, bit, path);
+            return std::make_pair(success, true);
+          } 
+        });
+        if(result.has_value()) return result.value();
+        else return std::make_pair(false, false); 
+      }
+    } else {
+      bool go_left = (lookup_bit(q.first, T->bit) == 0);
+      return insert_point_path_copy(q, T, 
+              (go_left ? T->Left() : T->Right()), T->bit-1);
+    }   
+  }
+
+  void install_new_path(std::vector<link> &old_path, node* new_n,
+                         indexed_point q) {
+    for(int i = old_path.size()-1; i>= 1; i--) {
+      node* T = old_path[i].n;
+      box b = T->Box();
+      box bigger = box(b.first.minCoords(q.second->pt), 
+                       b.second.maxCoords(q.second->pt));
+      if(old_path[i].go_left) 
+        new_n = node::new_node(new_n, T->Right(), T->bit, bigger);
+      else 
+        new_n = node::new_node(T->Left(), new_n, T->bit, bigger);
+    }
+    if(old_path[0].n == nullptr)
+      set_root(new_n);
+    else
+      old_path[0].n->set_child(new_n, old_path[0].go_left);
+    for(int i = old_path.size()-1; i>= 1; i--)
+      delete_single(old_path[i].n);
+  }
+
+  bool insert_point_path_copy_helper(indexed_point q, node* T, int bit, std::vector<link> &path) {
+    if(T->is_leaf()) {
+      for(indexed_point p : T->Indexed_Pts()) {
+        if(points_equal(p.second->pt, q.second->pt)) return false;
+      }
+
+      auto points = parlay::tabulate(T->size()+1, [&] (long i) {
+        return (i == T->size()) ? q : T->Indexed_Pts()[i];
+      }, 1000);
+      //two cases: either (1) the leaf size is below the cutoff, in which case
+      //we create a new leaf with the point q added, or (2) the leaf needs to be
+      //split into an internal node and two leaf children
+      if(T->size() + 1 < o_tree::node_cutoff || T->bit == 0){
+        //case 1
+        box b = T->Box();
+        box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
+        node* new_l = node::new_leaf(std::move(points), T->bit, bigger);
+        install_new_path(path, new_l, q);
+        delete_single(T);
+        return true;
+      } else {
+        //sort points in leaf by interleave order
+        int cut_point = 0;
+        auto less_sort = [&] (indexed_point a, indexed_point b){
+          return a.first < b.first;
+        };
+        std::sort(points.begin(), points.end(), less_sort);
+        //search for cut point
+        int new_bit = T->bit;
+        while((cut_point == 0 | cut_point == points.size()) && new_bit != 0){
+          size_t val = ((size_t) 1) << (new_bit - 1);
+          size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+          auto less = [&] (indexed_point x) {
+            return (x.first & mask) < val;
+          };
+          cut_point = parlay::internal::binary_search(points, less);
+          new_bit--;
+        }
+        parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
+        auto left_s = parlay::tabulate(cut_point, [&] (size_t i) {return points[i];}, 1000);
+        auto right_s = parlay::tabulate(points.size()-cut_point, [&] (size_t i) {return points[cut_point+i];}, 1000);
+        node* L = node::new_leaf(std::move(left_s), new_bit);
+        node* R = node::new_leaf(std::move(right_s), new_bit);
+        node* new_l = node::new_node(L, R, new_bit+1);
+        install_new_path(path, new_l, q);
+        delete_single(T);
+        return true;
+      }
+    } else { // expand bounding box
+      return T->lck.with_lock([=, &path] {
+        bool go_left = (lookup_bit(q.first, T->bit) == 0);
+        //two cases: (1) need to create new leaf and internal node,
+        //or (2) bit unchanged and box changed
+
+        //if next bit of integer isn't same as node,
+        //iterate until either make a leaf or bits match
+        node* Q = T;
+        while(!(Q->is_leaf())){ Q=Q->Right(); }
+        indexed_point s = Q->Indexed_Pts()[0];
+        int cur_bit = bit;
+        // std::cout << cur_bit << " " << T->bit << endl;
+        assert(cur_bit >= T->bit);
+        // if(parent != nullptr) assert(cur_bit < G->bit);
+        while(cur_bit > T->bit) {
+          if(lookup_bit(q.first, cur_bit) != lookup_bit(s.first, cur_bit)){
+            // std::cout << "case 1" << std::endl;
+            //we know we are in case 1
+            //form leaf
+            parlay::sequence<indexed_point> points = {q};
+            node* R = node::new_leaf(parlay::make_slice(std::move(points)), cur_bit-1);
+            //new parent node should replace T as G's child
+            node* P;
+            if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit);
+            else P = node::new_node(T, R, cur_bit);
+            install_new_path(path, P, q);
+            return true;
+          } else cur_bit--;
+        }
+        // std::cout << "case 2" << std::endl;
+        //case 2
+        //calculate new box around T, and create new internal node
+        //with corrected box
+        node* child = (go_left ? T->Left() : T->Right());
+        link lnk = (link){T, go_left};
+        path.push_back(lnk);
+        return insert_point_path_copy_helper(q, child, T->bit-1, path);
+      });
+    }
+  }
+
   // return value: <q_added, locks successful>
   std::pair<bool, bool> insert_point0(indexed_point q, node* parent, node* T, int bit, bool parent_locked=false){
     //lock T
-    // assert(false);
     if(!parent_locked && (T->is_leaf() || !within_box(T, q.second))) {
       // enter locking mode
       if(parent == nullptr) { // T is root
@@ -513,7 +671,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
           //if next bit of integer isn't same as node,
           //iterate until either make a leaf or bits match
           node* Q = T;
-          while(!(Q->is_leaf())){node* L = Q->Right(); Q=L;}
+          while(!(Q->is_leaf())){Q=Q->Right();}
           indexed_point s = Q->Indexed_Pts()[0];
           int cur_bit = bit;
           assert(cur_bit >= T->bit);
@@ -578,7 +736,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
 
         });
       } else {
-        assert(!parent_locked);
+        assert(!parent_locked); // TODO: need to prove that this assert can't trigger (i.e. need to prove bounding boxes become strictly smaller along any path)
         return insert_internal(q, T, false);
       }
     }
@@ -675,7 +833,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
               else {
                 bool success = R->lck.with_lock([=] { 
                   auto res = delete_from_leaf(q, nullptr, nullptr, R);
-                  return res.first ; 
+                  return res.first; 
                 });
                 if(success) return 1;
                 else return 0;
