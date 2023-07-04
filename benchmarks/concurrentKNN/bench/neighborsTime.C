@@ -54,7 +54,7 @@ struct vertex {
 // *************************************************************
 
 template <int maxK, class point>
-void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFile, int p, double trial_time, int update_percent, bool do_check) {
+void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int p, double trial_time, int update_percent, bool do_check) {
   size_t n = pts.size();
   using vtx = vertex<point,maxK>;
   int dimensions = pts[0].dimension();
@@ -69,17 +69,6 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, char* outFil
 	    [&] () {},
 	    [&] () {ANN<maxK>(v, k, p, trial_time, update_percent, do_check);},
 	    [&] () {});
-
-  // if (outFile != NULL) {
-  //   int m = n * k;
-  //   parlay::sequence<int> Pout(m);
-  //   parlay::parallel_for (0, n-1, [&] (size_t i) {
-  //         for (int j=0; j < k; j++){
-  //           Pout[k*i + j] = (v[i]->ngh[j])->identifier;
-  //         }
-  //     });
-  //   writeIntSeqToFile(Pout, outFile);
-  // }
 }
 
 int main(int argc, char* argv[]) {
@@ -101,14 +90,14 @@ int main(int argc, char* argv[]) {
 
   if (d == 2) {
     parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
-    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile, p, trial_time, update_percent, do_check);
-    else timeNeighbors<100>(PIn, k, rounds, oFile, p, trial_time, update_percent, do_check);
+    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, p, trial_time, update_percent, do_check);
+    else timeNeighbors<100>(PIn, k, rounds, p, trial_time, update_percent, do_check);
   }
 
   if (d == 3) {
     parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
-    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, oFile, p, trial_time, update_percent, do_check);
-    else timeNeighbors<100>(PIn, k, rounds, oFile, p, trial_time, update_percent, do_check);
+    if (k == 1) timeNeighbors<1>(PIn, 1, rounds, p, trial_time, update_percent, do_check);
+    else timeNeighbors<100>(PIn, k, rounds, p, trial_time, update_percent, do_check);
   }
 
 }

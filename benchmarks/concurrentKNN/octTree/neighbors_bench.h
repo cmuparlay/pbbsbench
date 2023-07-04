@@ -69,6 +69,12 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 #else
     std::cout << "using path locking" << std::endl;
 #endif
+
+#ifdef PathCopy
+    std::cout << "using path copying" << std::endl;
+#else
+    std::cout << "no path copying" << std::endl;
+#endif
     if(algorithm_version == 0) std::cout << "root based algorithm" << std::endl;
     else if(algorithm_version == 1) std::cout << "bit based algorithm" << std::endl;
 
@@ -132,7 +138,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
             return;
           }
         }
-        int op_type = my_rand::get_rand()%100;
+        int op_type = my_rand::get_rand()%100;  // try hash64_2
         int idx = my_rand::get_rand()%n;
         // std::cout << op_type << " " << idx << std::endl;
         if (op_type < update_percent/2) { 

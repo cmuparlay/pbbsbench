@@ -206,7 +206,7 @@ struct k_nearest_neighbors {
       if (within_epsilon_box(T, sqrt(max_distance))) { 
         if (report_stats) internal_cnt++;
 	       if (T->is_leaf()) {
-	         if (report_stats) leaf_cnt++;
+	         if (report_stats) leaf_cnt+=T->size();
 	         auto &Vtx = T->Vertices();
 	         for (int i = 0; i < T->size(); i++)
 	           if (Vtx[i] != vertex){ 
@@ -236,7 +236,7 @@ struct k_nearest_neighbors {
     
     node* current = T; //this will be the node that node*T points to
     if (current -> is_leaf()){
-        if (report_stats) leaf_cnt++;
+        if (report_stats) leaf_cnt+=T->size();
         auto &Vtx = T->Vertices();
         for (int i = 0; i < T->size(); i++)
           if (Vtx[i] != vertex){
@@ -312,7 +312,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
   void k_nearest(vtx* p, int k) {
     kNN nn(p,k);
     nn.k_nearest_rec(tree.get()); //this is passing in a pointer to the o_tree root
-    if (report_stats) p->counter = nn.internal_cnt;
+    if (report_stats){ p->counter = nn.internal_cnt; p->counter2 = nn.leaf_cnt;}
     for (int i=0; i < k; i++)
       p->ngh[i] = nn[i];
   }
