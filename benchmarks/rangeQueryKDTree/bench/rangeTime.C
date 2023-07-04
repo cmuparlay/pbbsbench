@@ -54,7 +54,7 @@ struct vertex {
 // *************************************************************
 
 template <class point>
-void timeRange(parlay::sequence<point> &pts, double rad, int rounds, char* outFile) {
+void timeRange(parlay::sequence<point> &pts, double rad, int rounds, int p, double trial_time, int update_percent) {
   size_t n = pts.size();
   using vtx = vertex<point,0>;
   int dimensions = pts[0].dimension();
@@ -67,40 +67,33 @@ void timeRange(parlay::sequence<point> &pts, double rad, int rounds, char* outFi
   // run once for warmup
   time_loop(rounds, 1.0,
 	    [&] () {},
-	    [&] () {RANGE(v, rad, outFile);},
+	    [&] () {RANGE(v, rad, p, trial_time, update_percent);},
 	    [&] () {});
-
-  // if (outFile != NULL) {
-  //   int m = n * k;
-  //   parlay::sequence<int> Pout(m);
-  //   parlay::parallel_for (0, n-1, [&] (size_t i) {
-
-	// for (int j=0; j < k; j++){
-	//   Pout[k*i + j] = (v[i]->ngh[j])->identifier;
-  // }
-  //     });
-  //   writeIntSeqToFile(Pout, outFile);
-  // }
 }
 
 int main(int argc, char* argv[]) {
-  commandLine P(argc,argv,"[-rad <rad>] [-d {2,3}] [-o <outFile>] [-r <rounds>] <inFile>");
+  commandLine P(argc,argv,"[-r <rounds>] [-d {2,3}] [-k <rad>]  <inFile>");
   char* iFile = P.getArgument(0);
   char* oFile = P.getOptionValue("-o");
   int rounds = P.getOptionIntValue("-r",1);
-  double rad = P.getOptionDoubleValue("-rad",.1);
+  double rad = P.getOptionDoubleValue("-k",.1);
   int d = P.getOptionIntValue("-d",2);
+
+  int p = P.getOptionIntValue("-p",140);
+  double trial_time = P.getOptionDoubleValue("-t",1.0);
+  int update_percent = P.getOptionIntValue("-u",20);
+  bool do_check = P.getOptionValue("-c");
   if (rad <= 0) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();
 
   if (d == 2) {
     parlay::sequence<point2> PIn = readPointsFromFile<point2>(iFile);
-    timeRange(PIn, rad, rounds, oFile);
+    timeRange(PIn, rad, rounds, p, trial_time, update_percent);
   }
 
   if (d == 3) {
     parlay::sequence<point3> PIn = readPointsFromFile<point3>(iFile);
-    timeRange(PIn, rad, rounds, oFile);
+    timeRange(PIn, rad, rounds, p, trial_time, update_percent);
   }
 
 }

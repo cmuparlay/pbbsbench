@@ -30,7 +30,7 @@ bool report_stats = true;
 #include "common/geometry.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
-#include "../../nearestNeighbors/octTreeConcurrent/k_nearest_neighbors.h"
+#include "../../concurrentKNN/octTree/k_nearest_neighbors.h"
 
 /* compile with debug flags:
 g++-11 -DHOMEGROWN -pthread -mcx16 -g -std=c++17 -I .  -include neighbors.h -o neighbors_debug ../bench/neighborsTime.C -fsanitize=address -fsanitize=undefined -DHOMEGROWN -pthread -ldl -L/usr/local/lib -ljemalloc
@@ -62,7 +62,7 @@ void write_range_result(char* outFile, parlay::sequence<parlay::sequence<int>> &
 // find the k nearest neighbors for all points in tree
 // places pointers to them in the .ngh field of each vertex
 template <class vtx>
-void RANGE(parlay::sequence<vtx*> &v, double rad, char* outFile) {
+void RANGE(parlay::sequence<vtx*> &v, double rad, int p, double trial_time, int update_percent) {
   timer t("RANGE",report_stats);
 
   {
@@ -79,24 +79,25 @@ void RANGE(parlay::sequence<vtx*> &v, double rad, char* outFile) {
     knn_tree T(v, whole_box);
     t.next("build tree");
 
-    
-    
-
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
 
 
     size_t n = v.size();
     // find nearest k neighbors for each point
-    auto answers = parlay::tabulate(n, [&] (size_t i){
-      return T.range_search(v[i], rad);
+    parlay::sequence<int> lfc;
+    parlay::sequence<int> s;
+    parlay::sequence<parlay::sequence<int>> answers;
+
+    parlay::parallel_for(0, n, [&] (size_t i){
+      auto ans = T.range_search(v[i], rad);
+      lfc[i] = std::get<1>(ans);
+      s[i] = std::get<0>(ans);
+      answers[i] = std::get<2>(ans);
     });
-
-
 
     t.next("try all");
     if (report_stats) {
-      auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
       size_t i = parlay::max_element(s) - s.begin();
       size_t sum = parlay::reduce(s);
       std::cout << "max internal = " << s[i] 
@@ -104,9 +105,6 @@ void RANGE(parlay::sequence<vtx*> &v, double rad, char* outFile) {
       t.next("stats");
     }
     t.next("delete tree");   
-
-    if(outFile != NULL) write_range_result(outFile, answers);
-    t.next("write outfile");
 };
 }
 
