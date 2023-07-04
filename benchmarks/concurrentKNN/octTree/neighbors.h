@@ -68,6 +68,12 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 #else
     std::cout << "using path locking" << std::endl;
 #endif
+
+#ifdef PathCopy
+    std::cout << "using path copying" << std::endl;
+#else
+    std::cout << "no path copying" << std::endl;
+#endif
     if(algorithm_version == 0) std::cout << "root based algorithm" << std::endl;
     else if(algorithm_version == 1) std::cout << "bit based algorithm" << std::endl;
 
@@ -111,8 +117,6 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     t.next("equality check");
     // END EXAMPLE
 
-    
-   
     // insert v2 in parallel
     parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
       for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
@@ -122,6 +126,11 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 
     t.next("inserts");
     
+    // EXAMPLE OF EQUALITY CHECKING
+    knn_tree R2(v, whole_box);
+    T.are_equal(R2.tree.load(), dims);    
+    t.next("equality check");
+    // END EXAMPLE
 
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
