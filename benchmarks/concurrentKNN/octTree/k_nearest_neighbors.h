@@ -304,7 +304,7 @@ struct RNG {
     }
 
     parlay::sequence<int> return_answer(){
-      return std::move(range_candidates);
+      return range_candidates;
     }
 
     bool within_radius(node* T) {
@@ -397,11 +397,16 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
     return vv;
   }
 
-  parlay::sequence<int> range_search(vtx* p, double rad){
+  std::tuple<int, int, parlay::sequence<int>> range_search(vtx* p, double rad){
       RNG rn(p,rad);
-      rn.range_search_rec(tree.load());
-      if (report_stats) {p->counter = rn.internal_cnt; p->counter2 = rn.leaf_cnt;}
-      return std::move(rn.return_answer());
+      int ic;
+      int lc;
+      verlib::with_snapshot([&]{
+        rn.range_search_rec(tree.load());
+        lc = rn.internal_cnt;
+        ic = rn.leaf_cnt;
+      });
+      return {ic, lc, std::move(rn.return_answer())};
   }
   
 

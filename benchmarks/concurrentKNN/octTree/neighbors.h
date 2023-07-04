@@ -75,58 +75,15 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 
     //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);     
-
-    //split initial vertices into two sequences: one to build the tree with
-    //and one to later insert point by point
-    size_t n = v.size();
-    node_allocator<vtx>.shuffle(n); 
-    size_t init = 1;
-    size_t ins = n-init;
-    parlay::sequence<vtx*> v1(init);  
-    parlay::sequence<vtx*> v2(ins);
-    parlay::parallel_for(0, n, [&] (size_t i){
-      if(i<init) v1[i] = v[i];
-      else v2[i-init] = v[i];
-    }, 1
-    );
-    
-    //build tree with bounding box
-    t.next("setup benchmark");
     knn_tree T(v, whole_box);
     t.next("build tree");
 
-    //prelims for insert  
-    int dims = v[0]->pt.dimension();
-
-    // // delete v2 in parallel
-    parlay::parallel_for(0, v2.size(), [&] (size_t j) {
-      T.delete_point(v2[j]);
-    }, 100, true);
-
-    t.next("deletes");
-    
-    // EXAMPLE OF EQUALITY CHECKING
-    knn_tree R(v1, whole_box);
-    T.are_equal(R.tree.load(), dims);    
-    t.next("equality check");
-    // END EXAMPLE
-
-    
-   
-    // insert v2 in parallel
-    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
-        T.insert_point(v2[j]); 
-      }
-    }, 1, true);
-
-    t.next("inserts");
     
 
     if (report_stats) 
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
       
-        // find nearest k neighbors for each point
+    // find nearest k neighbors for each point
     parlay::parallel_for (0, n, [&] (size_t i) {
         T.k_nearest(v[i], k);
     }, 1);
