@@ -11,12 +11,16 @@ from create_graphs import *
 
 ds_options = {
   "neighbors_bench" : "neighbors_bench",
-  "range_bench" : "../../rangeQueryKDTree/range/range_bench"
+  "neighbors_bench_path_copy" : "neighbors_bench_path_copy",
+  "range_bench" : "../../rangeQueryKDTree/range/range_bench",
+  "range_bench_path_copy" : "../../rangeQueryKDTree/range/range_bench_path_copy",
 }
 
 ds_keys = {
   "neighbors_bench" : "neighbors_bench",
+  "neighbors_bench_path_copy" : "neighbors_bench_path_copy",
   "../../rangeQueryKDTree/range/range_bench" : "range_bench",
+  "../../rangeQueryKDTree/range/range_bench_path_copy" : "range_bench_path_copy",
 }
 
 
@@ -87,8 +91,6 @@ def runstring(test, op, outfile, k):
 def runtest(test,procs,u,k,d,infile,extra,outfile) :
     r = 1
     otherargs = " -c -t 1.0 "
-    if test_only:
-        otherargs = " -c -t 0.1 "
 
     runstring(test, "PARLAY_NUM_THREADS=" + str(min(int(procs), maxcpus)) + " numactl -i all ./" + test + " -r " + str(r) + " -d " + str(d) + " -k " + str(k) + " -p " + str(procs) + extra + " -u " + str(u) + otherargs + " " + infile, outfile, k)
 

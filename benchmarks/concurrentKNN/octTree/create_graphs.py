@@ -24,8 +24,12 @@ mk = ['o', 'v', '^', '1', 's', '+', 'x', 'D', '|', '>', '<',]
 
 dsinfo = {'neighbors_bench-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree, k=1", "blah", "blah"),
           'neighbors_bench-10' : DSInfo("C1", mk[1], "-", "CLEANN-Tree, k=10", "blah", "blah"),
+          'neighbors_bench_path_copy-1' :  DSInfo("C3", mk[3], "-", "CLEANN-Tree-PC, k=1", "blah", "blah"),
+          'neighbors_bench_path_copy-10' : DSInfo("C4", mk[4], "-", "CLEANN-Tree-PC, k=10", "blah", "blah"),
           'range_bench-.014' : DSInfo("C0", mk[0], "-", "CLEANN-Tree, r=5", "blah", "blah"),
           'range_bench-.0176' : DSInfo("C1", mk[1], "-", "CLEANN-Tree, r=10", "blah", "blah"),
+          'range_bench_path_copy-.014' : DSInfo("C3", mk[3], "-", "CLEANN-Tree-PC, r=5", "blah", "blah"),
+          'range_bench_path_copy-.0176' : DSInfo("C4", mk[4], "-", "CLEANN-Tree-PC, r=10", "blah", "blah"),
 } 
 
 # # datastructures = ["leaftree", "arttree"]
