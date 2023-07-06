@@ -38,12 +38,11 @@ using coord = double;
 using point2 = point2d<coord>;
 using point3 = point3d<coord>;
 
-template <class PT, int KK>
+template <class PT>
 struct vertex {
   using pointT = PT;
   int identifier;
   pointT pt;         // the point itself
-  vertex* ngh[KK];    // the list of neighbors
   vertex(pointT p, int id) : pt(p), identifier(id) {}
   size_t counter;
   size_t counter2; 
@@ -56,7 +55,7 @@ struct vertex {
 template <int maxK, class point>
 void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int p, double trial_time, int update_percent, bool do_check) {
   size_t n = pts.size();
-  using vtx = vertex<point,maxK>;
+  using vtx = vertex<point>;
   int dimensions = pts[0].dimension();
   auto vv = parlay::tabulate(n, [&] (size_t i) -> vtx {
       return vtx(pts[i],i);
