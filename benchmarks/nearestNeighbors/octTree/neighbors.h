@@ -20,7 +20,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = true;
+bool report_stats = false;
 int algorithm_version = 2;
 // 0=root based, 1=bit based, >2=map based
 
@@ -43,7 +43,6 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     using node = typename knn_tree::node;
     using box = typename knn_tree::box;
     using box_delta = std::pair<box, double>;
-    using point = typename vtx::pointT;
   
     box whole_box = knn_tree::o_tree::get_box(v);
 
@@ -61,21 +60,6 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     //build tree with optional box
     knn_tree T(v, whole_box);
     t.next("build tree");
-
-    auto less = [&] (point a, point b){
-      int d = a.dimension();
-      for(int i=0; i<d; i++){
-        if(a[i]<b[i]) return true;
-        else if(a[i]>b[i]) return false;
-        else continue;
-      }
-      return false;
-    };
-
-    auto points = parlay::tabulate(v.size(), [&] (size_t i){return v[i]->pt;});
-    auto ordered_points = parlay::remove_duplicates_ordered(points, less);
-    std::cout << points.size() << std::endl;
-    std::cout << ordered_points.size() << std::endl;
 
     //prelims for insert/delete
     int dims = v[0]->pt.dimension();
@@ -97,13 +81,13 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     if (algorithm_version == 0) { // this is for starting from root 
       // this reorders the vertices for locality
-      // parlay::sequence<vtx*> vr = T.vertices();
-      // t.next("flatten tree");
+      parlay::sequence<vtx*> vr = T.vertices();
+      t.next("flatten tree");
 
       // find nearest k neighbors for each point
-      size_t n = v.size();
+      size_t n = vr.size();
       parlay::parallel_for (0, n, [&] (size_t i) {
-	       T.k_nearest(v[i], k);
+	       T.k_nearest(vr[i], k);
       }, 1);
     
     } else if (algorithm_version == 1) {
@@ -136,12 +120,6 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
       size_t sum = parlay::reduce(s);
       std::cout << "max internal = " << s[i] 
 		<< ", average internal = " << sum/((double) v.size()) << std::endl;
-
-    auto l = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter2;});
-      size_t j = parlay::max_element(l) - l.begin();
-      size_t ssum = parlay::reduce(l);
-      std::cout << "max cmps = " << l[j] 
-		<< ", avg cmps = " << ssum/((double) v.size()) << std::endl;
       t.next("stats");
     }
     t.next("delete tree");   
