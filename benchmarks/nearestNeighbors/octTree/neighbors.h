@@ -20,8 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = false;
-int algorithm_version = 2;
+bool report_stats = true;
+int algorithm_version = 0;
 // 0=root based, 1=bit based, >2=map based
 
 #include <algorithm>
@@ -66,13 +66,20 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     node* root = T.tree.get();
     box_delta bd = T.get_box_delta(dims);
 
-    //batch-dynamic deletion
-    //T.batch_delete(v2, root, bd.first, bd.second);
-    //t.next("batch deletion");
+    t.next("get box");
+    // batch-dynamic deletion
+    T.batch_delete(v2, root, bd.first, bd.second);
+    t.next("batch deletion");
 
-    //batch-dynamic insertion
-    //T.batch_insert(v2, root, bd.first, bd.second);
-    //t.next("batch insertion");
+    // batch-dynamic insertion
+    T.batch_insert(v2, root, bd.first, bd.second);
+    t.next("batch insertion");
+
+    // knn_tree R(v, whole_box);
+    // t.next("build comparison tree");
+
+    // T.are_equal(R.tree.get(), dims);
+    // t.next("equality check");
 
 
 

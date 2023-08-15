@@ -51,6 +51,47 @@ struct k_nearest_neighbors {
 
   box tree_box; 
 
+  bool box_eq(box b, box c, int d){
+    bool first = true;
+    bool second = true;
+    for(int i=0; i<d; i++){
+      first = first && (b.first[i] == c.first[i]);
+      second = second && (b.second[i] == c.second[i]);
+    }
+    return (first && second);
+  }
+
+  void are_equal(node* T, int d){
+    node* V = tree.get();
+    return are_equal_rec(V, T, d);
+  }
+
+  void are_equal_rec(node* V, node* T, int d){
+    if(T->bit != V->bit){
+      std::cout << "UNEQUAL: bit" << std::endl;
+      std::cout << "Inserted tree has bit " << V->bit << " while regular tree has bit " << T->bit << std::endl;
+    }
+    if(!box_eq(T->Box(), V->Box(), d)){
+      std::cout << "UNEQUAL: box" << std::endl;
+    }
+    if(!(T->is_leaf()) && !(V->is_leaf())){
+      are_equal_rec(T->Left(), V->Left(), d);
+      are_equal_rec(T->Right(), V->Right(), d);
+      return;
+    }
+    else if(T->is_leaf() && V->is_leaf()){
+      if(T->size() != V->size()){
+        std::cout << "UNEQUAL: leaf size" << std::endl;
+        std::cout << "Inserted tree has leaf size " << V->size() << " while regular tree has leaf size " << T->size() << std::endl;
+        std::cout << "Leaves have bit " << V->bit << std::endl;
+      } //not a true eq check
+      return;
+    } else{
+      std::cout << "UNEQUAL: internal node vs leaf node" << std::endl;
+      abort();
+    }
+  }
+
   void set_box(box b){
     tree_box = b; 
   }
@@ -355,9 +396,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     T->set_flag(true);
     if(T->is_leaf()){
       if(T->size() + idpts.size() < o_tree::node_cutoff || T->bit == 0){
-        T->batch_update(idpts);
+        // std::cout << "batch update" << std::endl;
+        T->batch_update(idpts); 
+        // std::cout << "batch update done" << std::endl;
       } else{    
+        // std::cout << "batch split" << std::endl;
         o_tree::batch_split(idpts, T);
+        // std::cout << "batch split done" << std::endl;
       }
     } else{
         T->set_size(T->size()+idpts.size());
@@ -378,10 +423,14 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
           indexed_point sample = get_point(T);
           int sample_pos = lookup_bit(sample.first, new_bit-1);
           if(sample_pos == 0){ //the points already in the tree are on the left
+            // std::cout << "create new, v1" << std::endl;
             o_tree::create_new(T, idpts.cut(0, cut_point), new_bit, true);
+            // std::cout << "create new done" << std::endl;
             batch_insert0(idpts.cut(cut_point, idpts.size()), T->Left()); 
           } else{
+            // std::cout << "create new, v2" << std::endl;
             o_tree::create_new(T, idpts.cut(cut_point, idpts.size()), new_bit, false);
+            // std::cout << "create new done" << std::endl;
             batch_insert0(idpts.cut(0, cut_point), T->Right());
           } 
         }
@@ -416,8 +465,11 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       return a.first < b.first; 
     };
     auto x = parlay::sort(points, less);
+    // std::cout << "sorted" << std::endl;
     batch_insert0(parlay::make_slice(x), R);
+    // std::cout << "inserted" << std::endl;
     box root_box = o_tree::update_boxes(R);
+    // std::cout << "updated boxes" << std::endl;
   }
 
   void batch_delete0(slice_t idpts, node* R){
@@ -462,9 +514,13 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
       return a.first < b.first; 
     };
     auto x = parlay::sort(points, less); 
+    // std::cout << "sorted" << std::endl;
     batch_delete0(parlay::make_slice(x), R);
+    // std::cout << "deleted" << std::endl;
     o_tree::compress(R);  
+    // std::cout << "pruned" << std::endl;
     box root_box = o_tree::update_boxes(R);
+    // std::cout << "updated boxes" << std::endl;
   }
 
 }; //this ends the k_nearest_neighbors structure
