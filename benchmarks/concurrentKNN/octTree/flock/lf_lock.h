@@ -158,22 +158,6 @@ public:
   bool unchanged(lock_entry le) {return le == load();}
 
   
-  // // This is safe to be used inside of another lock (i.e. it is
-  // // idempotent, kind of).  The key components to making it effectively
-  // // idempotent is using an idempotent new_obj, and checking if it is
-  // // done (my_thunk->done).  It is lock free if no cycles in lock
-  // // ordering, and otherwise can deadlock.
-  // template <typename Thunk>
-  // auto with_lock(Thunk f) {
-  //   using RT = decltype(f());
-  //   std::optional<RT> result = {};
-  //   while(!result.has_value()) {
-  //     result = try_lock_result(f);
-  //   }    
-  //   return result.value();
-  // }
-
-
   // This is safe to be used inside of another lock (i.e. it is
   // idempotent, kind of).  The key components to making it effectively
   // idempotent is using an idempotent new_obj, and checking if it is
@@ -182,45 +166,61 @@ public:
   template <typename Thunk>
   auto with_lock(Thunk f) {
     using RT = decltype(f());
-    static_assert(sizeof(RT) <= 4 || std::is_pointer<RT>::value,
-		  "Result of with_lock must be a pointer or at most 4 bytes");
-    lock_entry current = read();
-
-    // idempotently allocate descriptor
-    auto [my_descriptor, i_own] = descriptor_pool.new_obj_acquired(f);
-    
-    // if already retired, then done
-    if (descriptor_pool.is_done(my_descriptor)) {
-	auto ret_val = descriptor_pool.done_val_result<RT>(my_descriptor);
-	assert(ret_val.has_value()); // with_lock is guaranteed to succeed
-	return ret_val.value(); 
-    }
-    
-    bool locked = is_locked_(current);
-    while (true) {
-      if (my_descriptor->done // already done
-	  || remove_tag(current) == my_descriptor // already acquired
-	  || (!locked && cas(current, my_descriptor))) { // try to acquire
-
-	// run the body f with the log from my_descriptor
-	RT result = with_log(Log(&my_descriptor->lg_array,0), [&] {return f();});
-
-	// mark as done and clear the lock
-	my_descriptor->done = true;
-	clear(my_descriptor);
-
-	// retire the descriptor saving the result in the enclosing
-	// descriptor, if any
-	descriptor_pool.retire_acquired_result(my_descriptor, i_own,
-					       std::optional<RT>(result));
-	return result;
-      } else if (locked) {
-	help_descriptor(current);
-      }
-      current = read();
-      locked = is_locked_(current);
-    }
+    std::optional<RT> result = {};
+    while(!result.has_value()) {
+      result = try_lock_result(f);
+    }    
+    return result.value();
   }
+
+
+  // // This is safe to be used inside of another lock (i.e. it is
+  // // idempotent, kind of).  The key components to making it effectively
+  // // idempotent is using an idempotent new_obj, and checking if it is
+  // // done (my_thunk->done).  It is lock free if no cycles in lock
+  // // ordering, and otherwise can deadlock.
+  // template <typename Thunk>
+  // auto with_lock(Thunk f) {
+  //   using RT = decltype(f());
+  //   static_assert(sizeof(RT) <= 4 || std::is_pointer<RT>::value,
+	// 	  "Result of with_lock must be a pointer or at most 4 bytes");
+  //   lock_entry current = read();
+
+  //   // idempotently allocate descriptor
+  //   auto [my_descriptor, i_own] = descriptor_pool.new_obj_acquired(f);
+    
+  //   // if already retired, then done
+  //   if (descriptor_pool.is_done(my_descriptor)) {
+	// auto ret_val = descriptor_pool.done_val_result<RT>(my_descriptor);
+	// assert(ret_val.has_value()); // with_lock is guaranteed to succeed
+	// return ret_val.value(); 
+  //   }
+    
+  //   bool locked = is_locked_(current);
+  //   while (true) {
+  //     if (my_descriptor->done // already done
+	//   || remove_tag(current) == my_descriptor // already acquired
+	//   || (!locked && cas(current, my_descriptor))) { // try to acquire
+
+	// // run the body f with the log from my_descriptor
+	// RT result = with_log(Log(&my_descriptor->lg_array,0), [&] {return f();});
+
+	// // mark as done and clear the lock
+	// my_descriptor->done = true;
+	// clear(my_descriptor);
+
+	// // retire the descriptor saving the result in the enclosing
+	// // descriptor, if any
+	// descriptor_pool.retire_acquired_result(my_descriptor, i_own,
+	// 				       std::optional<RT>(result));
+	// return result;
+  //     } else if (locked) {
+	// help_descriptor(current);
+  //     }
+  //     current = read();
+  //     locked = is_locked_(current);
+  //   }
+  // }
 
   // The thunk returns a value
   // The try_lock_result returns an optional value, which is empty if it fails
@@ -235,15 +235,19 @@ public:
       return std::optional(f()); // if so, run without acquiring
 
     // Idempotent allocation of descriptor.  
+    flck::internal::lg.check_synchronized(16);
     auto [my_descriptor, i_own] = descriptor_pool.new_obj_acquired(f);
+    flck::internal::lg.check_synchronized(17);
     
     // if descriptor is already retired, then done and return value
     if (descriptor_pool.is_done(my_descriptor)) 
       return descriptor_pool.done_val_result<RT>(my_descriptor);
-	
+	  flck::internal::lg.check_synchronized(18);
     if (!is_locked_(current)) {
       // use a CAS to try to acquire the lock
+      flck::internal::lg.check_synchronized(19);
       cas(current, my_descriptor);
+      flck::internal::lg.check_synchronized(20);
 
       // This could be a load() without the my_descriptor->done test.
       // Using read() is an optimization to avoid a logging event.
@@ -258,10 +262,14 @@ public:
 	my_descriptor->done = true;
 	clear(my_descriptor);
       }
-    } else help_descriptor(current);
-
+    } else {
+      flck::internal::lg.check_synchronized(21);
+      help_descriptor(current);
+    }
+    flck::internal::lg.check_synchronized(22);
     // retire the thunk
     descriptor_pool.retire_acquired_result(my_descriptor, i_own, result);
+    flck::internal::lg.check_synchronized(23);
     return result;
   }
 

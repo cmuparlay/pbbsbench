@@ -86,7 +86,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     //and one to later insert point by point
     size_t n = v.size();
     node_allocator<vtx>.shuffle(n); 
-    size_t init = 1;
+    size_t init = n/2;
     size_t ins = n-init;
     parlay::sequence<vtx*> v1(init);  
     parlay::sequence<vtx*> v2(ins);
@@ -98,15 +98,30 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     
     //build tree with bounding box
     t.next("setup benchmark");
-    knn_tree T(v, whole_box);
+    knn_tree T(v1, whole_box);
     t.next("build tree");
 
     //prelims for insert  
     int dims = v[0]->pt.dimension();
 
+    // insert v2 in parallel
+    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
+      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
+        assert(T.insert_point(v2[j])); 
+      }
+    }, 1, true);
+
+    t.next("inserts");
+
+    // EXAMPLE OF EQUALITY CHECKING
+    knn_tree R2(v, whole_box);
+    T.are_equal(R2.tree.load(), dims);    
+    t.next("equality check");
+    // END EXAMPLE
+
     // // delete v2 in parallel
     parlay::parallel_for(0, v2.size(), [&] (size_t j) {
-      T.delete_point(v2[j]);
+      assert(T.delete_point(v2[j]));
     }, 100, true);
 
     t.next("deletes");
@@ -114,21 +129,6 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     // EXAMPLE OF EQUALITY CHECKING
     knn_tree R(v1, whole_box);
     T.are_equal(R.tree.load(), dims);    
-    t.next("equality check");
-    // END EXAMPLE
-
-    // insert v2 in parallel
-    parlay::parallel_for(0, parlay::num_workers(), [&] (size_t i) {
-      for(int j = i; j < v2.size(); j+=parlay::num_workers()) {
-        T.insert_point(v2[j]); 
-      }
-    }, 1, true);
-
-    t.next("inserts");
-    
-    // EXAMPLE OF EQUALITY CHECKING
-    knn_tree R2(v, whole_box);
-    T.are_equal(R2.tree.load(), dims);    
     t.next("equality check");
     // END EXAMPLE
 

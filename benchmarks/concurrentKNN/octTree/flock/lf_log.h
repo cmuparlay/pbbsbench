@@ -9,7 +9,7 @@ namespace internal {
 static thread_local bool helping = false;
 
 // default log length.  Will grow if needed.
-constexpr int Log_Len = 8;
+constexpr int Log_Len = 50;
 using log_entry = std::atomic<void*>;
 struct log_array;
 
@@ -100,6 +100,17 @@ struct Log {
     if (oldv == nullptr && l->compare_exchange_strong(oldv, (void*) newv))
       return std::make_pair(newv, true);
     else return std::make_pair((V) (size_t) oldv, false);
+  }
+
+  bool check_synchronized(long i) {
+    if (is_empty()) return true;
+    if (commit_value((void*) i).first != (void*) i) {
+      std::cout << "log out of sync at log position: " << count << std::endl;
+      for (int i=0; i < count; i++)
+  std::cout << (*vals)[i] << ", ";
+      std::cout << std::endl;
+      return false;
+    } else return true;
   }
 
   // this version tags 48th bit so value can be zero

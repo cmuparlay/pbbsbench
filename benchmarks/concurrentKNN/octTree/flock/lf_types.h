@@ -24,7 +24,11 @@ public:
   atomic(V vv) : v(TV::init(vv)) {}
   atomic() : v(TV::init(0)) {}
   void init(V vv) {v = TV::init(vv);}
-  V load() {return TV::value(get_val(internal::lg));}
+  V load() {
+    V vv = TV::value(get_val(internal::lg));
+    assert((int64_t) vv != 1);
+    return vv;
+  }
   V load_ni() {return TV::value(v.load());}
   V read() {return TV::value(v.load());}
   V read_snapshot() {return TV::value(v.load());}

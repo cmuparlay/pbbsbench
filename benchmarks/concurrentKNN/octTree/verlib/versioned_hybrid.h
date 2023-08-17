@@ -73,7 +73,7 @@ private:
 
   static versioned* set_stamp(versioned* ptr) {
     versioned* ptr_ = strip_indirect(ptr);
-    if (ptr != nullptr && ptr_->time_stamp.load_ni() == tbd) {
+    if (ptr_ != nullptr && ptr_->time_stamp.load_ni() == tbd) {
       TS t = global_stamp.get_write_stamp();
       if(ptr_->time_stamp.load_ni() == tbd)
         ptr_->time_stamp.cas_ni(tbd, t);
