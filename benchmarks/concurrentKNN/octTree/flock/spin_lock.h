@@ -16,6 +16,10 @@
 namespace flck {
   bool deadlock = false;
   namespace internal {
+    struct _log { // unused
+      bool check_synchronized(int loc) { return true; }
+    };
+    _log lg;
     
 // used for reentrant locks
 static thread_local size_t current_id = parlay::worker_id();
