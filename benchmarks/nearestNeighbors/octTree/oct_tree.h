@@ -340,7 +340,7 @@ struct oct_tree {
 
     //takes in a sequence of points and a leaf node and splits based on the leaf node
     //TODO fix edge case where T has no parent 
-    static void batch_split(slice_t new_points, node* T){
+    static void batch_split(slice_t new_points, node* T, int bit){
       //get the new sequence of indexed points and sort it
       int size = T->size();
       int new_size = new_points.size();
@@ -357,21 +357,7 @@ struct oct_tree {
       };
       auto x = parlay::sort(indexed_points, less);
       //get a new tree based on the sorted sequence
-      int new_bit = T->bit;
-      // size_t pos=0;
-      // while(!(pos==0 | pos==indexed_points.size())){
-      //   new_bit--;
-      //   size_t val = ((size_t) 1) << (new_bit - 1);
-      //   size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
-      //   auto less = [&] (indexed_point x) {
-      //     return (x.first & mask) < val;
-      //   };
-      //   // and then we binary search for the cut point
-      //   size_t pos = parlay::internal::binary_search(indexed_points, less);
-      // } 
-      // std::cout << x.size() << std::endl;
-      // std::cout << new_bit << std::endl;
-      node* parent = build_recursive(parlay::make_slice(x), new_bit);
+      node* parent = build_recursive(parlay::make_slice(x), bit);
       // std::cout << "built tree" << std::endl;
       //set everyone's parent pointers and delete the old node
       node* grandparent = T->Parent();
@@ -384,23 +370,17 @@ struct oct_tree {
 
     //occasionally, inserting a point will require not splitting an existing node but creating a new one
     //this function creates the new node and a new intermediate node
-    static void create_new(node* parent, slice_t indexed_points, int bit, bool left){
+    static void create_new(node* T, slice_t indexed_points, int bit, bool points_left){
       if (indexed_points.size() == 0) return; 
-      node* new_node = build_recursive(indexed_points, bit-1);
-      node* left_child = parent->Left();
-      node* right_child = parent->Right();
-      node* new_parent = node::new_node(left_child, right_child, bit-1);
-      //set the correct parent pointers
-      if(left){
-        parent->set_child(new_parent, true);
-        parent->set_child(new_node, false);
-      } else{
-        parent->set_child(new_parent, false);
-        parent->set_child(new_node, true);
-      }
-      new_node->set_parent(parent);
-      left_child->set_parent(new_parent);
-      right_child->set_parent(new_parent);  
+      node* new_int = build_recursive(indexed_points, bit-1);
+      node* T_parent = T->Parent();
+      node* intermediate;
+      if(points_left) intermediate = node::new_node(new_int, T, bit);
+      else intermediate = node::new_node(T, new_int, bit);
+      intermediate->set_parent(T_parent);
+      bool T_left = (T == T_parent->Left());
+      T_parent->set_child(intermediate, T_left);
+      T_parent->set_size(T_parent->Left()->size() + T_parent->Right()->size());
     }
 
     //delete a node and all its children

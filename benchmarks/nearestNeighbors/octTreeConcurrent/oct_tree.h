@@ -421,7 +421,7 @@ private:
       size_t val = ((size_t) 1) << (bit - 1);
       size_t mask = (bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << bit);
       auto less = [&] (indexed_point x) {
-	return (x.first & mask) < val;
+	      return (x.first & mask) < val;
       };
       // and then we binary search for the cut point
       size_t pos = parlay::internal::binary_search(Pts, less);

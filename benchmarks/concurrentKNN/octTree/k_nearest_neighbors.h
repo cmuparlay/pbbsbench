@@ -251,6 +251,10 @@ struct k_nearest_neighbors {
     double distance(node* T) {
       return (T->center() - vertex->pt).sqLength();
     }
+
+    bool is_deep(node* T){
+      return (T->Left()->depth() >= 20) && (T->Right()->depth() >= 20);
+    }
     
     // looks for nearest neighbors for pt in Tree node T
     void k_nearest_rec(node* T) {
@@ -270,7 +274,15 @@ struct k_nearest_neighbors {
             }
           } 
           }
-        } else if (dist_sq_to_box(T->Left()->Box(), vertex->pt) < dist_sq_to_box(T->Right()->Box(), vertex->pt)) {
+        } 
+        else if (T->size() >= 10000 && max_distance != numeric_limits<double>::max()) { 
+          auto L = *this; // make copies of the distances
+          auto R = *this; // so safe to call in parallel
+          parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
+            [&] () {R.k_nearest_rec(T->Right());});
+          merge(L,R); // merge the results
+        }
+        else if (dist_sq_to_box(T->Left()->Box(), vertex->pt) < dist_sq_to_box(T->Right()->Box(), vertex->pt)) {
           k_nearest_rec(T->Left());
           k_nearest_rec(T->Right());
         } else {
@@ -278,6 +290,27 @@ struct k_nearest_neighbors {
           k_nearest_rec(T->Left());
         }
       }
+    }
+
+        // sorted backwards
+    void merge(kNN &L, kNN &R) {
+      int i = k-1;
+      int j = k-1;
+      int r = k-1;
+      while (r >= 0) {
+      if (L.distances[i] < R.distances[j]) {
+        distances[r] = L.distances[i];
+        neighbors[r] = L.neighbors[i];
+        i--; 
+      } else {
+        distances[r] = R.distances[j];
+        neighbors[r] = R.neighbors[j];
+        // same neighbor could appear in both lists
+        if (L.neighbors[i] == R.neighbors[j]) i--;
+        j--;
+      }
+      r--;
+          }
     }
 
 }; // this ends the knn structure

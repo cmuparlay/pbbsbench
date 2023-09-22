@@ -89,7 +89,7 @@ def runstring(test, op, outfile, k):
         os.system("echo Failed")
     
 def runtest(test,procs,u,k,d,infile,extra,outfile) :
-    r = 1
+    r = rounds
     otherargs = " -c -t 1.0 "
 
     runstring(test, "PARLAY_NUM_THREADS=" + str(min(int(procs), maxcpus)) + " numactl -i all ./" + test + " -r " + str(r) + " -d " + str(d) + " -k " + str(k) + " -p " + str(procs) + extra + " -u " + str(u) + otherargs + " " + infile, outfile, k)

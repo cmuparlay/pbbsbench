@@ -336,7 +336,8 @@ struct knn_index{
 		size_t m = inserts.size();
 		size_t inc = 0;
 		size_t count = 0;
-		size_t max_batch_size = std::min(static_cast<size_t>(max_fraction*static_cast<float>(n)), 1000000ul);
+		size_t max_batch_size=1;  
+		// size_t max_batch_size = std::min(static_cast<size_t>(max_fraction*static_cast<float>(n)), 1000000ul);
 		parlay::sequence<int> rperm;
 		if(random_order) rperm = parlay::random_permutation<int>(static_cast<int>(m));
 		else rperm = parlay::tabulate(m, [&] (int i) {return i;});

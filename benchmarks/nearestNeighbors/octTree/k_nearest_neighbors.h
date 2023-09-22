@@ -314,14 +314,14 @@ struct k_nearest_neighbors {
   }
 
 
-  // takes in an integer and a position in said integer and returns whether the bit at that position is 0 or 1
+   // takes in an integer and a position in said integer and returns whether the bit at that position is 0 or 1
   int lookup_bit(size_t interleave_integer, int pos){ //pos must be less than key_bits, can I throw error if not?
     size_t val = ((size_t) 1) << (pos - 1);
     size_t mask = (pos == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << pos);
-    if ((interleave_integer & mask) <= val){
-      return 1;
-    } else{
+    if ((interleave_integer & mask) < val){
       return 0;
+    } else{
+      return 1;
     }
   }
 
@@ -391,7 +391,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     }
   }
 
-  void batch_insert0(slice_t idpts, node* T){
+  void batch_insert0(slice_t idpts, node* T, int bit){
     if (idpts.size()==0) return;
     T->set_flag(true);
     if(T->is_leaf()){
@@ -401,38 +401,38 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
         // std::cout << "batch update done" << std::endl;
       } else{    
         // std::cout << "batch split" << std::endl;
-        o_tree::batch_split(idpts, T);
+        o_tree::batch_split(idpts, T, bit);
         // std::cout << "batch split done" << std::endl;
       }
     } else{
-        T->set_size(T->size()+idpts.size());
-        int new_bit = T->bit; 
-        size_t val = ((size_t) 1) << (new_bit - 1);
-        size_t mask = (new_bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << new_bit);
+        // std::cout << "internal" << std::endl;
+        //reset size of parent, and cut points based on bit of T
+        // int new_bit = T->bit; 
+        size_t val = ((size_t) 1) << (bit - 1);
+        size_t mask = (bit == 64) ? ~((size_t) 0) : ~(~((size_t) 0) << bit);
         auto less = [&] (indexed_point x) {
           return (x.first & mask) < val;
         };
         int cut_point = parlay::internal::binary_search(idpts, less);
-        int child_bit = (T->Right())->bit;
-        if(child_bit == (new_bit-1)){
-          parlay::par_do_if(idpts.size() > 100,
-            [&] () {batch_insert0(idpts.cut(0, cut_point), T->Left());},
-            [&] () {batch_insert0(idpts.cut(cut_point, idpts.size()), T->Right());}
-          );
-        } else{
+        // std::cout << "internal sorted" << std::endl;
+        if(bit > T->bit){ // T cannot be root due to enforced condition in batch_insert()
+          std::cout << "create new" << std::endl;
           indexed_point sample = get_point(T);
-          int sample_pos = lookup_bit(sample.first, new_bit-1);
-          if(sample_pos == 0){ //the points already in the tree are on the left
-            // std::cout << "create new, v1" << std::endl;
-            o_tree::create_new(T, idpts.cut(0, cut_point), new_bit, true);
-            // std::cout << "create new done" << std::endl;
-            batch_insert0(idpts.cut(cut_point, idpts.size()), T->Left()); 
-          } else{
-            // std::cout << "create new, v2" << std::endl;
-            o_tree::create_new(T, idpts.cut(cut_point, idpts.size()), new_bit, false);
-            // std::cout << "create new done" << std::endl;
-            batch_insert0(idpts.cut(0, cut_point), T->Right());
-          } 
+          int sample_pos = lookup_bit(sample.first, bit);
+          if(sample_pos == 0){ // T and descendants are in left half
+            o_tree::create_new(T, idpts.cut(cut_point, idpts.size()), bit, false);
+            batch_insert0(idpts.cut(0, cut_point), T, bit-1);
+          }else{ // T and descendants are in right half
+            o_tree::create_new(T, idpts.cut(0, cut_point), bit, true);
+            batch_insert0(idpts.cut(cut_point, idpts.size()), T, bit-1);
+          }
+        } else{
+          // std::cout << "standard recursion" << std::endl;
+          T->set_size(T->size()+idpts.size());
+          parlay::par_do_if(idpts.size() > 100,
+            [&] () {batch_insert0(idpts.cut(0, cut_point), T->Left(), bit-1);},
+            [&] () {batch_insert0(idpts.cut(cut_point, idpts.size()), T->Right(), bit-1);}
+          );
         }
     }
   }
@@ -458,18 +458,18 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     }
     parlay::sequence<indexed_point> idpts; 
     idpts = parlay::sequence<indexed_point>(vsize);
-    auto points = parlay::delayed_seq<indexed_point>(vsize, [&] (size_t i) -> indexed_point {
-  return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
-      });
+    auto points = parlay::tabulate(vsize, [&] (size_t i) -> indexed_point {
+      return std::make_pair(o_tree::interleave_bits(v[i]->pt, b.first, Delta), v[i]);
+    });
     auto less = [] (indexed_point a, indexed_point b){
       return a.first < b.first; 
     };
     auto x = parlay::sort(points, less);
-    // std::cout << "sorted" << std::endl;
-    batch_insert0(parlay::make_slice(x), R);
-    // std::cout << "inserted" << std::endl;
+    std::cout << "sorted" << std::endl;
+    batch_insert0(parlay::make_slice(x), R, R->bit);
+    std::cout << "inserted" << std::endl;
     box root_box = o_tree::update_boxes(R);
-    // std::cout << "updated boxes" << std::endl;
+    std::cout << "updated boxes" << std::endl;
   }
 
   void batch_delete0(slice_t idpts, node* R){
@@ -478,7 +478,7 @@ void k_nearest_leaf(vtx* p, node* T, int k) {
     if(R->is_leaf()){
       size_t n = idpts.size();
       if(n == R->size()){
-        o_tree::prune(R);
+        o_tree::prune(R); //TODO this might leave R's parent with wrong bit
       }else{
         R->batch_remove(idpts);
       }

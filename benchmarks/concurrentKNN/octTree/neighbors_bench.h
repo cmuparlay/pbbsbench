@@ -45,7 +45,7 @@ template <int max_k, class vtx>
 void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_percent, bool do_check) {
   timer t("ANN",report_stats);
 
-  {
+  { 
     using knn_tree = k_nearest_neighbors<vtx, max_k>;
     using point = typename knn_tree::point;
     using node = typename knn_tree::node;
@@ -181,16 +181,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 
     if (report_stats) {
       std::cout << "depth = " << T.tree.load()->depth() << std::endl;
-      // TODO: update average and max internal calcs
-      //   auto s = parlay::delayed_seq<size_t>(v.size(), [&] (size_t i) {return v[i]->counter;});
-      //   size_t i = parlay::max_element(s) - s.begin();
-      //   size_t sum = parlay::reduce(s);
-      //   std::cout << "max internal = " << s[i] 
-      // << ", average internal = " << sum/((double) v.size()) << std::endl;
-      //   t.next("stats");
     }
-
-    // parlay::parallel_for(1, n-1, [&] (size_t i) { T.delete_point(v[i]); });
 };
 }
 
