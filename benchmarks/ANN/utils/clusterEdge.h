@@ -32,12 +32,16 @@
 #include <functional>
 #include <queue>
 
+/* 
+A function which returns a pair of random distinct indices from the active_indices sequence 
+*/
 std::pair<size_t, size_t> select_two_random(parlay::sequence<size_t>& active_indices,
 	parlay::random& rnd) {
 	size_t first_index = rnd.ith_rand(0) % active_indices.size(); 
-	size_t second_index_unshifted = rnd.ith_rand(1) % (active_indices.size()-1);
+	size_t second_index_unshifted = rnd.ith_rand(1) % (active_indices.size() - 1); // the second index cannot be the last index in active_indices
 	size_t second_index = (second_index_unshifted < first_index) ?
-	second_index_unshifted : (second_index_unshifted + 1);
+	second_index_unshifted : (second_index_unshifted + 1); // if the second index is equal to or greater than the first, it's shifted up by one.
+	// is there a reason this isn't a != comparison?
 
 	return {active_indices[first_index], active_indices[second_index]};
 }
@@ -97,10 +101,11 @@ struct DisjointSet{
 
 };
 
+
 template<typename T>
 struct cluster{
-	unsigned d; 
-	bool mips;
+	unsigned d; // dimension of the vectors
+	bool mips; // whether comparison is mips as opposed to euclidean
 	using tvec_point = Tvec_point<T>;
 	using edge = std::pair<int, int>;
 	using labelled_edge = std::pair<edge, float>;
@@ -112,11 +117,16 @@ struct cluster{
 		else return distance(p, q, d);
 	}
 
-	//inserts each edge after checking for duplicates
+	/* 
+	inserts each edge after checking for duplicates
+
+	@param v: a sequence of tvec_points which are the vertices of the graph
+	@param edges: a sequence of edges to be inserted into the graph
+	*/
 	void process_edges(parlay::sequence<tvec_point*> &v, parlay::sequence<edge> edges){
-		int maxDeg = v[1]->out_nbh.begin() - v[0]->out_nbh.begin();
-		auto grouped = parlay::group_by_key(edges);
-		for(auto pair : grouped){
+		int maxDeg = v[1]->out_nbh.begin() - v[0]->out_nbh.begin(); // max degree of a vertex (although I feel like this approach seems a bit fragile when the neighborhoods are not arrays)
+		auto grouped = parlay::group_by_key(edges); // group edges by their first index
+		for(auto pair : grouped){ // could this be parallelized?
 			auto [index, candidates] = pair;
 			for(auto c : candidates){
 				if(size_of(v[index]->out_nbh) < maxDeg){
@@ -138,11 +148,23 @@ struct cluster{
 		add_out_nbh(np, p);
 	}
 
+	/* 
+	bin(N) - bin(N - i)
+	*/
 	int generate_index(int N, int i){
 		return (N*(N-1) - (N-i)*(N-i-1))/2;
 	}
 	
-	//parameters dim and K are just to interface with the cluster tree code
+	/* 
+	Builds an approximation of the MSTk of the graph using Kruskal's algorithm
+
+	parameters dim and K are just to interface with the cluster tree code 
+
+	@param v: a sequence of tvec_points which are the vertices of the graph
+	@param active_indices: a sequence of indices of the active vertices in v (on which the MSTk is to be built)
+	@param dim: the dimension of the vectors
+	@param K: the maximum degree of the vertices in the MSTk
+	*/
 	void MSTk(parlay::sequence<tvec_point*> &v, parlay::sequence<size_t> &active_indices, 
 		unsigned dim, int K){
 		//preprocessing for Kruskal's
@@ -151,9 +173,9 @@ struct cluster{
 		size_t m = 10;
 		auto less = [&] (labelled_edge a, labelled_edge b) {return a.second < b.second;};
 		parlay::sequence<parlay::sequence<labelled_edge>> pre_labelled(N);
-		parlay::parallel_for(0, N, [&] (size_t i){
+		parlay::parallel_for(0, N, [&] (size_t i){ // for index i of active_indices
 			std::priority_queue<labelled_edge, std::vector<labelled_edge>, decltype(less)> Q(less);
-			for(int j=0; j<N; j++){
+			for(int j=0; j<N; j++){ // for every other index j of active_indices
 				if(j!=i){
 					float dist_ij = Distance(v[active_indices[i]]->coordinates.begin(), v[active_indices[j]]->coordinates.begin(), dim);
 					if(Q.size() >= m){
