@@ -275,7 +275,7 @@ struct k_nearest_neighbors {
           } 
           }
         } 
-        else if (T->size() >= 10000 && max_distance != numeric_limits<double>::max()) { 
+        else if (false && T->size() >= 10000 && max_distance != numeric_limits<double>::max()) { 
           auto L = *this; // make copies of the distances
           auto R = *this; // so safe to call in parallel
           L.k_nearest_rec(T->Left());
