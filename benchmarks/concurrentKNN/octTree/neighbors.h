@@ -121,7 +121,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     // find nearest k neighbors for each point
     parlay::parallel_for (0, n, [&] (size_t i) {
         T.k_nearest(v[i], k);
-    }, 1);
+				}, 1, true);
 
 
     t.next("try all");

@@ -16,6 +16,16 @@ namespace verlib {
   
 #define bad_ptr ((void*) ((1ul << 48) -1))
 
+  const TS tbd = std::numeric_limits<TS>::max()/4;
+
+  template <typename T>
+  using atomic = flck::atomic<T>;
+  using lock = flck::lock;
+  using atomic_bool = flck::atomic_write_once<bool>;
+  using flck::memory_pool;
+  template <typename F>
+  auto do_now(F f) {return f();}
+
 struct versioned {
   std::atomic<TS> time_stamp;
   void* next_version;
@@ -57,11 +67,11 @@ public:
     if(head == nullptr) return nullptr;
     set_stamp(head);
     TS ls = local_stamp;
-    while (head->time_stamp.load() > ls) {
+    while (global_stamp.less(ls, head->time_stamp.load())) {
       head = (V*) head->next_version;
     }
 #ifdef LazyStamp
-    if (head->time_stamp.load() == ls && speculative)
+    if (global_stamp.equal(head->time_stamp.load(), ls) && speculative)
       aborted = true;
 #endif
     return head;
@@ -139,5 +149,10 @@ public:
 
   V* operator=(V* b) {store(b); return b; }
 };
+
+    template <typename T, typename E>
+  bool validate(flck::lock& lck, T* v, E expected) {
+    return true;
+  }
 
 } // namespace verlib

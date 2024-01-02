@@ -62,7 +62,7 @@ void timeNeighbors(parlay::sequence<point> &pts, int k, int rounds, int p, doubl
     });
   auto v = parlay::tabulate(n, [&] (size_t i) -> vtx* {
       return &vv[i];});
-
+  
   // run once for warmup
   time_loop(rounds, 1.0,
 	    [&] () {},
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
   double trial_time = P.getOptionDoubleValue("-t",1.0);
   int update_percent = P.getOptionIntValue("-u",20);
   bool do_check = P.getOptionValue("-c");
-  
+
   algorithm_version = P.getOptionIntValue("-t",algorithm_version);
   if (k < 1 || k>100) P.badArgument();
   if (d < 2 || d > 3) P.badArgument();

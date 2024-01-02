@@ -49,7 +49,7 @@ private:
     if (ptr_->time_stamp.load_ni() <= done_stamp) {
 #ifdef NoHelp
       if (v.cas(ptr, ptr_->value))
-	link_pool.retire(ptr_);
+	link_pool.Retire(ptr_);
 #else
       if (v.cas_ni(ptr, ptr_->value))
 	link_pool.retire_ni(ptr_);
@@ -105,7 +105,7 @@ public:
   ~versioned_ptr() {
     versioned* ptr = v.load();
     if (is_indirect(ptr))
-      link_pool.destruct((ver_link*) strip_indirect(ptr));
+      link_pool.Delete((ver_link*) strip_indirect(ptr));
   }
 
   void init(V* ptr) {v = set_zero_stamp(ptr);}
@@ -116,12 +116,12 @@ public:
     versioned* head_unmarked = strip_indirect(head);
 
     // chase down version chain
-    while (head != nullptr && head_unmarked->time_stamp.load() > ls) {
+    while (head != nullptr && global_stamp.less(ls, head_unmarked->time_stamp.load())) {
       head = head_unmarked->next_version;
       head_unmarked = strip_indirect(head);
     }
 #ifdef LazyStamp
-    if (head != nullptr && head_unmarked->time_stamp.load() == ls
+    if (head != nullptr && global_stamp.equal(head_unmarked->time_stamp.load(), ls)
 	&& speculative)
       aborted = true;
 #endif
@@ -155,20 +155,20 @@ public:
     bool use_indirect = (ptr == nullptr || ptr->time_stamp.load() != tbd);
 
     if (use_indirect) 
-      new_v = add_indirect(link_pool.new_obj(old_v, new_v));
+      new_v = add_indirect(link_pool.New(old_v, new_v));
     else ptr->next_version = old_v;
 
 #ifdef NoShortcut
     v = new_v;
     if (is_indirect(old_v))
-      link_pool.retire((ver_link*) strip_indirect(old_v));
+      link_pool.Retire((ver_link*) strip_indirect(old_v));
 #else
     v.cam(old_v, new_v);
     if (is_indirect(old_v)) {
       versioned* val = v.load();
       ver_link* old_l = (ver_link*) strip_indirect(old_v);
       if (val != old_l->value)
-	link_pool.retire(old_l);
+	link_pool.Retire(old_l);
       else v.cam(val, new_v);
     }
 #endif
@@ -178,6 +178,42 @@ public:
 #endif
   
   bool cas(V* exp, V* ptr) {
+    versioned* old_v = v.load();
+    versioned* new_v = ptr;
+    V* old = get_ptr(old_v);
+    set_stamp(old_v);
+    if(old != exp) return false;
+    if (exp == ptr) return true;
+    bool use_indirect = (ptr == nullptr || ptr->time_stamp.load() != tbd);
+
+    if(use_indirect)
+      new_v = add_indirect(link_pool.New(old_v, new_v));
+    else ptr->next_version = old_v;
+
+    bool succeeded = cas_from_cam(old_v, new_v);
+#ifndef NoShortcut
+    if (!succeeded && is_indirect(old_v)) {
+      old_v = ((ver_link*) strip_indirect(old_v))->value;
+      if (old_v == v.load())
+	succeeded = cas_from_cam(old_v, new_v);
+    }
+#endif
+    if (succeeded) {
+      set_stamp(new_v);
+      if (is_indirect(old_v))
+	link_pool.Retire((ver_link*) strip_indirect(old_v));
+#ifndef NoShortcut
+      if (use_indirect) shortcut(new_v);
+#endif
+      return true;
+    } 
+    if (use_indirect)
+      link_pool.Delete((ver_link*) strip_indirect(new_v));
+    set_stamp(v.load());
+    return false;
+  }
+
+    bool casz(V* exp, V* ptr) {
 #ifndef NoShortcut
     for(int ii = 0; ii < 2; ii++) {
 #endif
@@ -190,20 +226,20 @@ public:
       bool use_indirect = (ptr == nullptr || ptr->time_stamp.load() != tbd);
 
       if(use_indirect)
-	new_v = add_indirect(link_pool.new_obj(old_v, new_v));
+	new_v = add_indirect(link_pool.New(old_v, new_v));
       else ptr->next_version = old_v;
 
       if (cas_from_cam(old_v, new_v)) {
         set_stamp(new_v);
         if (is_indirect(old_v))
-	  link_pool.retire((ver_link*) strip_indirect(old_v));
+	  link_pool.Retire((ver_link*) strip_indirect(old_v));
 #ifndef NoShortcut
 	if (use_indirect) shortcut(new_v);
 #endif
         return true;
       }
       if (use_indirect)
-	link_pool.destruct((ver_link*) strip_indirect(new_v));
+	link_pool.Delete((ver_link*) strip_indirect(new_v));
 #ifndef NoShortcut
     }
 #endif
@@ -213,10 +249,5 @@ public:
 
   V* operator=(V* b) {store(b); return b; }
 };
-
-  template <typename T, typename E>
-  bool validate(flck::lock& lck, T* v, E expected) {
-    return true;
-  }
 
 } // namespace verlib

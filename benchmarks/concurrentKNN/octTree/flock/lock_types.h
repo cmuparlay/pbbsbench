@@ -44,6 +44,7 @@ struct atomic_write_once {
   V read() {return v.load();}
   void init(V vv) { v = vv; }
   void store(V vv) { v = vv; }
+  void store_ni(V vv) { v = vv; }
   bool cas_ni(V exp_v, V new_v) {return v.compare_exchange_strong(exp_v, new_v);}
   void cam(V old_v, V new_v) {
     if (v.load() == old_v)
@@ -56,7 +57,8 @@ template <typename V>
 using atomic_aba_free = atomic_write_once<V>;
   
 template <typename T>
-using memory_pool = internal::mem_pool<T>;
+//using memory_pool = internal::mem_pool<T>;
+using memory_pool = epoch::memory_pool<T>;
 
   // to make consistent with lock free implementation
   namespace internal {
@@ -75,6 +77,8 @@ using memory_pool = internal::mem_pool<T>;
 
   template <typename F>
   void non_idempotent(F f) { f();}
+
+  bool check_synchronized(long i) { return true;}
 
 } // namespace flck
 

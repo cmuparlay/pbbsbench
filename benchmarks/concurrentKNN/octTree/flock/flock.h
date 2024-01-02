@@ -65,6 +65,8 @@ namespace flck {
 // structure.  However, the hashing can create lock cycles so this
 // cannot be used with a strict lock, just a try_lock.
 
+  using epoch::with_epoch;
+  
 #ifdef HashLock
 struct lock {
 private:
@@ -75,10 +77,24 @@ private:
     return &locks[parlay::hash64_2((size_t) this) & mask];}
 public:
   template <typename F>
-  bool try_lock(F f) {
-    return get_lock()->try_lock(f);}
+  bool try_lock(F f, bool do_help=true) {
+    return get_lock()->try_lock(f, do_help);}
+  template <typename F>
+  auto try_lock_result(F f, bool* no_release=nullptr) -> decltype(f()) {
+    return get_lock()->try_lock_result(f, no_release);}
+  //  void unlock() {get_lock()->unlock();}
   void wait_lock() { get_lock()->wait_lock(); }
   bool is_locked() { return get_lock()->is_locked(); }
+
+  // for compatibility with transactions, otherwise do not use
+  template <typename Thunk>
+  auto read_lock(Thunk f) {return f();}
+
+#ifdef NoHelp
+  bool try_lock_no_unlock() { return get_lock()->try_lock_no_unlock();}
+  void lock_no_unlock() { get_lock()->lock_no_unlock();}
+  void unlock() { get_lock()->unlock();}
+#endif
 };
 
 std::vector<internal::lock> lock::locks{1ul << bucket_bits};
@@ -93,10 +109,10 @@ std::vector<internal::lock> lock::locks{1ul << bucket_bits};
     int multiplier = 1;
     int cnt = 0;
     while (true)  {
-      if (cnt++ == 1000000000/(delay*max_multiplier)) {
-	std::cout << "problably in an infinite retry loop" << std::endl;
-	abort(); 
-	//deadlock = true;
+      if ((unsigned long) cnt++ == 1000000000ul/(delay*max_multiplier)) {
+        std::cout << "problably in an infinite retry loop" << std::endl;
+        abort(); 
+        //deadlock = true;
       }
       auto r = f();
       //if (try_time_taken != -1) delay = try_time_taken;
@@ -119,5 +135,33 @@ std::vector<internal::lock> lock::locks{1ul << bucket_bits};
     using RT = decltype(f());
     return RT();
   }
+
+  template <typename T>
+  extern inline memory_pool<T>& get_pool() {
+    static memory_pool<T> pool;
+    return pool;
+  }
+
+  template <typename T, typename ... Args>
+  inline T* New(Args... args) {
+    return get_pool<T>().New(std::forward<Args>(args)...);}
+
+  // f is a function that initializes a new object before it is shared
+  template <typename T, typename F, typename ... Args>
+  inline T* NewInit(const F& f, Args... args) {
+    return get_pool<T>().new_init(f, std::forward<Args>(args)...);
+  }
+
+  template <typename T>
+  inline void Delete(T* p) {get_pool<T>().Delete(p);}
+
+  template <typename T>
+  inline bool* Retire(T* p) {return get_pool<T>().Retire(p);}
+
+  template <typename T>
+  inline void clear_pool() {get_pool<T>().clear();}
+
+  template <typename T>
+  inline void pool_stats() {get_pool<T>().stats();}
 
 } // namespace flck

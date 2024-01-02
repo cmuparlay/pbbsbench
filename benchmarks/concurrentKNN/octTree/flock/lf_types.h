@@ -87,25 +87,32 @@ public:
 template <typename V>
 struct atomic_aba_free {
 private:
-   constexpr static unsigned long set_bit= (1ul << 63);
+  constexpr static unsigned long set_bit= (1ul << 63);
+  // set then mask high bit to ensure not zero
+  static V log_value(V v) {
+    size_t x = internal::lg.commit_value((size_t) v | set_bit).first;
+    return (V) (x & ~set_bit);
+  }
 public:
   std::atomic<V> v;
   atomic_aba_free(V initial) : v(initial) {}
   atomic_aba_free() {}
-  V load() { // set then mask high bit to ensure not zero
-    size_t x = internal::lg.commit_value((size_t) v.load() | set_bit).first;
-    return (V) (x & ~set_bit);
-  }
-  void init(V vv) { v = vv; }
+  V load() { return log_value(v.load());}
+  //void init(V vv) { v = vv; }
   void store(V vv) {
-    V old_v = load();
-    v.compare_exchange_strong(old_v, vv);
+    V old_v = v.load();
+    if (log_value(old_v) == old_v)
+      v.compare_exchange_strong(old_v, vv);
   }
   void cam(V expected, V new_v) {
-    V old_v = load();
-    if (expected == old_v)
+    V old_v = v.load();
+    if (old_v == expected && log_value(old_v) == old_v)
       v.compare_exchange_strong(old_v, new_v);
   }
+  V load_ni() {return v.load();}
+  void store_ni(V vv) {v = vv;}
+  bool cas_ni(V exp_v, V new_v) {
+    return v.compare_exchange_strong(exp_v, new_v);}
   V operator=(V b) { store(b); return b; }
 };
 
@@ -121,10 +128,12 @@ public:
     size_t x = internal::lg.commit_value((size_t) v.load() | set_bit).first;
     return (V) (x & ~set_bit);
   }
-  V load_ni() {return v.load();}
   void init(V vv) { v = vv; }
   void store(V vv) { v = vv; }
-  bool cas_ni(V exp_v, V new_v) {return v.compare_exchange_strong(exp_v, new_v);}
+  V load_ni() {return v.load();}
+  void store_ni(V vv) { v = vv; }
+  bool cas_ni(V exp_v, V new_v) {
+    return v.compare_exchange_strong(exp_v, new_v);}
   V operator=(V b) { store(b); return b; }
   // inline operator V() { return load(); } // implicit conversion
 };
@@ -138,7 +147,7 @@ public:
    struct lock;
  }
  
-template <typename T, typename Pool=internal::mem_pool<T>>
+template <typename T, typename Pool=epoch::memory_pool<T>>
 struct memory_pool {
   Pool pool;
 
@@ -149,31 +158,31 @@ struct memory_pool {
   
   void acquire(T* p) { pool.acquire(p);}
   
-  bool* retire(T* p) {
+  bool* Retire(T* p) {
     assert(p != nullptr);
     if (!internal::helping)
-      return internal::with_empty_log([&] {return pool.retire(p);});
+      return internal::with_empty_log([&] {return pool.Retire(p);});
     else return nullptr;
     //auto x = internal::lg.commit_value_safe(p);
-    //if (x.second) // only retire if first try
-    //  internal::with_empty_log([&] {pool.retire(p);}); 
+    //if (x.second) // only Retire if first try
+    //  internal::with_empty_log([&] {pool.Retire(p);}); 
   }
 
   bool* retire_ni(T* p) {
     assert(p != nullptr);
-    return internal::with_empty_log([&] {return pool.retire(p);});
+    return internal::with_empty_log([&] {return pool.Retire(p);});
   }
 	      
-  void destruct(T* p) {
+  void Delete(T* p) {
     assert(p != nullptr);
     auto x = internal::lg.commit_value_safe(p);
     if (x.second) // only retire if first try
-      internal::with_empty_log([&] {pool.destruct(p);}); 
+      internal::with_empty_log([&] {pool.Delete(p);}); 
   }
 
   void destruct_ni(T* p) {
     assert(p != nullptr);
-    internal::with_empty_log([&] {pool.destruct(p);}); 
+    internal::with_empty_log([&] {pool.Delete(p);}); 
   }
 
   template <typename F, typename ... Args>
@@ -181,18 +190,19 @@ struct memory_pool {
   T* new_init(F f, Args... args) {
     //run f without logging (i.e. an empty log)
     T* newv = internal::with_log(internal::Log(), [&] { 
-	T* x = pool.new_obj(args...);
+	T* x = pool.New(args...);
 	f(x);
 	return x;});
     auto r = internal::lg.commit_value(newv);
     if (!r.second)  // destruct if already initialized
-      internal::with_empty_log([&] {pool.destruct(newv);});
+      internal::with_empty_log([&] {pool.Delete(newv);});
+    assert(check_synchronized(13));
     return r.first;
   }
 
   // Idempotent allocation
   template <typename ... Args>
-  T* new_obj(Args ...args) {
+  T* New(Args ...args) {
     return new_obj_fl(args...).first;
   }
 
@@ -228,10 +238,10 @@ protected:
   // is not null, otherwise could be retired multiple times
   template<typename TT>
   void retire_acquired_result(T* p, internal::log_entry* le, std::optional<TT> result) {
-    if (internal::lg.is_empty()) pool.retire(p);
+    if (internal::lg.is_empty()) pool.Retire(p);
     else if (le != nullptr) {
       *le = tag_result(result);
-      internal::with_empty_log([&] { pool.retire(p);});
+      internal::with_empty_log([&] { pool.Retire(p);});
     }
   }
 
@@ -254,11 +264,11 @@ private:
     // TODO: helpers might do lots of allocates and frees,
     // can potentially optimize by checking if a log value has already been committed.
     T* newv = internal::with_log(internal::Log(),
-				 [&] {return pool.new_obj(args...);});
+				 [&] {return pool.New(args...);});
     auto r = internal::lg.commit_value(newv);
     // if already allocated return back to pool
     if (!r.second) {
-      internal::with_empty_log([&] {pool.destruct(newv);}); }
+      internal::with_empty_log([&] {pool.Delete(newv);}); }
     return r;
   }
 

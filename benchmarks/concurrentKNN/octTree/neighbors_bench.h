@@ -97,7 +97,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     // parlay::sequence<vtx*> v2(ins);
     parlay::parallel_for(0, init, [&] (size_t i){
       v_init[i] = v[i];
-    }, 1);
+				  }, 1, true);
 
     parlay::sequence<size_t> totals(p);
     parlay::sequence<long> addeds(p);
@@ -151,7 +151,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
         cnt++;
         total++;
       }
-    }, 1);
+			       }, 1, true);
     double duration = t.stop();
 
     //std::cout << duration << " : " << trial_time << std::endl;

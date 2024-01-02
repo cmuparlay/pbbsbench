@@ -27,22 +27,22 @@ struct write_annoucements {
   std::atomic<size_t>* announcements;
   const int stride = {16};
   write_annoucements() {
-    announcements = new std::atomic<size_t>[parlay::num_workers()*stride];
+    announcements = new std::atomic<size_t>[epoch::internal::num_workers()*stride];
   }
   ~write_annoucements() {
     delete[] announcements;
   }
   std::vector<size_t> scan() {
     std::vector<size_t> announced_tags;
-    for(int i = 0; i < parlay::num_workers()*stride; i += stride)
+    for(int i = 0; i < epoch::internal::num_workers()*stride; i += stride)
       announced_tags.push_back(announcements[i]);
     return announced_tags;
   }
   void set(size_t val) {
-    int id = parlay::worker_id();
+    int id = epoch::internal::worker_id();
     announcements[id*stride] = val;}
   void clear() {
-    int id = parlay::worker_id();
+    int id = epoch::internal::worker_id();
     announcements[id*stride].store(0, std::memory_order::memory_order_release);}
 };
 
@@ -114,7 +114,8 @@ private:
       // announce the location and tag been written
       announce_write.set(add_tag(oldv, (IT) &loc));
       skip_if_done_no_log([&] { // skip both for correctness, and efficiency
-	  r = loc.compare_exchange_strong(oldv, newv);});
+        r = loc.compare_exchange_strong(oldv, newv);
+      });
       // unannounce the location
       announce_write.clear();
       return r;

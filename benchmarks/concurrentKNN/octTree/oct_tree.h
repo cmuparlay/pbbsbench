@@ -465,16 +465,16 @@ flck::memory_pool<typename oct_tree<vtx>::node> node_allocator;
 
 template <typename vtx>
 template <typename... Args>
-typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node(Args... args) { return node_allocator<vtx>.new_obj(args...);}
+typename oct_tree<vtx>::node* oct_tree<vtx>::node::alloc_node(Args... args) { return node_allocator<vtx>.New(args...);}
 
 template <typename vtx>
-void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.destruct(T);}
+void oct_tree<vtx>::node::free_node(node* T) { node_allocator<vtx>.Delete(T);}
   
 template <typename vtx>
-void oct_tree<vtx>::node::retire_node(node* T) { node_allocator<vtx>.retire(T);}
+void oct_tree<vtx>::node::retire_node(node* T) { node_allocator<vtx>.Retire(T);}
 
 template <typename vtx>
-void oct_tree<vtx>::node::shuffle(size_t n) { node_allocator<vtx>.shuffle(10000000);}
+void oct_tree<vtx>::node::shuffle(size_t n) { } //node_allocator<vtx>.shuffle(10000000);}
 
 
   

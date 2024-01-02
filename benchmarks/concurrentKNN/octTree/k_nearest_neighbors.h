@@ -871,7 +871,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       size_t interleave_int = o_tree::interleave_bits(p->pt, b.first, Delta);
       indexed_point q = std::make_pair(interleave_int, p);
 
+      long cnt = 0;
       while(true) {
+	if (cnt++ > 10000000) { std::cout << "overflow:" << parlay::worker_id() << ", " << tree.load()->is_leaf() << std::endl; cnt = 0;}
         node* R = tree.load();
         assert(R != nullptr);
         if(R->is_leaf()) {

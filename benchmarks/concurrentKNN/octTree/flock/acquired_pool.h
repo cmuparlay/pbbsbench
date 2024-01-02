@@ -5,9 +5,9 @@
 #include "epoch.h"
 
 // A trivial wrapper around a memory pool so that retire will call
-// "destruct" instead of "retire" if the object's "acquired" field is
+// "delete" instead of "retire" if the object's "acquired" field is
 // false.  The object type xT must have an atomic boolean field called
-// acquired.  Note that "destruct" frees the memory immediately while
+// acquired.  Note that "delete" frees the memory immediately while
 // "retire" puts it aside and does not free until it is safe to do so
 // (e.g. two epochs later in an epoch-based pool).  Object needs
 // acquired field and if acquired after it is retired user then needs
@@ -29,19 +29,19 @@ struct acquired_pool {
   void shuffle(size_t n) { pool.shuffle(n);}
   void stats() { pool.stats();}
   void clear() { pool.clear();}
-  void destruct(T* ptr) { pool.destruct(ptr); }
+  void Delete(T* ptr) { pool.Delete(ptr); }
   void acquire(T* ptr) {
     if (ptr->acquired == false)
       ptr->acquired = true; }
   template <typename ... Args>
-  T* new_obj(Args... args) { return pool.new_obj(args...);} 
+  T* New(Args... args) { return pool.New(args...);} 
 
-  void retire(T* ptr) {
+  void Retire(T* ptr) {
     bool x = (ptr->acquired).load();
-    if (!x) destruct(ptr);
+    if (!x) Delete(ptr);
     else {
       ptr->acquired = false;
-      pool.retire(ptr);
+      pool.Retire(ptr);
     }
   }
 };

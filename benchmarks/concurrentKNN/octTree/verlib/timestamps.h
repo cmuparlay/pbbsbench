@@ -16,9 +16,70 @@ thread_local int write_delay = 1;
       return (TS) (((uint64_t)(hi & ~(1<<31)) << 32) | lo);
   }
 
+  thread_local TS last_ts = 0;
+
+  // Use TL2 stamp
+struct alignas(128) timestamp_tl2 {
+  std::atomic<TS> stamp;
+  int delay;
+
+  // bottom thread_bits bits are used for the thread id;
+  static constexpr int thread_bits = 10;
+  static constexpr TS step = (1l << thread_bits);
+  static constexpr TS mask = step - 1;
+
+  TS get_stamp() {return stamp.load();}
+
+  // mask out the processor id then compare
+  bool less(TS a, TS b) {
+    return ((a >> thread_bits) < (b >> thread_bits));
+  }
+  
+  // check on lazy read if stamp is ok -- if "equal" then abort
+  TS equal(TS a, TS b) {
+    return ((a >> thread_bits) == (b >> thread_bits) && a != b);
+  }
+
+  // should not get here if speculative
+  TS get_read_stamp() {
+    std::abort(); 
+    TS ts = stamp.load();
+    increment_stamp(ts);
+    return ts;
+  }
+
+  // apply if read_only is aborted or as part of get_write_stamp
+  TS increment_stamp(TS ts) {
+    TS id = epoch::internal::worker_id();
+    TS new_ts = ((ts + step) & ~mask) | id;
+    for (volatile int i = 1; i < delay; i++) {}
+    if (ts == stamp.load()) 
+      stamp.compare_exchange_strong(ts, new_ts);
+    last_ts = new_ts;
+    return new_ts;
+  }
+
+  // applied on every write
+  TS get_write_stamp() {
+    TS ts = stamp.load();
+    if (ts == last_ts) return increment_stamp(ts);
+    TS id = epoch::internal::worker_id();
+    TS new_ts = (ts & ~mask) | id;
+    last_ts = new_ts;
+    return new_ts;
+  }
+
+  timestamp_tl2(int d = 20) : stamp(step), delay(d) {}
+};
+
   // Use hardware clock with update ensured on read
 struct alignas(64) timestamp_read_hw {
   TS get_stamp() {return rdtsc();}
+
+  bool less(TS a, TS b) { return a < b;}
+  bool equal(TS a, TS b) { return a == b;}
+  
+  
   TS get_read_stamp() {
     TS ts = rdtsc();
     while(ts == rdtsc()) {}
@@ -34,6 +95,8 @@ struct alignas(64) timestamp_read_hw {
   // Use hardware clock with update ensured on write
 struct alignas(64) timestamp_write_hw {
   TS get_stamp() {return rdtsc();}
+  bool less(TS a, TS b) { return a < b;}
+  bool equal(TS a, TS b) { return a == b;}
   TS get_read_stamp() {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     return rdtsc();}
@@ -47,19 +110,21 @@ struct alignas(64) timestamp_write_hw {
 };
 
 
-struct alignas(64) timestamp_read {
+struct alignas(128) timestamp_read {
   std::atomic<TS> stamp;
   alignas(128) int delay;
-
+  bool less(TS a, TS b) { return a < b;}
+  bool equal(TS a, TS b) { return a == b;}
+  
   TS get_stamp() {return stamp.load();}
 
   TS get_read_stamp() {
     TS ts = stamp.load();
-    inc_read_stamp(ts);
+    increment_stamp(ts);
     return ts;
   }
 
-  void inc_read_stamp(TS ts) {
+  void increment_stamp(TS ts) {
     if(delay == -1) {
       // delay to reduce contention
       for(volatile int i = 1; i < read_delay; i++) {}
@@ -97,7 +162,9 @@ struct alignas(64) timestamp_read {
 struct alignas(64) timestamp_write {
   std::atomic<TS> stamp;
   alignas(128) static int delay;
-
+  bool less(TS a, TS b) { return a < b;}
+  bool equal(TS a, TS b) { return a == b;}
+  
   TS get_stamp() {return stamp.load();}
 
   TS get_read_stamp() {return stamp.load();}
@@ -143,7 +210,9 @@ struct alignas(64) timestamp_multiple {
   static constexpr int gap = 16;
   static constexpr int delay = 300;
   std::atomic<TS> stamps[slots*gap];
-
+  bool less(TS a, TS b) { return a < b;}
+  bool equal(TS a, TS b) { return a == b;}
+  
   inline TS get_write_stamp() {
     TS total = 0;
     for (int i = 0; i < slots; i++)
@@ -154,11 +223,11 @@ struct alignas(64) timestamp_multiple {
   TS get_read_stamp() {
     TS ts = get_write_stamp();
     //int i = sched_getcpu() / 36; //% slots;
-    int i = parlay::worker_id() % slots;
+    int i = epoch::internal::worker_id() % slots;
     for(volatile int j = 0; j < delay ; j++);
     TS tsl = stamps[i*gap].load();
     if (ts == get_write_stamp()) {
-      //int i = parlay::worker_id() % slots;
+      //int i = epoch::internal::worker_id() % slots;
       stamps[i*gap].compare_exchange_strong(tsl,tsl+1);
     }
     return ts;
@@ -172,6 +241,8 @@ struct alignas(64) timestamp_multiple {
 
 struct alignas(64) timestamp_no_inc {
   std::atomic<TS> stamp;
+  bool less(TS a, TS b) { return a < b;}
+  bool equal(TS a, TS b) { return a == b;}
   TS get_stamp() {return stamp.load();}
   TS get_read_stamp() {return stamp.load();}
   TS get_write_stamp() {return stamp.load();}
@@ -285,6 +356,8 @@ alignas(128) int timestamp_read_write::delay = 200;
 
 #ifdef ReadStamp
 timestamp_read global_stamp;
+#elif TL2Stamp
+  timestamp_tl2 global_stamp{100};
 #elif LazyStamp
 timestamp_read global_stamp{100};
 #elif WriteStamp
@@ -310,9 +383,9 @@ TS prev_stamp = global_stamp.get_stamp();
 thread_local TS current_stamp;
   
   bool add_epoch_hooks() {
-    flck::internal::epoch.before_epoch_hooks.push_back([&] {
+    epoch::internal::get_epoch().before_epoch_hooks.push_back([&] {
        current_stamp = global_stamp.get_stamp();});
-    flck::internal::epoch.after_epoch_hooks.push_back([&] {
+    epoch::internal::get_epoch().after_epoch_hooks.push_back([&] {
 	done_stamp = prev_stamp;
 	prev_stamp = current_stamp;});
     return true;
@@ -354,7 +427,7 @@ auto with_snapshot(F f, bool unused_parameter=false) {
 }
 #else
 thread_local bool speculative = false;
-parlay::sequence<long> num_retries(parlay::num_workers()*16, 0);
+parlay::sequence<long> num_retries(epoch::internal::num_workers()*16, 0);
 void print_retries() {
   std::cout << " retries = " << parlay::reduce(num_retries)
 	    << ", final stamp = " << global_stamp.get_read_stamp() <<std::endl;
@@ -372,8 +445,8 @@ auto with_snapshot(F f, bool use_speculative=true) {
         speculative = false;
         if (aborted) {
           aborted = false;
-          num_retries[parlay::worker_id()*16]++;
-          global_stamp.inc_read_stamp(local_stamp);
+          num_retries[epoch::internal::worker_id()*16]++;
+          global_stamp.increment_stamp(local_stamp);
           f();
         }
         local_stamp = -1;
@@ -382,8 +455,8 @@ auto with_snapshot(F f, bool use_speculative=true) {
         speculative = false;
         if (aborted) {
           aborted = false;
-          num_retries[parlay::worker_id()*16]++;
-          global_stamp.inc_read_stamp(local_stamp);
+          num_retries[epoch::internal::worker_id()*16]++;
+          global_stamp.increment_stamp(local_stamp);
           r = f();
         }
         local_stamp = -1;

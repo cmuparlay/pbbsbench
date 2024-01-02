@@ -19,7 +19,15 @@ namespace flck {
 namespace internal {
 
 // used for reentrant locks
-static thread_local size_t current_id = parlay::worker_id();
+  static thread_local size_t current_id = 1000000;
+  inline size_t get_current_id() {
+    if (current_id == 1000000)
+      current_id = epoch::internal::worker_id();
+    return current_id;
+  }
+  inline void set_current_id(size_t id) {
+    current_id = id;
+  }
 
 // user facing lock
 using lock_entry_ = size_t;
@@ -43,10 +51,10 @@ struct descriptor {
   
   template <typename Thunk>
   descriptor(Thunk& g) : 
-    done(false), freed(false), f([=] {g();}) {
+    f([=] {g();}), done(false), freed(false) {
     lg_array.init();
-    epoch_num = epoch.get_my_epoch();
-    thread_id = current_id;
+    epoch_num = epoch::internal::get_epoch().get_my_epoch();
+    thread_id = get_current_id();
   }
 
   ~descriptor() { // just for debugging
@@ -72,7 +80,12 @@ memory_pool<descriptor> descriptor_pool;
 // If noone is helping (acquire flag is false), then reclaim
 // immediately, otherwise send to epoch-based collector.
 // When helping the acquired flag needs to be set.
-memory_pool<descriptor,acquired_pool<descriptor>> descriptor_pool;
+
+inline memory_pool<descriptor,acquired_pool<descriptor>>& get_descriptor_pool() {
+  static memory_pool<descriptor,acquired_pool<descriptor>> descriptor_pool;
+  return descriptor_pool;
+}
+
 #endif
 
 struct lock {
@@ -109,7 +122,7 @@ private:
   bool is_locked_(lock_entry le) { return Tag::value(le) != nullptr;}
   descriptor* remove_tag(lock_entry le) { return Tag::value(le);}
   bool lock_is_self(lock_entry le) {
-    return current_id == remove_tag(le)->thread_id;
+    return ((int)get_current_id()) == remove_tag(le)->thread_id;
   }
 
   // runs thunk in appropriate epoch and after it is acquired
@@ -118,13 +131,13 @@ private:
     descriptor* desc = remove_tag(le);
     bool still_locked = (read() == le);
     if (!still_locked) return false;
-    long my_epoch = epoch.get_my_epoch();
+    long my_epoch = epoch::internal::get_epoch().get_my_epoch();
     long other_epoch = desc->epoch_num;
     if (other_epoch < my_epoch)
-      epoch.set_my_epoch(other_epoch); // inherit epoch of helpee
-    int my_id = current_id; 
-    current_id = desc->thread_id;   // inherit thread id of helpee
-    descriptor_pool.acquire(desc);  // mark descriptor as acquired
+      epoch::internal::get_epoch().set_my_epoch(other_epoch); // inherit epoch of helpee
+    int my_id = get_current_id(); 
+    set_current_id(desc->thread_id);   // inherit thread id of helpee
+    get_descriptor_pool().acquire(desc);  // mark descriptor as acquired
     still_locked = (read() == le);
     if (still_locked) {
       bool hold_h = helping; 
@@ -133,8 +146,8 @@ private:
       clear(desc);    // unset the lock
       helping = hold_h; // reset helping mode
     }
-    current_id = my_id; // reset thread id
-    epoch.set_my_epoch(my_epoch); // reset to my epoch
+    set_current_id(my_id); // reset thread id
+    epoch::internal::get_epoch().set_my_epoch(my_epoch); // reset to my epoch
     return still_locked; // return true if did helping
   }
 
@@ -158,22 +171,6 @@ public:
   bool unchanged(lock_entry le) {return le == load();}
 
   
-  // // This is safe to be used inside of another lock (i.e. it is
-  // // idempotent, kind of).  The key components to making it effectively
-  // // idempotent is using an idempotent new_obj, and checking if it is
-  // // done (my_thunk->done).  It is lock free if no cycles in lock
-  // // ordering, and otherwise can deadlock.
-  // template <typename Thunk>
-  // auto with_lock(Thunk f) {
-  //   using RT = decltype(f());
-  //   std::optional<RT> result = {};
-  //   while(!result.has_value()) {
-  //     result = try_lock_result(f);
-  //   }    
-  //   return result.value();
-  // }
-
-
   // This is safe to be used inside of another lock (i.e. it is
   // idempotent, kind of).  The key components to making it effectively
   // idempotent is using an idempotent new_obj, and checking if it is
@@ -187,11 +184,11 @@ public:
     lock_entry current = read();
 
     // idempotently allocate descriptor
-    auto [my_descriptor, i_own] = descriptor_pool.new_obj_acquired(f);
+    auto [my_descriptor, i_own] = get_descriptor_pool().new_obj_acquired(f);
     
     // if already retired, then done
-    if (descriptor_pool.is_done(my_descriptor)) {
-	auto ret_val = descriptor_pool.done_val_result<RT>(my_descriptor);
+    if (get_descriptor_pool().is_done(my_descriptor)) {
+	auto ret_val = get_descriptor_pool().done_val_result<RT>(my_descriptor);
 	assert(ret_val.has_value()); // with_lock is guaranteed to succeed
 	return ret_val.value(); 
     }
@@ -211,7 +208,7 @@ public:
 
 	// retire the descriptor saving the result in the enclosing
 	// descriptor, if any
-	descriptor_pool.retire_acquired_result(my_descriptor, i_own,
+	get_descriptor_pool().retire_acquired_result(my_descriptor, i_own,
 					       std::optional<RT>(result));
 	return result;
       } else if (locked) {
@@ -225,7 +222,7 @@ public:
   // The thunk returns a value
   // The try_lock_result returns an optional value, which is empty if it fails
   template <typename Thunk>
-  auto try_lock_result(Thunk f) {
+  auto try_lock_result(Thunk f, bool do_help=true) {
     using RT = decltype(f());
     std::optional<RT> result = {};
     lock_entry current = load();
@@ -235,11 +232,11 @@ public:
       return std::optional(f()); // if so, run without acquiring
 
     // Idempotent allocation of descriptor.  
-    auto [my_descriptor, i_own] = descriptor_pool.new_obj_acquired(f);
+    auto [my_descriptor, i_own] = get_descriptor_pool().new_obj_acquired(f);
     
     // if descriptor is already retired, then done and return value
-    if (descriptor_pool.is_done(my_descriptor)) 
-      return descriptor_pool.done_val_result<RT>(my_descriptor);
+    if (get_descriptor_pool().is_done(my_descriptor)) 
+      return get_descriptor_pool().done_val_result<RT>(my_descriptor);
 	
     if (!is_locked_(current)) {
       // use a CAS to try to acquire the lock
@@ -258,20 +255,27 @@ public:
 	my_descriptor->done = true;
 	clear(my_descriptor);
       }
-    } else help_descriptor(current);
+    } else {
+      if (do_help) help_descriptor(current);
+    }
 
     // retire the thunk
-    descriptor_pool.retire_acquired_result(my_descriptor, i_own, result);
+    get_descriptor_pool().retire_acquired_result(my_descriptor, i_own, result);
     return result;
   }
 
   // A wrapper that returns true if the try_lock succeeds and its thunk
   // returns true.
   template <typename Thunk>
-  auto try_lock(Thunk f) {
-    auto result = try_lock_result(f);
+  auto try_lock(Thunk f, bool do_help=true) {
+    auto result = try_lock_result(f, do_help);
     return result.has_value() && result.value();
   }
+
+  // for compatibility with transactions, otherwise do not use
+  template <typename Thunk>
+  auto read_lock(Thunk f) {return f();}
+
 };
 
 } // namespace internal
