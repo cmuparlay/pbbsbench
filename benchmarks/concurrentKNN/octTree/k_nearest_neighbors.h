@@ -278,8 +278,10 @@ struct k_nearest_neighbors {
         else if (T->size() >= 10000 && max_distance != numeric_limits<double>::max()) { 
           auto L = *this; // make copies of the distances
           auto R = *this; // so safe to call in parallel
-          parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
-            [&] () {R.k_nearest_rec(T->Right());});
+          L.k_nearest_rec(T->Left());
+          R.k_nearest_rec(T->Right());
+	  //parlay::par_do([&] () {L.k_nearest_rec(T->Left());},
+          //  [&] () {R.k_nearest_rec(T->Right());});
           merge(L,R); // merge the results
         }
         else if (dist_sq_to_box(T->Left()->Box(), vertex->pt) < dist_sq_to_box(T->Right()->Box(), vertex->pt)) {
