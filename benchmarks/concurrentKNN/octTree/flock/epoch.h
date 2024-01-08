@@ -98,7 +98,7 @@ struct alignas(64) epoch_s {
   }
 
   std::pair<bool,int> announce() {
-      size_t id = worker_id();
+    size_t id = worker_id();
     while (true) {
       long current_e = get_current();
 #ifdef NestedEpochs

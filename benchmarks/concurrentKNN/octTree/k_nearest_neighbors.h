@@ -275,7 +275,7 @@ struct k_nearest_neighbors {
           } 
           }
         } 
-        else if (false && T->size() >= 10000 && max_distance != numeric_limits<double>::max()) { 
+        else if (false && T->size() >= 10000 && max_distance != numeric_limits<double>::max()) { // skipping this case because par_do does not interact well with snapshots
           auto L = *this; // make copies of the distances
           auto R = *this; // so safe to call in parallel
           L.k_nearest_rec(T->Left());
@@ -497,6 +497,13 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
     }
   }
 
+  void delete_single_no_retire(node* T){
+    if(T != nullptr) {
+      T->removed.store(true);
+      // node::retire_node(T);
+    }
+  }
+
   //takes in a single point and a pointer to the root of the tree
   //as well as a bounding box and its largest side length
   //assumes integer coordinates
@@ -592,6 +599,30 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       delete_single(old_path[i].n);
   }
 
+  void install_new_path_insert(std::vector<link> &old_path, node* new_n) {
+    for(int i = old_path.size()-1; i>= 1; i--) {
+      node* T = old_path[i].n;
+      box b = T->Box();
+      
+      if(old_path[i].go_left) {
+        box bigger = box(T->Right()->Box().first.minCoords(new_n->Box().first), 
+                       T->Right()->Box().second.maxCoords(new_n->Box().second));
+        new_n = node::new_node(new_n, T->Right(), T->bit, bigger);
+      }
+      else {
+        box bigger = box(T->Left()->Box().first.minCoords(new_n->Box().first), 
+                       T->Left()->Box().second.maxCoords(new_n->Box().second));
+        new_n = node::new_node(T->Left(), new_n, T->bit, bigger);
+      }
+    }
+    if(old_path[0].n == nullptr)
+      set_root(new_n);
+    else
+      old_path[0].n->set_child(new_n, old_path[0].go_left);
+    for(int i = old_path.size()-1; i>= 1; i--)
+      delete_single(old_path[i].n);
+  }
+
   bool insert_point_path_copy_helper(indexed_point q, node* T, int bit, std::vector<link> &path) {
     if(T->is_leaf()) {
       for(indexed_point p : T->Indexed_Pts()) {
@@ -609,7 +640,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         box b = T->Box();
         box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
         node* new_l = node::new_leaf(std::move(points), T->bit, bigger);
-        install_new_path(path, new_l);
+        install_new_path_insert(path, new_l);
         delete_single(T);
         return true;
       } else {
@@ -636,7 +667,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         node* L = node::new_leaf(std::move(left_s), new_bit);
         node* R = node::new_leaf(std::move(right_s), new_bit);
         node* new_l = node::new_node(L, R, new_bit+1);
-        install_new_path(path, new_l);
+        install_new_path_insert(path, new_l);
         delete_single(T);
         return true;
       }
@@ -666,7 +697,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             node* P;
             if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit);
             else P = node::new_node(T, R, cur_bit);
-            install_new_path(path, P);
+            install_new_path_insert(path, P);
             return true;
           } else cur_bit--;
         }

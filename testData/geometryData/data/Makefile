@@ -49,6 +49,9 @@ cubes_% : ../randPoints
 3DinCube_10M : ../randPoints
 	../randPoints -d 3 10000000 $@
 
+# 3DinCube_10M : ../randPoints
+# 	../randPoints -d 3 10000000 $@
+
 3DinCube_% : ../randPoints
 	../randPoints -d 3  $(subst 3DinCube_,,$@) $@
 
