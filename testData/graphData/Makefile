@@ -1,7 +1,7 @@
 include common/parallelDefs
 
 COMMON = common/graph.h common/graphIO.h common/graphUtils.h
-GENERATORS = rMatGraph gridGraph randLocalGraph nBy2Comps lineGraph addWeights adjToEdgeArray edgeArrayToAdj 
+GENERATORS = rMatGraph gridGraph randLocalGraph nBy2Comps lineGraph addWeights adjToEdgeArray edgeArrayToAdj
 
 NOTUPDATED_GENERATORS = powerGraph addWeights randDoubleVector fromAdjIdx adjElimSelfEdges starGraph combGraph adjGraphAddWeights binTree randGraph reorderGraph randomizeGraphOrder adjGraphAddSourceSink dimacsToFlowGraph adjToBinary adjWghToBinary
 
@@ -11,80 +11,80 @@ all: $(GENERATORS)
 %.o : %.C $(COMMON)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-rMatGraph : rMatGraph.o 
-	$(CC) $(LFLAGS) -o $@ rMatGraph.o 
+rMatGraph : rMatGraph.o
+	$(CC) -o $@ rMatGraph.o  $(LFLAGS)
 
-gridGraph : gridGraph.o 
-	$(CC) $(LFLAGS) -o $@ gridGraph.o 
+gridGraph : gridGraph.o
+	$(CC) -o $@ gridGraph.o  $(LFLAGS)
 
-nBy2Comps : nBy2Comps.o 
-	$(CC) $(LFLAGS) -o $@ nBy2Comps.o 
+nBy2Comps : nBy2Comps.o
+	$(CC) -o $@ nBy2Comps.o  $(LFLAGS)
 
-lineGraph : lineGraph.o 
-	$(CC) $(LFLAGS) -o $@ lineGraph.o 
+lineGraph : lineGraph.o
+	$(CC) -o $@ lineGraph.o  $(LFLAGS)
 
-powerGraph : powerGraph.o 
-	$(CC) $(LFLAGS) -o $@ powerGraph.o 
+powerGraph : powerGraph.o
+	$(CC) -o $@ powerGraph.o  $(LFLAGS)
 
-randLocalGraph : randLocalGraph.o 
-	$(CC) $(LFLAGS) -o $@ randLocalGraph.o 
+randLocalGraph : randLocalGraph.o
+	$(CC) -o $@ randLocalGraph.o  $(LFLAGS)
 
-randGraph : randGraph.o 
-	$(CC) $(LFLAGS) -o $@ randGraph.o 
+randGraph : randGraph.o
+	$(CC) -o $@ randGraph.o  $(LFLAGS)
 
-addWeights : addWeights.o 
-	$(CC) $(LFLAGS) -o $@ addWeights.o
+addWeights : addWeights.o
+	$(CC) -o $@ addWeights.o $(LFLAGS)
 
-fromAdjIdx : fromAdjIdx.o 
-	$(CC) $(LFLAGS) -o $@ fromAdjIdx.o
+fromAdjIdx : fromAdjIdx.o
+	$(CC) -o $@ fromAdjIdx.o $(LFLAGS)
 
 randDoubleVector : randDoubleVector.o
-	$(CC) $(LFLAGS) -o $@ randDoubleVector.o
+	$(CC) -o $@ randDoubleVector.o $(LFLAGS)
 
 adjToEdgeArray : adjToEdgeArray.C $(COMMON)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ adjToEdgeArray.C
+	$(CC) $(CFLAGS) -o $@ adjToEdgeArray.C $(LFLAGS)
 
 adjElimSelfEdges : adjElimSelfEdges.C $(COMMON)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ adjElimSelfEdges.C
+	$(CC) $(CFLAGS) -o $@ adjElimSelfEdges.C $(LFLAGS)
 
 edgeArrayToAdj : edgeArrayToAdj.C $(COMMON)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ edgeArrayToAdj.C
+	$(CC) $(CFLAGS) -o $@ edgeArrayToAdj.C $(LFLAGS)
 
-starGraph : starGraph.o 
-	$(CC) $(LFLAGS) -o $@ starGraph.o 
+starGraph : starGraph.o
+	$(CC) -o $@ starGraph.o  $(LFLAGS)
 
-combGraph : combGraph.o 
-	$(CC) $(LFLAGS) -o $@ combGraph.o 
+combGraph : combGraph.o
+	$(CC) -o $@ combGraph.o  $(LFLAGS)
 
-expGraph : expGraph.o 
-	$(CC) $(LFLAGS) -o $@ expGraph.o 
+expGraph : expGraph.o
+	$(CC) -o $@ expGraph.o  $(LFLAGS)
 
-binTree : binTree.o 
-	$(CC) $(LFLAGS) -o $@ binTree.o 
+binTree : binTree.o
+	$(CC) -o $@ binTree.o  $(LFLAGS)
 
-reorderGraph : reorderGraph.o 
-	$(CC) $(LFLAGS) -o $@ reorderGraph.o 
+reorderGraph : reorderGraph.o
+	$(CC) -o $@ reorderGraph.o  $(LFLAGS)
 
-randomizeGraphOrder : randomizeGraphOrder.o 
-	$(CC) $(LFLAGS) -o $@ randomizeGraphOrder.o 
+randomizeGraphOrder : randomizeGraphOrder.o
+	$(CC) -o $@ randomizeGraphOrder.o  $(LFLAGS)
 
-adjGraphAddWeights : adjGraphAddWeights.o 
-	$(CC) $(LFLAGS) -o $@ adjGraphAddWeights.o
+adjGraphAddWeights : adjGraphAddWeights.o
+	$(CC) -o $@ adjGraphAddWeights.o $(LFLAGS)
 
 adjGraphAddSourceSink : adjGraphAddSourceSink.o
-	$(CC) $(LFLAGS) -o $@ adjGraphAddSourceSink.o
+	$(CC) -o $@ adjGraphAddSourceSink.o $(LFLAGS)
 
 dimacsToFlowGraph : dimacsToFlowGraph.o
-	$(CC) $(LFLAGS) -o $@ dimacsToFlowGraph.o
+	$(CC) -o $@ dimacsToFlowGraph.o $(LFLAGS)
 
 flowGraphToDimacs : flowGraphToDimacs.o
-	$(CC) $(LFLAGS) -o $@ flowGraphToDimacs.o
+	$(CC) -o $@ flowGraphToDimacs.o $(LFLAGS)
 
-adjToBinary : adjToBinary.o 
-	$(CC) $(LFLAGS) -o $@ adjToBinary.o
+adjToBinary : adjToBinary.o
+	$(CC) -o $@ adjToBinary.o $(LFLAGS)
 
-adjWghToBinary : adjWghToBinary.o 
-	$(CC) $(LFLAGS) -o $@ adjWghToBinary.o
+adjWghToBinary : adjWghToBinary.o
+	$(CC) -o $@ adjWghToBinary.o $(LFLAGS)
 
 clean :
 	rm -f *.o $(GENERATORS)
@@ -92,6 +92,6 @@ clean :
 #   	cd maxFlowGens; make clean
 #	make clean -s -C data
 
-cleansrc : 
+cleansrc :
 	make -s clean
-	rm -f $(COMMON) 
+	rm -f $(COMMON)
