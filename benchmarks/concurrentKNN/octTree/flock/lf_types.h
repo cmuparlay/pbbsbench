@@ -250,7 +250,10 @@ protected:
   template <typename RT>
   std::optional<RT> done_val_result(T* p) {
     auto r = extract_result(p);
-    if (r.has_value()) return (RT) r.value();
+    if (r.has_value()) {
+      auto val = r.value();
+      return std::optional<RT>(val);
+    }
     else return {};
   }
   
@@ -292,12 +295,15 @@ private:
   template<typename TT>
   void* tag_result(std::optional<TT> result) {
     if(!result.has_value()) return (void*) (2ul << 48);
-    else return (void*) ((1ul << 48) | (size_t) result.value());
+    else {
+      auto val = result.value();
+      return (void*) ((1ul << 48) | size_t(val));
+    }
   }
 
   std::optional<size_t> extract_result(T* p) {
     if (extract_bool(p))
-      return ((size_t) p) & ((1ul << 48) - 1);
+      return std::optional<size_t>(((size_t) p) & ((1ul << 48) - 1));
     return {};
   }
   

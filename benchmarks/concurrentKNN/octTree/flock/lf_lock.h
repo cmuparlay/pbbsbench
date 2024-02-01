@@ -11,7 +11,6 @@
 #include <functional>
 #include <assert.h>
 #include "lf_log.h"
-#include "tagged.h"
 #include "lf_types.h"
 #include "acquired_pool.h"
 
@@ -46,12 +45,13 @@ struct descriptor {
   std::atomic<bool> acquired;   
   int thread_id; // used to detect reentrant locks, inherited by helpers
   lock_entry_ current; // currently not used
+  std::atomic<size_t> counter; // used for aba-prevention when taking a lock
   long epoch_num; // the epoch when initially created, inherited by helpers
   log_array lg_array; // the log itself
   
   template <typename Thunk>
-  descriptor(Thunk& g) : 
-    f([=] {g();}), done(false), freed(false) {
+  descriptor(Thunk& g, long counter) : 
+    f([=] {g();}), done(false), freed(false), counter(counter) {
     lg_array.init();
     epoch_num = epoch::internal::get_epoch().get_my_epoch();
     thread_id = get_current_id();
@@ -92,9 +92,8 @@ struct lock {
 public:
     using lock_entry = lock_entry_;
 private:
-  // each lock entry will be a pointer to a descriptor tagged with a counter
-  // to avoid ABA issues
-  using Tag = tagged<descriptor*>;
+  // each lock entry will be a pointer to a descriptor when locked
+  // and a counter when unlocked. The counter is to prevent ABA problems.
   std::atomic<lock_entry> lck;
   lock_entry load() {return lg.commit_value(lck.load()).first;}
   lock_entry read() {return lck.load();}
@@ -103,24 +102,19 @@ private:
   bool cas(lock_entry oldl, descriptor* d) {
     lock_entry current = read();
     if (current != oldl) return false;
-    return Tag::cas(lck, oldl, d);
+    return lck.compare_exchange_strong(oldl, (lock_entry) d);
   }
   
   void clear(descriptor* d) {
     lock_entry current = lck.load();
-    if (Tag::value(current) == d)
+    if (current == (lock_entry) d)
       // true indicates this is ABA free since current cannot
       // be reused until all helpers are done with it.
-      Tag::cas(lck, current, nullptr, true);
+      lck.compare_exchange_strong(current, d->counter+1);
   }
 
-  void unlock() {
-    lock_entry current = load();
-    Tag::cas(lck, current, nullptr, true);
-  }
-
-  bool is_locked_(lock_entry le) { return Tag::value(le) != nullptr;}
-  descriptor* remove_tag(lock_entry le) { return Tag::value(le);}
+  bool is_locked_(lock_entry le) { return (le & (1ull<<63)) == 0;}
+  descriptor* remove_tag(lock_entry le) { return (descriptor*) le;}
   bool lock_is_self(lock_entry le) {
     return ((int)get_current_id()) == remove_tag(le)->thread_id;
   }
@@ -152,7 +146,7 @@ private:
   }
 
 public:
-  lock() : lck(Tag::init(nullptr)) {}
+  lock() : lck((1ull<<63)) {} // initialize in unlocked state
   
   // waits until current owner of lock releases it (unless self owned)
   void wait_lock() {
@@ -182,41 +176,54 @@ public:
     static_assert(sizeof(RT) <= 4 || std::is_pointer<RT>::value,
 		  "Result of with_lock must be a pointer or at most 4 bytes");
     lock_entry current = read();
+    bool locked = is_locked_(current);
 
     // idempotently allocate descriptor
-    auto [my_descriptor, i_own] = get_descriptor_pool().new_obj_acquired(f);
+    auto [my_descriptor, i_own] = get_descriptor_pool().new_obj_acquired(f, locked ? 0 : current);
     
     // if already retired, then done
     if (get_descriptor_pool().is_done(my_descriptor)) {
-	auto ret_val = get_descriptor_pool().done_val_result<RT>(my_descriptor);
-	assert(ret_val.has_value()); // with_lock is guaranteed to succeed
-	return ret_val.value(); 
+      auto ret_val = get_descriptor_pool().done_val_result<RT>(my_descriptor);
+      assert(ret_val.has_value()); // with_lock is guaranteed to succeed
+      return ret_val.value(); 
     }
     
-    bool locked = is_locked_(current);
+    
     while (true) {
+      size_t old_count = my_descriptor->counter;
+      if(!locked && old_count < current) {
+        if(!my_descriptor->counter.compare_exchange_strong(old_count, current)) {
+          current = old_count;
+          locked = is_locked_(current);
+        }
+      }
       if (my_descriptor->done // already done
-	  || remove_tag(current) == my_descriptor // already acquired
-	  || (!locked && cas(current, my_descriptor))) { // try to acquire
+          || remove_tag(current) == my_descriptor // already acquired
+          || (!locked && cas(current, my_descriptor))) { // try to acquire
 
-	// run the body f with the log from my_descriptor
-	RT result = with_log(Log(&my_descriptor->lg_array,0), [&] {return f();});
+        // run the body f with the log from my_descriptor
+        RT result = with_log(Log(&my_descriptor->lg_array,0), [&] {return f();});
 
-	// mark as done and clear the lock
-	my_descriptor->done = true;
-	clear(my_descriptor);
+        // mark as done and clear the lock
+        my_descriptor->done = true;
+        clear(my_descriptor);
 
-	// retire the descriptor saving the result in the enclosing
-	// descriptor, if any
-	get_descriptor_pool().retire_acquired_result(my_descriptor, i_own,
-					       std::optional<RT>(result));
-	return result;
+        // retire the descriptor saving the result in the enclosing
+        // descriptor, if any
+        get_descriptor_pool().retire_acquired_result(my_descriptor, i_own,
+                                               std::optional<RT>(result));
+        return result;
       } else if (locked) {
-	help_descriptor(current);
+        help_descriptor(current);
       }
       current = read();
       locked = is_locked_(current);
     }
+  }
+
+  void unlock() {
+    lock_entry current = load();
+    lck.compare_exchange_strong(current, ((descriptor*) current)->counter+1);
   }
 
   // The thunk returns a value
@@ -232,12 +239,12 @@ public:
       return std::optional(f()); // if so, run without acquiring
 
     // Idempotent allocation of descriptor.  
-    auto [my_descriptor, i_own] = get_descriptor_pool().new_obj_acquired(f);
+    auto [my_descriptor, i_own] = get_descriptor_pool().new_obj_acquired(f, is_locked_(current) ? 0 : current);
     
     // if descriptor is already retired, then done and return value
     if (get_descriptor_pool().is_done(my_descriptor)) 
       return get_descriptor_pool().done_val_result<RT>(my_descriptor);
-	
+        
     if (!is_locked_(current)) {
       // use a CAS to try to acquire the lock
       cas(current, my_descriptor);
@@ -247,13 +254,13 @@ public:
       current = read();
       if (my_descriptor->done || remove_tag(current) == my_descriptor) {
 
-	// run f with log from my_descriptor
-	result = with_log(Log(&my_descriptor->lg_array,0),
-			  [&] {return f();});
+        // run f with log from my_descriptor
+        result = with_log(Log(&my_descriptor->lg_array,0),
+                          [&] {return f();});
 
-	// mark as done and clear the lock
-	my_descriptor->done = true;
-	clear(my_descriptor);
+        // mark as done and clear the lock
+        my_descriptor->done = true;
+        clear(my_descriptor);
       }
     } else {
       if (do_help) help_descriptor(current);

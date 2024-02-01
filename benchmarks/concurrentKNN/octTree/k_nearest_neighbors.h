@@ -37,6 +37,8 @@ int queue_cutoff = 50;
 #include <assert.h>
 #include <sstream>
 
+
+
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
 template <class vtx, int max_k>
@@ -166,6 +168,27 @@ struct k_nearest_neighbors {
     return tree.load()->flatten();
   }
 
+  template<typename A, typename B, typename C>
+  struct tuple {
+    bool a; bool b; bool c;
+    tuple(bool a, bool b, bool c) : a(a), b(b), c(c) {}
+    tuple(size_t val) : a(val&(1<<2)), b(val&(1<<1)), c(val&(1)) {}
+    // operator size_t&() { return 0+a; }
+    operator size_t() const { return (((size_t)a)<<2) + (((size_t)b)<<1) + (size_t)c; }
+  };
+
+  tuple<bool,bool,bool> make_tuple(bool a, bool b, bool c) { return tuple<bool,bool,bool>(a,b,c); }
+
+  template<typename A, typename B>
+  struct pair {
+    bool first; bool second;
+    pair(bool a, bool b) : first(a), second(b) {}
+    pair(size_t val) : first(val&(1<<1)), second(val&(1)) {}
+    // operator size_t&() { return 0+first; }
+    operator size_t() const { return (((size_t)first)<<1) + (size_t)second; }
+  };
+
+  pair<bool,bool> make_pair(bool a, bool b) { return pair<bool,bool>(a,b); }
 
   struct kNN {
     vtx *vertex;  // the vertex for which we are trying to find a NN
@@ -388,7 +411,7 @@ struct RNG {
     double Delta = 0;
     for (int i = 0; i < dims; i++) 
       Delta = std::max(Delta, b.second[i] - b.first[i]);
-    box_delta bd = make_pair(b, Delta);
+    box_delta bd = std::make_pair(b, Delta);
     return bd;
   }
 
@@ -518,9 +541,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         // set_root(insert_point_path_copy_helper(q, R, o_tree::key_bits));
         // return true;
 #ifdef PathCopy
-        std::pair<bool, bool> result = insert_point_path_copy(q, nullptr, R, o_tree::key_bits);
+        pair<bool, bool> result = insert_point_path_copy(q, nullptr, R, o_tree::key_bits);
 #else
-        std::pair<bool, bool> result = insert_point0(q, nullptr, R, o_tree::key_bits);
+        pair<bool, bool> result = insert_point0(q, nullptr, R, o_tree::key_bits);
 #endif
         // assert(result.second);
         // assert(result.first);
@@ -536,37 +559,37 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
     bool go_left;
   };
 
-  std::pair<bool, bool> insert_point_path_copy(indexed_point q, node* parent, node* T, int bit) {
+  pair<bool, bool> insert_point_path_copy(indexed_point q, node* parent, node* T, int bit) {
     // if(true) {
     if(T->is_leaf() || !within_box(T, q.second)) {
       // enter locking mode
       if(parent == nullptr) { // T is root
         auto result = root_lock.try_lock_result([=] { 
-          if(tree.load() != T) return std::make_pair(false, false);
+          if(tree.load() != T) return make_pair(false, false);
           else {
             std::vector<link> path; path.reserve(4);
             path.push_back((link){nullptr, false});
             bool success = insert_point_path_copy_helper(q, T, bit, path);
-            return std::make_pair(success, true);
+            return make_pair(success, true);
           }
         });
         if(result.has_value()) return result.value();
-        else return std::make_pair(false, false); 
+        else return make_pair(false, false); 
       } else {
         auto result = parent->lck.try_lock_result([=] {
           if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
             // std::cout << "failed valdiation" << std::endl; 
-            return std::make_pair(false, false);
+            return make_pair(false, false);
           } else {
             std::vector<link> path; path.reserve(4);
             bool left_child = (parent->Left() == T);
             path.push_back((link){parent, left_child});
             bool success = insert_point_path_copy_helper(q, T, bit, path);
-            return std::make_pair(success, true);
+            return make_pair(success, true);
           } 
         });
         if(result.has_value()) return result.value();
-        else return std::make_pair(false, false); 
+        else return make_pair(false, false); 
       }
     } else {
       bool go_left = (lookup_bit(q.first, T->bit) == 0);
@@ -714,31 +737,31 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   }
 
   // return value: <q_added, locks successful>
-  std::pair<bool, bool> insert_point0(indexed_point q, node* parent, node* T, int bit, bool parent_locked=false){
+  pair<bool, bool> insert_point0(indexed_point q, node* parent, node* T, int bit, bool parent_locked=false){
     //lock T
     if(!parent_locked && (T->is_leaf() || !within_box(T, q.second))) {
       // enter locking mode
       if(parent == nullptr) { // T is root
         auto result = root_lock.try_lock_result([=] { 
-          if(tree.load() != T) return std::make_pair(false, false);
+          if(tree.load() != T) return make_pair(false, false);
           else return insert_point0(q, parent, T, bit, true); 
         });
         if(result.has_value()) return result.value();
-        else return std::make_pair(false, false); 
+        else return make_pair(false, false); 
       } else {
         auto result = parent->lck.try_lock_result([=] {
           if(parent->removed.load() || !(parent->Left() == T || parent->Right() == T)) { // if P is removed or P's child isn't T
             // std::cout << "failed valdiation" << std::endl; 
-            return std::make_pair(false, false);
+            return make_pair(false, false);
           } else return insert_point0(q, parent, T, bit, true);
         });
         if(result.has_value()) return result.value();
-        else return std::make_pair(false, false); 
+        else return make_pair(false, false); 
       }
     }
 
     if(T->is_leaf()) {
-      return std::make_pair(insert_into_leaf(q, parent, T), true);
+      return make_pair(insert_into_leaf(q, parent, T), true);
     } else {
       if(!within_box(T, q.second)) {
         assert(parent_locked);
@@ -775,7 +798,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
                 // std::cout << "root changed (internal: added new level)" << std::endl; 
                 set_root(P);
               }
-              return std::make_pair(true, true);
+              return make_pair(true, true);
             } else cur_bit--;
           }
           // std::cout << "case 2" << std::endl;
@@ -822,7 +845,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
 
   //assumes lock on T
   //uses q's interleave integer to recurse right or left
-  std::pair<bool, bool> insert_internal(indexed_point q, node* T, bool parent_locked=false){
+  pair<bool, bool> insert_internal(indexed_point q, node* T, bool parent_locked=false){
     node* N;
     if(lookup_bit(q.first, T->bit) == 0) N = T->Left();
     else N = T->Right();
@@ -954,7 +977,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   }
 
   //path copy version of delete
-  std::pair<bool, bool> delete_point_path_copy(indexed_point q, node* parent, node* T){
+  pair<bool, bool> delete_point_path_copy(indexed_point q, node* parent, node* T){
     bool q_present; bool T_deleted = false; bool child_changed = true; bool locks_successful;
     node* N;
 
@@ -968,32 +991,32 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       if(parent == nullptr) { // T is root
         // locks_taken_++;
         auto result = root_lock.try_lock_result([=] { 
-          if(tree.load() != T) return std::make_pair(false, false); // validation failed
+          if(tree.load() != T) return make_pair(false, false); // validation failed
           else {
             std::vector<link> path; path.reserve(4);
             path.push_back((link){nullptr, false});
             bool success = delete_point_path_copy_helper(q, parent, T, path); 
-            return std::make_pair(success, true);
+            return make_pair(success, true);
           }
         });
         if(result.has_value()) return result.value();
-        else return std::make_pair(false, false); // locking failed 
+        else return make_pair(false, false); // locking failed 
       } else {
         // locks_taken_++;
         auto result = parent->lck.try_lock_result([=] {
           if(parent->removed.load() || (parent->Left() != T && parent->Right() != T)) { // if P is removed or P's child isn't T
             // std::cout << "failed valdiation" << std::endl; 
-            return std::make_pair(false, false); // validation failed
+            return make_pair(false, false); // validation failed
           } else {
             std::vector<link> path; path.reserve(4);
             bool left_child = (parent->Left() == T);
             path.push_back((link){parent, left_child});
             bool success = delete_point_path_copy_helper(q, parent, T, path); 
-            return std::make_pair(success, true);
+            return make_pair(success, true);
           }
         });
         if(result.has_value()) return result.value();
-        else return std::make_pair(false, false); // locking failed 
+        else return make_pair(false, false); // locking failed 
       }
     } else return delete_point_path_copy(q, T, N);
   }
@@ -1027,7 +1050,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   //second indicates whether the child node was changed--if not,
   //can end recursion early
   //third indicates if it failed to take all the locks
-  std::tuple<bool, bool, bool> delete_point0(indexed_point q, node* parent, node* T, bool parent_locked=false, bool T_locked=false){
+  tuple<bool, bool, bool> delete_point0(indexed_point q, node* parent, node* T, bool parent_locked=false, bool T_locked=false){
     bool q_present; bool T_deleted = false; bool child_changed = true; bool locks_successful;
     node* N;
 
@@ -1041,21 +1064,21 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       if(parent == nullptr) { // T is root
         // locks_taken_++;
         auto result = root_lock.try_lock_result([=] { 
-          if(tree.load() != T) return std::make_tuple(false, false, false); // validation failed
+          if(tree.load() != T) return make_tuple(false, false, false); // validation failed
           else return delete_point0(q, parent, T, true, false); 
         });
         if(result.has_value()) return result.value();
-        else return std::make_tuple(false, false, false); // locking failed 
+        else return make_tuple(false, false, false); // locking failed 
       } else {
         // locks_taken_++;
         auto result = parent->lck.try_lock_result([=] {
           if(parent->removed.load() || (parent->Left() != T && parent->Right() != T)) { // if P is removed or P's child isn't T
             // std::cout << "failed valdiation" << std::endl; 
-            return std::make_tuple(false, false, false); // validation failed
+            return make_tuple(false, false, false); // validation failed
           } else return delete_point0(q, parent, T, true, false); 
         });
         if(result.has_value()) return result.value();
-        else return std::make_tuple(false, false, false); // locking failed 
+        else return make_tuple(false, false, false); // locking failed 
       }
     }
     else if(parent_locked && !T_locked) {
@@ -1073,12 +1096,12 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         q_present=a;
         child_changed=b;
         locks_successful = c;
-        if(!locks_successful) return std::make_tuple(a,b,c);
+        if(!locks_successful) return make_tuple(a,b,c);
       }
 
       //if the point wasn't present, no change needed
       //if child wasn't changed, no more changes needed, can end early
-      if(!q_present || !child_changed) {return std::make_tuple(q_present, false, locks_successful);}
+      if(!q_present || !child_changed) {return make_tuple(q_present, false, locks_successful);}
       
       if(!T_deleted) {
         //two cases:
@@ -1101,10 +1124,10 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             }
             delete_single(T);
           }
-          return std::make_tuple(q_present, true, locks_successful);
+          return make_tuple(q_present, true, locks_successful);
         }
-        else return std::make_tuple(q_present, false, locks_successful); //case 1
-      } else return std::make_tuple(q_present, true, locks_successful);
+        else return make_tuple(q_present, false, locks_successful); //case 1
+      } else return make_tuple(q_present, true, locks_successful);
     }
   }
 
@@ -1198,7 +1221,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
     } 
   }
 
-  std::pair<bool, bool> delete_from_leaf(indexed_point q, node* parent, node* grandparent, node* T){
+  pair<bool, bool> delete_from_leaf(indexed_point q, node* parent, node* grandparent, node* T){
     parlay::sequence<indexed_point> pts;
     bool cont = false;
     bool q_present = false;
@@ -1211,7 +1234,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         } else pts.push_back(p);    
       } 
     }
-    if(!q_present) {return std::make_pair(false, false);}
+    if(!q_present) {return make_pair(false, false);}
     node* sibling;
     int sib_size=0;
     bool sib_is_leaf=false;
@@ -1243,7 +1266,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       delete_single(parent->Left());
       delete_single(parent->Right());
       delete_single(parent);
-      return std::make_pair(q_present, true);
+      return make_pair(q_present, true);
     }
     else{
       if(pts.size() > 0){
@@ -1260,7 +1283,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
           set_root(Leaf);
         }
         delete_single(T);
-        return std::make_pair(q_present, false);
+        return make_pair(q_present, false);
       }
       else{
         // std::cout << "Deletion from leaf, case 3" << std::endl;
@@ -1291,7 +1314,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         }
         delete_single(parent);
         delete_single(T);
-        return std::make_pair(q_present, true);
+        return make_pair(q_present, true);
       }
     }
   }
