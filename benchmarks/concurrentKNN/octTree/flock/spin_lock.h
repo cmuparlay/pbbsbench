@@ -7,7 +7,7 @@
 //   is_locked() -> bool
 
 #include <parlay/parallel.h> // needed for worker_id
-#include <flock/epoch.h>  // for worker_id()
+#include "epoch.h"  // for worker_id()
 
 #include <atomic>
 #include<chrono>

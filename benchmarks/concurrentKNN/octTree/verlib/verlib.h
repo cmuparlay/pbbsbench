@@ -9,7 +9,7 @@
 #pragma once
 #include <parlay/parallel.h>
 #include <parlay/sequence.h>
-#include "flock/flock.h"
+#include "../flock/flock.h"
 
 namespace verlib {
  bool strict_lock = false;

@@ -82,6 +82,7 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
     std::cout << "update_percent: " << update_percent << std::endl;
     std::cout << "query size: " << k << std::endl;
     std::cout << "trial_time: " << trial_time << std::endl;
+    std::cout << "index_size: " << v.size()/2 << std::endl;
 
     //calculate bounding box around the whole point set
     box whole_box = knn_tree::o_tree::get_box(v);     

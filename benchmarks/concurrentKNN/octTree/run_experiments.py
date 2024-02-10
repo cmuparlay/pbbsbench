@@ -30,13 +30,33 @@ ds_keys = {
 
 data_options = {
   "2DinCube_20M" : "../geometryData/data/2DinCube_20000000",
+  "3DinCube_2K" : "../geometryData/data/3DinCube_2000",
+  "3DinCube_20K" : "../geometryData/data/3DinCube_20000",
+  "3DinCube_200K" : "../geometryData/data/3DinCube_200000",
   "3DinCube_2M" : "../geometryData/data/3DinCube_2000000",
   "3DinCube_20M" : "../geometryData/data/3DinCube_20000000",
+  "3DinCube_200M" : "/ssd0/geometryData/3DinCube_200M",
+  "3DinCube_2B" : "/ssd0/geometryData/3DinCube_2B",
   "3Dplummer_20M" : "../geometryData/data/3Dplummer_20000000",
   "lucy3D_2M" : "/ssd0/angel/lucy3D_2M",
   "lucy3D_14M" : "/ssd0/angel/lucy3D_14M",
   "thai_statue2M" : "/ssd0/thai_statue/thai_statue2M",
   "thai_statue5M" : "/ssd0/thai_statue/thai_statue5M",
+}
+
+data_sizes = {
+  "2DinCube_20M" : 10000000,
+  "3DinCube_2K" : 1000,
+  "3DinCube_20K" : 10000,
+  "3DinCube_200K" : 100000,
+  "3DinCube_2M" : 1000000,
+  "3DinCube_20M" : 10000000,
+  "3DinCube_200M" : 100000000,
+  "3Dplummer_20M" : 10000000,
+  "lucy3D_2M" : 1000000,
+  "lucy3D_14M" : 7000000,
+  "thai_statue2M" : 1000000,
+  "thai_statue5M" : 2500000,
 }
 
 parser = argparse.ArgumentParser()
@@ -45,7 +65,7 @@ parser.add_argument("threads", help="Number of threads")
 parser.add_argument("ratios", help="Update ratio, number between 0 and 100.")
 parser.add_argument("query_sizes", help="size of query (k)")
 parser.add_argument("dimension", help="dimension of data")
-parser.add_argument("input_name", help="input name")
+parser.add_argument("input_names", help="input names")
 parser.add_argument("-t", "--test_only", help="test script",
                     action="store_true")
 parser.add_argument("-g", "--graphs_only", help="graphs only",
@@ -55,10 +75,10 @@ parser.add_argument("-p", "--paper_ver", help="paper version of graphs, no title
 args = parser.parse_args()
 print("datastructure: " + args.ds_type)
 print("threads: " + args.threads)
-print("update percent: " + args.ratios)
+print("update percents: " + args.ratios)
 print("query_sizes: " + args.query_sizes)
 print("dimension: " + args.dimension)
-print("input_name: " + args.input_name)
+print("input_names: " + args.input_names)
 
 test_only = args.test_only
 graphs_only = args.graphs_only
@@ -94,7 +114,7 @@ def runstring(test, op, outfile, k):
     
 def runtest(test,procs,u,k,d,infile,extra,outfile) :
     r = rounds
-    otherargs = " -c -t 10.0 "
+    otherargs = " -c -t 1.0 "
 
     runstring(test, "PARLAY_NUM_THREADS=" + str(min(int(procs), maxcpus)) + " numactl -i all ./" + test + " -r " + str(r) + " -d " + str(d) + " -k " + str(k) + " -p " + str(procs) + extra + " -u " + str(u) + otherargs + " " + infile, outfile, k)
 
@@ -105,8 +125,7 @@ threads = args.threads
 ratios = args.ratios
 query_sizes = args.query_sizes
 dimension = args.dimension
-input_name = args.input_name
-input_file = data_options[input_name]
+input_names = args.input_names
 
 if '[' in args.threads:
   exp_type = "scalability"
@@ -127,6 +146,24 @@ else:
   print('invalid argument')
   exit(1)
 
+if '[' in args.ratios:
+  ratios = string_to_list(ratios)
+else:
+  print('invalid argument')
+  exit(1)
+
+if '[' in args.input_names:
+  input_names = string_to_list(input_names)
+else:
+  print('invalid argument')
+  exit(1)
+
+input_files = []
+for name in input_names:
+  input_files.append(data_options[name])
+print(input_files)
+
+
 
 for i in ds_types:
   if i.find("range") != -1:
@@ -134,7 +171,7 @@ for i in ds_types:
   else:
     exp_category = "neighbors"
 
-outfile = "results/" + exp_category + "-".join([ratios+"up", input_name]) + ".txt"
+outfile = "results/" + exp_category + "-".join([input_names[0]]) + ".txt"
 
 datastructures=[]
 for ds in ds_types:
@@ -143,18 +180,21 @@ for ds in ds_types:
 if not graphs_only:
   # clear output file
   os.system("echo \"\" > " + outfile)
-  for ds in datastructures:
-    for th in to_list(threads):
-      for k in to_list(query_sizes):
-        runtest(ds,th,ratios,k,dimension,input_file,"",outfile)
+  for file in input_files:
+    for ds in datastructures:
+      for th in to_list(threads):
+        for k in to_list(query_sizes):
+          for u in to_list(ratios):
+            runtest(ds,th,u,k,dimension,file,"",outfile)
 
 throughput = {}
 stddev = {}
 threads = []
 ratios = []
 algs = []
+sizes = []
 
-readResultsFile(outfile, throughput, stddev, threads, ratios, algs)
+readResultsFile(outfile, throughput, stddev, threads, ratios, sizes, algs)
 
 threads.sort()
 ratios.sort()
@@ -162,13 +202,18 @@ ratios.sort()
 print('threads: ' + str(threads))
 print('update ratios: ' + str(ratios))
 print('algs: ' + str(algs))
-print(throughput)
 
-graph_name=exp_category+input_name
+graph_name=exp_category+input_names[0]
 
 alg_names=[]
 for ds in ds_types:
   for k in query_sizes:
     alg_names.append(ds+"-"+str(k))
 
-plot_scalability_graphs(throughput, stddev, threads, ratios, alg_names, graph_name, args.paper_ver)
+
+if(len(input_names) <= 1):
+  plot_scalability_graphs(throughput, stddev, threads, ratios, sizes[0], alg_names, "scalability_"+graph_name, args.paper_ver)
+  plot_ratio_graphs(throughput, stddev, threads, ratios, sizes[0], alg_names, "ratio_"+graph_name, args.paper_ver)
+else:
+  plot_size_graphs(throughput, stddev, threads, ratios, sizes, alg_names, "sizes_"+graph_name, args.paper_ver)
+

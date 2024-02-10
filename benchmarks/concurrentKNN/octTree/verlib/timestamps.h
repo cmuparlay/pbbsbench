@@ -1,7 +1,7 @@
 #pragma once
 #include <limits>
 #include <atomic>
-#include "flock/epoch.h"
+#include "../flock/epoch.h"
 #include <x86intrin.h>
 
 namespace verlib {
