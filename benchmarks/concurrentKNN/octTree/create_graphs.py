@@ -24,51 +24,17 @@ mk = ['o', 'v', '^', '1', 's', '+', 'x', 'D', '|', '>', '<',]
 
 dsinfo = {'neighbors_bench-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree, k=1", "blah", "blah"),
           'neighbors_bench-10' : DSInfo("C1", mk[1], "-", "CLEANN-Tree, k=10", "blah", "blah"),
+          'neighbors_bench_hoh-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree-HOH, k=1", "blah", "blah"),
+          'neighbors_bench_hoh-10' : DSInfo("C1", mk[1], "-", "CLEANN-Tree-HOH, k=10", "blah", "blah"),
           'neighbors_bench_path_copy-1' :  DSInfo("C3", mk[3], "-", "CLEANN-Tree-PC, k=1", "blah", "blah"),
           'neighbors_bench_path_copy-10' : DSInfo("C4", mk[4], "-", "CLEANN-Tree-PC, k=10", "blah", "blah"),
+          'neighbors_bench_lockfree-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree-LF, k=1", "blah", "blah"),
+          'neighbors_bench_lockfree-10' : DSInfo("C1", mk[1], "-", "CLEANN-Tree-LF, k=10", "blah", "blah"),
           'range_bench-.014' : DSInfo("C0", mk[0], "-", "CLEANN-Tree, r=5", "blah", "blah"),
           'range_bench-.0176' : DSInfo("C1", mk[1], "-", "CLEANN-Tree, r=10", "blah", "blah"),
           'range_bench_path_copy-.014' : DSInfo("C3", mk[3], "-", "CLEANN-Tree-PC, r=5", "blah", "blah"),
           'range_bench_path_copy-.0176' : DSInfo("C4", mk[4], "-", "CLEANN-Tree-PC, r=10", "blah", "blah"),
 } 
-
-# # datastructures = ["leaftree", "arttree"]
-# ds_list = { 'tree-ours-trylock-lb'        : ['leaftree-trylock-lb', 'arttree-trylock-lb', 'arttree_opt-trylock-lb', 'blockleaftree-trylock-lb', 'blockleaftree-b-trylock-lb'],
-#             'tree-ours-trylock-lf'        : ['leaftree-trylock-lf', 'arttree-trylock-lf', 'arttree_opt-trylock-lf', 'blockleaftree-trylock-lf', 'blockleaftree-b-trylock-lf'],
-#             'tree-theirs'                 : ['bronson', 'drachsler', 'natarajan'], #, 'chromatic', 'ellen', 'guerraoui', ],
-
-#             'list-ours-trylock-lb'        : ['list-trylock-lb', 'dlist-trylock-lb'], 
-#             'list-ours-trylock-lf'        : ['list-trylock-lf', 'dlist-trylock-lf'], 
-#             'list-theirs'                 : ['harris_list'], #, 'mwcas_dlist', harris_list_opt'],
-
-#             'trees'           : ['chromatic', 'leaftree-trylock-lb', 'leaftree-trylock-lf', 'bronson', 'drachsler', 'natarajan', 'ellen', 'scx_bst'],
-#             'rtrees'          : ['leaftree-trylock-lb', 'leaftree-trylock-lf', 'arttree-trylock-lb', 'blockleaftree-b-lb', 'blockleaftree-b-trylock-lb', 'arttree-trylock-lf', 'blockleaftree-b-lf', 'blockleaftree-b-trylock-lf', 'hash_optimistic-trylock-lf', 'hash_optimistic-trylock-lb', ], # 'arttree_opt-trylock-lb', 'arttree_opt-trylock-lf', 
-#             'lists'           : ['list-trylock-lb', 'dlist-trylock-lb', 'list-trylock-lf', 'dlist-trylock-lf', 'harris_list', 'harris_list_opt'],
-#             'our-lists'           : ['list-trylock-lb', 'list-trylock-lf'],
-
-#             # 'leftovers-list'       : ['list-trylock-lb', 'dlist-trylock-lb', 'list-trylock-lf', 'dlist-trylock-lf', 'harris_list', 'harris_list_opt'],
-#             'leftovers-list'       : ['harris_list', 'harris_list_opt'],
-#             'leftovers-tree'       : ['leaftree-trylock-lb', 'leaftree-trylock-lf', 'leaftree-lb', 'leaftree-lf'],
-#             # 'leftovers-rtree'      : ['hash_optimistic-trylock-lf', 'hash_optimistic-trylock-lb'],
-#             'leftovers-rtree'      : ['blockleaftree-b-lb', 'blockleaftree-b-lf'],
-
-#             'test_list'       : ['list-trylock-lf'],
-#             'test_tree'       : ['bronson'],
-#             'test_chromatic'       : ['chromatic'],
-#             'test_scx_bst'       : ['scx_bst'],
-#             # 'test_abtree'       : ['abtree','sri_abtree','sri_abtree_mcs','sri_abtree_pub','chromatic'],
-#             'test_abtree'       : ['chromatic', 'sri_abtree_mcs','sri_abtree_pub'],
-#             # 'test_abtree'       : ['abtree'],
-
-#             'test_mwcas_dlist'       : ['mwcas_dlist'],
-#             'test_arttree'       : ['arttree-trylock-lb', "arttree-trylock-lf"],
-
-#             'try_lock_exp'   : ['leaftree-lb', 'leaftree-lf', 'leaftree-trylock-lf', 'leaftree-trylock-lb', ],
-# }
-
-# datastructures = {}
-# datastructures['lists'] = ds_list['list-ours-trylock-lb'] + ds_list['list-ours-trylock-lf'] + ds_list['list-theirs']
-# datastructures['tree'] = 
 
 def toString(algname, th, ratio):
     return algname + '-' + str(th) + 'u-' + str(ratio)
