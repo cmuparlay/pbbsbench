@@ -82,9 +82,10 @@ public:
       lock_entry newl = current.take_lock();
       if (lck.compare_exchange_strong(current, newl)) {
         RT result = f();
-	if (no_release == nullptr)
-	  lck = newl.release_lock();  // release lock
-	else *no_release = true;
+        if (no_release == nullptr)
+          lck.compare_exchange_strong(newl, newl.release_lock());
+          // lck = newl.release_lock();  // release lock
+        else *no_release = true;
         return std::optional<RT>(result); 
       } else {
         return std::optional<RT>(); // fail
@@ -117,7 +118,7 @@ public:
       for (volatile int i=0; i < delay; i++);
       delay = std::min(2*delay, max_delay);
       if (cnt++ > 1000000)
-	std::cout << "in loop: " << this << std::endl;
+        std::cout << "in loop: " << this << std::endl;
     }
   }
 
