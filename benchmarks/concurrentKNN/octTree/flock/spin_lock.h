@@ -7,7 +7,7 @@
 //   is_locked() -> bool
 
 #include <parlay/parallel.h> // needed for worker_id
-#include "epoch.h"  // for worker_id()
+#include <flock/epoch.h>  // for worker_id()
 
 #include <atomic>
 #include<chrono>
@@ -82,9 +82,10 @@ public:
       lock_entry newl = current.take_lock();
       if (lck.compare_exchange_strong(current, newl)) {
         RT result = f();
-        if (no_release == nullptr)
-          lck.compare_exchange_strong(newl, newl.release_lock());
-          // lck = newl.release_lock();  // release lock
+        if (no_release == nullptr) {
+          if(lck.load().is_self_locked()) // lock might have been released early during f()
+            lck = newl.release_lock();  // release lock
+        }
         else *no_release = true;
         return std::optional<RT>(result); 
       } else {
@@ -124,7 +125,7 @@ public:
 
   void unlock() {
     //std::cout << "released lock:" << this << ", " << is_locked() << std::endl;
-    if (!is_locked()) abort();
+    assert(lck.load().is_self_locked());
     lck = lck.load().release_lock();
   }
   
