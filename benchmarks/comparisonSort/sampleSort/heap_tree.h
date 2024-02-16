@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAMPLESORT_HEAPTREE_H_
+#define SAMPLESORT_HEAPTREE_H_
 
 #include <parlay/sequence.h>
 #include <parlay/utilities.h>
@@ -45,3 +46,4 @@ struct heap_tree {
     return j - size;
   }
 };
+#endif

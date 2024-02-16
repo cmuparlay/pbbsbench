@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PBBS_ATOMICS_H_
+#define PBBS_ATOMICS_H_
 
 namespace pbbs {
 
@@ -79,3 +80,4 @@ namespace pbbs {
     return r;
   }
 }
+#endif

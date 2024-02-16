@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <random>
 #include <math.h>
 #include "parlay/primitives.h"
 #include "parlay/random.h"
@@ -33,7 +34,7 @@ namespace dataGen {
     double payload[2];
   };
 
-  class payloadCmp : public std::binary_function <payload, payload, bool> {
+  class payloadCmp {
   public:
     bool operator()(payload const& A, payload const& B) const {
       return A.key<B.key;
@@ -50,9 +51,11 @@ namespace dataGen {
 
   template<typename T>
   parlay::sequence<T> rand(size_t s, size_t e) {
-    parlay::random r(0);
-    auto In = parlay::tabulate(e-s, [&] (size_t i) -> T{return
-	  r.ith_rand(i+s);});
+    parlay::random_generator gen(0);
+    std::uniform_real_distribution<double> dis(0.0,1.0);
+    auto In = parlay::tabulate(e-s, [&] (size_t i) -> T{
+      auto r = gen[i+s];
+      return dis(r);});
     return In;
   }
 

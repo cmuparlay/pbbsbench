@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PBBS_GEOMETRY_H_
+#define PBBS_GEOMETRY_H_
 #include <iostream>
 #include <algorithm>
 #include <math.h>
@@ -306,4 +307,4 @@ using namespace std;
     vector2d<coord> v22 = v2 * v1.dot(v1);
     return a + vector2d<coord>(v22.y - v11.y, v11.x - v22.x)/(2.0 * v1.cross(v2));
   }
-
+#endif

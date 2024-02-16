@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PBBS_DATAGEN_H_
+#define PBBS_DATAGEN_H_
 #include "../parlay/utilities.h"
 
 namespace dataGen {
@@ -33,3 +34,4 @@ namespace dataGen {
   inline float hash<float>(size_t i) {
     return ((double) hash<int>(i)/((double) ((((size_t) 1) << 31) - 1)));}
 };
+#endif

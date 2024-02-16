@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PBBS_GETTIME_H_
+#define PBBS_GETTIME_H_
 
 #include <stdlib.h>
 #include <sys/time.h>
@@ -83,3 +84,5 @@ struct timer {
 static timer _tm;
 #define startTime() _tm.start();
 #define nextTime(_string) _tm.next(_string);
+
+#endif

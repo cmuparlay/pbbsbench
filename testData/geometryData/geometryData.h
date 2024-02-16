@@ -19,8 +19,8 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-#pragma once
+#ifndef PBBS_GEOMETRYDATA_H_
+#define PBBS_GEOMETRYDATA_H_
 
 #include "parlay/parallel.h"
 #include "common/geometry.h"
@@ -77,3 +77,4 @@ point3d<coord> randOnUnitSphere3d(size_t i) {
   vector3d<coord> v = vector3d<coord>(randInUnitSphere3d<coord>(i));
   return point3d<coord>(v/v.Length());
 }
+#endif

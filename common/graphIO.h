@@ -19,8 +19,9 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#ifndef PBBS_GRAPHIO_H_
+#define PBBS_GRAPHIO_H_
 
-#pragma once
 #include <iostream>
 #include <stdint.h>
 #include <cstring>
@@ -514,3 +515,4 @@ namespace benchIO {
   //   return FlowGraph<intV>(wghGraph<intV>(v, n, m, adj, weights), S, T);
   // }
 };
+#endif

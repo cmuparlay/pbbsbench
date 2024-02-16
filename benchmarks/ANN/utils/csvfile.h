@@ -21,9 +21,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //source: https://gist.github.com/rudolfovich/f250900f1a833e715260a66c87369d15
+#ifndef CSVFILE_H_
+#define CSVFILE_H_
 
-
-#pragma once
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -135,3 +135,5 @@ inline static csvfile& flush(csvfile& file)
     file.flush();
     return file;
 }
+
+#endif

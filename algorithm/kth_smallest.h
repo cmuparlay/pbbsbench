@@ -1,4 +1,6 @@
-#pragma once
+#ifndef PBBS_KTH_SMALLEST_H_
+#define PBBS_KTH_SMALLEST_H_
+
 #include "../parlay/primitives.h"
 #include "../parlay/random.h"
 
@@ -35,3 +37,4 @@ namespace pbbs {
     //kth_smallest(samples, k * num_samples / n, less);
   }
 }
+#endif // PBBS_KTH_SMALLEST_H_

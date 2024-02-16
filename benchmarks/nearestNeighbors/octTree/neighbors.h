@@ -20,8 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = true;
-int algorithm_version = 0;
+bool report_stats = false;
+int algorithm_version = 2;
 // 0=root based, 1=bit based, >2=map based
 
 #include <algorithm>
@@ -47,19 +47,18 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
     box whole_box = knn_tree::o_tree::get_box(v);
 
     // create sequences for insertion and deletion
-    size_t n = v.size(); 
-    size_t n2 = 2000000;
-    size_t n1 = n-n2;
-    parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>(n1);
-    parlay::sequence<vtx*> v2 = parlay::sequence<vtx*>(n2);
-    parlay::parallel_for(0, n, [&] (size_t i){
-      if(i<n1) v1[i] = v[i];
-      else v2[i-n1] = v[i];
-    }, 1
-    );
+    // size_t size = v.size(); 
+    // size_t p = .5*size;
+    // parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>(p);
+    // parlay::sequence<vtx*> v2 = parlay::sequence<vtx*>(p);
+    // parlay::parallel_for(0, size, [&] (size_t i){
+    //   if(i<p) v1[i] = v[i];
+    //   else v2[i-p] = v[i];
+    // }, 1
+    // );
 
     //build tree with optional box
-    knn_tree T(v1, whole_box);
+    knn_tree T(v, whole_box);
     t.next("build tree");
 
     //prelims for insert/delete
@@ -69,18 +68,18 @@ void ANN(parlay::sequence<vtx*> &v, int k) {
 
     t.next("get box");
     // batch-dynamic deletion
-    // T.batch_delete(v2, root, bd.first, bd.second);
-    // t.next("batch deletion");
+    //T.batch_delete(v2, root, bd.first, bd.second);
+    //t.next("batch deletion");
 
     // batch-dynamic insertion
-    T.batch_insert(v2, root, bd.first, bd.second);
-    t.next("batch insertion");
+    //T.batch_insert(v2, root, bd.first, bd.second);
+    //t.next("batch insertion");
 
-    knn_tree R(v, whole_box);
-    t.next("build comparison tree");
+    //knn_tree R(v, whole_box);
+    //t.next("build comparison tree");
 
-    T.are_equal(R.tree.get(), dims);
-    t.next("equality check");
+    // T.are_equal(R.tree.get(), dims);
+    //  t.next("equality check");
 
 
 

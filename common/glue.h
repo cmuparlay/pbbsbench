@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PBBS_GLUE_H_
+#define PBBS_GLUE_H_
 
 #include "../pbbslib/hash_table.h"
 #include "../pbbslib/integer_sort.h"
@@ -122,3 +123,4 @@ namespace dataGen {
 //   return pbbs::remove_duplicates(pbbs::range<ET*>(S.A, S.A+S.n), hashF);
 // }
 
+#endif

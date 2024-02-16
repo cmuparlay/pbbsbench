@@ -19,8 +19,8 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-#pragma once
+#ifndef PBBS_RANGE_MIN_H_
+#define PBBS_RANGE_MIN_H_
 
 #include "../parlay/parallel.h"
 #include "../parlay/primitives.h"
@@ -123,3 +123,4 @@ range_min<Seq,Compare,Uint> make_range_min(Seq &a, Compare less, long block_size
   return range_min<Seq,Compare,Uint>(a, less, block_size);
 }
 
+#endif // PBBS_RANGE_MIN_H_
