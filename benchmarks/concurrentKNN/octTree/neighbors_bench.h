@@ -118,41 +118,46 @@ void ANN(parlay::sequence<vtx*> &v, int k, int p, double trial_time, int update_
 
     parlay::sequence<parlay::sequence<int>> visited_stats(p);
 
-    parlay::parallel_for(0, p, [&] (size_t i) {
-      int cnt = 0;
-      size_t total = 0;
-      long added = 0;
-      long ins_failed = 0;
-      long del_failed = 0;
-      my_rand::init(i);
-      while (true) {
-        // every once in a while check if time is over
-        if (cnt == 100) {
-          cnt = 0;
-          auto current = std::chrono::system_clock::now();
-          double duration = std::chrono::duration_cast<std::chrono::seconds>(current - start).count();
-          if (duration > trial_time || finish) {
-            totals[i] = total;
-            addeds[i] = added;
-            ins_fails[i] = ins_failed;
-            del_fails[i] = del_failed;
-            return;
+    auto runner = [&] () {
+      parlay::parallel_for(0, p, [&] (size_t i) {
+        int cnt = 0;
+        size_t total = 0;
+        long added = 0;
+        long ins_failed = 0;
+        long del_failed = 0;
+        my_rand::init(i);
+        while (true) {
+          // every once in a while check if time is over
+          if (cnt == 100) {
+            cnt = 0;
+            auto current = std::chrono::system_clock::now();
+            double duration = std::chrono::duration_cast<std::chrono::seconds>(current - start).count();
+            if (duration > trial_time || finish) {
+              totals[i] = total;
+              addeds[i] = added;
+              ins_fails[i] = ins_failed;
+              del_fails[i] = del_failed;
+              return;
+            }
           }
+          int op_type = my_rand::get_rand()%100;  // try hash64_2
+          int idx = my_rand::get_rand()%n;
+          // std::cout << op_type << " " << idx << std::endl;
+          if (op_type < update_percent/2) { 
+            if(T.insert_point(v[idx])) added++;
+            else ins_failed++; 
+          } else if (op_type < update_percent) { 
+            if(T.delete_point(v[idx])) added--;
+            else del_failed++; 
+          } else { visited_stats[i].push_back(T.k_nearest(v[idx], k)); }
+          cnt++;
+          total++;
         }
-        int op_type = my_rand::get_rand()%100;  // try hash64_2
-        int idx = my_rand::get_rand()%n;
-        // std::cout << op_type << " " << idx << std::endl;
-        if (op_type < update_percent/2) { 
-          if(T.insert_point(v[idx])) added++;
-          else ins_failed++; 
-        } else if (op_type < update_percent) { 
-          if(T.delete_point(v[idx])) added--;
-          else del_failed++; 
-        } else { visited_stats[i].push_back(T.k_nearest(v[idx], k)); }
-        cnt++;
-        total++;
-      }
-			       }, 1, true);
+      }, 1, true);
+    };
+
+    parlay::execute_with_scheduler(p, runner);
+
     double duration = t.stop();
 
     //std::cout << duration << " : " << trial_time << std::endl;
