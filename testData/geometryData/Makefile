@@ -7,25 +7,25 @@ TO_UPDATE = triangles addRays toNodes
 .PHONY: all clean
 all: $(GENERATORS)
 
-%.o : %.C $(COMMON) 
+%.o : %.C $(COMMON)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-randPoints : randPoints.C geometryData.h $(COMMON) 
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
+randPoints : randPoints.C geometryData.h $(COMMON)
+	$(CC) $(CFLAGS) -o $@ $@.C $(LFLAGS)
 
-toNodes : toNodes.C $(COMMON) 
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
+toNodes : toNodes.C $(COMMON)
+	$(CC) $(CFLAGS) -o $@ $@.C $(LFLAGS)
 
-triangles : triangles.C geometryData.h $(COMMON) 
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
+triangles : triangles.C geometryData.h $(COMMON)
+	$(CC) $(CFLAGS) -o $@ $@.C $(LFLAGS)
 
-addRays : addRays.C $(COMMON) 
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $@.C
+addRays : addRays.C $(COMMON)
+	$(CC) $(CFLAGS) -o $@ $@.C $(LFLAGS)
 
 clean :
 	rm -f *.o $(GENERATORS)
 	make clean -s -C data
 
-cleansrc : 
+cleansrc :
 	make -s clean
-	rm -f $(COMMON) 
+	rm -f $(COMMON)
