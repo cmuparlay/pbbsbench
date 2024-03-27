@@ -567,9 +567,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         auto result = root_lock.try_lock_result([=] { 
           if(tree.load() != T) return make_pair(false, false);
           else {
-            // std::vector<link> path; path.reserve(4);
-            // path.push_back((link){nullptr, false});
-            bool success = insert_point_path_copy_helper(q, T, bit, nullptr, false);
+            std::vector<link> path; path.reserve(4);
+            path.push_back((link){nullptr, false});
+            bool success = insert_point_path_copy_helper(q, T, bit, path);
             return make_pair(success, true);
           }
         });
@@ -581,10 +581,10 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             // std::cout << "failed valdiation" << std::endl; 
             return make_pair(false, false);
           } else {
-            // std::vector<link> path; path.reserve(4);
+            std::vector<link> path; path.reserve(4);
             bool left_child = (parent->Left() == T);
-            // path.push_back((link){parent, left_child});
-            bool success = insert_point_path_copy_helper(q, T, bit, parent, left_child);
+            path.push_back((link){parent, left_child});
+            bool success = insert_point_path_copy_helper(q, T, bit, path);
             return make_pair(success, true);
           } 
         });
@@ -598,41 +598,55 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
     }   
   } 
 
-  // start is the first node to replace
-  // end is the node to be replaced with new_n
-  node* copy_path_rec(node* start, node* end, node* new_n, indexed_point q) {
-      assert(start != nullptr);
-      delete_single(start); // not sure this is not too early as new root hasn't been set yet
-
-      if(start == end) return new_n;
+  void install_new_path(std::vector<link> &old_path, node* new_n) {
+    for(int i = old_path.size()-1; i>= 1; i--) {
+      node* T = old_path[i].n;
+      box b = T->Box();
       
-      bool go_left = (lookup_bit(q.first, start->bit) == 0);
-      node* child = (go_left ? start->Left() : start->Right());
-      node* new_child = copy_path_rec(child, end, new_n, q);
-
-      if(go_left) {
-        box bigger = box(start->Right()->Box().first.minCoords(new_child->Box().first), 
-                       start->Right()->Box().second.maxCoords(new_child->Box().second));
-        return node::new_node(new_child, start->Right(), start->bit, bigger);
+      if(old_path[i].go_left) {
+        box bigger = box(T->Right()->Box().first.minCoords(new_n->Box().first), 
+                       T->Right()->Box().second.maxCoords(new_n->Box().second));
+        new_n = node::new_node(new_n, T->Right(), T->bit, bigger);
       }
       else {
-        box bigger = box(start->Left()->Box().first.minCoords(new_child->Box().first), 
-                       start->Left()->Box().second.maxCoords(new_child->Box().second));
-        return node::new_node(start->Left(), new_child, start->bit, bigger);
+        box bigger = box(T->Left()->Box().first.minCoords(new_n->Box().first), 
+                       T->Left()->Box().second.maxCoords(new_n->Box().second));
+        new_n = node::new_node(T->Left(), new_n, T->bit, bigger);
       }
+    }
+    if(old_path[0].n == nullptr)
+      set_root(new_n);
+    else
+      old_path[0].n->set_child(new_n, old_path[0].go_left);
+    for(int i = old_path.size()-1; i>= 1; i--)
+      delete_single(old_path[i].n);
   }
 
-  void install_new_path_2(node* start_parent, bool start_left, node* end, node* new_n, indexed_point q) {
-    if(start_parent == nullptr) 
-      set_root(copy_path_rec(tree.load(), end, new_n, q));
-    else {
-      node* child = (start_left ? start_parent->Left() : start_parent->Right());
-      node* new_child = copy_path_rec(child, end, new_n, q);
-      start_parent->set_child(new_child, start_left);
+  void install_new_path_insert(std::vector<link> &old_path, node* new_n) {
+    for(int i = old_path.size()-1; i>= 1; i--) {
+      node* T = old_path[i].n;
+      box b = T->Box();
+      
+      if(old_path[i].go_left) {
+        box bigger = box(T->Right()->Box().first.minCoords(new_n->Box().first), 
+                       T->Right()->Box().second.maxCoords(new_n->Box().second));
+        new_n = node::new_node(new_n, T->Right(), T->bit, bigger);
+      }
+      else {
+        box bigger = box(T->Left()->Box().first.minCoords(new_n->Box().first), 
+                       T->Left()->Box().second.maxCoords(new_n->Box().second));
+        new_n = node::new_node(T->Left(), new_n, T->bit, bigger);
+      }
     }
+    if(old_path[0].n == nullptr)
+      set_root(new_n);
+    else
+      old_path[0].n->set_child(new_n, old_path[0].go_left);
+    for(int i = old_path.size()-1; i>= 1; i--)
+      delete_single(old_path[i].n);
   }
-  
-  bool insert_point_path_copy_helper(indexed_point q, node* T, int bit, node* start_parent, bool start_left) {
+
+  bool insert_point_path_copy_helper(indexed_point q, node* T, int bit, std::vector<link> &path) {
     if(T->is_leaf()) {
       for(indexed_point p : T->Indexed_Pts()) {
         if(points_equal(p.second->pt, q.second->pt)) return false;
@@ -649,9 +663,8 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         box b = T->Box();
         box bigger = box(b.first.minCoords(q.second->pt), b.second.maxCoords(q.second->pt));
         node* new_l = node::new_leaf(std::move(points), T->bit, bigger);
-        install_new_path_2(start_parent, start_left, T, new_l, q);
-        // install_new_path_insert(path, new_l);
-        // delete_single(T);
+        install_new_path_insert(path, new_l);
+        delete_single(T);
         return true;
       } else {
         //sort points in leaf by interleave order
@@ -677,13 +690,13 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         node* L = node::new_leaf(std::move(left_s), new_bit);
         node* R = node::new_leaf(std::move(right_s), new_bit);
         node* new_l = node::new_node(L, R, new_bit+1);
-        install_new_path_2(start_parent, start_left, T, new_l, q);
-        //install_new_path_insert(path, new_l);
-        // delete_single(T);
+        install_new_path_insert(path, new_l);
+        delete_single(T);
         return true;
       }
     } else { // expand bounding box
       return T->lck.with_lock([=] {
+        auto path_mutable = path;
         bool go_left = (lookup_bit(q.first, T->bit) == 0);
         //two cases: (1) need to create new leaf and internal node,
         //or (2) bit unchanged and box changed
@@ -708,8 +721,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             node* P;
             if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit);
             else P = node::new_node(T, R, cur_bit);
-            install_new_path_2(start_parent, start_left, T, P, q);
-            // install_new_path_insert(path, P);
+            install_new_path_insert(path_mutable, P);
             return true;
           } else cur_bit--;
         }
@@ -718,9 +730,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         //calculate new box around T, and create new internal node
         //with corrected box
         node* child = (go_left ? T->Left() : T->Right());
-        // link lnk = (link){T, go_left};
-        // path.push_back(lnk);
-        return insert_point_path_copy_helper(q, child, T->bit-1, start_parent, start_left);
+        link lnk = (link){T, go_left};
+        path_mutable.push_back(lnk);
+        return insert_point_path_copy_helper(q, child, T->bit-1, path_mutable);
       });
     }
   }
@@ -982,9 +994,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         auto result = root_lock.try_lock_result([=] { 
           if(tree.load() != T) return make_pair(false, false); // validation failed
           else {
-            // std::vector<link> path; path.reserve(4);
-            // path.push_back((link){nullptr, false});
-            bool success = delete_point_path_copy_helper(q, parent, T, nullptr, false); 
+            std::vector<link> path; path.reserve(4);
+            path.push_back((link){nullptr, false});
+            bool success = delete_point_path_copy_helper(q, parent, T, path); 
             return make_pair(success, true);
           }
         });
@@ -997,10 +1009,10 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             // std::cout << "failed valdiation" << std::endl; 
             return make_pair(false, false); // validation failed
           } else {
-            // std::vector<link> path; path.reserve(4);
+            std::vector<link> path; path.reserve(4);
             bool left_child = (parent->Left() == T);
-            // path.push_back((link){parent, left_child});
-            bool success = delete_point_path_copy_helper(q, parent, T, parent, left_child); 
+            path.push_back((link){parent, left_child});
+            bool success = delete_point_path_copy_helper(q, parent, T, path); 
             return make_pair(success, true);
           }
         });
@@ -1015,8 +1027,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   //second indicates whether the child node was changed--if not,
   //can end recursion early
   //third indicates if it failed to take all the locks
-  bool delete_point_path_copy_helper(indexed_point q, node* parent, node* T, node* start_parent, bool start_left) {
+  bool delete_point_path_copy_helper(indexed_point q, node* parent, node* T, std::vector<link> &path){
     return T->lck.with_lock([=] {
+      auto path_mutable = path;
       bool q_present; bool T_deleted = false; bool child_changed = true; bool locks_successful;
       node* N;
       bool go_left = lookup_bit(q.first, T->bit) == 0;
@@ -1024,15 +1037,14 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       else N = T->Right();
       assert(!(T->is_leaf()));
       if(N->is_leaf()) // base case
-        return delete_from_leaf_path_copy(q, T, parent, N, start_parent, start_left);
+        return delete_from_leaf_path_copy(q, T, parent, N, path_mutable);
 
       // recursive step
-      // link lnk = (link){T, go_left};
-      // path.push_back(lnk);
-      return delete_point_path_copy_helper(q, T, N, start_parent, start_left);
+      link lnk = (link){T, go_left};
+      path_mutable.push_back(lnk);
+      return delete_point_path_copy_helper(q, T, N, path_mutable);
     });
   }
-
 
   //returns pair of bools
   //first indicates whether q present in the data structure
@@ -1130,7 +1142,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   }
 
   // grandparent is the last node in 'path'
-  bool delete_from_leaf_path_copy(indexed_point q, node* parent, node* grandparent, node* T, node* start_parent, bool start_left){
+  bool delete_from_leaf_path_copy(indexed_point q, node* parent, node* grandparent, node* T, std::vector<link> &path){
     parlay::sequence<indexed_point> pts;
     bool cont = false;
     bool q_present = false;
@@ -1165,11 +1177,10 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       node* Leaf;
       if(on_box_border(parent, q.second)) Leaf = node::new_leaf(std::move(pts), bit);
       else Leaf = node::new_leaf(std::move(pts), bit, parent->Box());
-      install_new_path_2(start_parent, start_left, parent, Leaf, q);
-      // install_new_path(path, Leaf); // replace parent with Leaf
+      install_new_path(path, Leaf); // replace parent with Leaf
       delete_single(parent->Left()); // TODO: double check retires
       delete_single(parent->Right());
-      // delete_single(parent);
+      delete_single(parent);
       return true;
     }
     else{
@@ -1179,10 +1190,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         node* Leaf;
         if(on_box_border(T, q.second)) Leaf = node::new_leaf(std::move(pts), T->bit);
         else Leaf = node::new_leaf(std::move(pts), T->bit, T->Box());
-        // path.push_back((link){parent,parent->Left() == T});
-        install_new_path_2(start_parent, start_left, T, Leaf, q);
-        // install_new_path(path, Leaf); // replace T with Leaf
-        // delete_single(T);
+        path.push_back((link){parent,parent->Left() == T});
+        install_new_path(path, Leaf); // replace T with Leaf
+        delete_single(T);
         return true;
       }
       else{
@@ -1203,10 +1213,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
           }
           delete_single(sibling);
         } else Leaf = sibling;
-        install_new_path_2(start_parent, start_left, parent, Leaf, q);
-        // install_new_path(path, Leaf); // replace parent with Leaf
+        install_new_path(path, Leaf); // replace parent with Leaf
         // TODO: in some cases, sibling needs to be retired as well
-        // delete_single(parent);
+        delete_single(parent);
         delete_single(T);
         return true;
       }
