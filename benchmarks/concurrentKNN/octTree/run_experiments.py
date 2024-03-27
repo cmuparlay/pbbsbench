@@ -14,6 +14,9 @@ ds_options = {
   "neighbors_bench_path_copy" : "neighbors_bench_path_copy",
   "neighbors_bench_lockfree" : "neighbors_bench_lockfree",
   "neighbors_bench_hoh" : "neighbors_bench_hoh",
+  "working_set_bench" : "working_set_bench",
+  "working_set_bench_hoh" : "working_set_bench_hoh",
+  "working_set_bench_path_copy" : "working_set_bench_path_copy",
   "range_bench" : "../../rangeQueryKDTree/range/range_bench",
   "range_bench_path_copy" : "../../rangeQueryKDTree/range/range_bench_path_copy",
 }
@@ -23,6 +26,9 @@ ds_keys = {
   "neighbors_bench_path_copy" : "neighbors_bench_path_copy",
   "neighbors_bench_lockfree" : "neighbors_bench_lockfree",
   "neighbors_bench_hoh" : "neighbors_bench_hoh",
+  "working_set_bench" : "working_set_bench",
+  "working_set_bench_hoh" : "working_set_bench_hoh",
+  "working_set_bench_path_copy" : "working_set_bench_path_copy",
   "../../rangeQueryKDTree/range/range_bench" : "range_bench",
   "../../rangeQueryKDTree/range/range_bench_path_copy" : "range_bench_path_copy",
 }
@@ -35,6 +41,7 @@ data_options = {
   "3DinCube_200K" : "../geometryData/data/3DinCube_200000",
   "3DinCube_2M" : "../geometryData/data/3DinCube_2000000",
   "3DinCube_20M" : "../geometryData/data/3DinCube_20000000",
+  "3DinCube_WorkingSet_11M" : "../geometryData/data/3DinCube_WorkingSet_11M",
   "3DinCube_200M" : "/ssd0/geometryData/3DinCube_200M",
   "3DinCube_2B" : "/ssd0/geometryData/3DinCube_2B",
   "3Dplummer_20M" : "../geometryData/data/3Dplummer_20000000",
@@ -57,6 +64,7 @@ data_sizes = {
   "lucy3D_14M" : 7000000,
   "thai_statue2M" : 1000000,
   "thai_statue5M" : 2500000,
+  "3DinCube_WorkingSet_11M" : 10000000,
 }
 
 parser = argparse.ArgumentParser()
@@ -115,8 +123,12 @@ def runstring(test, op, outfile, k):
 def runtest(test,procs,u,k,d,infile,extra,outfile) :
     r = rounds
     otherargs = " -c -t 1.0 "
+    if(int(procs) < maxcpus): 
+      tr = maxcpus
+    else:
+      tr = int(procs)
 
-    runstring(test, "numactl -i all ./" + test + " -r " + str(r) + " -d " + str(d) + " -k " + str(k) + " -p " + str(procs) + extra + " -u " + str(u) + otherargs + " " + infile, outfile, k)
+    runstring(test, "PARLAY_NUM_THREADS=" + str(tr) + " numactl -i all ./" + test + " -r " + str(r) + " -d " + str(d) + " -k " + str(k) + " -p " + str(procs) + extra + " -u " + str(u) + otherargs + " " + infile, outfile, k)
 
 
 exp_type = ""
