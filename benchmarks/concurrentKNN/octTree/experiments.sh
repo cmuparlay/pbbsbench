@@ -31,7 +31,7 @@ mkdir -p graphs
 
 ##OVERSUBSCRIPTION
 
-# python3 run_experiments.py [neighbors_bench,neighbors_bench_lockfree,neighbors_bench_path_copy,neighbors_bench_path_copy_lockfree] [144,196,288,432,500] [50] [1] 3 [3DinCube_20M]
+python3 run_experiments.py [neighbors_bench,neighbors_bench_lockfree,neighbors_bench_path_copy,neighbors_bench_path_copy_lockfree] [144,196,288,432,500] [50] [1] 3 [3DinCube_20M]
 python3 run_experiments.py [working_set_bench,working_set_bench_lockfree] [144,196,288,432,500] [50] [1] 3 [3DinCube_WorkingSet_11M]
 
 

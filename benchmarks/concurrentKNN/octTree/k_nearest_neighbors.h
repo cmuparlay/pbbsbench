@@ -720,7 +720,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             // std::cout << "case 1" << std::endl;
             //we know we are in case 1
             //form leaf
-            parlay::sequence<indexed_point> points = {q};
+            std::vector<indexed_point> points = {q};
             node* R = node::new_leaf(std::move(points), cur_bit-1);
             //new parent node should replace T as G's child
             node* P;
