@@ -28,6 +28,8 @@ dsinfo = {'neighbors_bench-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree, k=1", "b
           'neighbors_bench_hoh-10' : DSInfo("C6", mk[6], "-", "CLEANN-Tree-HOH, k=10", "blah", "blah"),
           'working_set_bench-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree, k=1", "blah", "blah"),
           'working_set_bench-10' : DSInfo("C1", mk[1], "-", "CLEANN-Tree, k=10", "blah", "blah"),
+          'working_set_bench_lockfree-1' :  DSInfo("C7", mk[7], "-", "CLEANN-Tree-LF, k=1", "blah", "blah"),
+          'working_set_bench_lockfree-10' : DSInfo("C8", mk[8], "-", "CLEANN-Tree-LF, k=10", "blah", "blah"),
           'working_set_bench_hoh-1' :  DSInfo("C5", mk[5], "-", "CLEANN-Tree-HOH, k=1", "blah", "blah"),
           'working_set_bench_hoh-10' : DSInfo("C6", mk[6], "-", "CLEANN-Tree-HOH, k=10", "blah", "blah"),
           'working_set_bench_path_copy-1' :  DSInfo("C3", mk[3], "-", "CLEANN-Tree-PC, k=1", "blah", "blah"),
@@ -36,6 +38,8 @@ dsinfo = {'neighbors_bench-1' :  DSInfo("C0", mk[0], "-", "CLEANN-Tree, k=1", "b
           'neighbors_bench_path_copy-10' : DSInfo("C4", mk[4], "-", "CLEANN-Tree-PC, k=10", "blah", "blah"),
           'neighbors_bench_lockfree-1' :  DSInfo("C7", mk[7], "-", "CLEANN-Tree-LF, k=1", "blah", "blah"),
           'neighbors_bench_lockfree-10' : DSInfo("C8", mk[8], "-", "CLEANN-Tree-LF, k=10", "blah", "blah"),
+          'neighbors_bench_path_copy_lockfree-1' :  DSInfo("C2", mk[2], "-", "CLEANN-Tree-PC, k=1", "blah", "blah"),
+          'neighbors_bench_path_copy_lockfree-10' : DSInfo("C9", mk[9], "-", "CLEANN-Tree-PC, k=10", "blah", "blah"),
           'range_bench-.014' : DSInfo("C0", mk[0], "-", "CLEANN-Tree, r=5", "blah", "blah"),
           'range_bench-.0176' : DSInfo("C1", mk[1], "-", "CLEANN-Tree, r=10", "blah", "blah"),
           'range_bench_path_copy-.014' : DSInfo("C3", mk[3], "-", "CLEANN-Tree-PC, r=5", "blah", "blah"),
@@ -48,13 +52,6 @@ ratiomarkers = {0 : mk[0], 50 : mk[1], 100 : mk[2]}
 def toString(algname, th, ratio, size):
     return algname + '-' + str(th) + 'u-' + str(ratio) + "s-" + str(size)
 
-# def export_legend(legend, filename="legend.pdf", expand=[-5,-5,5,5]):
-#     fig  = legend.figure
-#     fig.canvas.draw()
-#     bbox  = legend.get_window_extent()
-#     bbox = bbox.from_extents(*(bbox.extents + np.array(expand)))
-#     bbox = bbox.transformed(fig.dpi_scale_trans.inverted())
-#     fig.savefig(filename, dpi="figure", bbox_inches=bbox)
 
 def export_legend(legend, filename="legend.pdf"):
     fig  = legend.figure
@@ -305,6 +302,10 @@ def plot_size_graph(throughput, stddev, thread, ratios, maxkeys, algs, graph_nam
     plt.title(graphtitle)
     plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y))
   plt.savefig(outputFile, bbox_inches='tight')
+
+  if paper_ver:
+    legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=8, framealpha=0.0)
+    export_legend(legend, 'graphs/' + graph_name + '_legend.pdf')
   plt.close('all')
 
 def plot_size_graphs(throughput, stddev, threads, ratios, maxkeys, algs, graph_name, paper_ver=False):
@@ -393,6 +394,10 @@ def plot_ratio_graph(throughput, stddev, thread, ratios, size, algs, graph_name,
     plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y))
   
   plt.savefig(outputFile, bbox_inches='tight')
+
+  if paper_ver:
+    legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=8, framealpha=0.0)
+    export_legend(legend, 'graphs/' + graph_name + '_legend.pdf')
   plt.close('all')
 
 def plot_ratio_graphs(throughput, stddev, threads, ratios, size, algs, graph_name, paper_ver=False):
@@ -476,17 +481,9 @@ def plot_scalability_graph(throughput, stddev, threads, ratio, size, algs, graph
   plt.savefig(outputFile, bbox_inches='tight')
 
   if paper_ver:
-    if graph_name == 'lists':
-      legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=2, framealpha=0.0)
-    elif graph_name == 'sets':
-      legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=3, framealpha=0.0)
-    else:
-      legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=8, framealpha=0.0)
-    # outputFile = 'graphs/' + graph_name + '_legend.pdf'
-    # legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=7, framealpha=0.0)
+    legend = plt.legend(loc='center left', bbox_to_anchor=(legend_x, legend_y), ncol=8, framealpha=0.0)
     export_legend(legend, 'graphs/' + graph_name + '_legend.pdf')
-    # plt.close('all')
-    # return
+
   
   plt.close('all')
 

@@ -12,9 +12,11 @@ from create_graphs import *
 ds_options = {
   "neighbors_bench" : "neighbors_bench",
   "neighbors_bench_path_copy" : "neighbors_bench_path_copy",
+  "neighbors_bench_path_copy_lockfree" : "neighbors_bench_path_copy_lockfree",
   "neighbors_bench_lockfree" : "neighbors_bench_lockfree",
   "neighbors_bench_hoh" : "neighbors_bench_hoh",
   "working_set_bench" : "working_set_bench",
+  "working_set_bench_lockfree" : "working_set_bench_lockfree",
   "working_set_bench_hoh" : "working_set_bench_hoh",
   "working_set_bench_path_copy" : "working_set_bench_path_copy",
   "range_bench" : "../../rangeQueryKDTree/range/range_bench",
@@ -24,9 +26,11 @@ ds_options = {
 ds_keys = {
   "neighbors_bench" : "neighbors_bench",
   "neighbors_bench_path_copy" : "neighbors_bench_path_copy",
+  "neighbors_bench_path_copy_lockfree" : "neighbors_bench_path_copy_lockfree",
   "neighbors_bench_lockfree" : "neighbors_bench_lockfree",
   "neighbors_bench_hoh" : "neighbors_bench_hoh",
   "working_set_bench" : "working_set_bench",
+  "working_set_bench_lockfree" : "working_set_bench_lockfree",
   "working_set_bench_hoh" : "working_set_bench_hoh",
   "working_set_bench_path_copy" : "working_set_bench_path_copy",
   "../../rangeQueryKDTree/range/range_bench" : "range_bench",
@@ -222,10 +226,11 @@ for ds in ds_types:
   for k in query_sizes:
     alg_names.append(ds+"-"+str(k))
 
-
+args.paper_ver = True
 if(len(input_names) <= 1):
   plot_scalability_graphs(throughput, stddev, threads, ratios, sizes[0], alg_names, "scalability_"+graph_name, args.paper_ver)
   plot_ratio_graphs(throughput, stddev, threads, ratios, sizes[0], alg_names, "ratio_"+graph_name, args.paper_ver)
 else:
   plot_size_graphs(throughput, stddev, threads, ratios, sizes, alg_names, "sizes_"+graph_name, args.paper_ver)
+
 

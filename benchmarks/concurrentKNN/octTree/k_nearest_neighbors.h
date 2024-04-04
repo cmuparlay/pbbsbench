@@ -651,10 +651,12 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
       for(indexed_point p : T->Indexed_Pts()) {
         if(points_equal(p.second->pt, q.second->pt)) return false;
       }
-
-      auto points = parlay::tabulate(T->size()+1, [&] (long i) {
-        return (i == T->size()) ? q : T->Indexed_Pts()[i];
-      }, 1000);
+      std::vector<indexed_point> points;
+      for(auto i : T->Indexed_Pts()) points.push_back(i);
+      points.push_back(q);
+      // auto points = parlay::tabulate(T->size()+1, [&] (long i) {
+      //   return (i == T->size()) ? q : T->Indexed_Pts()[i];
+      // }, 1000);
       //two cases: either (1) the leaf size is below the cutoff, in which case
       //we create a new leaf with the point q added, or (2) the leaf needs to be
       //split into an internal node and two leaf children
@@ -684,9 +686,12 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
           cut_point = parlay::internal::binary_search(points, less);
           new_bit--;
         }
-        parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
-        auto left_s = parlay::tabulate(cut_point, [&] (size_t i) {return points[i];}, 1000);
-        auto right_s = parlay::tabulate(points.size()-cut_point, [&] (size_t i) {return points[cut_point+i];}, 1000);
+        std::vector<indexed_point> left_s;
+        std::vector<indexed_point> right_s;
+        for(size_t i=0; i<points.size(); i++){
+          if(i<cut_point) left_s.push_back(points[i]);
+          else right_s.push_back(points[i]);
+        }
         node* L = node::new_leaf(std::move(left_s), new_bit);
         node* R = node::new_leaf(std::move(right_s), new_bit);
         node* new_l = node::new_node(L, R, new_bit+1);
@@ -716,7 +721,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
             //we know we are in case 1
             //form leaf
             parlay::sequence<indexed_point> points = {q};
-            node* R = node::new_leaf(parlay::make_slice(std::move(points)), cur_bit-1);
+            node* R = node::new_leaf(std::move(points), cur_bit-1);
             //new parent node should replace T as G's child
             node* P;
             if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit);
@@ -784,8 +789,8 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
               //we know we are in case 1
               //form leaf
               node* G = parent;
-              parlay::sequence<indexed_point> points = {q};
-              node* R = node::new_leaf(parlay::make_slice(points), cur_bit-1);
+              std::vector<indexed_point> points = {q};
+              node* R = node::new_leaf(points, cur_bit-1);
               //new parent node should replace T as G's child
               node* P;
               if(lookup_bit(q.first, cur_bit) == 0) P = node::new_node(R, T, cur_bit);
@@ -860,8 +865,9 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
         }
       }
 
-      auto points = parlay::tabulate(T->size()+1, [&] (long i) {
-        return (i == T->size()) ? q : T->Indexed_Pts()[i];}, 1000);
+      std::vector<indexed_point> points;
+      for(auto i : T->Indexed_Pts()) points.push_back(i);
+      points.push_back(q);
       node* G = parent;
       bool left;
       if(G != nullptr) left = (G->Left() == T);
@@ -900,9 +906,12 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
           cut_point = parlay::internal::binary_search(points, less);
           new_bit--;
         }
-        parlay::slice<indexed_point*, indexed_point*> pts = parlay::make_slice(points);
-        auto left_s = parlay::tabulate(cut_point, [&] (size_t i) {return points[i];}, 1000);
-        auto right_s = parlay::tabulate(points.size()-cut_point, [&] (size_t i) {return points[cut_point+i];}, 1000);
+        std::vector<indexed_point> left_s;
+        std::vector<indexed_point> right_s;
+        for(size_t i=0; i<points.size(); i++){
+          if(i<cut_point) left_s.push_back(points[i]);
+          else right_s.push_back(points[i]);
+        }
         node* L = node::new_leaf(std::move(left_s), new_bit);
         node* R = node::new_leaf(std::move(right_s), new_bit);
         node* P = node::new_node(L, R, new_bit+1);
@@ -1143,7 +1152,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
 
   // grandparent is the last node in 'path'
   bool delete_from_leaf_path_copy(indexed_point q, node* parent, node* grandparent, node* T, std::vector<link> &path){
-    parlay::sequence<indexed_point> pts;
+    std::vector<indexed_point> pts;
     bool cont = false;
     bool q_present = false;
     for(indexed_point p : T->Indexed_Pts()){
@@ -1223,7 +1232,7 @@ node* find_leaf(node* T){ //takes in a point since interleave_bits() takes in a 
   }
 
   pair<bool, bool> delete_from_leaf(indexed_point q, node* parent, node* grandparent, node* T){
-    parlay::sequence<indexed_point> pts;
+    std::vector<indexed_point> pts;
     bool cont = false;
     bool q_present = false;
     for(indexed_point p : T->Indexed_Pts()){

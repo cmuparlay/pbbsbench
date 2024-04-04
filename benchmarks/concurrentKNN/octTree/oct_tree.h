@@ -80,7 +80,8 @@ struct oct_tree {
 
     // generates a box consisting of a lower left corner,
   // and an upper right corner.
-  static box get_box(parlay::sequence<indexed_point> &V) { // parlay::sequence<vtx*> &V) {
+  template<typename Seq>
+  static box get_box(Seq &V) { // parlay::sequence<vtx*> &V) {
     size_t n = V.size();
     // std::cout << n << std::endl;
     auto minmax = [&] (box x, box y) {
@@ -111,7 +112,7 @@ struct oct_tree {
       return (L.load() == nullptr) && (R.load() == nullptr);}
     node* Left() {return L.load();}
     node* Right() {return R.load();}
-    parlay::sequence<indexed_point>& Indexed_Pts(){return indexed_pts;}
+    std::vector<indexed_point>& Indexed_Pts(){return indexed_pts;}
     // leaf_seq& Vertices() {return P;}
 
     void set_size(size_t s){n=s;}
@@ -131,7 +132,7 @@ struct oct_tree {
     }
 
     // construct a leaf node with a sequence of points directly in it
-    node(parlay::sequence<indexed_point> &Pts, int currentBit) : removed(false), n(Pts.size()) { 
+    node(std::vector<indexed_point> &Pts, int currentBit) : removed(false), n(Pts.size()) { 
       // strips off the integer tag, no longer needed
       indexed_pts = std::move(Pts);
       L = R = nullptr;
@@ -141,44 +142,11 @@ struct oct_tree {
     }
 
     // construct a leaf node with a sequence of points directly in it
-    node(parlay::sequence<indexed_point> &Pts, int currentBit, box &B) : removed(false), n(Pts.size()) { 
+    node(std::vector<indexed_point> &Pts, int currentBit, box &B) : removed(false), n(Pts.size()) { 
       // strips off the integer tag, no longer needed
       indexed_pts = std::move(Pts);
       L = R = nullptr;
       b = B;
-      set_center();
-      bit = currentBit;
-    }
-
-    // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts, int currentBit, box &B) : removed(false), n(Pts.size()) { 
-      // strips off the integer tag, no longer needed
-      indexed_pts = parlay::sequence<indexed_point>(n);
-      for (int i = 0; i < n; i++) {
-        indexed_pts[i] = Pts[i];  
-      }
-      L = R = nullptr;
-      b = B;
-      set_center();
-      bit = currentBit;
-    }
-
-
-    // construct a leaf node with a sequence of points directly in it
-    node(slice_t Pts, int currentBit) : removed(false), n(Pts.size()) { 
-      // strips off the integer tag, no longer needed
-      indexed_pts = parlay::sequence<indexed_point>(n);
-      for (int i = 0; i < n; i++) {
-        if(indexed_pts.size() < n) {
-          std::stringstream ss;
-          ss << "n = " << n << std::endl << "P.size() = " << indexed_pts.size() << std::endl;
-          std::cout << ss.str() << std::endl;
-          exit(1);
-        }
-        indexed_pts[i] = Pts[i];  
-      }
-      L = R = nullptr;
-      b = get_box(indexed_pts);
       set_center();
       bit = currentBit;
     }
@@ -209,52 +177,30 @@ struct oct_tree {
       }
     }
 
-    static node* new_leaf(slice_t Pts, int currentBit) {
+
+
+    static node* new_leaf(std::vector<indexed_point> Pts, int currentBit) {
       node* r = alloc_node(Pts, currentBit);
       assert(Pts.begin() != nullptr);
-      // new (r) node();
       return r;
     }
 
-    static node* new_leaf(slice_t Pts, int currentBit, box B) {
+    static node* new_leaf(std::vector<indexed_point> Pts, int currentBit, box B) {
       node* r = alloc_node(Pts, currentBit, B);
       assert(Pts.begin() != nullptr);
-      // new (r) node();
-      return r;
-    }
-
-    static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit) {
-      node* r = alloc_node(Pts, currentBit);
-      assert(Pts.begin() != nullptr);
-      // new (r) node();
-      return r;
-    }
-
-    static node* new_leaf(parlay::sequence<indexed_point> Pts, int currentBit, box B) {
-      node* r = alloc_node(Pts, currentBit, B);
-      assert(Pts.begin() != nullptr);
-      // new (r) node();
       return r;
     }
 
     static node* new_node(node* L, node* R, int currentBit) {
       node* nd = alloc_node(L, R, currentBit);
-      // new (nd) node();
       return nd;
     }
 
     static node* new_node(node* L, node* R, int currentBit, box B) {
       node* nd = alloc_node(L, R, currentBit, B);
-      // new (nd) node();
       return nd;
     }
     
-    // ~node() {
-    //   // need to collect in parallel
-    //   parlay::par_do_if(n > 1000,
-		// 	[&] () { delete_tree(L.load());},
-		// 	[&] () { delete_tree(R.load());});
-    // }
 
     parlay::sequence<vtx*> flatten() {
       parlay::sequence<vtx*> r(n);
@@ -322,7 +268,7 @@ struct oct_tree {
     verlib::versioned_ptr<node> R;
     box b;
     point centerv;
-    parlay::sequence<indexed_point> indexed_pts;
+    std::vector<indexed_point> indexed_pts;
     // leaf_seq P;
 
     void set_center() {			   
@@ -430,7 +376,9 @@ private:
 
     // if run out of bit, or small then generate a leaf
     if (bit == 0 || n < node_cutoff) {
-      return node::new_leaf(Pts, bit); 
+      std::vector<indexed_point> points;
+      for(auto i : Pts) points.push_back(i);
+      return node::new_leaf(points, bit); 
     } else {
 
       // this was extracted to lookup_bit but left as is here since the less function requires mask and val
