@@ -21,6 +21,7 @@ ds_options = {
   "working_set_bench_path_copy" : "working_set_bench_path_copy",
   "range_bench" : "../../rangeQueryKDTree/range/range_bench",
   "range_bench_path_copy" : "../../rangeQueryKDTree/range/range_bench_path_copy",
+  "LFKDTree" : "~/ConcurrentKDTree_o/dist/ConcurrentKDTree.jar",
 }
 
 ds_keys = {
@@ -35,6 +36,7 @@ ds_keys = {
   "working_set_bench_path_copy" : "working_set_bench_path_copy",
   "../../rangeQueryKDTree/range/range_bench" : "range_bench",
   "../../rangeQueryKDTree/range/range_bench_path_copy" : "range_bench_path_copy",
+  "~/ConcurrentKDTree_o/dist/ConcurrentKDTree.jar" : "LFKDTree",
 }
 
 
@@ -70,6 +72,26 @@ data_sizes = {
   "thai_statue5M" : 2500000,
   "3DinCube_WorkingSet_11M" : 10000000,
 }
+
+filename_sizes = {
+  "../geometryData/data/2DinCube_20000000" : 10000000,
+  "../geometryData/data/3DinCube_2000" : 1000,
+  "../geometryData/data/3DinCube_20000" : 10000,
+  "../geometryData/data/3DinCube_200000" : 100000,
+  "../geometryData/data/3DinCube_2000000": 1000000,
+  "../geometryData/data/3DinCube_20000000" : 10000000,
+  "../geometryData/data/3DinCube_WorkingSet_11M" : 10000000,
+  "/ssd0/geometryData/3DinCube_200M" : 100000000,
+  "/ssd0/geometryData/3DinCube_2B" : 1000000000,
+  "../geometryData/data/3Dplummer_20000000" : 10000000,
+  "/ssd0/angel/lucy3D_2M" : 1000000,
+  "/ssd0/angel/lucy3D_14M" : 7000000,
+  "/ssd0/thai_statue/thai_statue2M" : 1000000,
+  "/ssd0/thai_statue/thai_statue5M" : 2500000,
+}
+
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("ds_type", help="datastructure type")
@@ -126,13 +148,27 @@ def runstring(test, op, outfile, k):
     
 def runtest(test,procs,u,k,d,infile,extra,outfile) :
     r = rounds
-    otherargs = " -c -t 1.0 "
+    otherargs = " -c -t 10.0 "
     if(int(procs) < maxcpus): 
       tr = maxcpus
     else:
       tr = int(procs)
 
     runstring(test, "PARLAY_NUM_THREADS=" + str(tr) + " numactl -i all ./" + test + " -r " + str(r) + " -d " + str(d) + " -k " + str(k) + " -p " + str(procs) + extra + " -u " + str(u) + otherargs + " " + infile, outfile, k)
+
+def runCompetitor(test,procs,u,d,n,outfile) :
+    s = 100-int(u)
+    op = "java -jar " + test + " -a LFKDTree -d " + str(d) + " -n " + str(procs) + " -r " + str(s) + " -i " + str(int(int(u)/2)) + " -x " + str(int(int(u)/2)) + " -k "+ str(n) + " -m " + str(d)
+    os.system("echo \"" + op + "\"")
+    os.system("echo \"datastructure: " + ds_keys[test] + "-"+str(k)+"\"")
+    os.system("echo \"" + op + "\" >> " + outfile)
+    os.system("echo \"datastructure: " + ds_keys[test] + "-"+str(k) + "\" >> " + outfile)
+    os.system("echo \"" + op + "\" >> " + outfile)
+    x = os.system(op + " >> " + outfile)
+    if (x) :
+        if (os.WEXITSTATUS(x) == 0) : raise NameError("  aborted: " + op)
+        os.system("echo Failed")
+    
 
 
 exp_type = ""
@@ -201,7 +237,12 @@ if not graphs_only:
       for th in to_list(threads):
         for k in to_list(query_sizes):
           for u in to_list(ratios):
-            runtest(ds,th,u,k,dimension,file,"",outfile)
+            if((ds_keys[ds] == "LFKDTree") and (int(k) == 1)):
+              runCompetitor(ds,th,u,dimension,filename_sizes[file],outfile)
+            elif((ds_keys[ds] == "LFKDTree")):
+              continue
+            else:
+              runtest(ds,th,u,k,dimension,file,"",outfile)
 
 throughput = {}
 stddev = {}
