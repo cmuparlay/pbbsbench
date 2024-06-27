@@ -37,7 +37,8 @@ parlay::sequence<indexT> hull(parlay::sequence<point> const &S) {
   size_t l = 0;
   size_t r = 0;
   for (size_t i=1; i < n; i++) {
-    if (P[i].x > P[r].x) r = i;
+    if (P[i].x > P[r].x || ((P[i].x == P[r].x) && P[i].y > P[r].y))
+      r = i;
     if (P[i].x < P[l].x || ((P[i].x == P[l].x) && P[i].y < P[l].y))
       l = i;
   }
