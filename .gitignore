@@ -3,3 +3,5 @@
 *testInputs_small
 *Check
 *.pyc
+.vscode/*
+**/testData/**

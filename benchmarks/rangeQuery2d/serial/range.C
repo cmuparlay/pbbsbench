@@ -65,15 +65,13 @@ struct RangeQuery {
   }
 };
 
-long range(Points const &points, Queries const &queries, bool verbose) {
+parlay::sequence<long> range(Points const &points, Queries const &queries, bool verbose) {
   parlay::internal::timer t("range", verbose);
   RangeQuery r(points);
   t.next("build");
-  long total = parlay::reduce(parlay::map(queries, [&] (query q) {
-  	          return (long) r.count_in_range(q);}));
-  /*auto result_s = parlay::map(queries, [&] (query q) {
+
+  auto result_s = parlay::map(queries, [&] (query q) {
   	          return (long) r.count_in_range(q);});
-  long total = parlay::reduce(result_s);*/
   t.next("query");
 
 #ifdef CHECK
@@ -98,5 +96,5 @@ long range(Points const &points, Queries const &queries, bool verbose) {
 
   r.clear();
   t.next("clear");
-  return total;
+  return result_s;
 }

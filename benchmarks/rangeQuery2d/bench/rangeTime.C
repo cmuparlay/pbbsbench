@@ -27,6 +27,7 @@
 #include "parlay/io.h"
 #include "common/time_loop.h"
 #include "common/IO.h"
+#include "common/sequenceIO.h"
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 
@@ -34,19 +35,19 @@
 
 using namespace std;
 using namespace benchIO;
-
+using parlay::sequence;
 void timeRange(Points const &points, Queries const& queries,
 	       int rounds, bool verbose, char* outFile) {
   cout << "start timeRange" << endl;
-  long result;
+  sequence<long> R;
   time_loop(rounds, 2.0,
-	    [&] () {},
-	    [&] () {result = range(points, queries, verbose);},
+	    [&] () {R.clear();},
+	    [&] () {R = range(points, queries, verbose);},
 	    [&] () {});
   cout << endl;
-
-  cout << "total count = " << result << endl;
-  if (outFile != NULL) parlay::chars_to_file(parlay::to_chars(result), outFile);
+  long total = parlay::reduce(R);
+  cout << "total count = " << total << endl;
+  if (outFile != NULL) writeSequenceToFile(R, outFile);
 }
 
 using pointx = point2d<coord>;

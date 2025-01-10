@@ -67,7 +67,7 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, ke
       if (len(nonCommentLines) > 0) :
         print("CheckOut:", checkOut)
         raise NameError(checkString+"\n"+checkOut)
-      os.remove(outFile)
+      #os.remove(outFile)
     if len(dataDir)>0 and not(keepData):
       out = shellGetOutput("rm " + longInputNames)
     ptimes = str([stripFloat(time)
