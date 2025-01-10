@@ -31,7 +31,7 @@ def runSingle(runProgram, options, ifile, procs) :
   if (procs > 0) :
     comString = onPprocessors(comString,procs)
   out = shellGetOutput(comString)
-  #print(out)
+  print(out)
   try:
     times = [float(str[str.index(':')+2:]) for str in out.split('\n') if str.startswith("Parlay time: ")]
     return times
