@@ -66,6 +66,12 @@ struct RangeQuery {
 };
 
 parlay::sequence<long> range(Points const &points, Queries const &queries, bool verbose) {
+  if (queries.size()< 100){
+    parlay::map(queries,[&] (query q) {printf("query: %f %f %f %f\n",q.x1,q.x2,q.y1,q.y2 ); return 0;});
+  }
+    if (points.size()< 100){
+    parlay::map(points,[&] (point p) {printf("point: %f %f \n",p.x,p.y ); return 0;});
+  }
   parlay::internal::timer t("range", verbose);
   RangeQuery r(points);
   t.next("build");
