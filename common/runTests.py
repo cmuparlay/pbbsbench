@@ -46,8 +46,8 @@ def geomean(a) :
 
 def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, keepData) :
     random.seed()
-    outFile="/tmp/ofile%d_%d" %(random.randint(0, 1000000), random.randint(0, 1000000)) 
     [weight, inputFileNames, runOptions, checkOptions] = test
+    outFile="/tmp/pbbs/%s" %(inputFileNames) 
     if type(inputFileNames) is str :
       inputFileNames = [inputFileNames]
     shortInputNames = " ".join(inputFileNames)
