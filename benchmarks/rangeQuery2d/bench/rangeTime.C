@@ -41,10 +41,10 @@ void timeRange(Points const &points, Queries const& queries,
   cout << "start timeRange" << endl;
 
   if (queries.size()< 100){
-    parlay::map(queries,[&] (query q) {printf("query: %f %f %f %f\n",q.x1,q.x2,q.y1,q.y2 ); return 0;});
+    parlay::map(queries,[&] (query q) {printf("query: (%f,%f) (%f%f)\n",q.x1,q.y1,q.x2,q.y2 ); return 0;});
   }
   if (points.size()< 100){
-    parlay::map(points,[&] (point p) {printf("point: %f %f \n",p.x,p.y ); return 0;});
+    parlay::map(points,[&] (point p) {printf("point: (%f,%f) \n",p.x,p.y ); return 0;});
   }
   sequence<long> R;
   time_loop(rounds, 2.0,
