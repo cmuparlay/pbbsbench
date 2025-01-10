@@ -4,4 +4,6 @@
 *Check
 *.pyc
 .vscode/*
-**/testData/**
+testData/geometryData/data/*
+!testData/geometryData/data/*.in
+
