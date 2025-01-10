@@ -51,8 +51,8 @@ def runTest(runProgram, checkProgram, dataDir, test, rounds, procs, noOutput, ke
     if type(inputFileNames) is str :
       inputFileNames = [inputFileNames]
     shortInputNames = " ".join(inputFileNames)
-    if len(dataDir)>0:
-      out = shellGetOutput("cd " + dataDir + "; make " + shortInputNames)
+    # if len(dataDir)>0:
+      # out = shellGetOutput("cd " + dataDir + "; make " + shortInputNames)
     longInputNames = " ".join(dataDir + "/" + name for name in inputFileNames)
     runOptions = runOptions + " -r " + repr(rounds)
     if (noOutput == 0) :
