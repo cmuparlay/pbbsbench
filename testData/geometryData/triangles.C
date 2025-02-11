@@ -21,36 +21,39 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <math.h>
-#include "parallel.h"
-#include "IO.h"
-#include "geometry.h"
-#include "geometryIO.h"
+#include <stddef.h>
+#include "parlay/parallel.h"
+#include "common/IO.h"
+#include "common/geometry.h"
+#include "common/geometryIO.h"
 #include "geometryData.h"
-#include "dataGen.h"
-#include "parseCommandLine.h"
+#include "common/dataGen.h"
+#include "common/parseCommandLine.h"
 using namespace benchIO;
 using namespace dataGen;
 using namespace std;
 
-int parallel_main(int argc, char* argv[]) {
+using coord = double;
+
+int main(int argc, char* argv[]) {
   commandLine P(argc,argv,"n <outFile>");
-  pair<intT,char*> in = P.sizeAndFileName();
+  pair<size_t,char*> in = P.sizeAndFileName();
   bool onSphere = P.getOption("-S");
 
-  intT n = in.first;
+  size_t n = in.first;
   char* fname = in.second;
-  point3d* Points = newA(point3d, n*3);
-  triangle* Triangles = newA(triangle, n);
-  double d = 1.0/sqrt((double) n);
-  parallel_for (intT i=0; i < n; i++) {
-    if (onSphere) Points[3*i] = randOnUnitSphere3d(i);
-    else Points[3*i] = rand3d(i);
-    Points[3*i+1] = Points[3*i] + vect3d(d,d,0);
-    Points[3*i+2] = Points[3*i] + vect3d(d,0,d);
-    Triangles[i].C[0] = 3*i;
-    Triangles[i].C[1] = 3*i+1;
-    Triangles[i].C[2] = 3*i+2;
-  }
-  return writeTrianglesToFile(triangles<point3d>(3*n,n,Points,Triangles),
+  parlay::sequence<point3d<coord>> Points(3*n);
+  parlay::sequence<tri> Triangles(n);
+  coord d = (coord)(1.0/sqrt((double) n));
+  parlay::parallel_for (0, n, [&] (size_t i) {
+    if (onSphere) Points[3*i] = randOnUnitSphere3d<coord>(i);
+    else Points[3*i] = rand3d<coord>(i);
+    Points[3*i+1] = Points[3*i] + vector3d<coord>(d,d,0);
+    Points[3*i+2] = Points[3*i] + vector3d<coord>(d,0,d);
+    Triangles[i][0] = 3*i;
+    Triangles[i][1] = 3*i+1;
+    Triangles[i][2] = 3*i+2;
+  });
+  return writeTrianglesToFile(triangles<point3d<coord>>(Points,Triangles),
 			      fname);
 }
