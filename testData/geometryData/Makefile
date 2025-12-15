@@ -1,8 +1,8 @@
 include common/parallelDefs
 
 COMMON = common/IO.h common/parse_command_line.h common/geometry.h common/geometryIO.h parlay/parallel.h parlay/primitives.h
-GENERATORS = randPoints
-TO_UPDATE = triangles addRays toNodes
+GENERATORS = randPoints triangles addRays
+TO_UPDATE = toNodes
 
 .PHONY: all clean
 all: $(GENERATORS)
