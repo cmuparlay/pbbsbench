@@ -11,7 +11,7 @@ INCLUDE =
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(BNCHMRK)Check : $(CHECKFILES)
-	$(CC) $(LFLAGS) -o $@ $(CHECKFILES)
+	$(CC) -o $@ $(CHECKFILES) $(LFLAGS)
 
 clean :
 	rm -f $(BNCHMRK)Check *.o *.pyc
