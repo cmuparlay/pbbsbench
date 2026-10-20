@@ -43,7 +43,7 @@ int timeDedup(sequence<sequence<char>> const &In, int rounds, char* outFile) {
        [&] () {R = dedup(A);},
        [] () {});
   if (outFile != NULL) writeSequenceToFile(R, outFile);
-  return 1;
+  return 0;
 }
 
 int main(int argc, char* argv[]) {
