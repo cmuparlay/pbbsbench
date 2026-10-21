@@ -7,7 +7,7 @@ def onPprocessors(command,p) :
   if "OPENMP" in os.environ:
     return "OMP_NUM_THREADS="+repr(p)+" " + command
     return command  
-  elif "CILK" in os.environ:
+  elif "CILK" in os.environ or "OPENCILK" in os.environ:
     return "CILK_NWORKERS="+repr(p)+" " + command
   else:
     return "PARLAY_NUM_THREADS="+repr(p)+" " + command
