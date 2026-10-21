@@ -18,8 +18,13 @@ def shellGetOutput(str) :
                              text=True)
   output, err = process.communicate()
   
+  # Judge success by exit status, not by stderr: compilers routinely print
+  # warnings (e.g. while building a data generator) and those must not
+  # abort a test. Forward stderr so it still reaches the log.
+  if (process.returncode != 0):
+      raise NameError(str+"\n"+output+err+"\n(exit status "+repr(process.returncode)+")")
   if (len(err) > 0):
-      raise NameError(str+"\n"+output+err)
+      sys.stderr.write(err)
   return output
 
 def stripFloat(val) :
