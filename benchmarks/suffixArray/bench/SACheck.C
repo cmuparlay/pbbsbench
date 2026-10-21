@@ -66,7 +66,7 @@ bool isSorted(parlay::sequence<uchar> const &s, parlay::sequence<long> const &SA
 	 << error+1 << endl;
     return 0;
   }
-  return 0;
+  return 1;
 }
 
 int main(int argc, char* argv[]) {
