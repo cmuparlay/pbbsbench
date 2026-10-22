@@ -7,7 +7,7 @@ def onPprocessors(command,p) :
   if "OPENMP" in os.environ:
     return "OMP_NUM_THREADS="+repr(p)+" " + command
     return command  
-  elif "CILK" in os.environ:
+  elif "CILK" in os.environ or "OPENCILK" in os.environ:
     return "CILK_NWORKERS="+repr(p)+" " + command
   else:
     return "PARLAY_NUM_THREADS="+repr(p)+" " + command
@@ -18,8 +18,13 @@ def shellGetOutput(str) :
                              text=True)
   output, err = process.communicate()
   
+  # Judge success by exit status, not by stderr: compilers routinely print
+  # warnings (e.g. while building a data generator) and those must not
+  # abort a test. Forward stderr so it still reaches the log.
+  if (process.returncode != 0):
+      raise NameError(str+"\n"+output+err+"\n(exit status "+repr(process.returncode)+")")
   if (len(err) > 0):
-      raise NameError(str+"\n"+output+err)
+      sys.stderr.write(err)
   return output
 
 def stripFloat(val) :
